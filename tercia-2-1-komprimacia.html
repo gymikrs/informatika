@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2.1 Komprimácia údajov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+.pix{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;background:#C9C4DA;padding:2px;border-radius:8px;max-width:420px;user-select:none;touch-action:none}
+.px{aspect-ratio:1;border:0;padding:0;cursor:crosshair;border-radius:2px}
+.palette{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.sw{display:flex;align-items:center;gap:6px;border:2px solid var(--border);background:var(--surface);border-radius:999px;padding:4px 12px 4px 6px;cursor:pointer;font-weight:600}
+.sw i{width:20px;height:20px;border-radius:50%;border:1px solid #9990B4;display:inline-block}
+.sw.on{border-color:var(--acc);background:var(--accSoft)}
+.lab{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:780px){.lab{grid-template-columns:1fr}}
+.stat{background:var(--surface2);border-radius:12px;padding:12px 14px;font-size:15.5px}
+.stat .code{font-family:var(--mono);font-size:13.5px;line-height:1.5;white-space:pre;overflow-x:auto;margin:8px 0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+.bars{display:grid;gap:8px;margin-top:8px}
+.bar{display:grid;grid-template-columns:120px 1fr 90px;gap:10px;align-items:center;font-size:15px}
+.bar .tr{height:18px;border-radius:9px;background:var(--surface);overflow:hidden;border:1px solid var(--border)}
+.bar .tr i{display:block;height:100%;border-radius:9px;background:var(--acc)}
+.bar .tr i.o{background:#9A93B5}
+.bar b{text-align:right;font-family:var(--mono);font-size:14px}
+.lyr{font-family:var(--mono);font-size:16px;line-height:2;background:var(--surface2);border-radius:12px;padding:12px 16px;white-space:pre-wrap}
+.mk{display:inline-grid;place-items:center;min-width:24px;height:24px;border-radius:50%;color:#fff;font-weight:700;font-size:13px;margin:0 1px;vertical-align:middle}
+.cands{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.dict{width:100%;max-width:420px;font-size:15px}
+.dict td{padding:4px 8px}
+.meter{height:14px;border-radius:7px;background:var(--surface2);overflow:hidden;border:1px solid var(--border);margin:6px 0}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--amber),var(--ok))}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.jlab{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:780px){.jlab{grid-template-columns:1fr}}
+.jlab img,.jlab canvas{width:100%;height:auto;border-radius:10px;display:block;border:1px solid var(--border)}
+#zoom{image-rendering:pixelated}
+.slider{width:100%;accent-color:var(--acc)}
+.qval{font-family:var(--mono);font-weight:700;font-size:22px;color:var(--acc)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15.5px;margin-top:10px}
+.kv b{font-family:var(--mono)}
+.formula{font-family:var(--mono);font-size:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:inline-block;margin:4px 0}
+.calc{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.calc .in{max-width:140px}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const KEY = "komprimacia-21-v1";
+const LESSON = "2.1 Komprimácia údajov";
+const BRAND = "2.1 Komprimácia údajov";
+const CLASS_DEFAULT = "Tercia";
+const WIDE = { rle: 1, strata: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "preco", title: "Prečo komprimovať", min: 5 },
+  { id: "rle", title: "Opakovanie", min: 10 },
+  { id: "slovnik", title: "Slovník", min: 7 },
+  { id: "strata", title: "So stratou a bez", min: 10 },
+  { id: "pomer", title: "Kompresný pomer", min: 5 },
+  { id: "test", title: "Záverečný test", min: 5 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { preco: ["precoq"], rle: ["rlecode", "rleq"], slovnik: ["dict", "gzq"], strata: ["jpegq", "formaty", "scen"], pomer: ["ratio"], test: ["test"] };
+const START = {
+  kicker: "Informatika, Tercia",
+  hero: "",
+  lead: "Zistíš, ako sa dá súbor zmenšiť bez toho, aby sa z neho niečo stratilo, a kedy sa naopak oplatí niečo obetovať. Vyskúšaš si komprimáciu vlastnými rukami: zakóduješ obrázok, vytvoríš slovník a pokazíš fotku. 6 zastávok, body a na konci výsledok.",
+  guessQ: "Kamarátovi pošleš fotku zabalenú do archívu ZIP. Aká bude fotka, keď si ju rozbalí?",
+  guessNote: "Tip sa neboduje. Na zastávke So stratou a bez zistíš, či si mal pravdu.",
+  guesses: ["Trochu rozmazanejšia ako pôvodná", "Presne taká istá ako pôvodná", "Čiernobiela, aby bola menšia", "Menšia na šírku aj výšku"],
+  ok: 1, yes: "Presne tak! ZIP je bezstratový: po rozbalení dostaneš úplne rovnaký súbor.", no: "Nie. ZIP je bezstratový: po rozbalení dostaneš úplne rovnaký súbor, bit po bite."
+};
+
+/* ---------- RLE data ---------- */
+const COL = { B: "#FFFFFF", M: "#3B82F6", C: "#E4572E", H: "#8B5A2B", Z: "#F5C518" };
+const CNAME = { B: "biela", M: "modrá", C: "červená", H: "hnedá", Z: "žltá" };
+const BOAT = ["BBBBBBBBBZZB", "BBBBBCBBBZZB", "BBBBBCCBBBBB", "BBBBBCCCBBBB", "BBBBBCCCCBBB", "BBBBBHBBBBBB", "BHHHHHHHHHHB", "MMHHHHHHHHMM", "MMMMMMMMMMMM"];
+function rle(row) { let o = "", i = 0; while (i < row.length) { let j = i; while (j < row.length && row[j] === row[i]) j++; o += (j - i) + row[i]; i = j; } return o; }
+const normCode = v => String(v).toUpperCase().replace(/[\s,;.]/g, "");
+
+/* ---------- dictionary data ---------- */
+const LYRIC = ["keď je vonku zima, zima, zima,", "keď je vonku zima, doma je nám fajn.", "keď je vonku zima, zima, zima,", "keď je vonku zima, čaj a teplý šál."];
+const LYR = LYRIC.join("\n");
+const CANDS = ["zima", "vonku", "keď", "je", "doma", "keď je vonku zima"];
+const MARKS = ["①", "②", "③"], MCOL = ["#6A3FD0", "#D9480F", "#0B7A75"];
+function dictCalc(sel) {
+  const byLen = sel.map((w, i) => ({ w, i })).sort((a, b) => b.w.length - a.w.length);
+  let txt = LYR;
+  byLen.forEach(x => { txt = txt.split(x.w).join(MARKS[x.i]); });
+  const used = sel.map((w, i) => txt.split(MARKS[i]).length - 1);
+  const cost = sel.reduce((a, w) => a + w.length + 1, 0);
+  const comp = Array.from(txt).length + cost, orig = Array.from(LYR).length;
+  return { txt, used, cost, comp, orig, save: Math.round((1 - comp / orig) * 100) };
+}
+
+/* ---------- gzip texts ---------- */
+const GZ = {
+  pesnicka: { n: "Opakujúca sa pieseň", t: (LYR + "\n").repeat(6).trim() },
+  text: { n: "Bežný text", t: "Cez víkend sme išli s rodinou na výlet do hôr. Ráno bola hmla, ale okolo desiatej vyšlo slnko a z vrcholu sme videli celú dolinu. Na chate sme si dali polievku a čaj, potom sme zišli dolu k jazeru. Brat našiel v tráve jaštericu a mama fotila kvety. Večer sme boli unavení, ale spokojní a už teraz plánujeme ďalší výlet." },
+  nahodne: { n: "Náhodné znaky", t: null }
+};
+function randomText(n) { const a = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; let s = ""; for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+async function gzipSize(str) {
+  if (!("CompressionStream" in window)) return null;
+  try { const cs = new CompressionStream("gzip"); const w = cs.writable.getWriter(); w.write(new TextEncoder().encode(str)); w.close(); const buf = await new Response(cs.readable).arrayBuffer(); return buf.byteLength; } catch (e) { return null; }
+}
+const bytes = s => new TextEncoder().encode(s).length;
+
+function EXTRA_STATE() { return { paint: BOAT.slice(), brush: "M", dict: [], gzKey: "pesnicka", gzText: GZ.pesnicka.t, gzSeen: {}, q: 60, calc: { a: "100", b: "25" } }; }
+
+const TASKS = {
+  precoq: { id: "precoq", type: "mc", qs: [
+    { id: "1", q: "Čo je komprimácia údajov?", opts: ["Zmenšenie súboru tak, že údaje zapíšeme úspornejšie", "Vymazanie nepotrebných súborov z disku", "Presun súboru na USB kľúč alebo do cloudu", "Premenovanie súboru na kratší názov"], a: 0 },
+    { id: "2", q: "Ako sa volá opačný postup, keď archív rozbalíš?", opts: ["Dekomprimácia", "Defragmentácia", "Formátovanie", "Konverzia"], a: 0 },
+    { id: "3", q: "Prečo sa oplatí zbaliť 30 súborov do jedného archívu pred odoslaním e-mailom?", opts: ["Pošleš jeden menší súbor namiesto 30 príloh", "Súbory sa tým ochránia pred vírusmi", "E-mail sa odošle aj bez internetu", "Príjemca ich nebude musieť otvárať"], a: 0, why: "Archív spojí veľa súborov do jedného a zároveň ho zmenší. Pred vírusmi ťa však nechráni." }
+  ]},
+  rlecode: { id: "rlecode", type: "input", qs: [
+    { id: "r4", q: "Zakóduj riadok 4 (plachta).", ok: v => normCode(v) === "5B3C4B", show: "5B3C4B", ph: "napr. 7B5M" },
+    { id: "r7", q: "Zakóduj riadok 7 (paluba loďky).", ok: v => normCode(v) === "1B10H1B", show: "1B10H1B", ph: "napr. 7B5M" },
+    { id: "r8", q: "Zakóduj riadok 8 (loďka na vode).", ok: v => normCode(v) === "2M8H2M", show: "2M8H2M", ph: "napr. 7B5M" }
+  ]},
+  rleq: { id: "rleq", type: "mc", qs: [
+    { id: "1", q: "Kedy metóda RLE súbor namiesto zmenšenia zväčší?", opts: ["Keď má takmer každý pixel inú farbu ako jeho sused", "Keď je obrázok veľmi veľký", "Keď má celý obrázok jednu farbu", "Keď je obrázok iba čiernobiely"], a: 0, why: "Pri šume je každý beh dlhý iba 1 pixel, takže namiesto „B“ píšeme „1B“: dvakrát viac znakov." }
+  ]},
+  dict: { id: "dict", type: "custom", max: 2 },
+  gzq: { id: "gzq", type: "mc", qs: [
+    { id: "1", q: "Ktorý text sa v pokuse skomprimoval najhoršie (ušetril najmenej)?", opts: ["Náhodné znaky", "Opakujúca sa pieseň", "Bežný text o výlete", "Všetky rovnako"], a: 0 },
+    { id: "2", q: "Prečo sa pieseň skomprimovala najlepšie?", opts: ["Veľa slov a riadkov sa v nej opakuje", "Má najmenej znakov", "Obsahuje iba malé písmená", "Je napísaná po slovensky"], a: 0, why: "Komprimačné programy hľadajú opakovania. Čím viac sa opakuje, tým menší je výsledok." }
+  ]},
+  jpegq: { id: "jpegq", type: "mc", qs: [
+    { id: "1", q: "Nastav kvalitu na 5. Čo sa stalo s obrázkom?", opts: ["Objavili sa štvorčeky a farby sa rozmazali", "Obrázok je úplne rovnaký, len súbor je menší", "Obrázok sa zmenil na čiernobiely", "Obrázok sa vôbec nezobrazil"], a: 0 },
+    { id: "2", q: "Porovnaj veľkosť súboru pri kvalite 90 a pri kvalite 30. Čo platí?", opts: ["Pri kvalite 30 je súbor oveľa menší", "Pri kvalite 30 je súbor väčší", "Veľkosť sa nemení, mení sa iba vzhľad", "Pri kvalite 90 je súbor menší"], a: 0 }
+  ]},
+  formaty: { id: "formaty", type: "sort",
+    buckets: [{ id: "bez", label: "🧩 Bezstratové", sub: "po rozbalení presne to isté" }, { id: "so", label: "✂️ Stratové", sub: "časť údajov sa navždy stratí" }],
+    items: [{ id: "1", t: ".zip", b: "bez" }, { id: "2", t: ".7z", b: "bez" }, { id: "3", t: ".rar", b: "bez" }, { id: "4", t: ".png", b: "bez" }, { id: "5", t: ".flac (hudba)", b: "bez" },
+      { id: "6", t: ".jpg", b: "so" }, { id: "7", t: ".mp3", b: "so" }, { id: "8", t: ".mp4 (video)", b: "so" }],
+    after: "Archívy (ZIP, 7z, RAR) musia byť bezstratové, lebo v nich môžu byť programy aj dokumenty. JPG, MP3 a MP4 odstraňujú detaily, ktoré oko alebo ucho takmer nepostrehne."
+  },
+  scen: { id: "scen", type: "mc", qs: [
+    { id: "1", q: "Posielaš kamarátovi hru (súbor .exe). Akú komprimáciu treba použiť?", opts: ["Bezstratovú, inak by program nefungoval", "Stratovú, aby bol súbor čo najmenší", "Je to jedno, výsledok bude rovnaký", "Programy sa komprimovať nedajú"], a: 0, why: "Stačí zmeniť jediný bit a program môže spadnúť. Preto sa programy komprimujú iba bezstratovo." },
+    { id: "2", q: "Dávaš 50 fotiek na školský web. Chceš malé súbory a drobná strata kvality nevadí. Čo zvolíš?", opts: ["Stratovú komprimáciu (JPG)", "Bezstratový archív ZIP", "Uloženie ako textový súbor", "Kódovanie RLE"], a: 0 }
+  ]},
+  ratio: { id: "ratio", type: "input", qs: [
+    { id: "1", q: "Súbor mal 80 MB, archív má 20 MB. Aký je kompresný pomer?", ok: v => Math.abs(parseNum(v) - 4) < 0.01, show: "4 : 1", unit: ": 1", ph: "?" },
+    { id: "2", q: "Súbor mal 50 MB, archív má 10 MB. Koľko percent miesta sa ušetrilo?", ok: v => Math.abs(parseNum(v) - 80) < 0.6, show: "80 %", unit: "%", ph: "?" },
+    { id: "3", q: "Fotky JPG mali 12 MB, po zabalení do ZIP majú 11,4 MB. Koľko percent sa ušetrilo?", ok: v => Math.abs(parseNum(v) - 5) < 0.6, show: "5 %", unit: "%", ph: "?", why: "Iba 0,6 MB z 12 MB, teda 5 %. Fotky JPG sú už skomprimované, a tak v nich ZIP nenájde veľa opakovaní." }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Ktorý formát je stratový?", opts: ["MP3", "ZIP", "PNG", "FLAC"], a: 0 },
+    { id: "2", q: "V riadku obrázka je 20 bielych pixelov za sebou. Ako ho zapíšeme metódou RLE?", opts: ["20B", "B20B", "2B0B", "BB20"], a: 0 },
+    { id: "3", q: "Pôvodný súbor mal 60 MB, archív má 15 MB. Aký je kompresný pomer?", opts: ["4 : 1", "1 : 4", "3 : 1", "45 : 1"], a: 0 },
+    { id: "4", q: "Prečo sa fotky JPG v ZIP-e takmer nezmenšia?", opts: ["Už sú skomprimované", "ZIP nepodporuje obrázky", "Fotky sú príliš malé", "ZIP komprimuje iba text"], a: 0 },
+    { id: "5", q: "Bezstratová komprimácia znamená, že:", opts: ["po rozbalení dostaneš presne pôvodné údaje", "súbor sa skomprimuje bez straty času", "pri kopírovaní sa nestratí žiadny súbor", "kvalita sa zníži iba trochu"], a: 0 },
+    { id: "6", q: "Ktorý súbor sa pravdepodobne skomprimuje najlepšie?", opts: ["Textový dokument s opakujúcimi sa slovami", "Video MP4", "Fotka JPG", "Archív ZIP"], a: 0 },
+    { id: "7", q: "Metóda, ktorá nahrádza opakujúce sa slová značkami zo slovníka, patrí medzi:", opts: ["bezstratové metódy", "stratové metódy", "šifrovacie metódy", "antivírusové metódy"], a: 0 }
+  ]}
+};
+
+/* ---------- illustrations ---------- */
+const ART = {
+  suitcase: `<svg viewBox="0 0 680 250" role="img" aria-label="Kufor s oblečením a vákuový vak">
+  <rect width="680" height="250" rx="14" fill="#F7F4FF"/>
+  <g transform="translate(40,14)">
+    <rect x="0" y="60" width="200" height="120" rx="14" fill="#B5652E"/><rect x="0" y="60" width="200" height="22" rx="10" fill="#9A5325"/>
+    <rect x="80" y="40" width="40" height="22" rx="6" fill="none" stroke="#6E3A18" stroke-width="7"/>
+    <path d="M10 64 q20 -50 50 -30 q15 -35 45 -8 q25 -40 55 -4 q25 -25 36 18z" fill="#F2A516"/>
+    <path d="M24 64 q14 -34 44 -20 q18 -24 40 2 z" fill="#E4572E"/><path d="M120 64 q18 -30 50 -6 q10 4 16 6z" fill="#3B82F6"/>
+    <path d="M60 40 q10 -30 40 -24" stroke="#6A3FD0" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <rect x="18" y="176" width="16" height="10" rx="3" fill="#333"/><rect x="166" y="176" width="16" height="10" rx="3" fill="#333"/>
+    <text x="100" y="212" text-anchor="middle" font-family="Rubik,sans-serif" font-size="17" font-weight="600" fill="#1A1530">Pred: 40 MB</text>
+  </g>
+  <g font-family="Rubik,sans-serif" font-size="15" font-weight="600">
+    <path d="M280 100 H400" stroke="#6A3FD0" stroke-width="6" stroke-linecap="round"/><path d="M392 88 l16 12 l-16 12" fill="none" stroke="#6A3FD0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="340" y="84" text-anchor="middle" fill="#6A3FD0">komprimácia</text>
+    <path d="M400 160 H280" stroke="#0B7A75" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 12"/><path d="M288 148 l-16 12 l16 12" fill="none" stroke="#0B7A75" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="340" y="190" text-anchor="middle" fill="#0B7A75">dekomprimácia</text>
+  </g>
+  <g transform="translate(450,70)">
+    <rect x="0" y="40" width="190" height="80" rx="18" fill="#DCE8F7" stroke="#8FB0DA" stroke-width="3"/>
+    <rect x="16" y="56" width="50" height="48" rx="6" fill="#F2A516"/><rect x="72" y="56" width="50" height="48" rx="6" fill="#E4572E"/><rect x="128" y="56" width="46" height="48" rx="6" fill="#3B82F6"/>
+    <path d="M10 44 q85 20 170 0" stroke="#FFFFFF" stroke-width="4" fill="none" opacity=".8"/>
+    <circle cx="176" cy="36" r="10" fill="#8FB0DA"/>
+    <text x="95" y="152" text-anchor="middle" font-family="Rubik,sans-serif" font-size="17" font-weight="600" fill="#1A1530">Po: 8 MB</text>
+  </g></svg>`,
+  email: `<svg viewBox="0 0 680 200" role="img" aria-label="Príloha e-mailu nad limitom a pod limitom">
+  <rect width="680" height="200" rx="14" fill="#F7F4FF"/>
+  <g transform="translate(40,34)" font-family="Rubik,sans-serif">
+    <rect x="0" y="0" width="160" height="110" rx="10" fill="#fff" stroke="#C9C4DA" stroke-width="3"/><path d="M0 8 L80 62 L160 8" fill="none" stroke="#C9C4DA" stroke-width="3"/>
+    <text x="80" y="140" text-anchor="middle" font-size="15" font-weight="600" fill="#1A1530">Limit prílohy: 25 MB</text>
+  </g>
+  <g transform="translate(260,30)" font-family="Rubik,sans-serif">
+    <path d="M0 0 h70 l24 24 v96 h-94z" fill="#fff" stroke="#9A93B5" stroke-width="3"/><path d="M70 0 v24 h24" fill="none" stroke="#9A93B5" stroke-width="3"/>
+    <rect x="12" y="44" width="70" height="8" rx="4" fill="#C9C4DA"/><rect x="12" y="60" width="56" height="8" rx="4" fill="#C9C4DA"/><rect x="12" y="76" width="64" height="8" rx="4" fill="#C9C4DA"/>
+    <text x="47" y="150" text-anchor="middle" font-size="15" font-weight="600" fill="#1A1530">projekt: 60 MB</text>
+    <circle cx="92" cy="110" r="20" fill="#C0392B"/><path d="M84 102 l16 16 M100 102 l-16 16" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(470,46)" font-family="Rubik,sans-serif">
+    <rect x="0" y="0" width="84" height="104" rx="8" fill="#F2A516"/><rect x="36" y="0" width="12" height="104" fill="#1A1530" opacity=".25"/>
+    ${[0, 1, 2, 3, 4, 5].map(i => `<rect x="${i % 2 ? 42 : 36}" y="${8 + i * 12}" width="6" height="6" fill="#fff"/>`).join("")}
+    <rect x="30" y="76" width="24" height="18" rx="3" fill="#fff"/>
+    <text x="42" y="134" text-anchor="middle" font-size="15" font-weight="600" fill="#1A1530">projekt.zip: 18 MB</text>
+    <circle cx="92" cy="94" r="20" fill="#12805A"/><path d="M82 94 l7 7 l13 -14" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g></svg>`,
+  rleRow: (() => { const row = "BBBBMMMCCB"; let s = `<svg viewBox="0 0 680 170" role="img" aria-label="Riadok pixelov a jeho zápis RLE"><rect width="680" height="170" rx="14" fill="#F7F4FF"/>`;
+    for (let i = 0; i < row.length; i++) s += `<rect x="${60 + i * 56}" y="24" width="50" height="50" rx="6" fill="${COL[row[i]]}" stroke="#9990B4" stroke-width="2"/>`;
+    const groups = [[0, 4, "4B"], [4, 3, "3M"], [7, 2, "2C"], [9, 1, "1B"]];
+    groups.forEach(([st, n, t]) => { const x1 = 60 + st * 56, x2 = 60 + (st + n) * 56 - 6; s += `<path d="M${x1} 86 v10 H${x2} v-10" fill="none" stroke="#6A3FD0" stroke-width="3"/><text x="${(x1 + x2) / 2}" y="126" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="24" font-weight="700" fill="#6A3FD0">${t}</text>`; });
+    return s + `<text x="340" y="158" text-anchor="middle" font-family="Rubik,sans-serif" font-size="14" fill="#5E5877">10 znakov „BBBBMMMCCB“ → 8 znakov „4B3M2C1B“</text></svg>`; })(),
+  lossless: `<svg viewBox="0 0 330 200" role="img" aria-label="Bezstratová komprimácia ako puzzle"><rect width="330" height="200" rx="14" fill="#EAF7F1"/>
+  <g transform="translate(20,40)"><rect width="80" height="80" rx="6" fill="#7EC8F2"/><path d="M0 60 L30 36 L50 52 L80 30 V80 H0z" fill="#3E8E3A"/><circle cx="60" cy="18" r="9" fill="#F5C518"/></g>
+  <g transform="translate(125,40)"><rect width="36" height="36" rx="4" fill="#7EC8F2"/><rect x="44" width="36" height="36" rx="4" fill="#7EC8F2"/><circle cx="60" cy="18" r="9" fill="#F5C518"/><rect y="44" width="36" height="36" rx="4" fill="#3E8E3A"/><rect x="44" y="44" width="36" height="36" rx="4" fill="#3E8E3A"/></g>
+  <g transform="translate(230,40)"><rect width="80" height="80" rx="6" fill="#7EC8F2"/><path d="M0 60 L30 36 L50 52 L80 30 V80 H0z" fill="#3E8E3A"/><circle cx="60" cy="18" r="9" fill="#F5C518"/></g>
+  <text x="110" y="86" font-size="22" fill="#12805A" font-weight="700">→</text><text x="212" y="86" font-size="22" fill="#12805A" font-weight="700">→</text>
+  <text x="165" y="160" text-anchor="middle" font-family="Rubik,sans-serif" font-size="15" font-weight="600" fill="#12805A">Rozložíš a zložíš: presne to isté</text></svg>`,
+  lossy: (() => { let s = `<svg viewBox="0 0 330 200" role="img" aria-label="Stratová komprimácia stráca detaily"><rect width="330" height="200" rx="14" fill="#FDF1D6"/>
+  <g transform="translate(30,40)"><rect width="100" height="80" rx="6" fill="#7EC8F2"/><path d="M0 60 L30 36 L50 52 L100 26 V80 H0z" fill="#3E8E3A"/><circle cx="76" cy="18" r="10" fill="#F5C518"/><rect x="18" y="46" width="22" height="18" fill="#F4E3C3"/><path d="M15 47 l14 -12 l14 12z" fill="#C8452F"/></g>
+  <text x="147" y="86" font-size="22" fill="#B7791F" font-weight="700">→</text><g transform="translate(190,40)">`;
+    const g = [["#7EC8F2", "#7EC8F2", "#8CCBE8", "#F5C518", "#7EC8F2"], ["#8CCBE8", "#7EC8F2", "#6FB6C9", "#7EC8F2", "#6FAF7F"], ["#E3C9A6", "#B98B5E", "#5FA052", "#3E8E3A", "#3E8E3A"], ["#3E8E3A", "#3E8E3A", "#3E8E3A", "#3E8E3A", "#3E8E3A"]];
+    g.forEach((r, y) => r.forEach((c, x) => { s += `<rect x="${x * 20}" y="${y * 20}" width="20" height="20" fill="${c}"/>`; }));
+    return s + `</g><text x="165" y="160" text-anchor="middle" font-family="Rubik,sans-serif" font-size="15" font-weight="600" fill="#9A5B00">Menší súbor, ale detaily zmizli navždy</text></svg>`; })(),
+  ratio: `<svg viewBox="0 0 680 170" role="img" aria-label="Porovnanie veľkosti 100 MB a 25 MB"><rect width="680" height="170" rx="14" fill="#F7F4FF"/>
+  <g font-family="Rubik,sans-serif" font-weight="600">
+    <text x="30" y="52" font-size="16" fill="#1A1530">Pôvodný súbor</text><rect x="170" y="32" width="440" height="30" rx="8" fill="#9A93B5"/><text x="600" y="53" text-anchor="end" font-size="15" fill="#fff">100 MB</text>
+    <text x="30" y="106" font-size="16" fill="#1A1530">Archív</text><rect x="170" y="86" width="110" height="30" rx="8" fill="#6A3FD0"/><text x="290" y="107" font-size="15" fill="#6A3FD0">25 MB</text>
+    <text x="30" y="150" font-size="15" fill="#5E5877">100 : 25 = pomer 4 : 1 · ušetrené 75 MB, teda 75 %</text></g></svg>`,
+  book: `<svg viewBox="0 0 220 160" role="img" aria-label="Slovník"><rect width="220" height="160" rx="14" fill="#F7F4FF"/>
+  <path d="M30 30 q40 -10 80 6 v100 q-40 -16 -80 -6z" fill="#6A3FD0"/><path d="M190 30 q-40 -10 -80 6 v100 q40 -16 80 -6z" fill="#8A63E6"/>
+  <g font-family="JetBrains Mono,monospace" font-size="12" fill="#fff" font-weight="700"><text x="44" y="62">① = zima</text><text x="44" y="84">② = keď</text><text x="122" y="62">①①①</text><text x="122" y="84">②①</text></g></svg>`
+};
+function pixelSVG(rows, hl) {
+  const c = 30, ox = 40; let s = `<svg viewBox="0 0 ${ox + 12 * c + 10} ${rows.length * c + 12}" role="img" aria-label="Pixelový obrázok loďky">`;
+  rows.forEach((r, y) => { s += `<text x="${ox - 10}" y="${y * c + 26}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="15" font-weight="700" fill="${hl.includes(y) ? "#6A3FD0" : "#9A93B5"}">${y + 1}</text>`;
+    for (let x = 0; x < 12; x++) s += `<rect x="${ox + x * c}" y="${y * c + 6}" width="${c - 2}" height="${c - 2}" rx="3" fill="${COL[r[x]]}" stroke="#C9C4DA"/>`;
+    if (hl.includes(y)) s += `<rect x="${ox - 3}" y="${y * c + 3}" width="${12 * c + 4}" height="${c + 4}" rx="6" fill="none" stroke="#6A3FD0" stroke-width="3"/>`; });
+  return s + `</svg>`;
+}
+function rleStats() {
+  const codes = S.paint.map(rle), len = codes.reduce((a, c) => a + c.length, 0), raw = 108;
+  const d = len - raw;
+  return `<b>Pôvodne:</b> ${raw} znakov (12 × 9 pixelov)<br><b>RLE:</b> ${len} znakov
+    <div class="code">${codes.map((c, i) => String(i + 1).padStart(2, " ") + ": " + c).join("\n")}</div>
+    ${d < 0 ? `<span style="color:var(--ok);font-weight:600">Ušetrené: ${-d} znakov (${Math.round(-d / raw * 100)} %)</span>` : `<span style="color:var(--bad);font-weight:600">RLE je o ${d} znakov DLHŠIE ako pôvodný zápis!</span>`}`;
+}
+
+/* ---------- JPEG lab ---------- */
+let SCENE = null, PNGSIZE = null, JURL = null;
+function drawScene() {
+  const c = document.createElement("canvas"); c.width = 320; c.height = 200; const x = c.getContext("2d");
+  const g = x.createLinearGradient(0, 0, 0, 120); g.addColorStop(0, "#5DB4EE"); g.addColorStop(1, "#DDF1FB"); x.fillStyle = g; x.fillRect(0, 0, 320, 200);
+  x.fillStyle = "#FFD23F"; x.beginPath(); x.arc(262, 42, 22, 0, 7); x.fill();
+  x.strokeStyle = "#FFD23F"; x.lineWidth = 3; for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; x.beginPath(); x.moveTo(262 + Math.cos(a) * 28, 42 + Math.sin(a) * 28); x.lineTo(262 + Math.cos(a) * 38, 42 + Math.sin(a) * 38); x.stroke(); }
+  x.fillStyle = "#7C8DA6"; x.beginPath(); x.moveTo(0, 120); x.lineTo(70, 60); x.lineTo(120, 100); x.lineTo(180, 50); x.lineTo(250, 115); x.lineTo(320, 90); x.lineTo(320, 200); x.lineTo(0, 200); x.fill();
+  x.fillStyle = "#FFFFFF"; x.beginPath(); x.moveTo(180, 50); x.lineTo(165, 64); x.lineTo(195, 64); x.fill();
+  x.fillStyle = "#5BAA4A"; x.beginPath(); x.moveTo(0, 140); x.quadraticCurveTo(160, 100, 320, 150); x.lineTo(320, 200); x.lineTo(0, 200); x.fill();
+  x.fillStyle = "#3E8E3A"; x.beginPath(); x.moveTo(0, 170); x.quadraticCurveTo(120, 150, 320, 180); x.lineTo(320, 200); x.lineTo(0, 200); x.fill();
+  x.fillStyle = "#F4E3C3"; x.fillRect(140, 112, 70, 52); x.fillStyle = "#C8452F"; x.beginPath(); x.moveTo(132, 114); x.lineTo(175, 82); x.lineTo(218, 114); x.fill();
+  x.fillStyle = "#6B4226"; x.fillRect(150, 134, 16, 30); x.fillStyle = "#2B6CB0"; x.fillRect(180, 124, 22, 20);
+  x.strokeStyle = "#FFFFFF"; x.lineWidth = 2; x.beginPath(); x.moveTo(191, 124); x.lineTo(191, 144); x.moveTo(180, 134); x.lineTo(202, 134); x.stroke();
+  x.strokeStyle = "#FFFFFF"; x.lineWidth = 1; for (let i = 0; i < 16; i++) { x.beginPath(); x.moveTo(20 + i * 6, 170); x.lineTo(20 + i * 6, 186); x.stroke(); } x.beginPath(); x.moveTo(18, 174); x.lineTo(114, 174); x.stroke();
+  x.fillStyle = "#1A1530"; x.font = "bold 13px Rubik, sans-serif"; x.fillText("Ahoj, Tercia!", 222, 188);
+  return c;
+}
+function updateJpeg() {
+  const q = +S.q; const qv = document.getElementById("qv"); if (qv) qv.textContent = q;
+  if (!SCENE) SCENE = drawScene();
+  if (PNGSIZE === null) SCENE.toBlob(b => { PNGSIZE = b ? b.size : 0; updateJpeg(); }, "image/png");
+  SCENE.toBlob(b => {
+    if (!b) return; const img = document.getElementById("jimg"); if (!img) return;
+    if (JURL) URL.revokeObjectURL(JURL); JURL = URL.createObjectURL(b); img.src = JURL;
+    img.onload = () => { const z = document.getElementById("zoom"); if (!z) return; const zx = z.getContext("2d"); zx.imageSmoothingEnabled = false; zx.drawImage(img, 130, 78, 80, 54, 0, 0, 320, 216); };
+    const kb = n => (n / 1024).toFixed(1).replace(".", ",") + " kB";
+    document.getElementById("jsize").textContent = kb(b.size);
+    if (PNGSIZE) { document.getElementById("psize").textContent = kb(PNGSIZE); document.getElementById("jsave").textContent = Math.max(0, Math.round((1 - b.size / PNGSIZE) * 100)) + " %"; }
+  }, "image/jpeg", Math.max(0.01, q / 100));
+}
+let GZT = null;
+function updateGz() {
+  clearTimeout(GZT);
+  GZT = setTimeout(async () => {
+    const out = document.getElementById("gzout"); if (!out) return;
+    const t = S.gzText || "", o = bytes(t), c = await gzipSize(t);
+    if (c === null) { out.innerHTML = `<p class="muted">Tento prehliadač nevie komprimovať priamo na stránke. Skús Chrome, Edge alebo Firefox.</p>`; return; }
+    if (S.gzKey && t === (S.gzKey === "nahodne" ? S.gzRand : GZ[S.gzKey].t)) { S.gzSeen[S.gzKey] = [o, c]; save(); }
+    const pct = o ? Math.round((1 - c / o) * 100) : 0;
+    out.innerHTML = `<div class="bars"><div class="bar"><span>Pôvodne</span><span class="tr"><i class="o" style="width:100%"></i></span><b>${o} B</b></div>
+      <div class="bar"><span>Po komprimácii</span><span class="tr"><i style="width:${o ? Math.min(100, c / o * 100) : 0}%"></i></span><b>${c} B</b></div></div>
+      <p style="margin:10px 0 0">${pct > 0 ? `Ušetrené: <b>${pct} %</b>` : `<b style="color:var(--bad)">Nič sa neušetrilo, súbor je dokonca o ${c - o} B väčší.</b>`}</p>
+      ${Object.keys(S.gzSeen).length ? `<table style="margin-top:12px"><thead><tr><th>Vyskúšaný text</th><th>Pôvodne</th><th>Po komprimácii</th><th>Úspora</th></tr></thead><tbody>${Object.entries(S.gzSeen).map(([k, v]) => `<tr><td>${GZ[k].n}</td><td>${v[0]} B</td><td>${v[1]} B</td><td>${Math.round((1 - v[1] / v[0]) * 100)} %</td></tr>`).join("")}</tbody></table>` : ""}`;
+  }, 200);
+}
+
+/* ---------- views ---------- */
+const VIEWS = {
+  preco() {
+    return head() + `<h2>Prečo súbory komprimujeme?</h2>
+    <p>Predstav si, že balíš na tábor a oblečenie sa nezmestí do kufra. Dáš ho do vákuového vaku, vysaješ vzduch a zrazu zaberá oveľa menej miesta. Keď vak otvoríš, oblečenie je celé a nepoškodené.</p>
+    <figure class="fig">${ART.suitcase}<figcaption>Komprimácia zmenší súbor. Dekomprimácia (rozbalenie) ho vráti do pôvodnej podoby.</figcaption></figure>
+    <p><b>Komprimácia údajov</b> je zmenšenie súboru tak, že tie isté údaje zapíšeme úspornejšie. Program pri tom hľadá, čo sa v údajoch <b>opakuje</b>, a zapíše to kratšie.</p>
+    <figure class="fig">${ART.email}<figcaption>Projekt má 60 MB a cez e-mail neprejde. Zabalený do archívu ZIP má 18 MB a prejde.</figcaption></figure>
+    <div>
+      <div class="box v"><p><b>Kedy sa to hodí?</b></p><ul style="margin:0;padding-left:20px">
+        <li>posielaš súbory e-mailom a príloha má limit,</li><li>chceš ušetriť miesto na disku alebo v mobile,</li>
+        <li>chceš rýchlejšie nahrať súbory na internet,</li><li>chceš veľa súborov spojiť do jedného <b>archívu</b>.</li></ul></div>
+    </div>
+    <h3>Otázky</h3><div class="task">${taskHTML("precoq")}</div>` + nextBar();
+  },
+  rle() {
+    const hl = [3, 6, 7];
+    return head() + `<h2>Opakovanie je poklad: metóda RLE</h2>
+    <p>Počítač si obrázok pamätá ako mriežku bodov, <b>pixelov</b>, a každý má svoju farbu. Keď je vedľa seba veľa rovnakých pixelov, nemusíme ich vypisovať jeden po druhom. Stačí napísať, <b>koľko</b> ich je a <b>akej farby</b>. Tejto metóde sa hovorí <b>RLE</b> (Run-Length Encoding), po slovensky kódovanie dĺžky behov.</p>
+    <figure class="fig">${ART.rleRow}<figcaption>Číslo = koľko pixelov za sebou, písmeno = farba.</figcaption></figure>
+    <div class="palette">${Object.keys(COL).map(k => `<span class="sw" style="cursor:default"><i style="background:${COL[k]}"></i>${k} = ${CNAME[k]}</span>`).join("")}</div>
+    <h3>Úloha 1: zakóduj loďku</h3>
+    <div class="lab"><figure class="fig" style="margin:0">${pixelSVG(BOAT, hl)}<figcaption>Riadky 4, 7 a 8 sú zvýraznené. Počítaj pixely zľava doprava.</figcaption></figure>
+      <div class="task" style="margin:0"><div class="ins">Príklad: riadok 1 sa zapíše <b style="font-family:var(--mono)">9B2Z1B</b>.</div>${taskHTML("rlecode")}</div></div>
+    <h3>Úloha 2: bádaj, kedy RLE pomáha</h3>
+    <p>Nakresli vlastný obrázok alebo skús tlačidlá nižšie. Sleduj, ako sa mení dĺžka zápisu RLE. Čo sa stane pri obrázku z náhodných bodov?</p>
+    <div class="lab"><div>
+      <div class="palette">${Object.keys(COL).map(k => `<button class="sw ${S.brush === k ? "on" : ""}" data-brush="${k}"><i style="background:${COL[k]}"></i>${CNAME[k]}</button>`).join("")}</div>
+      <div class="pix" id="pix">${S.paint.map((r, y) => Array.from(r).map((ch, x) => `<button class="px" data-px="${y},${x}" style="background:${COL[ch]}" aria-label="pixel ${y + 1},${x + 1}"></button>`).join("")).join("")}</div>
+      <div class="row"><button class="ghost" data-paint="boat">⛵ Loďka</button><button class="ghost" data-paint="one">⬜ Jedna farba</button><button class="ghost" data-paint="stripes">〰️ Pruhy</button><button class="ghost" data-paint="noise">🎲 Náhodný šum</button></div>
+    </div><div class="stat" id="rlestats">${rleStats()}</div></div>
+    <div class="task">${taskHTML("rleq")}</div>` + nextBar();
+  },
+  slovnik() {
+    const r = dictCalc(S.dict), done = S.t.dict;
+    const shown = esc(r.txt).replace(/[①②③]/g, m => { const i = MARKS.indexOf(m); return `<span class="mk" style="background:${MCOL[i]}">${i + 1}</span>`; });
+    return head() + `<h2>Slovník: nahraď, čo sa opakuje</h2>
+    <div class="two"><div><p>V texte sa často opakujú celé slová aj vety. Komprimačné programy ako ZIP si ich zapíšu do <b>slovníka</b> iba raz a v texte ich potom nahradia krátkou značkou. Pri rozbalení značky nahradia späť slovami, takže sa nič nestratí.</p>
+      <p>Slovník však tiež zaberá miesto. Oplatí sa preto nahrádzať to, čo je <b>dlhé</b> a <b>často sa opakuje</b>.</p></div>
+      <figure class="fig" style="margin:0">${ART.book}</figure></div>
+    <h3>Úloha 1: skomprimuj pieseň</h3>
+    <div class="task"><div class="ins">Vyber do slovníka najviac 3 položky. Cieľ: ušetri aspoň 35 % znakov. Položku odstrániš ďalším kliknutím.</div>
+      <div class="cands">${CANDS.map(w => { const i = S.dict.indexOf(w); return `<button class="ghost ${i >= 0 ? "on" : ""}" data-dw="${esc(w)}" ${done || (i < 0 && S.dict.length >= 3) ? "disabled" : ""}>${i >= 0 ? `<span class="mk" style="background:${MCOL[i]}">${i + 1}</span> ` : ""}„${esc(w)}“</button>`; }).join("")}</div>
+      <div class="lyr">${shown}</div>
+      ${S.dict.length ? `<table class="dict"><thead><tr><th>Značka</th><th>Znamená</th><th>Použitá</th></tr></thead><tbody>${S.dict.map((w, i) => `<tr><td><span class="mk" style="background:${MCOL[i]}">${i + 1}</span></td><td>„${esc(w)}“</td><td>${r.used[i]}×</td></tr>`).join("")}</tbody></table>` : ""}
+      <p style="margin:12px 0 0">Pôvodne: <b>${r.orig}</b> znakov · Text so značkami + slovník: <b>${r.comp}</b> znakov · Ušetrené: <b>${Math.max(r.save, 0)} %</b></p>
+      <div class="meter"><i style="width:${Math.max(0, Math.min(100, r.save / 50 * 100))}%"></i></div>
+      ${done ? `<div class="checkbar"><span class="score ${done.score < 2 ? "part" : ""}">Ušetril si ${S.dictSave} %. Získal si ${done.score} z 2 bodov</span></div>
+        <div class="box g"><p>Najviac ušetrí celá opakujúca sa veta <b>„keď je vonku zima“</b> spolu so slovom <b>„zima“</b>. Krátke slová ako „je“ sa neoplatia: slovník stojí viac, ako ušetria.</p></div>`
+        : `<div class="checkbar"><button class="primary" data-dictdone ${S.dict.length ? "" : "disabled"}>Hotovo, vyhodnotiť</button><span class="hint">Aspoň 35 % = 2 body, aspoň 20 % = 1 bod.</span></div>`}
+    </div>
+    <h3>Úloha 2: skutočná komprimácia</h3>
+    <p>Teraz text naozaj skomprimujeme metódou <b>gzip</b>, ktorú používa aj internet. Vyskúšaj všetky tri texty, alebo napíš vlastný.</p>
+    <div class="task"><div class="presets">${Object.keys(GZ).map(k => `<button class="ghost ${S.gzKey === k ? "on" : ""}" data-gz="${k}">${GZ[k].n}</button>`).join("")}</div>
+      <textarea id="gztext" rows="6" aria-label="Text na komprimáciu">${esc(S.gzText)}</textarea><div id="gzout"><p class="muted">Počítam…</p></div></div>
+    <div class="task">${taskHTML("gzq")}</div>` + nextBar();
+  },
+  strata() {
+    return head() + `<h2>Bezstratová a stratová komprimácia</h2>
+    <div class="two"><figure class="fig" style="margin:0">${ART.lossless}<figcaption><b>Bezstratová:</b> po rozbalení máš presne pôvodné údaje. ZIP, 7z, RAR, PNG.</figcaption></figure>
+      <figure class="fig" style="margin:0">${ART.lossy}<figcaption><b>Stratová:</b> niečo sa zahodí navždy, ale súbor je oveľa menší. JPG, MP3, MP4.</figcaption></figure></div>
+    ${guessBox()}
+    <p>Stratové formáty zahadzujú hlavne detaily, ktoré oko alebo ucho takmer nepostrehne. Čím viac zahodíme, tým je súbor menší, ale aj horší. Vyskúšaj to.</p>
+    <h3>Laboratórium: pokaz fotku</h3>
+    <div class="task"><div class="jlab"><div><img id="jimg" alt="Obrázok uložený ako JPG vo zvolenej kvalite"><p class="cap">Obrázok uložený ako JPG</p></div>
+      <div><canvas id="zoom" width="320" height="216" aria-label="Zväčšený výrez obrázka"></canvas><p class="cap">Zväčšený výrez okolo domčeka</p></div></div>
+      <label class="f" for="q">Kvalita JPG: <span class="qval" id="qv">${S.q}</span></label>
+      <input type="range" id="q" class="slider" min="1" max="100" value="${S.q}">
+      <div class="kv"><span>Veľkosť JPG:</span><b id="jsize">…</b><span>Bezstratové PNG:</span><b id="psize">…</b><span>JPG je menšie o:</span><b id="jsave">…</b></div></div>
+    <div class="task">${taskHTML("jpegq")}</div>
+    <h3>Roztrieď formáty</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("formaty")}</div>
+    <h3>Čo by si zvolil?</h3><div class="task">${taskHTML("scen")}</div>` + nextBar();
+  },
+  pomer() {
+    const a = parseNum(S.calc.a), b = parseNum(S.calc.b), okc = a > 0 && b > 0;
+    return head() + `<h2>Kompresný pomer: o koľko sa to zmenšilo?</h2>
+    <figure class="fig">${ART.ratio}</figure>
+    <p>Úspešnosť komprimácie vyjadrujeme dvoma spôsobmi:</p>
+    <div class="two"><div class="box v" style="margin:0"><p><b>Kompresný pomer</b><br><span class="formula">pôvodná veľkosť : veľkosť archívu</span><br>100 MB : 25 MB = <b>4 : 1</b>, teda archív je 4-krát menší.</p></div>
+      <div class="box v" style="margin:0"><p><b>Úspora v percentách</b><br><span class="formula">(pôvodná − archív) / pôvodná × 100</span><br>(100 − 25) / 100 × 100 = <b>75 %</b></p></div></div>
+    <h3>Kalkulačka na overenie</h3>
+    <div class="task"><div class="calc"><div><label class="f" for="ca">Pôvodne (MB)</label><input class="in" id="ca" data-calc="a" value="${esc(S.calc.a)}"></div>
+      <div><label class="f" for="cb">Archív (MB)</label><input class="in" id="cb" data-calc="b" value="${esc(S.calc.b)}"></div></div>
+      <p id="cres" style="margin:12px 0 0">${calcText(a, b, okc)}</p></div>
+    <h3>Úloha: vypočítaj</h3><div class="task"><div class="ins">Najprv počítaj sám, kalkulačkou si výsledok môžeš overiť.</div>${taskHTML("ratio")}</div>` + nextBar();
+  },
+  test() {
+    return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar();
+  }
+};
+function calcText(a, b, ok) {
+  if (!ok) return `<span class="muted">Zadaj dve kladné čísla.</span>`;
+  const r = a / b, s = (1 - b / a) * 100, f = n => (Math.round(n * 10) / 10).toString().replace(".", ",");
+  return `Pomer: <b>${f(r)} : 1</b> · Úspora: <b>${f(s)} %</b>${b > a ? ` <span style="color:var(--bad)">(archív je väčší ako originál!)</span>` : ""}`;
+}
+
+/* ---------- hooks ---------- */
+let PAINTING = false;
+function paintCell(el) {
+  const [y, x] = el.dataset.px.split(",").map(Number);
+  const r = S.paint[y]; if (r[x] === S.brush) return;
+  S.paint[y] = r.slice(0, x) + S.brush + r.slice(x + 1); el.style.background = COL[S.brush];
+  document.getElementById("rlestats").innerHTML = rleStats(); save();
+}
+document.addEventListener("mousedown", e => { const c = e.target.closest && e.target.closest("[data-px]"); if (c) { PAINTING = true; paintCell(c); e.preventDefault(); } });
+document.addEventListener("mouseover", e => { if (!PAINTING) return; const c = e.target.closest && e.target.closest("[data-px]"); if (c) paintCell(c); });
+document.addEventListener("mouseup", () => { PAINTING = false; });
+function CUSTOM_CLICK(e) {
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.px) return true;
+  if (ds.brush) { S.brush = ds.brush; save(); render(false); return true; }
+  if (ds.paint) {
+    const k = ds.paint, L = Object.keys(COL);
+    if (k === "boat") S.paint = BOAT.slice();
+    if (k === "one") S.paint = Array(9).fill("M".repeat(12));
+    if (k === "stripes") S.paint = Array.from({ length: 9 }, (_, y) => (y % 2 ? "Z" : "M").repeat(12));
+    if (k === "noise") S.paint = Array.from({ length: 9 }, () => Array.from({ length: 12 }, () => L[Math.floor(Math.random() * L.length)]).join(""));
+    save(); render(false); return true;
+  }
+  if (ds.dw !== undefined) { if (S.t.dict) return true; const w = ds.dw, i = S.dict.indexOf(w); if (i >= 0) S.dict.splice(i, 1); else if (S.dict.length < 3) S.dict.push(w); save(); render(false); return true; }
+  if (ds.dictdone !== undefined) { const r = dictCalc(S.dict); S.dictSave = Math.max(0, r.save); award("dict", r.save >= 35 ? 2 : r.save >= 20 ? 1 : 0); save(); render(false); return true; }
+  if (ds.gz) { S.gzKey = ds.gz; if (ds.gz === "nahodne") { S.gzRand = randomText(bytes(GZ.text.t)); S.gzText = S.gzRand; } else S.gzText = GZ[ds.gz].t; save(); render(false); return true; }
+  return false;
+}
+function CUSTOM_INPUT(e) {
+  const t = e.target;
+  if (t.id === "q") { S.q = t.value; save(); updateJpeg(); return true; }
+  if (t.id === "gztext") { S.gzText = t.value; save(); updateGz(); return true; }
+  if (t.dataset.calc) { S.calc[t.dataset.calc] = t.value; save(); const a = parseNum(S.calc.a), b = parseNum(S.calc.b); document.getElementById("cres").innerHTML = calcText(a, b, a > 0 && b > 0); return true; }
+  return false;
+}
+function AFTER_RENDER(id) { if (id === "strata") updateJpeg(); if (id === "slovnik") updateGz(); }
+GZ.nahodne.t = "";
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.2 Postup riešenia problému, základné pojmy algoritmizácie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+:root{--bg:#ECF3F0;--acc:#0E7A5C;--accSoft:#D5EEE5;--track:#C6D8D1;--border:#D0DED8;--surface2:#F3F8F6;--ink:#0F1F1A;--muted:#4E645C}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1614;--surface:#15221E;--surface2:#1B2B26;--acc:#4CC9A0;--accSoft:#173A31;--track:#2C403A;--border:#284039;--ink:#E4F1EC;--muted:#98B3AA}}
+:root[data-theme="dark"]{--bg:#0D1614;--surface:#15221E;--surface2:#1B2B26;--acc:#4CC9A0;--accSoft:#173A31;--track:#2C403A;--border:#284039;--ink:#E4F1EC;--muted:#98B3AA}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc svg{width:54px;height:54px;display:block}
+.pc h4{margin:8px 0 4px;font-family:var(--head);font-size:17px}
+.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.code{font-family:var(--mono);font-size:15px;line-height:1.7;background:#0F1F1A;color:#DDF3EA;border-radius:12px;padding:12px 16px;overflow-x:auto;white-space:pre;margin:10px 0}
+.code .k{color:#FFB86B;font-weight:700}.code .s{color:#9BE39B}
+.code .ln{display:block;border-radius:4px;padding:0 6px;margin:0 -6px}
+.code .ln.hl{background:#1F7A5C}
+.wide-svg svg{width:100%;height:auto;display:block}
+.game{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:800px){.game{grid-template-columns:1fr}}
+.game svg{width:100%;height:auto;display:block;border-radius:14px}
+.hist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hist span{font-family:var(--mono);font-size:14px;border-radius:6px;padding:2px 8px;background:var(--surface2);border:1px solid var(--border)}
+.coinbtn{border:0;background:none;cursor:pointer;padding:0}
+.coinbtn svg{width:64px;height:64px}
+.coins{display:flex;gap:6px;flex-wrap:wrap}
+.picked{display:flex;gap:4px;flex-wrap:wrap;min-height:48px;background:var(--surface2);border:1.5px dashed var(--border);border-radius:12px;padding:6px;margin-top:8px}
+.picked button svg{width:40px;height:40px}
+.fcwrap{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:800px){.fcwrap{grid-template-columns:1fr}}
+.fc svg{width:100%;height:auto;display:block}
+.fs{cursor:pointer}.fs:hover .sh{stroke:#F2A516;stroke-width:4}
+.tray{display:grid;gap:8px}
+.card2{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;font-family:var(--mono);font-size:15px}
+.card2.sel{border-color:var(--amber);background:var(--amberSoft)}
+.console{font-family:var(--mono);font-size:14px;background:#0F1F1A;color:#9BE39B;border-radius:10px;padding:10px 14px;min-height:70px;white-space:pre-wrap;margin-top:10px}
+.vars{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.var{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:6px 14px;font-family:var(--mono);font-size:16px;min-width:80px;text-align:center}
+.var b{display:block;font-size:12px;color:var(--muted);font-family:var(--font)}
+.var.ch{border-color:var(--amber);background:var(--amberSoft)}
+.mono .chipb,.mono .slotbtn{font-family:var(--mono);white-space:pre;font-size:15px}
+.qimg{display:block;margin:8px 0;max-width:420px}
+.qimg svg{width:100%;height:auto;display:block;border-radius:10px}
+.rv g[data-rv]{cursor:pointer}
+.rv g[data-rv]:hover rect{stroke:#F2A516;stroke-width:4}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const KEY = "alg3-12-v1";
+const LESSON = "1.2 Postup riešenia problému, základné pojmy algoritmizácie";
+const BRAND = "1.2 Riešenie problému a algoritmus";
+const CLASS_DEFAULT = "3. ročník";
+const WIDE = { problem: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "problem", title: "Čo je problém", min: 10 },
+  { id: "zivot", title: "Postupy zo života", min: 5 },
+  { id: "pojmy", title: "Základné pojmy", min: 6 },
+  { id: "vlastnosti", title: "Definícia a vlastnosti", min: 10 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { problem: ["rieka"], zivot: ["bankomat", "chyba"], pojmy: ["pojmyq"], vlastnosti: ["vlq"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 3. ročník",
+  lead: "Každý deň riešiš problémy: ako sa dostať do školy, ako vybrať peniaze, ako uvariť obed. Dnes zistíš, ako takéto riešenie popísať presne, aby ho zvládol hocikto, aj počítač. 4 zastávky, body a na konci výsledok.",
+  guessQ: "Čo musíš vedieť ako prvé, keď chceš vyriešiť akýkoľvek problém?",
+  guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
+  guesses: ["Aký programovací jazyk použijem", "Kde som teraz a kam sa chcem dostať", "Koľko času mi to zaberie", "Kto to už riešil predo mnou"],
+  ok: 1, yes: "Presne! Počiatočný a cieľový stav sú základ každého problému.", no: "Dôležitejšie je najprv vedieť, kde si teraz (počiatočný stav) a kam sa chceš dostať (cieľový stav)."
+};
+function EXTRA_STATE() { return { rv: fresRv(), rvFails: 0 }; }
+function fresRv() { return { pos: { vlk: "L", koza: "L", kapusta: "L" }, boat: "L", load: null, moves: 0, fail: null, won: false }; }
+
+const PR = [["Elementárnosť", "Kroky sú jednoduché a vykonávateľ im rozumie."], ["Determinovanosť", "Po každom kroku je jasné, čo nasleduje (jednoznačnosť)."], ["Konečnosť", "Skončí po konečnom počte krokov."], ["Rezultatívnosť", "Dá výsledok, aj keby to bola správa „riešenie neexistuje“."], ["Hromadnosť", "Rieši celú skupinu úloh rovnakého typu (všeobecnosť)."], ["Efektívnosť", "Dosiahne cieľ s čo najmenším počtom krokov a zdrojov."]];
+const PRO = PR.map(p => p[0]);
+const TASKS = {
+  rieka: { id: "rieka", type: "custom", max: 2 },
+  bankomat: { id: "bankomat", type: "order", items: [
+    { id: "a", t: "💳 Vlož kartu do bankomatu" }, { id: "b", t: "🔢 Zadaj PIN" }, { id: "c", t: "💶 Vyber sumu" }, { id: "d", t: "🧾 Potvrď výber" }, { id: "e", t: "💳 Vyber kartu" }, { id: "f", t: "💵 Vyber peniaze" }
+  ]},
+  chyba: { id: "chyba", type: "mc", qs: [
+    { id: "1", q: "Postup „Ako sa dostať do školy“: <i>1. Vstaň. 2. Obleč sa. 3. Choď na zastávku. 4. Vystúp pri škole.</i> Čo chýba?", opts: ["Nastúp do autobusu", "Umy sa", "Zober si desiatu", "Pozri sa na hodinky"], a: 0, why: "Bez nastúpenia sa k vystúpeniu nedostaneš. Ostatné kroky sú užitočné, ale postup bez nich funguje." },
+    { id: "2", q: "Prečo bankomat vydá kartu skôr ako peniaze?", opts: ["Aby si kartu v bankomate nezabudol, keď už máš peniaze", "Lebo karta je ľahšia", "Aby bol výber rýchlejší", "Nie je na to dôvod, je to náhoda"], a: 0, why: "Aj poradie krokov je súčasť dobrého návrhu. Tvorcovia bankomatov mysleli na to, ako sa ľudia správajú." }
+  ]},
+  pojmyq: { id: "pojmyq", type: "mc", qs: [
+    { id: "1", q: "Recept na palacinky: čo sú v ňom <b>vstupné údaje</b>?", opts: ["Múka, mlieko, vajcia", "Hotové palacinky", "Kuchár", "Pokyn „Vymiešaj cesto“"], a: 0 },
+    { id: "2", q: "Čo je v recepte <b>výstup</b>?", opts: ["Hotové palacinky", "Múka, mlieko, vajcia", "Panvica", "Recept samotný"], a: 0 },
+    { id: "3", q: "Kto je <b>vykonávateľ</b>?", opts: ["Ten, kto podľa receptu varí", "Ten, kto recept vymyslel", "Kuchárska kniha", "Sporák"], a: 0 },
+    { id: "4", q: "Čo je <b>príkaz</b> (inštrukcia)?", opts: ["„Vymiešaj cesto.“", "Múka", "Hotová palacinka", "Kuchár"], a: 0 },
+    { id: "5", q: "Čo je <b>program</b>?", opts: ["Algoritmus zapísaný v jazyku, ktorému rozumie počítač", "Akýkoľvek postup v kuchárskej knihe", "Zoznam vstupných údajov", "Výsledok výpočtu"], a: 0 }
+  ]},
+  vlq: { id: "vlq", type: "mc", keep: true, qs: [
+    { id: "1", q: "„Opakuj: pripočítaj 1.“ Postup nemá koniec.", opts: PRO, a: 2 },
+    { id: "2", q: "„Ak je vonku zima, obleč sa teplo, alebo aj nie.“", opts: PRO, a: 1 },
+    { id: "3", q: "Robot pozná iba príkazy krok a otoč sa, ale v programe je „Uprac izbu“.", opts: PRO, a: 0 },
+    { id: "4", q: "Program na priemer funguje iba pre známky 1, 2 a 3 jedného konkrétneho žiaka.", opts: PRO, a: 4 },
+    { id: "5", q: "Hľadanie slova v slovníku tak, že čítaš všetky slová od „A“, aj keď slovo začína na „Ž“.", opts: PRO, a: 5, why: "Výsledok dostaneš, ale postup je zbytočne dlhý. Efektívnejšie je otvoriť slovník pri písmene Ž." },
+    { id: "6", q: "Postup na riešenie rovnice sa skončí, ale nevypíše nič, ani to, že riešenie neexistuje.", opts: PRO, a: 3 }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Algoritmus je:", opts: ["konečná postupnosť jednoznačných krokov, ktorá vedie k riešeniu úlohy", "ľubovoľný program v počítači", "zoznam vstupných údajov", "matematický vzorec"], a: 0 },
+    { id: "2", q: "Počiatočný stav, cieľový stav a obmedzenia opisujú:", opts: ["problém", "program", "vykonávateľa", "výstup"], a: 0 },
+    { id: "3", q: "Múka, mlieko a vajcia v recepte sú:", opts: ["vstup", "výstup", "vykonávateľ", "príkaz"], a: 0 },
+    { id: "4", q: "Determinovanosť znamená, že:", opts: ["po každom kroku je jednoznačne určené, čo sa urobí ďalej", "algoritmus sa skončí", "algoritmus rieši celú skupinu úloh", "kroky sú jednoduché"], a: 0 },
+    { id: "5", q: "Hromadnosť znamená, že algoritmus:", opts: ["rieši celú skupinu úloh rovnakého typu", "sa dá spustiť na veľa počítačoch naraz", "má veľa krokov", "pracuje s veľkým množstvom údajov"], a: 0 },
+    { id: "6", q: "Efektívnosť znamená, že algoritmus:", opts: ["dosiahne výsledok čo najmenším počtom krokov a zdrojov", "vždy dá výsledok", "je napísaný v Pythone", "sa dá ľahko prečítať"], a: 0 },
+    { id: "7", q: "Vykonávateľom algoritmu môže byť:", opts: ["človek, robot aj počítač", "iba počítač", "iba programátor", "iba robot"], a: 0 }
+  ]}
+};
+
+/* ---------- art ---------- */
+const ART = {
+  problem: `<svg viewBox="0 0 720 200" role="img" aria-label="Problém: počiatočný stav, cieľový stav a cesta medzi nimi"><rect width="720" height="200" rx="14" fill="#F3F8F6"/>
+  <g font-family="Rubik,sans-serif" text-anchor="middle">
+  <circle cx="110" cy="92" r="58" fill="#FBE3E0"/><text x="110" y="104" font-size="44">😴</text><text x="110" y="176" font-size="15" font-weight="700" fill="#0F1F1A">Počiatočný stav</text><text x="110" y="194" font-size="12.5" fill="#4E645C">ležím v posteli</text>
+  <circle cx="610" cy="92" r="58" fill="#D5EEE5"/><text x="610" y="104" font-size="44">🏫</text><text x="610" y="176" font-size="15" font-weight="700" fill="#0F1F1A">Cieľový stav</text><text x="610" y="194" font-size="12.5" fill="#4E645C">sedím v lavici</text>
+  <path d="M178 92 C 260 20, 330 160, 400 92 S 520 40, 545 92" fill="none" stroke="#0E7A5C" stroke-width="5" stroke-dasharray="3 10" stroke-linecap="round"/>
+  <text x="360" y="40" font-size="15" font-weight="700" fill="#0E7A5C">riešenie = postup krokov</text>
+  <rect x="290" y="130" width="140" height="44" rx="10" fill="#FDF1D6"/><text x="360" y="150" font-size="12.5" font-weight="700" fill="#8A5A00">obmedzenia</text><text x="360" y="166" font-size="12" fill="#8A5A00">do 7:55, bez auta</text></g></svg>`,
+  machine: `<svg viewBox="0 0 720 190" role="img" aria-label="Vstup, algoritmus, výstup"><rect width="720" height="190" rx="14" fill="#F3F8F6"/>
+  <g font-family="Rubik,sans-serif" text-anchor="middle">
+  <text x="100" y="82" font-size="40">🥚🥛</text><text x="100" y="120" font-size="15" font-weight="700" fill="#0F1F1A">VSTUP</text><text x="100" y="140" font-size="12.5" fill="#4E645C">údaje, suroviny</text>
+  <path d="M170 90 h70" stroke="#4E645C" stroke-width="5"/><path d="M232 80 l12 10 l-12 10" fill="none" stroke="#4E645C" stroke-width="5"/>
+  <rect x="260" y="30" width="200" height="120" rx="16" fill="#0E7A5C"/><text x="360" y="80" font-size="34">⚙️</text><text x="360" y="112" font-size="16" font-weight="700" fill="#fff">ALGORITMUS</text><text x="360" y="132" font-size="12.5" fill="#D5EEE5">postupnosť príkazov</text>
+  <text x="360" y="176" font-size="13" fill="#4E645C">vykonáva ho <tspan font-weight="700">vykonávateľ</tspan>: kuchár, robot, počítač</text>
+  <path d="M470 90 h70" stroke="#4E645C" stroke-width="5"/><path d="M532 80 l12 10 l-12 10" fill="none" stroke="#4E645C" stroke-width="5"/>
+  <text x="620" y="82" font-size="40">🥞</text><text x="620" y="120" font-size="15" font-weight="700" fill="#0F1F1A">VÝSTUP</text><text x="620" y="140" font-size="12.5" fill="#4E645C">výsledok</text></g></svg>`,
+  atm: `<svg viewBox="0 0 220 200" role="img" aria-label="Bankomat"><rect width="220" height="200" rx="14" fill="#F3F8F6"/><rect x="50" y="20" width="120" height="170" rx="10" fill="#4E645C"/><rect x="64" y="34" width="92" height="56" rx="4" fill="#9BE3C8"/><text x="110" y="66" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#0F1F1A">PIN: ****</text>${[0, 1, 2].map(r => [0, 1, 2].map(c => `<rect x="${72 + c * 26}" y="${100 + r * 18}" width="20" height="13" rx="2" fill="#D0DED8"/>`).join("")).join("")}<rect x="70" y="162" width="80" height="8" rx="4" fill="#0F1F1A"/><rect x="150" y="104" width="12" height="4" fill="#0F1F1A"/></svg>`
+};
+const PICO = ["🧱", "🎯", "🏁", "📦", "♾️", "⚡"];
+
+/* ---------- river ---------- */
+const RV = { vlk: "🐺", koza: "🐐", kapusta: "🥬" }, RVN = { vlk: "vlk", koza: "koza", kapusta: "kapusta" };
+function rvSVG() {
+  const r = S.rv; let s = `<svg class="rv" viewBox="0 0 720 280" role="img" aria-label="Rieka s dvoma brehmi">
+  <rect width="720" height="280" rx="14" fill="#8FD18A"/><rect x="230" y="0" width="260" height="280" fill="#5AA9E6"/>
+  ${[40, 110, 180, 240].map(y => `<path d="M245 ${y} q15 -8 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0" stroke="#fff" stroke-width="2.5" fill="none" opacity=".6"/>`).join("")}
+  <text x="115" y="26" text-anchor="middle" font-family="Rubik,sans-serif" font-weight="700" font-size="15" fill="#1B4D1A">Ľavý breh</text><text x="605" y="26" text-anchor="middle" font-family="Rubik,sans-serif" font-weight="700" font-size="15" fill="#1B4D1A">Pravý breh</text>`;
+  const bx = r.boat === "L" ? 240 : 400;
+  s += `<path d="M${bx} 150 h80 l-12 26 h-56z" fill="#8B5A2B"/><text x="${bx + 20}" y="146" font-size="34">🧑‍🌾</text>`;
+  if (r.load) s += `<g data-rv="${r.load}"><rect x="${bx + 44}" y="112" width="38" height="38" rx="8" fill="transparent" stroke="transparent"/><text x="${bx + 46}" y="144" font-size="32">${RV[r.load]}</text></g>`;
+  ["L", "R"].forEach(side => {
+    const items = Object.keys(RV).filter(k => r.pos[k] === side && r.load !== k);
+    items.forEach((k, i) => { const x = side === "L" ? 30 + i * 64 : 520 + i * 64, y = 90;
+      s += `<g data-rv="${k}" role="button" tabindex="0" aria-label="${RVN[k]}"><rect x="${x - 4}" y="${y - 4}" width="60" height="78" rx="10" fill="#fff" fill-opacity=".55" stroke="#1B4D1A" stroke-opacity=".25" stroke-width="2"/><text x="${x + 26}" y="${y + 42}" text-anchor="middle" font-size="36">${RV[k]}</text><text x="${x + 26}" y="${y + 66}" text-anchor="middle" font-family="Rubik,sans-serif" font-size="12" font-weight="600" fill="#1B4D1A">${RVN[k]}</text></g>`; });
+  });
+  return s + `</svg>`;
+}
+function rvCross() {
+  const r = S.rv; if (r.fail || r.won) return;
+  const to = r.boat === "L" ? "R" : "L"; r.boat = to; if (r.load) r.pos[r.load] = to; r.moves++;
+  const left = r.load; r.load = null;
+  const alone = Object.keys(RV).filter(k => r.pos[k] !== to);
+  if (alone.includes("vlk") && alone.includes("koza")) r.fail = "🐺 Vlk zjedol kozu! Nechal si ich spolu bez dozoru.";
+  else if (alone.includes("koza") && alone.includes("kapusta")) r.fail = "🐐 Koza zjedla kapustu! Nechal si ich spolu bez dozoru.";
+  if (r.fail) S.rvFails++;
+  if (!r.fail && Object.values(r.pos).every(p => p === "R")) { r.won = true; if (!S.t.rieka) award("rieka", S.rvFails === 0 ? 2 : 1); }
+}
+
+/* ---------- views ---------- */
+const VIEWS = {
+  problem() {
+    const r = S.rv;
+    return head() + `<h2>Čo je problém a ako ho riešime</h2>
+    ${guessBox()}
+    <p><b>Problém</b> je situácia, keď nie sme tam, kde chceme byť. Opisujú ho tri veci: <b>počiatočný stav</b> (kde som), <b>cieľový stav</b> (kam chcem) a <b>obmedzenia</b> (čo nesmiem alebo čo mám k dispozícii). <b>Riešenie</b> je postupnosť krokov, ktorá nás dovedie z počiatočného stavu do cieľového.</p>
+    <figure class="fig wide-svg">${ART.problem}</figure>
+    <h3>Úloha: prevez všetko cez rieku</h3>
+    <p>Starý hlavolam: farmár potrebuje prepraviť cez rieku <b>vlka, kozu a kapustu</b>. Do loďky sa zmestí iba on a jedna vec. Ak nechá vlka s kozou bez dozoru, vlk ju zje. Ak nechá kozu s kapustou, koza zje kapustu.</p>
+    <div class="box v"><p><b>Počiatočný stav:</b> všetko na ľavom brehu. <b>Cieľový stav:</b> všetko na pravom brehu. <b>Obmedzenia:</b> loďka uvezie jednu vec, zakázané dvojice.</p></div>
+    <div><div class="fig" style="padding:8px">${rvSVG()}</div><div class="task">
+      <div class="ins">Klikni na zviera alebo kapustu na brehu pri loďke, aby nastúpili. Ďalším kliknutím vystúpia. Farmár sa môže plaviť aj sám.</div>
+      <div class="row" style="margin-top:0"><button class="primary" data-rvgo ${r.fail || r.won ? "disabled" : ""}>⛵ Plaviť sa ${r.boat === "L" ? "doprava" : "doľava"}</button><button class="ghost" data-rvreset>↺ Odznova</button></div>
+      <p style="margin:10px 0 0">Počet plavieb: <b>${r.moves}</b>${r.load ? ` · v loďke: ${RV[r.load]}` : ""}</p>
+      ${r.fail ? `<div class="fb bad">${r.fail} Skús to odznova.</div>` : ""}
+      ${r.won ? `<div class="fb ok">🎉 Hotovo za ${r.moves} plavieb! ${r.moves === 7 ? "To je najkratšie možné riešenie." : "Dá sa to aj na 7 plavieb."}</div>` : ""}
+      ${S.t.rieka ? `<div class="checkbar"><span class="score ${S.t.rieka.score < 2 ? "part" : ""}">${S.t.rieka.score === 2 ? "Bez chyby: 2 body" : "Vyriešené po chybe: 1 bod"}</span></div>` : ""}</div></div>
+    ${r.won ? `<div class="box g"><p>Riešenie: kozu tam, vrátiť sa, vlka tam, <b>kozu späť</b>, kapustu tam, vrátiť sa, kozu tam. Kľúčový nápad bol zobrať kozu späť. Presne takéto nápady hľadáme pri tvorbe algoritmov.</p></div>` : ""}` + nextBar();
+  },
+  zivot() {
+    return head() + `<h2>Postupy z bežného života</h2>
+    <div class="two"><div><p>Veľa problémov riešime tak často, že nad postupom ani nerozmýšľame: čistenie zubov, výber peňazí, cesta do školy. Keď však postup máme niekomu <b>vysvetliť</b> alebo ho má vykonať <b>stroj</b>, musíme ho rozpísať presne, v správnom poradí a bez vynechaných krokov.</p></div>
+      <figure class="fig wide-svg" style="margin:0">${ART.atm}</figure></div>
+    <h3>Úloha 1: zoraď kroky výberu z bankomatu</h3><div class="task">${taskHTML("bankomat")}</div>
+    <h3>Úloha 2: nájdi chybu v postupe</h3><div class="task">${taskHTML("chyba")}</div>` + nextBar();
+  },
+  pojmy() {
+    return head() + `<h2>Základné pojmy algoritmizácie</h2>
+    <figure class="fig wide-svg">${ART.machine}</figure>
+    <div class="cards">
+      <div class="pc"><h4>📥 Vstup</h4><p>Údaje, ktoré algoritmus dostane na začiatku.</p></div>
+      <div class="pc"><h4>📤 Výstup</h4><p>Výsledok, ktorý algoritmus vráti.</p></div>
+      <div class="pc"><h4>🧑‍🍳 Vykonávateľ</h4><p>Ten, kto algoritmus vykonáva: človek, robot, počítač.</p></div>
+      <div class="pc"><h4>👉 Príkaz</h4><p>Jeden krok, ktorému vykonávateľ rozumie.</p></div>
+      <div class="pc"><h4>💻 Program</h4><p>Algoritmus zapísaný v programovacom jazyku.</p></div></div>
+    <div class="box"><p><b>Algoritmizácia</b> je tvorba algoritmu: problém rozložíme na kroky, ktoré vykonávateľ zvládne. Tomu sa budeme venovať na ďalšej hodine.</p></div>
+    <h3>Úloha: pojmy v recepte</h3><div class="task">${taskHTML("pojmyq")}</div>` + nextBar();
+  },
+  vlastnosti() {
+    return head() + `<h2>Definícia a vlastnosti algoritmu</h2>
+    <div class="box v"><p style="font-size:18.5px"><b>Algoritmus</b> je konečná postupnosť presných a jednoznačných krokov (príkazov), ktorá vykonávateľa dovedie od vstupných údajov k výsledku.</p></div>
+    <p>Aby postup bol algoritmom, musí mať tieto vlastnosti:</p>
+    <div class="cards">${PR.map((p, i) => `<div class="pc"><div style="font-size:34px">${PICO[i]}</div><h4>${p[0]}</h4><p>${p[1]}</p></div>`).join("")}</div>
+    <h3>Úloha: ktorá vlastnosť chýba?</h3><p>Každý postup nižšie má chybu. Urči, ktorú vlastnosť porušuje.</p>
+    <div class="task">${taskHTML("vlq")}</div>` + nextBar();
+  },
+  test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
+};
+
+function CUSTOM_CLICK(e) {
+  const g = e.target.closest && e.target.closest("[data-rv]");
+  if (g) { const r = S.rv, k = g.dataset.rv; if (r.fail || r.won) return true;
+    if (r.load === k) r.load = null; else if (r.pos[k] === r.boat) r.load = k;
+    save(); render(false); return true; }
+  const el = e.target.closest("button"); if (!el) return false;
+  if (el.dataset.rvgo !== undefined) { rvCross(); save(); render(false); return true; }
+  if (el.dataset.rvreset !== undefined) { S.rv = fresRv(); save(); render(false); return true; }
+  return false;
+}
+document.addEventListener("keydown", e => { const g = e.target.closest && e.target.closest("[data-rv]"); if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); g.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.4 Spôsoby zápisu algoritmov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+:root{--bg:#ECF3F0;--acc:#0E7A5C;--accSoft:#D5EEE5;--track:#C6D8D1;--border:#D0DED8;--surface2:#F3F8F6;--ink:#0F1F1A;--muted:#4E645C}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1614;--surface:#15221E;--surface2:#1B2B26;--acc:#4CC9A0;--accSoft:#173A31;--track:#2C403A;--border:#284039;--ink:#E4F1EC;--muted:#98B3AA}}
+:root[data-theme="dark"]{--bg:#0D1614;--surface:#15221E;--surface2:#1B2B26;--acc:#4CC9A0;--accSoft:#173A31;--track:#2C403A;--border:#284039;--ink:#E4F1EC;--muted:#98B3AA}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc svg{width:54px;height:54px;display:block}
+.pc h4{margin:8px 0 4px;font-family:var(--head);font-size:17px}
+.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.code{font-family:var(--mono);font-size:15px;line-height:1.7;background:#0F1F1A;color:#DDF3EA;border-radius:12px;padding:12px 16px;overflow-x:auto;white-space:pre;margin:10px 0}
+.code .k{color:#FFB86B;font-weight:700}.code .s{color:#9BE39B}
+.code .ln{display:block;border-radius:4px;padding:0 6px;margin:0 -6px}
+.code .ln.hl{background:#1F7A5C}
+.wide-svg svg{width:100%;height:auto;display:block}
+.game{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:800px){.game{grid-template-columns:1fr}}
+.game svg{width:100%;height:auto;display:block;border-radius:14px}
+.hist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hist span{font-family:var(--mono);font-size:14px;border-radius:6px;padding:2px 8px;background:var(--surface2);border:1px solid var(--border)}
+.coinbtn{border:0;background:none;cursor:pointer;padding:0}
+.coinbtn svg{width:64px;height:64px}
+.coins{display:flex;gap:6px;flex-wrap:wrap}
+.picked{display:flex;gap:4px;flex-wrap:wrap;min-height:48px;background:var(--surface2);border:1.5px dashed var(--border);border-radius:12px;padding:6px;margin-top:8px}
+.picked button svg{width:40px;height:40px}
+.fcwrap{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:800px){.fcwrap{grid-template-columns:1fr}}
+.fc svg{width:100%;height:auto;display:block}
+.fs{cursor:pointer}.fs:hover .sh{stroke:#F2A516;stroke-width:4}
+.tray{display:grid;gap:8px}
+.card2{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;font-family:var(--mono);font-size:15px}
+.card2.sel{border-color:var(--amber);background:var(--amberSoft)}
+.console{font-family:var(--mono);font-size:14px;background:#0F1F1A;color:#9BE39B;border-radius:10px;padding:10px 14px;min-height:70px;white-space:pre-wrap;margin-top:10px}
+.vars{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.var{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:6px 14px;font-family:var(--mono);font-size:16px;min-width:80px;text-align:center}
+.var b{display:block;font-size:12px;color:var(--muted);font-family:var(--font)}
+.var.ch{border-color:var(--amber);background:var(--amberSoft)}
+.mono .chipb,.mono .slotbtn{font-family:var(--mono);white-space:pre;font-size:15px}
+.qimg{display:block;margin:8px 0;max-width:420px}
+.qimg svg{width:100%;height:auto;display:block;border-radius:10px}
+.rv g[data-rv]{cursor:pointer}
+.rv g[data-rv]:hover rect{stroke:#F2A516;stroke-width:4}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const KEY = "alg3-14-v1";
+const LESSON = "1.4 Spôsoby zápisu algoritmov";
+const BRAND = "1.4 Spôsoby zápisu algoritmov";
+const CLASS_DEFAULT = "3. ročník";
+const WIDE = { graficke: 1, linearne: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "prehlad", title: "Prehľad zápisov", min: 7 },
+  { id: "graficke", title: "Grafický zápis", min: 12 },
+  { id: "linearne", title: "Lineárny zápis", min: 10 },
+  { id: "jazyky", title: "Programovacie jazyky", min: 7 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { prehlad: ["kat"], graficke: ["build"], linearne: ["trace", "nula"], jazyky: ["pyorder"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 3. ročník",
+  lead: "Ten istý algoritmus vieš zapísať slovami, obrázkom aj programom. Zistíš, ktorý zápis sa hodí na čo, poskladáš vývojový diagram, spustíš ho, prečítaš pseudokód krok po kroku a prepíšeš ho do Pythonu. 4 zastávky, body a na konci výsledok.",
+  guessQ: "Do ktorej skupiny patrí pseudokód?",
+  guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
+  guesses: ["Grafické zápisy", "Lineárne (textové) zápisy", "Programovacie jazyky", "Nepatrí do žiadnej skupiny"],
+  ok: 1, yes: "Presne tak! Pseudokód je text, riadok za riadkom, ako slovný zápis.", no: "Pseudokód je text písaný riadok za riadkom, preto patrí medzi lineárne zápisy. Počítač ho priamo nevykoná."
+};
+function EXTRA_STATE() { return { fc: { sel: null, slots: {} }, sim: { a: "7", b: "12", k: -1 }, tr: { n: 2026, k: 0 } }; }
+
+/* ---------- shapes ---------- */
+const FILL = { oval: "#D5EEE5", io: "#FDF1D6", proc: "#DCE8F8", dec: "#FBE3E0" }, STROKE = { oval: "#0E7A5C", io: "#C98A00", proc: "#1766C2", dec: "#C0392B" };
+function shapePath(t, cx, cy, w, h) {
+  if (t === "oval") return `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="${h / 2}"`;
+  if (t === "proc") return `<rect x="${cx - w / 2}" y="${cy - h / 2}" width="${w}" height="${h}" rx="3"`;
+  if (t === "io") { const k = 14; return `<path d="M${cx - w / 2 + k} ${cy - h / 2} H${cx + w / 2} L${cx + w / 2 - k} ${cy + h / 2} H${cx - w / 2}z"`; }
+  return `<path d="M${cx} ${cy - h / 2} L${cx + w / 2} ${cy} L${cx} ${cy + h / 2} L${cx - w / 2} ${cy}z"`;
+}
+function shape(t, cx, cy, w, h, text, o = {}) {
+  const f = o.empty ? "transparent" : FILL[t], st = o.stroke || (o.empty ? "#9BB3AA" : STROKE[t]);
+  return `${shapePath(t, cx, cy, w, h)} class="sh" fill="${f}" stroke="${st}" stroke-width="${o.sw || 2.5}" ${o.empty ? 'stroke-dasharray="6 5"' : ""}/>` + (text ? `<text x="${cx}" y="${cy + 5}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="${o.fs || 14}" font-weight="600" fill="#0F1F1A">${text}</text>` : "");
+}
+const DEFS = `<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#4E645C"/></marker></defs>`;
+const arrow = (d, lab, lx, ly) => `<path d="${d}" fill="none" stroke="#4E645C" stroke-width="2.5" marker-end="url(#ah)"/>${lab ? `<text x="${lx}" y="${ly}" font-family="Rubik,sans-serif" font-size="13" font-weight="700" fill="#4E645C">${lab}</text>` : ""}`;
+
+/* ---------- art ---------- */
+const ART = {
+  tree: `<svg viewBox="0 0 740 250" role="img" aria-label="Rozdelenie spôsobov zápisu algoritmov"><rect width="740" height="250" rx="14" fill="#F3F8F6"/>
+  <g font-family="Rubik,sans-serif" text-anchor="middle" font-weight="700">
+  <rect x="265" y="14" width="210" height="44" rx="10" fill="#0E7A5C"/><text x="370" y="42" font-size="15" fill="#fff">Zápis algoritmu</text>
+  ${[["📄 Lineárny", 125, "#1766C2", ["slovný", "pseudokód"]], ["🔷 Grafický", 370, "#C0392B", ["vývojový diagram", "štruktúrogram"]], ["💻 Programovací jazyk", 615, "#6A3FD0", ["textový (Python)", "blokový (Scratch)"]]].map(([t, x, c, ch]) => `<path d="M370 58 L${x} 98" stroke="#9BB3AA" stroke-width="3"/><rect x="${x - 100}" y="98" width="200" height="42" rx="10" fill="${c}"/><text x="${x}" y="124" font-size="14.5" fill="#fff">${t}</text>
+    ${ch.map((n, i) => `<path d="M${x} 140 L${x - 58 + i * 116} 176" stroke="#9BB3AA" stroke-width="3"/><rect x="${x - 114 + i * 116}" y="176" width="112" height="40" rx="8" fill="#fff" stroke="${c}" stroke-width="2"/><text x="${x - 58 + i * 116}" y="201" font-size="11.5" fill="#0F1F1A" font-weight="600">${n}</text>`).join("")}`).join("")}</g></svg>`,
+  flow: (() => { let s = `<svg viewBox="0 0 300 330" role="img" aria-label="Vývojový diagram">${DEFS}<rect width="300" height="330" rx="12" fill="#F3F8F6"/>`;
+    s += shape("oval", 150, 28, 130, 32, "Začiatok", { fs: 12 }) + arrow("M150 44 V66") + shape("io", 150, 86, 160, 34, "Načítaj a, b", { fs: 12 }) + arrow("M150 103 V128") + shape("dec", 150, 160, 150, 60, "a > b ?", { fs: 12 });
+    s += arrow("M75 160 H52 V226", "áno", 42, 150) + arrow("M225 160 H248 V226", "nie", 232, 150) + shape("io", 60, 246, 100, 34, "Vypíš a", { fs: 12 }) + shape("io", 240, 246, 100, 34, "Vypíš b", { fs: 12 });
+    s += arrow("M60 263 V300 H96") + arrow("M240 263 V300 H204") + shape("oval", 150, 300, 110, 30, "Koniec", { fs: 12 });
+    return s + `</svg>`; })(),
+  nsd: `<svg viewBox="0 0 300 220" role="img" aria-label="Štruktúrogram"><rect width="300" height="220" rx="12" fill="#F3F8F6"/>
+  <g font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" fill="#0F1F1A">
+  <rect x="20" y="20" width="260" height="44" fill="#DCE8F8" stroke="#1766C2" stroke-width="2"/><text x="150" y="47" text-anchor="middle">načítaj a, b</text>
+  <rect x="20" y="64" width="260" height="60" fill="#FBE3E0" stroke="#C0392B" stroke-width="2"/><path d="M20 64 L150 124 L280 64" fill="none" stroke="#C0392B" stroke-width="2"/>
+  <text x="150" y="86" text-anchor="middle">a &gt; b</text><text x="36" y="116">áno</text><text x="264" y="116" text-anchor="end">nie</text>
+  <rect x="20" y="124" width="130" height="56" fill="#FDF1D6" stroke="#C98A00" stroke-width="2"/><rect x="150" y="124" width="130" height="56" fill="#FDF1D6" stroke="#C98A00" stroke-width="2"/>
+  <text x="85" y="157" text-anchor="middle">vypíš a</text><text x="215" y="157" text-anchor="middle">vypíš b</text></g>
+  <text x="150" y="206" text-anchor="middle" font-family="Rubik,sans-serif" font-size="12" fill="#4E645C">bloky do seba zapadajú, šípky netreba</text></svg>`,
+  blocks: (() => { const b = (x, y, w, t, c) => `<path d="M${x} ${y} h14 l6 6 h14 l6 -6 h${w - 40} v30 h-${w - 40} l-6 6 h-14 l-6 -6 h-14z" fill="${c}"/><text x="${x + 12}" y="${y + 20}" font-family="Rubik,sans-serif" font-size="13" font-weight="700" fill="#fff">${t}</text>`;
+    return `<svg viewBox="0 0 300 250" role="img" aria-label="Blokový programovací jazyk"><rect width="300" height="250" rx="12" fill="#F3F8F6"/>
+    ${b(20, 20, 220, "keď klikneš na štart", "#D9A400")}${b(20, 54, 220, "načítaj a, b", "#1766C2")}
+    <rect x="20" y="88" width="24" height="140" fill="#E08A00"/><rect x="20" y="88" width="240" height="30" rx="4" fill="#E08A00"/><text x="32" y="108" font-family="Rubik,sans-serif" font-size="13" font-weight="700" fill="#fff">ak a &gt; b tak</text>
+    ${b(44, 118, 180, "vypíš a", "#6A3FD0")}<rect x="20" y="154" width="240" height="24" rx="4" fill="#E08A00"/><text x="32" y="171" font-family="Rubik,sans-serif" font-size="13" font-weight="700" fill="#fff">inak</text>${b(44, 178, 180, "vypíš b", "#6A3FD0")}<rect x="20" y="214" width="240" height="14" rx="4" fill="#E08A00"/></svg>`; })()
+};
+const QIMG = { flow: ART.flow, nsd: ART.nsd, blocks: ART.blocks };
+const OPTS6 = ["Slovný zápis", "Pseudokód", "Vývojový diagram", "Štruktúrogram", "Textový programovací jazyk", "Blokový programovací jazyk"];
+
+/* ---------- builder ---------- */
+const SLOTS = [{ id: "s1", t: "oval", x: 300, y: 40, w: 180, h: 42, ok: "zac" }, { id: "s2", t: "io", x: 300, y: 124, w: 210, h: 44, ok: "nac" }, { id: "s3", t: "dec", x: 300, y: 228, w: 250, h: 92, ok: "pod" },
+  { id: "s4", t: "io", x: 135, y: 340, w: 200, h: 44, ok: "va" }, { id: "s5", t: "io", x: 465, y: 340, w: 200, h: 44, ok: "vb" }, { id: "s6", t: "oval", x: 300, y: 440, w: 180, h: 42, ok: "kon" }];
+const CARDS = { zac: "Začiatok", nac: "Načítaj a, b", pod: "a > b ?", va: "Vypíš a", vb: "Vypíš b", kon: "Koniec", d1: "a ← a + b", d2: "Vypíš a + b" };
+function simPath() { const a = parseFloat(S.sim.a), b = parseFloat(S.sim.b); if (isNaN(a) || isNaN(b)) return []; return ["s1", "s2", "s3", a > b ? "s4" : "s5", "s6"]; }
+function fcSVG() {
+  const F = S.fc, done = S.t.build, hl = simPath()[S.sim.k];
+  let s = `<svg viewBox="0 0 600 480" role="img" aria-label="Vývojový diagram na doplnenie"><rect width="600" height="480" rx="14" fill="#F3F8F6"/>${DEFS}`;
+  s += arrow("M300 61 V100") + arrow("M300 146 V180") + arrow("M175 228 H135 V316", "áno", 138, 220) + arrow("M425 228 H465 V316", "nie", 438, 220) + arrow("M135 362 V440 H208") + arrow("M465 362 V440 H392");
+  SLOTS.forEach(sl => { const c = F.slots[sl.id], st = hl === sl.id ? "#F2A516" : done ? (c === sl.ok ? "#12805A" : "#C0392B") : null;
+    s += `<g class="fs" data-fs="${sl.id}" role="button" tabindex="0" aria-label="Políčko diagramu">${shape(sl.t, sl.x, sl.y, sl.w, sl.h, c ? CARDS[c] : (done ? "" : "?"), { empty: !c, stroke: st, sw: st ? 5 : 2.5 })}</g>`; });
+  return s + `</svg>`;
+}
+function simLog() {
+  const a = parseFloat(S.sim.a), b = parseFloat(S.sim.b), p = simPath(), o = [];
+  for (let k = 0; k <= S.sim.k && k < p.length; k++) { const id = p[k];
+    if (id === "s1") o.push("▶ začiatok"); if (id === "s2") o.push(`vstup: a = ${a}, b = ${b}`); if (id === "s3") o.push(`${a} > ${b} → ${a > b ? "áno" : "nie"}`);
+    if (id === "s4") o.push(`výstup: ${a}`); if (id === "s5") o.push(`výstup: ${b}`); if (id === "s6") o.push("■ koniec"); }
+  return o.join("\n");
+}
+
+/* ---------- trace ---------- */
+const PSEUDO = ["načítaj n", "p ← 0", "kým n > 0 opakuj", "    n ← n div 10", "    p ← p + 1", "vypíš p"];
+function traceSteps(n0) {
+  const st = []; let n = n0, p;
+  st.push({ ln: 0, v: { n }, note: `n = ${n}` }); p = 0; st.push({ ln: 1, v: { n, p }, ch: "p" });
+  for (let g = 0; g < 12; g++) { const c = n > 0; st.push({ ln: 2, v: { n, p }, note: `${n} > 0 je ${c ? "pravda → telo cyklu" : "nepravda → koniec cyklu"}` }); if (!c) break;
+    const old = n; n = Math.floor(n / 10); st.push({ ln: 3, v: { n, p }, ch: "n", note: `${old} div 10 = ${n}` }); p++; st.push({ ln: 4, v: { n, p }, ch: "p" }); }
+  st.push({ ln: 5, v: { n, p }, out: p }); return st;
+}
+function traceHTML() {
+  const T = S.tr, st = traceSteps(T.n), k = Math.min(T.k, st.length - 1), cur = st[k];
+  const kw = l => l.replace(/(načítaj|kým|opakuj|vypíš)/g, '<span class="k">$1</span>').replace(/ div /, ' <span class="k">div</span> ');
+  const code = PSEUDO.map((l, i) => `<span class="ln ${cur.ln === i ? "hl" : ""}">${kw(l)}</span>`).join("");
+  return `<div class="fcwrap"><div><div class="code">${code}</div><p class="muted" style="font-size:14.5px"><b>div</b> je celočíselné delenie: 2026 div 10 = 202 (zvyšok sa zahodí).</p></div>
+  <div><div class="row" style="margin-top:0"><b>Vstup n:</b>${[7, 305, 2026, 0].map(v => `<button class="ghost ${T.n === v ? "on" : ""}" data-trn="${v}">${v}</button>`).join("")}</div>
+    <div class="vars">${["n", "p"].map(x => `<div class="var ${cur.ch === x ? "ch" : ""}"><b>${x}</b>${cur.v[x] === undefined ? "–" : cur.v[x]}</div>`).join("")}</div>
+    <p style="min-height:46px;margin:0;font-size:15.5px">${cur.out !== undefined ? `Výstup: <b>${cur.out}</b>` : cur.note || `Riadok ${cur.ln + 1}`}</p>
+    <div class="row"><button class="ghost" data-trk="-1" ${k === 0 ? "disabled" : ""}>◀ Späť</button><button class="primary" data-trk="1" ${k >= st.length - 1 ? "disabled" : ""}>Ďalší krok ▶</button><button class="ghost" data-trk="0">↺</button></div>
+    <p class="muted" style="font-size:14px;margin-top:6px">Krok ${k + 1} z ${st.length}</p></div></div>`;
+}
+
+const TASKS = {
+  kat: { id: "kat", type: "mc", keep: true, qs: [
+    { id: "1", q: `Aký je to zápis?<div class="qimg">${QIMG.flow}</div>`, opts: OPTS6, a: 2 },
+    { id: "2", q: `Aký je to zápis?<div class="qimg">${QIMG.nsd}</div>`, opts: OPTS6, a: 3 },
+    { id: "3", q: `Aký je to zápis?<div class="code" style="font-size:14px">načítaj a, b\nak a > b tak\n    vypíš a\ninak\n    vypíš b</div>`, opts: OPTS6, a: 1 },
+    { id: "4", q: `Aký je to zápis?<div class="qimg">${QIMG.blocks}</div>`, opts: OPTS6, a: 5 },
+    { id: "5", q: `Aký je to zápis?<div class="code" style="font-size:14px">a = int(input())\nb = int(input())\nif a > b:\n    print(a)\nelse:\n    print(b)</div>`, opts: OPTS6, a: 4 }
+  ]},
+  build: { id: "build", type: "custom", max: 6 },
+  trace: { id: "trace", type: "input", qs: [
+    { id: "1", q: "Čo vypíše algoritmus pre n = 2026?", ok: v => parseNum(v) === 4, show: "4", ph: "?" },
+    { id: "2", q: "Koľkokrát sa pre n = 305 vykoná telo cyklu?", ok: v => parseNum(v) === 3, show: "3", unit: "-krát", ph: "?" },
+    { id: "3", q: "Čo algoritmus počíta? Doplň jedno slovo: počet …", ok: v => /cif|číslic|cislic/i.test(v), show: "cifier (číslic)", ph: "?" }
+  ]},
+  nula: { id: "nula", type: "mc", qs: [
+    { id: "1", q: "Pre n = 0 algoritmus vypíše 0. Je to správne?", opts: ["Nie, číslo 0 má jednu cifru, algoritmus treba opraviť", "Áno, nula nemá žiadnu cifru", "Áno, pre nulu sa cifry nepočítajú", "Nedá sa to zistiť"], a: 0, why: "To je hraničný prípad, na ktorý sa pri návrhu ľahko zabudne. Oprava: ak n = 0, vypíš 1. Preto testujeme aj takéto vstupy." }
+  ]},
+  pyorder: { id: "pyorder", type: "order", items: [
+    { id: "a", t: "n = int(input(\"Zadaj číslo: \"))" }, { id: "b", t: "p = 0" }, { id: "c", t: "while n > 0:" }, { id: "d", t: "    n = n // 10" }, { id: "e", t: "    p = p + 1" }, { id: "f", t: "print(p)" }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Pseudokód patrí medzi zápisy:", opts: ["lineárne", "grafické", "programovacie jazyky", "strojové"], a: 0 },
+    { id: "2", q: "Štruktúrogram je:", opts: ["grafický zápis z do seba vnorených obdĺžnikov", "textový zápis riadok za riadkom", "blokový programovací jazyk", "zoznam príkazov Pythonu"], a: 0 },
+    { id: "3", q: "Kosoštvorec vo vývojovom diagrame znamená:", opts: ["rozhodovanie (podmienku)", "vstup alebo výstup", "príkaz", "začiatok alebo koniec"], a: 0 },
+    { id: "4", q: "Koľko je 2026 div 10?", opts: ["202", "202,6", "6", "20260"], a: 0 },
+    { id: "5", q: "Ktorý zápis vie počítač vykonať (po preložení)?", opts: ["Program v programovacom jazyku", "Pseudokód", "Vývojový diagram", "Štruktúrogram"], a: 0 },
+    { id: "6", q: "Scratch je:", opts: ["blokový (vizuálny) programovací jazyk", "druh pseudokódu", "druh vývojového diagramu", "textový jazyk ako Python"], a: 0 },
+    { id: "7", q: "Podľa čoho Python pozná, ktoré príkazy patria do cyklu while?", opts: ["Podľa odsadenia", "Podľa zložených zátvoriek { }", "Podľa slova end", "Podľa bodkočiarky"], a: 0 }
+  ]}
+};
+
+/* ---------- views ---------- */
+const VIEWS = {
+  prehlad() {
+    return head() + `<h2>Ako sa dá algoritmus zapísať</h2>
+    ${guessBox()}
+    <p>Spôsoby zápisu delíme do troch skupín. <b>Lineárne</b> zápisy sú text písaný riadok za riadkom. <b>Grafické</b> zápisy sú obrázky zo značiek. <b>Programovacie jazyky</b> majú presné pravidlá a počítač ich vie vykonať.</p>
+    <figure class="fig wide-svg">${ART.tree}</figure>
+    <div class="cards"><div class="pc"><h4>📄 Lineárny</h4><p>Rýchlo sa píše a ľahko upravuje. Pri zložitých vetveniach je menej prehľadný.</p></div>
+      <div class="pc"><h4>🔷 Grafický</h4><p>Štruktúru vidno na prvý pohľad. Kreslenie a úpravy zaberú viac času.</p></div>
+      <div class="pc"><h4>💻 Programovací jazyk</h4><p>Počítač ho vykoná. Treba presne dodržať pravidlá (syntax).</p></div></div>
+    <h3>Úloha: spoznaj zápis</h3><p>Všetkých päť ukážok je <b>ten istý algoritmus</b>: načíta dve čísla a vypíše väčšie z nich.</p>
+    <div class="task">${taskHTML("kat")}</div>` + nextBar();
+  },
+  graficke() {
+    const F = S.fc, done = S.t.build, used = Object.values(F.slots), ready = SLOTS.every(s => F.slots[s.id]);
+    const tray = Object.keys(CARDS).filter(k => !used.includes(k)).map(k => `<button class="card2 ${F.sel === k ? "sel" : ""}" data-fcard="${k}">${CARDS[k]}</button>`).join("");
+    return head() + `<h2>Grafický zápis: vývojový diagram a štruktúrogram</h2>
+    <div class="cards">
+      <div class="pc"><svg viewBox="0 0 80 50">${shape("oval", 40, 25, 70, 28, "")}</svg><h4>Začiatok / koniec</h4><p>Ovál</p></div>
+      <div class="pc"><svg viewBox="0 0 80 50">${shape("io", 40, 25, 70, 28, "")}</svg><h4>Vstup / výstup</h4><p>Rovnobežník</p></div>
+      <div class="pc"><svg viewBox="0 0 80 50">${shape("proc", 40, 25, 70, 28, "")}</svg><h4>Príkaz</h4><p>Obdĺžnik</p></div>
+      <div class="pc"><svg viewBox="0 0 80 50">${shape("dec", 40, 25, 70, 40, "")}</svg><h4>Rozhodovanie</h4><p>Kosoštvorec, dve výstupné šípky</p></div></div>
+    <h3>Úloha: poskladaj diagram „väčšie z dvoch čísel“</h3>
+    <div class="fcwrap"><div class="fc fig" style="margin:0">${fcSVG()}</div>
+      <div class="task" style="margin:0">${done ? `<span class="score ${done.score < 6 ? "part" : ""}">Správne políčka: ${done.score} z 6</span>` : `<div class="ins">Vyber kartičku a klikni na políčko s otáznikom. Tvar políčka ti napovie. Dve kartičky sú navyše. Kliknutím na vyplnené políčko kartičku vrátiš.</div><div class="tray">${tray || '<span class="muted">Všetky potrebné kartičky sú použité.</span>'}</div>
+        <div class="checkbar"><button class="primary" data-fccheck ${ready ? "" : "disabled"}>Skontrolovať</button></div>`}
+      ${done ? `<h4 style="font-family:var(--head);margin:18px 0 6px">Spusti diagram</h4>
+        <div class="row" style="margin-top:0"><label>a = <input class="in" style="max-width:80px;font-family:var(--mono)" data-sim="a" value="${esc(S.sim.a)}"></label><label>b = <input class="in" style="max-width:80px;font-family:var(--mono)" data-sim="b" value="${esc(S.sim.b)}"></label></div>
+        <div class="row"><button class="primary" data-simk="1" ${S.sim.k >= 4 ? "disabled" : ""}>Krok ▶</button><button class="ghost" data-simk="0">↺</button></div>
+        <div class="console">${esc(simLog()) || "Stlač Krok."}</div>` : ""}</div></div>
+    ${done ? `<div class="box v"><p><b>Skús a = 5, b = 5.</b> Vypíše sa b, čo je v poriadku, lebo čísla sú rovnaké. Keby sme však chceli vypísať „čísla sú rovnaké“, potrebovali by sme ďalšie rozhodovanie.</p></div>` : ""}
+    <h3>Štruktúrogram</h3>
+    <div class="two"><figure class="fig wide-svg" style="margin:0">${ART.nsd}</figure><div><p>Štruktúrogram (Nassiho–Shneidermanov diagram) je iný grafický zápis. Namiesto šípok sa bloky skladajú <b>do seba</b>: vetvenie je trojuholník, pod ktorým sa blok rozdelí na vetvu áno a vetvu nie.</p><p>Výhoda: nedá sa v ňom „skákať“ šípkami hocikam, preto núti písať prehľadné algoritmy.</p></div></div>` + nextBar();
+  },
+  linearne() {
+    return head() + `<h2>Lineárny zápis: slovne a pseudokódom</h2>
+    <div class="two"><div class="box" style="margin:0"><p><b>Slovný zápis</b></p><ol style="margin:0;padding-left:20px"><li>Zapamätaj si číslo n.</li><li>Počítadlo cifier nastav na 0.</li><li>Kým je n väčšie ako 0, odstráň z neho poslednú cifru a počítadlo zväčši o 1.</li><li>Oznám počítadlo.</li></ol></div>
+      <div class="box v" style="margin:0"><p><b>Pseudokód</b></p><p style="margin:0">Rovnaký postup, ale stručne a s kľúčovými slovami <b>kým – opakuj</b>, <b>ak – tak – inak</b>. Odsadenie ukazuje, čo patrí do cyklu. Šípka <span style="font-family:var(--mono)">p ← 0</span> znamená „do p ulož 0“.</p></div></div>
+    <h3>Krokuj pseudokód</h3><p>Vyber vstup a klikaj na „Ďalší krok“. Sleduj premenné n a p.</p>
+    <div class="task">${traceHTML()}</div>
+    <h3>Úloha 1: čo robí algoritmus?</h3><div class="task">${taskHTML("trace")}</div>
+    <h3>Úloha 2: hraničný prípad</h3><div class="task">${taskHTML("nula")}</div>` + nextBar();
+  },
+  jazyky() {
+    return head() + `<h2>Programovacie jazyky</h2>
+    <p>Program je algoritmus zapísaný v programovacom jazyku. Počítač mu rozumie až po preložení do strojového kódu (to za nás urobí prekladač alebo interpret). Jazyky sú <b>textové</b> (Python, C++, Java) a <b>blokové</b> (Scratch), kde sa program skladá z dielikov ako puzzle.</p>
+    <div class="two"><figure class="fig wide-svg" style="margin:0">${ART.blocks}<figcaption>Blokový jazyk: syntaktickú chybu urobiť nejde</figcaption></figure>
+      <div class="fig" style="margin:0"><div class="code" style="margin:0">a = int(input())
+b = int(input())
+<span class="k">if</span> a &gt; b:
+    print(a)
+<span class="k">else</span>:
+    print(b)</div><p class="cap">Python: presné pravidlá, dvojbodky a odsadenie</p></div></div>
+    <h3>Úloha: prepíš pseudokód do Pythonu</h3>
+    <p>Algoritmus na počet cifier zo zastávky 3 prepíš do Pythonu. <span style="font-family:var(--mono)">//</span> je v Pythone celočíselné delenie (div) a <span style="font-family:var(--mono)">while</span> je cyklus „kým“. Poskladaj riadky v správnom poradí.</p>
+    <div class="task mono">${taskHTML("pyorder")}</div>
+    ${S.t.pyorder ? `<div class="box g"><p>Porovnaj: <span style="font-family:var(--mono)">kým n &gt; 0 opakuj</span> → <span style="font-family:var(--mono)">while n &gt; 0:</span>, <span style="font-family:var(--mono)">n ← n div 10</span> → <span style="font-family:var(--mono)">n = n // 10</span>. Pseudokód sa do programu prepisuje takmer riadok za riadkom.</p></div>` : ""}` + nextBar();
+  },
+  test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
+};
+
+function CUSTOM_CLICK(e) {
+  const g = e.target.closest && e.target.closest("[data-fs]");
+  if (g) { const F = S.fc, id = g.dataset.fs; if (S.t.build) return true;
+    if (F.slots[id] && !F.sel) delete F.slots[id]; else if (F.sel) { F.slots[id] = F.sel; F.sel = null; }
+    save(); render(false); return true; }
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.fcard) { S.fc.sel = S.fc.sel === ds.fcard ? null : ds.fcard; save(); render(false); return true; }
+  if (ds.fccheck !== undefined) { award("build", SLOTS.filter(s => S.fc.slots[s.id] === s.ok).length); S.sim.k = -1; save(); render(false); return true; }
+  if (ds.simk) { S.sim.k = ds.simk === "0" ? -1 : Math.min(4, S.sim.k + 1); save(); render(false); return true; }
+  if (ds.trn) { S.tr.n = +ds.trn; S.tr.k = 0; save(); render(false); return true; }
+  if (ds.trk !== undefined) { const d = +ds.trk; S.tr.k = d === 0 ? 0 : Math.max(0, S.tr.k + d); save(); render(false); return true; }
+  return false;
+}
+function CUSTOM_INPUT(e) {
+  const t = e.target;
+  if (t.dataset.sim) { S.sim[t.dataset.sim] = t.value; S.sim.k = -1; save(); const c = document.querySelector(".console"); if (c) c.textContent = "Stlač Krok."; const f = document.querySelector(".fc"); if (f) f.innerHTML = fcSVG(); return true; }
+  return false;
+}
+document.addEventListener("keydown", e => { const g = e.target.closest && e.target.closest("[data-fs]"); if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); g.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>

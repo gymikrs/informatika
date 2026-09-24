@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.3 Základná doska, vstupné a výstupné zariadenia, BIOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECEFF1;--surface:#FFFFFF;--surface2:#F4F6F7;--ink:#111A22;--muted:#56626E;
+  --acc:#0B7A75;--accSoft:#D3ECEA;--amber:#F5A524;--amberSoft:#FDF0D5;--track:#C8D0D6;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D5DBE0;
+  --head:"Sora","Segoe UI",system-ui,sans-serif;--font:"IBM Plex Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1418;--surface:#162027;--surface2:#1C2830;--ink:#E6EDF2;--muted:#98A6B2;--acc:#3BC0B8;--accSoft:#173A38;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#2F3D47;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#2A3740}}
+:root[data-theme="dark"]{--bg:#0E1418;--surface:#162027;--surface2:#1C2830;--ink:#E6EDF2;--muted:#98A6B2;--acc:#3BC0B8;--accSoft:#173A38;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#2F3D47;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#2A3740}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .chip{width:16px;height:16px;border-radius:3px;background:var(--acc);box-shadow:inset 0 0 0 3px var(--surface),0 0 0 2px var(--acc)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:4px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:30px;height:30px;margin:0 auto;border-radius:6px;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:880px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1040px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:20px;margin:34px 0 6px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:18.5px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0}
+.box.teal{border-color:var(--acc);background:var(--accSoft)}
+.box p:last-child{margin-bottom:0}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:34px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+input[type=text]{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.muted{color:var(--muted)}
+/* chips / sort / order / mc */
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:8px;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 26px;height:26px;border-radius:7px;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.guesses{display:grid;gap:8px;max-width:560px}
+/* board */
+.lab{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.lab{grid-template-columns:1fr}}
+.boardwrap{background:#0B1512;border-radius:16px;padding:10px;box-shadow:0 10px 30px -12px rgba(0,0,0,.45)}
+svg.board,svg.ports{display:block;width:100%;height:auto}
+.zone{cursor:pointer}
+.zone .hit{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.zone:hover .hit,.zone:focus .hit{stroke:#F5B83D;fill:rgba(245,184,61,.16)}
+.zone:focus{outline:none}
+.zone.on .hit{stroke:#F5B83D;fill:rgba(245,184,61,.28);stroke-width:4}
+.zone.seen .hit{stroke:rgba(120,230,190,.55);stroke-dasharray:5 4}
+.zone.ok .hit{stroke:#3CCB8E;fill:rgba(60,203,142,.3);stroke-width:4}
+.zone.bad .hit{stroke:#FF6B5B;fill:rgba(255,107,91,.28);stroke-width:4}
+.silk{font-family:var(--mono);font-size:11px;fill:#D6ECE4;font-weight:600;pointer-events:none;letter-spacing:.04em}
+.nolab .silk{display:none}
+.ov{pointer-events:none}
+.side{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:sticky;top:150px}
+.side h4{font-family:var(--head);margin:0 0 6px;font-size:19px}
+.side .tag{display:inline-block;font-size:12.5px;font-weight:600;color:var(--acc);background:var(--accSoft);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+.meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin:6px 0 4px}
+.meter i{display:block;height:100%;background:var(--acc)}
+.prompt{font-size:18px;font-weight:600;margin:4px 0 10px}
+.tray{display:grid;gap:8px}
+.part{display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer}
+.part .i{font-size:22px}
+.part.sel{border-color:var(--amber);background:var(--amberSoft)}
+.part.done{border-color:var(--ok);background:var(--okSoft);cursor:default}
+.part.done .st{margin-left:auto;color:var(--ok);font-weight:700}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}
+.portwrap{background:#2B3036;border-radius:14px;padding:10px}
+/* UEFI */
+.uefi{font-family:var(--mono);font-size:14.5px;background:#1B3A8C;color:#E8EEFF;border-radius:12px;overflow:hidden;border:3px solid #0B1D4E;box-shadow:0 10px 30px -12px rgba(0,0,0,.5)}
+.uhead{background:#0B1D4E;padding:8px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.utabs{display:flex;background:#12296A;overflow-x:auto}
+.utab{background:none;border:0;color:#AFC3FF;padding:8px 16px;cursor:pointer;font-family:var(--mono);font-weight:600;white-space:nowrap}
+.utab.cur{background:#C9D0DC;color:#0B1D4E}
+.ubody{display:grid;grid-template-columns:1.6fr 1fr;min-height:300px}
+@media (max-width:640px){.ubody{grid-template-columns:1fr}}
+.ulist{background:#C9D0DC;color:#0B1D4E;padding:10px 6px}
+.uhelp{background:#1B3A8C;color:#E8EEFF;padding:12px 14px;border-left:2px solid #0B1D4E;font-family:var(--font);font-size:14.5px}
+.uhelp b{font-family:var(--mono)}
+.urow{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;padding:5px 8px;font-family:var(--mono);font-size:14px;color:inherit;border-radius:4px}
+button.urow{cursor:pointer}
+button.urow:hover,button.urow.sel{background:#0B1D4E;color:#FFF}
+.urow .v{color:#0B3FB0;font-weight:600;white-space:nowrap}
+button.urow:hover .v,button.urow.sel .v{color:#FFE27A}
+.ugrp{padding:8px 8px 2px;font-weight:700;color:#12296A;text-transform:uppercase;font-size:12.5px;letter-spacing:.06em}
+.uboot{display:flex;align-items:center;gap:6px;padding:3px 8px}
+.uboot span{flex:1}
+.uarrow{background:#0B1D4E;color:#fff;border:0;border-radius:4px;width:28px;height:26px;cursor:pointer;font-size:12px}
+.uarrow:disabled{opacity:.3;cursor:not-allowed}
+.ufoot{background:#0B1D4E;padding:6px 14px;font-size:12.5px;color:#AFC3FF}
+.uover{background:#000;color:#9CFFB1;padding:40px 20px;font-family:var(--mono);min-height:300px}
+.goals{list-style:none;padding:0;margin:12px 0 0}
+.goals li{padding:3px 0}
+/* result */
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+td:last-child,th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const KEY = "zakladna-doska-v1";
+const LESSON = "1.3 Základná doska, vstupné a výstupné zariadenia, BIOS";
+
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "doska", title: "Základná doska", min: 7 },
+  { id: "montaz", title: "Montáž", min: 6 },
+  { id: "io", title: "Vstup a výstup", min: 6 },
+  { id: "porty", title: "Porty", min: 6 },
+  { id: "bios", title: "BIOS a UEFI", min: 9 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { start: [], doska: ["find"], montaz: ["build"], io: ["iosort"], porty: ["ports"], bios: ["boot", "uefi", "biosq"], test: ["test"], vysledok: [] };
+
+const GUESSES = ["Spustí sa operačný systém Windows", "Spustí sa firmvér BIOS/UEFI a otestuje hardvér", "Procesor si načíta programy z disku do RAM", "Spustí sa antivírus a skontroluje disk"];
+const GUESS_OK = 1;
+
+/* ---------- Components of the motherboard ---------- */
+const Z = {
+  io:        { n: "Zadný panel (I/O)", t: "Porty vyvedené na zadnú stranu skrinky: USB, sieť RJ-45, zvuk a video výstupy. Sem zapájaš periférie." },
+  cpu8:      { n: "Napájanie procesora (EPS 8-pin)", t: "Samostatný konektor zo zdroja, ktorý napája procesor. Bez neho počítač nenaštartuje, aj keď je zapojené hlavné napájanie." },
+  vrm:       { n: "Napájacia kaskáda (VRM)", t: "Premieňa 12 V zo zdroja na nízke napätie okolo 1 V, ktoré potrebuje procesor. Hliníkové chladiče ju chránia pred prehriatím." },
+  cpu:       { n: "Pätica procesora (socket)", t: "Sem sa vkladá procesor. Pätica musí pasovať k procesoru, napríklad Intel LGA 1700 alebo AMD AM5. Na procesor potom príde chladič." },
+  ram:       { n: "Sloty pre RAM (DIMM)", t: "Do týchto slotov sa zasúvajú moduly operačnej pamäte. Dva moduly sa dávajú do slotov podľa návodu, aby pracovali v dvojkanálovom režime." },
+  atx24:     { n: "Hlavné napájanie (ATX 24-pin)", t: "Najväčší konektor zo zdroja. Napája celú základnú dosku a všetko, čo je na nej." },
+  pcie16:    { n: "Slot PCIe x16", t: "Najdlhší a najrýchlejší rozširujúci slot. Používa sa hlavne pre grafickú kartu." },
+  m2:        { n: "Slot M.2", t: "Sem sa priskrutkuje rýchly SSD disk NVMe. Leží naplocho na doske a nepotrebuje žiadne káble." },
+  pcie1:     { n: "Slot PCIe x1", t: "Krátky slot pre menšie rozširujúce karty, napríklad sieťovú, Wi-Fi alebo zvukovú kartu." },
+  chipset:   { n: "Čipová sada (chipset)", t: "Riadi komunikáciu medzi procesorom a ďalšími časťami: USB, SATA a ďalšími slotmi. Čip je schovaný pod chladičom." },
+  sata:      { n: "Porty SATA", t: "Na pripojenie klasických pevných diskov HDD, 2,5\" SSD diskov alebo optických mechaník dátovým káblom." },
+  battery:   { n: "Batéria CMOS", t: "Gombíková batéria CR2032. Keď je počítač odpojený, udržiava v chode hodiny a pamäť s nastaveniami BIOS/UEFI." },
+  bios:      { n: "Čip BIOS/UEFI", t: "Flash pamäť s firmvérom. Ten sa spustí ako prvý po zapnutí, otestuje hardvér a odovzdá riadenie operačnému systému." },
+  frontpanel:{ n: "Konektory predného panela", t: "Sem sa zapájajú tenké káble od tlačidla napájania, tlačidla reset a kontroliek na prednej strane skrinky." },
+  audio:     { n: "Zvukový čip (kodek)", t: "Spracúva zvuk: výstup do slúchadiel a reproduktorov a vstup z mikrofónu." }
+};
+const ZONE_IDS = Object.keys(Z);
+const FIND = [
+  { z: "bios", q: "Kde je čip s firmvérom BIOS/UEFI?" },
+  { z: "battery", q: "Nájdi batériu, ktorá uchováva čas a nastavenia." },
+  { z: "chipset", q: "Kde je čipová sada (chipset)?" },
+  { z: "cpu8", q: "Nájdi konektor napájania procesora." },
+  { z: "frontpanel", q: "Kam sa zapája tlačidlo napájania zo skrinky?" },
+  { z: "audio", q: "Kde je zvukový čip?" }
+];
+const PARTS = [
+  { id: "cpu", n: "Procesor", i: "🔳", z: "cpu", h: "Procesor patrí do pätice uprostred, obklopenej chladičmi napájania." },
+  { id: "ram", n: "Modul RAM", i: "🟩", z: "ram", h: "RAM sa zasúva do dlhých úzkych slotov vedľa pätice procesora." },
+  { id: "gpu", n: "Grafická karta", i: "🎮", z: "pcie16", h: "Grafická karta potrebuje najdlhší slot, PCIe x16." },
+  { id: "nvme", n: "SSD disk NVMe", i: "💾", z: "m2", h: "NVMe disk je malá doštička, ktorá leží naplocho v slote M.2." },
+  { id: "atx", n: "Kábel ATX 24-pin", i: "🔌", z: "atx24", h: "Najširší kábel zo zdroja ide do 24-pinového konektora na pravom okraji dosky." },
+  { id: "satac", n: "Dátový kábel SATA", i: "🔗", z: "sata", h: "SATA kábel sa zapája do malých portov v tvare L pri okraji dosky." }
+];
+const PORTS = {
+  usba: "USB-A", usbc: "USB-C", hdmi: "HDMI", dp: "DisplayPort", rj45: "RJ-45 (sieť LAN)",
+  linein: "Linkový vstup (modrý)", lineout: "Výstup na reproduktory (zelený)", mic: "Vstup pre mikrofón (ružový)"
+};
+const DEVICES = [
+  { id: "mon", n: "Monitor s HDMI káblom", i: "🖥️", z: "hdmi" },
+  { id: "lan", n: "Sieťový kábel z routra", i: "🌐", z: "rj45" },
+  { id: "mouse", n: "Myš s káblom USB-A", i: "🖱️", z: "usba" },
+  { id: "spk", n: "Reproduktory", i: "🔊", z: "lineout" },
+  { id: "mic", n: "Mikrofón", i: "🎤", z: "mic" },
+  { id: "phone", n: "Mobil s káblom USB-C", i: "📱", z: "usbc" }
+];
+
+const TASKS = {
+  find: { id: "find", type: "custom", max: FIND.length },
+  build: { id: "build", type: "custom", max: PARTS.length },
+  iosort: { id: "iosort", type: "sort",
+    buckets: [
+      { id: "in", label: "⬅️ Vstupné", sub: "posielajú údaje do počítača" },
+      { id: "out", label: "➡️ Výstupné", sub: "prijímajú údaje z počítača" },
+      { id: "io", label: "↔️ Vstupno-výstupné", sub: "robia oboje" }
+    ],
+    items: [
+      { id: "1", t: "Klávesnica", b: "in" }, { id: "2", t: "Myš", b: "in" }, { id: "3", t: "Mikrofón", b: "in" }, { id: "4", t: "Skener", b: "in" }, { id: "5", t: "Webkamera", b: "in" },
+      { id: "6", t: "Monitor", b: "out" }, { id: "7", t: "Tlačiareň", b: "out" }, { id: "8", t: "Reproduktory", b: "out" }, { id: "9", t: "Projektor", b: "out" },
+      { id: "10", t: "Dotykový displej", b: "io" }, { id: "11", t: "Headset s mikrofónom", b: "io" }, { id: "12", t: "USB flash disk", b: "io" }
+    ],
+    after: "Smer sa posudzuje z pohľadu počítača. Dotykový displej obraz zobrazuje (výstup) a zároveň sníma dotyky (vstup). Na flash disk počítač zapisuje aj z neho číta."
+  },
+  ports: { id: "ports", type: "custom", max: DEVICES.length },
+  boot: { id: "boot", type: "order", items: [
+    { id: "a", t: "Stlačíš tlačidlo napájania a zdroj dodá napätie" },
+    { id: "b", t: "Spustí sa firmvér BIOS/UEFI z čipu na doske" },
+    { id: "c", t: "POST: test procesora, pamäte a ďalšieho hardvéru" },
+    { id: "d", t: "Firmvér prechádza zariadenia podľa poradia zavádzania (boot order)" },
+    { id: "e", t: "Nájde zavádzač (boot loader) na disku" },
+    { id: "f", t: "Zavádzač načíta operačný systém" }
+  ]},
+  uefi: { id: "uefi", type: "custom", max: 3 },
+  biosq: { id: "biosq", type: "mc", qs: [
+    { id: "1", q: "Koľko operačnej pamäte má počítač v simulátore? Zisti to na karte Main.", opts: ["16 GB", "16 MB", "32 GB", "8 GB"], a: 0, why: "Na karte Main je Total Memory 16384 MB, čo je 16 GB (16 × 1024 MB)." },
+    { id: "2", q: "Počítač po každom zapnutí ukazuje dátum 1. 1. 2020 a nastavenia UEFI sa strácajú. Čo je najpravdepodobnejšia príčina?", opts: ["Vybitá batéria CMOS na základnej doske", "Pokazený pevný disk", "Vírus v operačnom systéme", "Slabý napájací zdroj"], a: 0, why: "Keď je počítač odpojený, hodiny a nastavenia drží iba gombíková batéria CR2032." },
+    { id: "3", q: "Kde je uložený firmvér BIOS/UEFI?", opts: ["Vo flash pamäti (čipe) na základnej doske", "Na disku C: spolu so systémom Windows", "V operačnej pamäti RAM", "Na grafickej karte"], a: 0, why: "Preto sa firmvér spustí aj vtedy, keď v počítači nie je žiadny disk." },
+    { id: "4", q: "Čím sa moderné UEFI líši od starého BIOS-u?", opts: ["Má grafické rozhranie, ovláda sa aj myšou, podporuje veľké disky GPT a Secure Boot", "Inštaluje sa spolu s Windows ako bežný program", "Funguje iba v notebookoch, nie v stolných počítačoch", "Nahrádza operačný systém, takže Windows netreba"], a: 0, why: "UEFI je nástupca BIOS-u. Stále je to firmvér na doske, ale s modernými funkciami." }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Ktorá časť počítača prepája všetky komponenty a umožňuje im komunikovať?", opts: ["Základná doska", "Procesor", "Operačná pamäť", "Napájací zdroj"], a: 0 },
+    { id: "2", q: "Grafickú kartu zapojíš do slotu:", opts: ["PCIe x16", "PCIe x1", "M.2", "DIMM"], a: 0 },
+    { id: "3", q: "Do slotov DIMM sa vkladá:", opts: ["operačná pamäť RAM", "SSD disk NVMe", "grafická karta", "procesor"], a: 0 },
+    { id: "4", q: "Ktoré zariadenie je vstupno-výstupné?", opts: ["Dotykový displej", "Projektor", "Skener", "Webkamera"], a: 0 },
+    { id: "5", q: "Na pripojenie počítača do káblovej siete slúži port:", opts: ["RJ-45", "HDMI", "DisplayPort", "USB-C"], a: 0 },
+    { id: "6", q: "Čo robí POST po zapnutí počítača?", opts: ["Otestuje základný hardvér", "Načíta operačný systém", "Aktualizuje ovládače", "Zálohuje disk"], a: 0, why: "POST = Power-On Self-Test, test pri zapnutí. Systém sa načíta až potom." },
+    { id: "7", q: "Chceš inštalovať Windows z USB kľúča, ale počítač stále štartuje zo starého disku. Čo zmeníš v UEFI?", opts: ["Poradie zavádzania (Boot order)", "Virtualizáciu procesora", "Systémový dátum a čas", "Otáčky ventilátora"], a: 0 },
+    { id: "8", q: "Ktorý konektor zo zdroja napája priamo procesor?", opts: ["8-pinový EPS pri pätici procesora", "24-pinový ATX na okraji dosky", "Napájací konektor SATA", "6-pinový PCIe"], a: 0 }
+  ]}
+};
+function maxOf(T) { return T.type === "mc" ? T.qs.length : T.type === "custom" ? T.max : T.items.length; }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+
+function fresh() { return { v: 1, name: "", cls: "II.", guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {},
+  exp: null, seen: [], find: { i: 0, res: [], last: null }, build: { sel: null, placed: {}, first: {}, last: null },
+  ports: { sel: null, placed: {}, first: {}, last: null }, uefi: null }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return o; } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+
+/* ---------- Header ---------- */
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="chip" aria-hidden="true"></span>1.3 Základná doska a BIOS</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+
+/* ---------- Generic tasks ---------- */
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button>${ready ? "" : `<span class="hint">${hint}</span>`}</div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box teal"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kroky.");
+}
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : orderHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  S.t[id] = { score: s, max: maxOf(T) };
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+
+/* ---------- Motherboard SVG ---------- */
+function zoneState(ctx, id) {
+  if (ctx === "explore") return (S.exp === id ? "on " : "") + (S.seen.includes(id) ? "seen" : "");
+  if (ctx === "find") { const L = S.find.last; if (!L) return ""; if (id === L.correct) return "ok"; if (id === L.clicked && !L.ok) return "bad"; return ""; }
+  if (ctx === "build") { const L = S.build.last; if (L && L.z === id) return L.ok ? "ok" : "bad"; return ""; }
+  return "";
+}
+function boardSVG(ctx) {
+  const zn = (id, hit, inner) => `<g class="zone ${zoneState(ctx, id)}" data-zone="${id}" data-ctx="${ctx}" tabindex="0" role="button" aria-label="${ctx === "explore" ? Z[id].n : "Časť dosky"}">${inner}${hit.map(r => `<rect class="hit" x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="6"/>`).join("")}</g>`;
+  const pins = (x, y, cols, rows, s, g) => { let o = ""; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) o += `<rect x="${x + c * g}" y="${y + r * g}" width="${s}" height="${s}" fill="#3A3F46"/>`; return o; };
+  const caps = (pts) => pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5.5" fill="#6B5B2E"/><circle cx="${x}" cy="${y}" r="3.2" fill="#C9A646"/>`).join("");
+  const P = S.build.placed;
+  let s = `<svg viewBox="0 0 600 480" class="board ${ctx === "explore" ? "" : "nolab"}" role="group" aria-label="Základná doska">
+  <defs>
+    <pattern id="pins" width="5" height="5" patternUnits="userSpaceOnUse"><rect width="5" height="5" fill="#2B2D30"/><circle cx="2.5" cy="2.5" r="1" fill="#C9A646"/></pattern>
+    <pattern id="fins" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#48515C"/><rect width="3" height="7" fill="#6D7884"/></pattern>
+    <pattern id="finsH" width="7" height="7" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#48515C"/><rect width="7" height="3" fill="#6D7884"/></pattern>
+  </defs>
+  <rect x="6" y="6" width="588" height="468" rx="12" fill="#163A31"/>
+  <g stroke="#1F4A3F" stroke-width="2" fill="none">
+    <path d="M140 250 H360 V330"/><path d="M200 210 V300"/><path d="M360 120 H372"/><path d="M450 170 H548"/><path d="M500 360 H548"/>
+    <path d="M110 250 V380"/><path d="M240 360 V398"/><path d="M340 230 L396 290"/><path d="M430 300 V320"/><path d="M60 170 H140"/>
+    <path d="M300 400 H390 V430"/><path d="M160 440 H290"/>
+  </g>
+  <g fill="#0E211C"><circle cx="24" cy="456" r="7"/><circle cx="576" cy="24" r="7"/><circle cx="576" cy="456" r="7"/><circle cx="352" cy="240" r="7"/></g>
+  <g fill="#B9A46A"><circle cx="24" cy="456" r="4"/><circle cx="576" cy="24" r="4"/><circle cx="576" cy="456" r="4"/><circle cx="352" cy="240" r="4"/></g>
+  ${caps([[200, 222], [214, 222], [228, 222], [340, 214], [340, 200]])}
+  <rect x="470" y="440" width="22" height="16" fill="#26292D"/><rect x="220" y="370" width="20" height="16" fill="#26292D"/>`;
+
+  s += zn("io", [[16, 16, 118, 132]], `<rect x="20" y="20" width="110" height="124" rx="5" fill="#2A2F36"/><rect x="28" y="30" width="30" height="36" fill="#555D67"/><rect x="28" y="74" width="30" height="30" fill="#555D67"/><rect x="66" y="30" width="54" height="22" fill="#3E4650"/><rect x="66" y="60" width="54" height="44" fill="#3E4650"/><rect x="28" y="112" width="92" height="22" fill="#555D67"/><text class="silk" x="75" y="158" text-anchor="middle">I/O</text>`);
+  s += zn("cpu8", [[146, 12, 62, 34]], `<rect x="150" y="16" width="54" height="26" rx="2" fill="#0E0F11"/>${pins(154, 20, 4, 2, 8, 12)}<text class="silk" x="210" y="34">CPU_PWR</text>`);
+  s += zn("vrm", [[146, 52, 48, 162], [208, 48, 128, 18]], `<rect x="150" y="56" width="40" height="154" rx="4" fill="url(#fins)"/><rect x="212" y="50" width="120" height="14" rx="3" fill="url(#finsH)"/><text class="silk" x="170" y="228" text-anchor="middle">VRM</text>`);
+  s += zn("cpu", [[206, 72, 132, 132]], `<rect x="210" y="76" width="124" height="124" rx="5" fill="#BFC4CB"/><rect x="220" y="86" width="104" height="104" fill="url(#pins)"/><rect x="210" y="76" width="16" height="16" fill="#8E949C"/><text class="silk" x="272" y="216" text-anchor="middle">CPU</text>`);
+  s += zn("ram", [[364, 26, 80, 270]], [0, 1, 2, 3].map(i => `<rect x="${372 + i * 18}" y="36" width="10" height="252" rx="2" fill="${i % 2 ? "#0F1012" : "#2D3036"}"/><rect x="${370 + i * 18}" y="30" width="14" height="8" fill="#6B7280"/><rect x="${370 + i * 18}" y="286" width="14" height="8" fill="#6B7280"/>`).join("") + `<text class="silk" x="404" y="20" text-anchor="middle">DIMM</text>`);
+  s += zn("atx24", [[540, 96, 44, 146]], `<rect x="546" y="102" width="30" height="134" rx="2" fill="#0E0F11"/>${pins(550, 106, 2, 12, 8, 11)}<text class="silk" x="540" y="94" text-anchor="middle">ATX_24</text>`);
+  s += zn("pcie16", [[34, 292, 346, 30]], `<rect x="40" y="300" width="320" height="14" rx="2" fill="#0F1012"/><rect x="44" y="305" width="312" height="4" fill="#26292D"/><rect x="358" y="296" width="16" height="22" rx="2" fill="#6B7280"/><text class="silk" x="44" y="292">PCIE_X16</text>`);
+  s += zn("m2", [[54, 330, 268, 30]], `<rect x="60" y="338" width="16" height="14" fill="#0F1012"/><rect x="76" y="341" width="226" height="8" fill="#20382F" stroke="#2C5244"/><circle cx="310" cy="345" r="6" fill="#C8CDD3"/><circle cx="310" cy="345" r="2" fill="#6B7280"/><text class="silk" x="130" y="372">M.2</text>`);
+  s += zn("pcie1", [[34, 380, 118, 26]], `<rect x="40" y="386" width="104" height="13" rx="2" fill="#0F1012"/><text class="silk" x="40" y="380">PCIE_X1</text>`);
+  s += zn("chipset", [[394, 318, 112, 96]], `<rect x="400" y="324" width="100" height="84" rx="8" fill="url(#fins)"/><rect x="430" y="350" width="40" height="32" rx="4" fill="#2A2F36"/><text class="silk" x="450" y="371" text-anchor="middle" style="font-size:10px">PCH</text>`);
+  s += zn("sata", [[540, 282, 44, 110]], [0, 1, 2, 3].map(i => `<rect x="546" y="${288 + i * 25}" width="32" height="19" rx="2" fill="#1C1E21"/><path d="M552 ${293 + i * 25} h18 v6 h-10 v4 h-8z" fill="#3A3F46"/>`).join("") + `<text class="silk" x="560" y="404" text-anchor="middle">SATA</text>`);
+  s += zn("battery", [[222, 396, 58, 58]], `<circle cx="251" cy="425" r="24" fill="#8A9099"/><circle cx="251" cy="425" r="21" fill="#D3D7DC"/><circle cx="251" cy="425" r="14" fill="none" stroke="#AEB4BB"/><text x="251" y="429" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" fill="#5A616A" pointer-events="none">CR2032</text><text class="silk" x="251" y="466" text-anchor="middle">BAT</text>`);
+  s += zn("bios", [[294, 400, 50, 50]], `<g stroke="#BFC4CB" stroke-width="2">${[0, 1, 2, 3].map(i => `<line x1="${301 + i * 7}" y1="410" x2="${301 + i * 7}" y2="404"/><line x1="${301 + i * 7}" y1="438" x2="${301 + i * 7}" y2="444"/>`).join("")}</g><rect x="298" y="410" width="30" height="28" rx="2" fill="#141518"/><circle cx="303" cy="415" r="2" fill="#555"/><text class="silk" x="313" y="462" text-anchor="middle">BIOS</text>`);
+  s += zn("frontpanel", [[412, 430, 126, 34]], `<rect x="420" y="438" width="110" height="18" rx="2" fill="#0E0F11"/>${pins(424, 441, 10, 2, 5, 10.6)}<text class="silk" x="475" y="428" text-anchor="middle">F_PANEL</text>`);
+  s += zn("audio", [[30, 412, 104, 56]], `<rect x="40" y="420" width="46" height="40" rx="3" fill="#141518"/><text x="63" y="444" text-anchor="middle" font-size="8" fill="#6B7280" font-family="IBM Plex Mono,monospace" pointer-events="none">ALC</text>${caps([[102, 428], [118, 428], [102, 448], [118, 448]])}<text class="silk" x="44" y="412">AUDIO</text>`);
+
+  if (ctx === "build") {
+    let ov = "";
+    if (P.cpu) ov += `<rect x="224" y="90" width="96" height="96" rx="7" fill="#D9DCE0" stroke="#9AA1A9" stroke-width="2"/><text x="272" y="136" text-anchor="middle" font-family="Sora,sans-serif" font-weight="700" font-size="15" fill="#39414A">CPU</text><text x="272" y="154" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#5A616A">6 CORE</text>`;
+    if (P.ram) ov += [1, 3].map(i => `<rect x="${371 + i * 18}" y="40" width="12" height="244" rx="2" fill="#2E7D4F" stroke="#1D5234"/>${[0, 1, 2, 3, 4, 5, 6].map(k => `<rect x="${373 + i * 18}" y="${52 + k * 32}" width="8" height="20" fill="#16181B"/>`).join("")}`).join("");
+    if (P.gpu) ov += `<rect x="28" y="284" width="356" height="44" rx="8" fill="#22262C" stroke="#4B535D" stroke-width="2"/><circle cx="130" cy="306" r="17" fill="#15181C" stroke="#4B535D"/><circle cx="250" cy="306" r="17" fill="#15181C" stroke="#4B535D"/><path d="M130 292 v28 M116 306 h28 M250 292 v28 M236 306 h28" stroke="#4B535D"/><text x="340" y="311" text-anchor="middle" font-family="Sora,sans-serif" font-weight="700" font-size="13" fill="#9AA1A9">GPU</text>`;
+    if (P.nvme) ov += `<rect x="76" y="338" width="232" height="14" rx="2" fill="#23508F"/><rect x="100" y="340" width="36" height="10" fill="#101216"/><rect x="150" y="340" width="36" height="10" fill="#101216"/><rect x="200" y="340" width="26" height="10" fill="#101216"/>`;
+    if (P.atx) ov += `<rect x="544" y="100" width="34" height="138" rx="3" fill="#15161A" stroke="#F5B83D" stroke-width="1.5"/>${[0, 1, 2, 3, 4, 5].map(k => `<line x1="578" y1="${112 + k * 22}" x2="596" y2="${112 + k * 22}" stroke="${["#E5C33B", "#1B1B1B", "#C0392B", "#E5C33B", "#1B1B1B", "#E67E22"][k]}" stroke-width="5"/>`).join("")}`;
+    if (P.satac) ov += `<rect x="548" y="289" width="26" height="17" rx="2" fill="#C0392B"/><path d="M574 297 H598" stroke="#C0392B" stroke-width="7"/>`;
+    s += `<g class="ov">${ov}</g>`;
+  }
+  return s + `</svg>`;
+}
+
+/* ---------- Ports SVG ---------- */
+function portsSVG() {
+  const P = S.ports, done = !!S.t.ports;
+  const st = id => { const L = P.last; return L && L.z === id ? (L.ok ? "ok" : "bad") : ""; };
+  const zn = (id, hit, inner) => `<g class="zone ${st(id)}" data-zone="${id}" data-ctx="ports" tabindex="0" role="button" aria-label="Port">${inner}<rect class="hit" x="${hit[0]}" y="${hit[1]}" width="${hit[2]}" height="${hit[3]}" rx="6"/></g>`;
+  const usb = (x, y) => `<rect x="${x}" y="${y}" width="38" height="16" rx="2" fill="#15171A"/><rect x="${x + 4}" y="${y + 4}" width="30" height="5" fill="#2F6FEB"/>`;
+  const jack = (cx, col) => `<circle cx="${cx}" cy="72" r="15" fill="${col}"/><circle cx="${cx}" cy="72" r="6.5" fill="#101114"/>`;
+  const lab = (x, t) => done ? `<text x="${x}" y="132" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="11" font-weight="600" fill="#E6EDF2">${t}</text>` : "";
+  return `<svg viewBox="0 0 560 144" class="ports" role="group" aria-label="Zadný panel základnej dosky">
+  <rect x="4" y="8" width="552" height="108" rx="8" fill="#B7BDC4"/><rect x="4" y="8" width="552" height="108" rx="8" fill="none" stroke="#8C939B" stroke-width="2"/>
+  ${zn("usba", [22, 24, 104, 80], usb(28, 32) + usb(28, 76) + usb(80, 32) + usb(80, 76))}
+  ${zn("usbc", [138, 52, 46, 36], `<rect x="146" y="64" width="30" height="12" rx="6" fill="#15171A"/><rect x="152" y="68" width="18" height="4" rx="2" fill="#6B7280"/>`)}
+  ${zn("hdmi", [194, 50, 60, 42], `<path d="M202 60 h44 v12 l-5 6 h-34 l-5 -6z" fill="#15171A"/><rect x="210" y="64" width="28" height="4" fill="#6B7280"/>`)}
+  ${zn("dp", [262, 50, 56, 42], `<path d="M270 60 h40 v18 h-34 l-6 -6z" fill="#15171A"/><rect x="278" y="66" width="26" height="4" fill="#6B7280"/>`)}
+  ${zn("rj45", [326, 30, 60, 76], `<rect x="332" y="38" width="48" height="46" rx="3" fill="#15171A"/><path d="M344 52 h24 v22 h-6 v6 h-12 v-6 h-6z" fill="#2A2D31"/><rect x="334" y="40" width="8" height="5" fill="#3CCB8E"/><rect x="370" y="40" width="8" height="5" fill="#F5A524"/>`)}
+  ${zn("linein", [396, 50, 44, 44], jack(418, "#4F8CFF"))}
+  ${zn("lineout", [446, 50, 44, 44], jack(468, "#3FB950"))}
+  ${zn("mic", [496, 50, 44, 44], jack(518, "#F778BA"))}
+  ${lab(74, "USB-A")}${lab(161, "USB-C")}${lab(224, "HDMI")}${lab(290, "DP")}${lab(356, "RJ-45")}${lab(418, "IN")}${lab(468, "OUT")}${lab(518, "MIC")}
+  </svg>`;
+}
+
+/* ---------- UEFI simulator ---------- */
+const BOOTN = { win: "Windows Boot Manager (NVMe Samsung 980)", usb: "UEFI: Kingston DataTraveler 32GB", net: "UEFI: PXE IPv4 Intel Ethernet" };
+function U() { if (!S.uefi) S.uefi = { tab: "main", virt: false, ht: true, boot: ["win", "usb", "net"], help: null, screen: "setup", savedState: null }; return S.uefi; }
+const UHELP = {
+  mem: "<b>Total Memory</b><br>Celková veľkosť operačnej pamäte RAM, ktorú firmvér našiel pri teste POST.",
+  cpu: "<b>Processor</b><br>Typ procesora, ktorý je vložený v pätici.",
+  ver: "<b>BIOS Version</b><br>Verzia firmvéru. Výrobca ju aktualizuje, napríklad kvôli podpore nových procesorov.",
+  date: "<b>System Date</b><br>Dátum hodín na doske. Ak sa stále resetuje, je vybitá batéria CMOS.",
+  virt: "<b>Virtualization Technology</b><br>Umožní spúšťať virtuálne počítače, napríklad vo VirtualBoxe. Kliknutím prepneš Enabled / Disabled.",
+  ht: "<b>Hyper-Threading</b><br>Jedno jadro procesora spracúva dve vlákna naraz. Na túto úlohu ho meniť netreba.",
+  temp: "<b>CPU Temperature</b><br>Aktuálna teplota procesora. Nad 90 °C je problém s chladením.",
+  fan: "<b>CPU Fan Speed</b><br>Otáčky ventilátora chladiča procesora.",
+  boot: "<b>Boot Option Priorities</b><br>Poradie, v ktorom firmvér hľadá zavádzač operačného systému. Šípkami meníš poradie. Prvé nájdené zariadenie so systémom vyhrá.",
+  sb: "<b>Secure Boot</b><br>Dovolí spustiť iba podpísaný zavádzač, čím chráni pred škodlivým softvérom pri štarte.",
+  save: "<b>Save Changes and Reset</b><br>Uloží zmeny do pamäte NVRAM a reštartuje počítač. Bez uloženia sa zmeny stratia.",
+  discard: "<b>Discard Changes and Exit</b><br>Zahodí všetky neuložené zmeny.",
+  def: "<b>Restore Defaults</b><br>Vráti výrobné nastavenia (zatiaľ neuložené)."
+};
+function uefiHTML() {
+  const u = U();
+  if (u.screen === "reboot") {
+    const sv = u.savedState;
+    return `<div class="uefi"><div class="uover">Saving changes to NVRAM... OK<br>System reset...<br><br>POST: CPU OK, Memory 16384 MB OK<br>Boot device: ${sv.usb ? BOOTN.usb : BOOTN[sv.first]}<br>${sv.usb ? "Loading Windows Setup from USB..." : "Loading Windows..."}<br><br><button class="ghost" data-u="reenter">Znova vstúpiť do UEFI (Del)</button></div></div>`;
+  }
+  const row = (key, label, val, act) => `<button class="urow ${u.help === key ? "sel" : ""}" data-u="${act || "help"}" data-k="${key}"><span>${label}</span><span class="v">${val}</span></button>`;
+  const info = (label, val, key) => row(key, label, val);
+  let list = "";
+  if (u.tab === "main") list = `<div class="ugrp">System Information</div>${info("BIOS Vendor", "American Megatrends", "ver")}${info("BIOS Version", "2.14.1263", "ver")}${info("Processor", "Intel Core i5-12400", "cpu")}${info("Total Memory", "16384 MB", "mem")}<div class="ugrp">System Settings</div>${info("System Date", "[Thu 09/24/2026]", "date")}${info("System Language", "[English]", "date")}`;
+  if (u.tab === "adv") list = `<div class="ugrp">CPU Configuration</div>${row("virt", "Intel Virtualization Technology", u.virt ? "[Enabled]" : "[Disabled]", "virt")}${row("ht", "Hyper-Threading", u.ht ? "[Enabled]" : "[Disabled]", "ht")}<div class="ugrp">Hardware Monitor</div>${info("CPU Temperature", "+42 °C", "temp")}${info("CPU Fan Speed", "1250 RPM", "fan")}`;
+  if (u.tab === "boot") list = `<div class="ugrp">Boot Option Priorities</div>${u.boot.map((b, i) => `<div class="uboot"><span>Boot Option #${i + 1}: <b>${BOOTN[b]}</b></span><button class="uarrow" data-u="up" data-k="${i}" ${i === 0 ? "disabled" : ""} aria-label="Vyššie">▲</button><button class="uarrow" data-u="down" data-k="${i}" ${i === u.boot.length - 1 ? "disabled" : ""} aria-label="Nižšie">▼</button></div>`).join("")}${info("Fast Boot", "[Enabled]", "boot")}${info("Secure Boot", "[Enabled]", "sb")}`;
+  if (u.tab === "exit") list = `<div class="ugrp">Save & Exit</div>${row("save", "Save Changes and Reset", "", "save")}${row("discard", "Discard Changes and Exit", "", "discard")}${row("def", "Restore Defaults", "", "defaults")}`;
+  const tabs = [["main", "Main"], ["adv", "Advanced"], ["boot", "Boot"], ["exit", "Save & Exit"]];
+  return `<div class="uefi"><div class="uhead"><span>UEFI Setup Utility</span><span>Školský PC · 09/24/2026</span></div>
+    <div class="utabs">${tabs.map(([k, n]) => `<button class="utab ${u.tab === k ? "cur" : ""}" data-u="tab" data-k="${k}">${n}</button>`).join("")}</div>
+    <div class="ubody"><div class="ulist">${list}</div><div class="uhelp">${u.help ? UHELP[u.help] : "<b>Pomocník</b><br>Klikni na položku vľavo a tu sa zobrazí jej vysvetlenie."}</div></div>
+    <div class="ufoot">Myš: vyber položku · ▲▼ poradie · Save & Exit: uloženie</div></div>`;
+}
+function uefiGoals() {
+  const u = U(), sv = u.savedState || {};
+  const li = (ok, t) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`;
+  return `<ul class="goals">${li(sv.usb, "Nastav USB kľúč ako prvé zariadenie, z ktorého sa štartuje (karta Boot)")}${li(sv.virt, "Zapni virtualizáciu procesora pre VirtualBox (karta Advanced)")}${li(sv.saved, "Ulož zmeny a reštartuj (karta Save & Exit)")}</ul>
+    <p class="muted" style="font-size:14.5px;margin-top:6px">Počítajú sa iba uložené nastavenia. Chybu môžeš opraviť: znova vstúp do UEFI a ulož.</p>
+    ${S.t.uefi ? `<div class="checkbar"><span class="score ${S.t.uefi.score < 3 ? "part" : ""}">Uložené nastavenia: ${S.t.uefi.score} z 3 bodov</span></div>` : ""}`;
+}
+
+/* ---------- Views ---------- */
+const head = () => `<p class="kicker">Zastávka ${S.cur} zo 6${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">Ďalšia zastávka: ${n.title}</button></div>`; }
+function placeSide(kind) {
+  const cfg = kind === "build" ? { st: S.build, list: PARTS, names: z => Z[z].n, title: "Súčiastky", ins: "Vyber súčiastku a potom klikni na miesto na doske, kam patrí." }
+                               : { st: S.ports, list: DEVICES, names: z => PORTS[z], title: "Zariadenia", ins: "Vyber zariadenie a potom klikni na port, kam ho zapojíš." };
+  const st = cfg.st, L = st.last;
+  let fb = "";
+  if (L) fb = `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? `✅ Správne! ${L.name} → ${cfg.names(L.z)}.` : `❌ Toto je ${cfg.names(L.z)}. ${L.hint}`}</div>`;
+  return `<div class="side"><h4>${cfg.title}</h4><p class="muted" style="font-size:14.5px">${cfg.ins}</p>
+    <div class="tray">${cfg.list.map(p => st.placed[p.id] ? `<div class="part done"><span class="i">${p.i}</span>${p.n}<span class="st">${st.first[p.id] ? "✓" : "✓ (2. pokus)"}</span></div>`
+      : `<button class="part ${st.sel === p.id ? "sel" : ""}" data-psel="${kind}|${p.id}"><span class="i">${p.i}</span>${p.n}</button>`).join("")}</div>${fb}</div>`;
+}
+
+const VIEWS = {
+  start() {
+    return `<p class="kicker">Informatika, 2. ročník</p>
+    <h1>${LESSON}</h1>
+    <p class="lead">Rozoberieš základnú dosku, poskladáš počítač, zapojíš periférie a nastavíš UEFI. Prejdeš 6 zastávok, za úlohy zbieraš body a na konci uvidíš výsledok.</p>
+    <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+    <label class="f" for="cl">Trieda</label><input type="text" id="cl" data-field="cls" value="${esc(S.cls)}" placeholder="napr. II.A"></div>
+    <h3>Než začneš: tvoj tip</h3>
+    <p>Čo sa stane ako prvé, keď stlačíš tlačidlo zapnutia počítača? Tip sa neboduje. Na zastávke BIOS a UEFI zistíš, či si mal pravdu.</p>
+    <div class="guesses">${GUESSES.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+    <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+    <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+  },
+  doska() {
+    const e = S.exp ? Z[S.exp] : null, n = S.seen.length, all = ZONE_IDS.length;
+    const F = S.find, done = S.t.find, q = FIND[F.i];
+    let findSide;
+    if (done) findSide = `<div class="side"><h4>Hotovo</h4><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} bodov</span><ul class="goals">${FIND.map((f, i) => `<li>${F.res[i] ? "✅" : "❌"} ${Z[f.z].n}</li>`).join("")}</ul></div>`;
+    else {
+      const L = F.last;
+      findSide = `<div class="side"><span class="tag">Otázka ${F.i + 1} zo ${FIND.length}</span><div class="prompt">${q.q}</div>
+        ${L ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne! Toto je " + Z[L.correct].n + "." : "❌ Kliknul si na: " + Z[L.clicked].n + ". Správna časť svieti nazeleno."}</div><div class="row"><button class="primary" data-findnext>${F.i + 1 < FIND.length ? "Ďalšia otázka" : "Dokončiť"}</button></div>`
+          : `<p class="muted" style="font-size:14.5px">Popisky sú skryté. Každá otázka má jeden pokus.</p>`}</div>`;
+    }
+    return head() + `<h2>Základná doska zblízka</h2>
+    <p>Základná doska (motherboard) je chrbtica počítača. Všetky ostatné súčiastky sa do nej zapájajú a cez jej vodivé cestičky si posielajú údaje aj napájanie.</p>
+    <h3>Prieskum: klikaj na časti dosky</h3>
+    <div class="lab"><div class="boardwrap">${boardSVG("explore")}</div>
+      <div class="side">${e ? `<span class="tag">Preskúmané ${n} z ${all}</span><h4>${e.n}</h4><p style="font-size:15.5px;margin:0">${e.t}</p>` : `<h4>Klikni na časť dosky</h4><p class="muted" style="font-size:15px">Pri každej časti sa dozvieš, na čo slúži. Preskúmané časti sa orámujú prerušovanou čiarou.</p>`}
+        <div class="meter" aria-hidden="true"><i style="width:${Math.round(n / all * 100)}%"></i></div><span class="muted" style="font-size:13.5px">Preskúmané ${n} z ${all}</span></div></div>
+    <h3>Úloha: nájdi na doske</h3>
+    <p class="muted">Teraz bez popiskov. Klikni na časť dosky, na ktorú sa pýta otázka.</p>
+    <div class="lab"><div class="boardwrap">${boardSVG("find")}</div>${findSide}</div>` + nextBar();
+  },
+  montaz() {
+    const done = S.t.build;
+    return head() + `<h2>Poskladaj počítač</h2>
+    <p>Na doske je prázdna pätica aj prázdne sloty. Osaď súčiastky na správne miesta. Za každú súčiastku zapojenú na prvý pokus dostaneš bod.</p>
+    <div class="lab"><div class="boardwrap">${boardSVG("build")}</div>${placeSide("build")}</div>
+    ${done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">${done.score === done.max ? "Výborne! " : ""}Počítač je zložený. Získal si ${done.score} z ${done.max} bodov</span></div>
+      <div class="box teal"><p><b>Vedel si?</b> Pri skutočnej montáži sa najprv vkladá procesor a RAM, kým je doska ešte mimo skrinky. K doske sa dostaneš ľahšie a nehrozí, že ju pri tlačení na sloty prehneš.</p></div>` : ""}` + nextBar();
+  },
+  io() {
+    return head() + `<h2>Vstupné a výstupné zariadenia</h2>
+    <p>Periférie sú zariadenia pripojené k počítaču. Delíme ich podľa toho, ktorým smerom tečú údaje, <b>vždy z pohľadu počítača</b>. Vstupné zariadenia údaje do počítača posielajú, výstupné ich od neho prijímajú a niektoré robia oboje.</p>
+    <div class="task"><div class="ins">Klikni na kartičku a potom na správny kôš. Kartičky môžeš aj ťahať myšou.</div>${taskHTML("iosort")}</div>` + nextBar();
+  },
+  porty() {
+    const done = S.t.ports;
+    return head() + `<h2>Zadný panel: kam čo zapojiť?</h2>
+    <p>Na zadnom paneli základnej dosky sú porty pre periférie. Každý typ konektora má iný tvar, takže kábel sa dá zasunúť len tam, kam patrí. Zvukové konektory sa rozlišujú farbou.</p>
+    <div class="lab"><div class="portwrap">${portsSVG()}</div>${placeSide("ports")}</div>
+    ${done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">${done.score === done.max ? "Výborne! " : ""}Všetko je zapojené. Získal si ${done.score} z ${done.max} bodov</span></div>
+      <div class="box teal"><p><b>Pozor v praxi:</b> ak má počítač samostatnú grafickú kartu, monitor zapoj do jej portu HDMI alebo DisplayPort, nie do portu na doske. Porty na doske patria k integrovanej grafike v procesore.</p></div>` : ""}` + nextBar();
+  },
+  bios() {
+    const g = S.guess !== null ? `<div class="box ${S.guess === GUESS_OK ? "teal" : ""}"><p>Na začiatku si tipoval: <b>„${GUESSES[S.guess]}“</b>. ${S.guess === GUESS_OK ? "Presne tak! Ako prvý sa vždy spustí firmvér." : "Nie celkom. Ako prvý sa vždy spustí firmvér na základnej doske, až potom operačný systém."}</p></div>` : "";
+    return head() + `<h2>BIOS a UEFI: prvý program po zapnutí</h2>
+    <p><b>BIOS</b> (Basic Input/Output System) je firmvér uložený v čipe na základnej doske. Po zapnutí otestuje hardvér a vyhľadá operačný systém. Moderné počítače majú jeho nástupcu <b>UEFI</b>: má grafické rozhranie, ovláda sa aj myšou a podporuje veľké disky aj Secure Boot. Do nastavení sa dostaneš klávesom <b>Del</b> alebo <b>F2</b> hneď po zapnutí.</p>
+    ${g}
+    <h3>Úloha 1: čo sa deje po zapnutí</h3>
+    <div class="task"><div class="ins">Zoraď kroky od stlačenia tlačidla po spustenie systému.</div>${taskHTML("boot")}</div>
+    <h3>Úloha 2: nastav UEFI</h3>
+    <p>Chceš preinštalovať Windows z USB kľúča a neskôr používať VirtualBox. Nastav to v simulátore UEFI.</p>
+    <div class="task">${uefiHTML()}${uefiGoals()}</div>
+    <h3>Úloha 3: otázky</h3>
+    <div class="task">${taskHTML("biosq")}</div>` + nextBar();
+  },
+  test() {
+    return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p>
+    <div class="task">${taskHTML("test")}</div>` + (S.t.test ? `<div class="next"><button class="primary" data-go="${STEPS.length - 1}">Zobraziť môj výsledok</button></div>` : "");
+  },
+  vysledok() {
+    if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="6">Prejsť na záverečný test</button>`;
+    const pct = Math.round(total() / MAX * 100);
+    const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+    const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const rows = STEPS.filter(s => STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+    const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+    const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+    let formBtn = "";
+    if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+      formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+    return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+    <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+      <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+    <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+    <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+    <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+  }
+};
+
+/* ---------- Render & events ---------- */
+const main = document.getElementById("main");
+const WIDE = { doska: 1, montaz: 1, porty: 1 };
+function render(toTop) {
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = WIDE[id] ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+function zoneClick(ctx, z) {
+  if (ctx === "explore") { S.exp = z; if (!S.seen.includes(z)) S.seen.push(z); save(); return render(false); }
+  if (ctx === "find") {
+    const F = S.find; if (S.t.find || F.last) return;
+    const q = FIND[F.i], ok = z === q.z; F.res[F.i] = ok; F.last = { clicked: z, correct: q.z, ok }; save(); return render(false);
+  }
+  if (ctx === "build" || ctx === "ports") {
+    const st = ctx === "build" ? S.build : S.ports, list = ctx === "build" ? PARTS : DEVICES, tid = ctx === "build" ? "build" : "ports";
+    if (S.t[tid]) return;
+    if (!st.sel) { st.last = null; save(); return render(false); }
+    const p = list.find(x => x.id === st.sel), ok = p.z === z;
+    if (!(p.id in st.first)) st.first[p.id] = ok;
+    st.last = { z, ok, name: p.n, hint: ctx === "build" ? p.h : `${p.n} sa zapája do portu ${PORTS[p.z].split(" (")[0]}.`.replace(/ \(.*/, "") };
+    if (ctx === "ports" && !ok) st.last.hint = portHint(p);
+    if (ok) { st.placed[p.id] = true; st.sel = null; }
+    if (list.every(x => st.placed[x.id])) S.t[tid] = { score: list.filter(x => st.first[x.id]).length, max: list.length };
+    save(); return render(false);
+  }
+}
+function portHint(p) {
+  return { mon: "Kábel HDMI má široký lichobežníkový konektor.", lan: "Sieťový kábel má hranatý konektor so zámkom, väčší než telefónny.", mouse: "USB-A je plochý obdĺžnikový konektor, tu s modrým jazýčkom.",
+    spk: "Reproduktory a slúchadlá patria do zeleného konektora.", mic: "Mikrofón patrí do ružového konektora.", phone: "USB-C je malý oválny konektor, ktorý sa dá zasunúť oboma stranami." }[p.id];
+}
+function uefiAct(a, k) {
+  const u = U();
+  if (a === "tab") { u.tab = k; u.help = null; }
+  else if (a === "help") u.help = k;
+  else if (a === "virt") { u.virt = !u.virt; u.help = "virt"; }
+  else if (a === "ht") { u.ht = !u.ht; u.help = "ht"; }
+  else if (a === "up" || a === "down") { const i = +k, j = a === "up" ? i - 1 : i + 1; [u.boot[i], u.boot[j]] = [u.boot[j], u.boot[i]]; u.help = "boot"; }
+  else if (a === "defaults") { u.virt = false; u.ht = true; u.boot = ["win", "usb", "net"]; u.help = "def"; }
+  else if (a === "discard") { const sv = u.savedState; u.virt = sv ? sv.virt : false; u.boot = sv ? sv.boot.slice() : ["win", "usb", "net"]; u.help = "discard"; }
+  else if (a === "save") {
+    u.savedState = { usb: u.boot[0] === "usb", virt: u.virt, saved: true, first: u.boot[0], boot: u.boot.slice() };
+    const sc = (u.savedState.usb ? 1 : 0) + (u.virt ? 1 : 0) + 1;
+    S.t.uefi = { score: Math.max(sc, S.t.uefi ? S.t.uefi.score : 0), max: 3 };
+    u.screen = "reboot";
+  }
+  else if (a === "reenter") { u.screen = "setup"; u.tab = "main"; u.help = null; }
+  save(); render(false);
+}
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  const zEl = e.target.closest("[data-zone]");
+  if (zEl) return zoneClick(zEl.dataset.ctx, zEl.dataset.zone);
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.findnext !== undefined) { const F = S.find; F.last = null; F.i++; if (F.i >= FIND.length) { F.i = FIND.length - 1; S.t.find = { score: F.res.filter(Boolean).length, max: FIND.length }; } save(); return render(false); }
+  if (ds.psel) { const [k, id] = ds.psel.split("|"); const st = k === "build" ? S.build : S.ports; st.sel = id; st.last = null; save(); return render(false); }
+  if (ds.u) return uefiAct(ds.u, ds.k);
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.dataset && e.target.dataset.zone) { e.preventDefault(); zoneClick(e.target.dataset.ctx, e.target.dataset.zone); }
+});
+document.addEventListener("input", e => {
+  const f = e.target.dataset.field; if (!f) return;
+  S[f] = e.target.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+
+if (!S.started) S.cur = 0;
+render(true);
+</script>
+</body>
+</html>

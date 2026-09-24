@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.2 Vznik a história internetu. Základné pojmy - ISP, URL, HTTP, FTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1F6; --surface:#FFFFFF; --surface2:#F5F7FA; --ink:#16213A; --muted:#566381;
+  --line:#2F5BEA; --lineSoft:#D5DFFB; --track:#C9D1DF;
+  --ok:#12805A; --okSoft:#DDF3EA; --bad:#C0392B; --badSoft:#FBE3E0; --sun:#F0B429; --sunSoft:#FDF1D3;
+  --border:#D6DCE6;
+  --font:"Lexend", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10172A; --surface:#18223A; --surface2:#1E2A46; --ink:#E8EDF7; --muted:#9AA7C4;
+    --line:#6E91FF; --lineSoft:#26386A; --track:#34425F;
+    --ok:#3CCB8E; --okSoft:#163A30; --bad:#FF7A6B; --badSoft:#46221F; --sun:#F5C451; --sunSoft:#3D3219;
+    --border:#2E3B58;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10172A; --surface:#18223A; --surface2:#1E2A46; --ink:#E8EDF7; --muted:#9AA7C4;
+  --line:#6E91FF; --lineSoft:#26386A; --track:#34425F;
+  --ok:#3CCB8E; --okSoft:#163A30; --bad:#FF7A6B; --badSoft:#46221F; --sun:#F5C451; --sunSoft:#3D3219;
+  --border:#2E3B58;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--line);outline-offset:2px}
+img{max-width:100%}
+
+/* Top: metro line */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1100px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:19px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .dot{width:14px;height:14px;border-radius:50%;background:var(--line);box-shadow:0 0 0 4px var(--lineSoft)}
+.pts{background:var(--sunSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1100px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 92px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:6px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--line)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:32px;height:32px;margin:0 auto;border-radius:50%;background:var(--surface);border:5px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--line);border-color:var(--line);color:#fff}
+.stn.cur .c{border-color:var(--line);transform:scale(1.25);box-shadow:0 0 0 5px var(--lineSoft)}
+.stn.cur.done .c{color:#fff}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--line)}
+
+/* Main */
+main{max-width:780px;margin:0 auto;padding:28px 20px 60px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.1;margin:0 0 14px;letter-spacing:-.01em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.15;margin:0 0 12px;letter-spacing:-.01em}
+h3{font-size:20px;margin:34px 0 6px}
+p{margin:0 0 14px;max-width:68ch}
+.lead{font-size:18.5px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin:12px 0 8px}
+.task .ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--sun);background:var(--sunSoft);border-radius:0 10px 10px 0;padding:12px 16px;margin:16px 0}
+.box.blue{border-color:var(--line);background:var(--lineSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.clues{margin:0;padding-left:22px}
+.clues li{margin-bottom:6px}
+
+/* Buttons */
+.primary{background:var(--line);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 18px;font-weight:600;cursor:pointer}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--sunSoft);color:var(--ink)}
+.next{margin-top:34px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end}
+
+/* Inputs */
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+input[type=text],input[type=password]{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+
+/* Chips & sorting */
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chip{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500;touch-action:manipulation}
+.chip.mono{font-family:var(--mono);border-radius:8px;font-size:15.5px}
+.chip:hover:not(:disabled){border-color:var(--line)}
+.chip.sel{background:var(--line);border-color:var(--line);color:#fff}
+.chip.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chip.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chip:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--line);border-radius:12px;padding:12px;min-height:110px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--lineSoft)}
+.bh{font-weight:700;margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.urlpool{font-family:var(--mono)}
+
+/* Ordering */
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--lineSoft);color:var(--line)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.extra{font-family:var(--mono);color:var(--line)}
+
+/* MC */
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--lineSoft);color:var(--line);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--line)}
+.opt.sel{border-color:var(--line);background:var(--lineSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+
+/* URL anatomy */
+.parts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:14px 0}
+.part{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.part b{display:block}
+.part span{font-size:14.5px;color:var(--muted)}
+.urlbar{font-family:var(--mono);background:var(--surface2);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;overflow-x:auto;white-space:nowrap;margin:6px 0}
+.p1{color:#B4570B}.p2{color:var(--line)}.p3{color:var(--ok)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .p1{color:#F5A35C}}
+:root[data-theme="dark"] .p1{color:#F5A35C}
+
+/* HTTP demo */
+.wire{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:10px;align-items:start;margin-top:16px}
+.node{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;font-weight:600}
+.node .ico{font-size:30px;display:block}
+.bubble{margin-top:8px;font-family:var(--mono);font-size:14px;font-weight:500;padding:8px;border-radius:8px;background:var(--surface);border:1.5px solid var(--border);word-break:break-all;min-height:40px}
+.bubble.leak{border-color:var(--bad);background:var(--badSoft)}
+.bubble.safe{border-color:var(--ok);background:var(--okSoft)}
+.proto-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.tried{font-size:14.5px;color:var(--muted);margin-top:10px}
+@media (max-width:560px){.wire{grid-template-columns:1fr}}
+
+/* FTP */
+.ftp{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch}
+.panel{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;min-height:180px}
+.panel h4{margin:0 0 8px;font-size:15.5px}
+.file{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;margin-bottom:6px;cursor:pointer;font-family:var(--mono);font-size:14.5px}
+.file.sel{border-color:var(--line);background:var(--lineSoft)}
+.file.new{border-style:dashed}
+.mid{display:flex;flex-direction:column;justify-content:center;gap:10px}
+.log{font-family:var(--mono);font-size:13.5px;background:#0F1729;color:#CFE0FF;border-radius:10px;padding:10px 14px;margin-top:12px;max-height:150px;overflow:auto;white-space:pre-wrap}
+.goals{list-style:none;padding:0;margin:12px 0 0}
+.goals li{padding:4px 0}
+.goals .g{display:inline-block;width:22px}
+@media (max-width:620px){.ftp{grid-template-columns:1fr}.mid{flex-direction:row;flex-wrap:wrap}}
+
+/* Result */
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-size:56px;font-weight:700;line-height:1;color:var(--line)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--line);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+td:last-child,th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.muted{color:var(--muted)}
+.guesses{display:grid;gap:8px;max-width:520px}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+
+<script>
+/* Ak chcete výsledky automaticky zbierať do Google Formulára, vyplňte URL formulára
+   (…/viewform) a identifikátory polí entry.XXXX z predvyplneného odkazu. */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+
+const KEY = "internet-prima-v1";
+const STEPS = [
+  { id: "start",   title: "Štart",          min: 3 },
+  { id: "historia",title: "História",       min: 8 },
+  { id: "sluzby",  title: "Internet a web", min: 5 },
+  { id: "isp",     title: "ISP",            min: 6 },
+  { id: "url",     title: "URL",            min: 8 },
+  { id: "http",    title: "HTTP a HTTPS",   min: 5 },
+  { id: "ftp",     title: "FTP",            min: 5 },
+  { id: "test",    title: "Záverečný test", min: 5 },
+  { id: "vysledok",title: "Výsledok",       min: 0 }
+];
+const STEP_TASKS = { start: [], historia: ["hist"], sluzby: ["tf"], isp: ["cesta", "ispsort"], url: ["urlsort", "urlq"], http: ["httpdemo", "httpq"], ftp: ["ftpsim", "ftpq"], test: ["test"], vysledok: [] };
+
+const GUESSES = [
+  "Priamo cez satelit vo vesmíre",
+  "Cez firmu, ktorá mi dodáva internet",
+  "Cez Google, lebo tam všetko hľadám",
+  "Cez operačný systém Windows"
+];
+const GUESS_OK = 1;
+
+const TF = ["Pravda", "Nepravda"];
+const TASKS = {
+  hist: { id: "hist", type: "order", items: [
+    { id: "a", text: "ARPANET prepojil prvé štyri počítače v USA", extra: "1969" },
+    { id: "b", text: "Ray Tomlinson poslal prvý e-mail so znakom @", extra: "1971" },
+    { id: "c", text: "Siete sa začali dorozumievať spoločným jazykom TCP/IP", extra: "1983" },
+    { id: "d", text: "Tim Berners-Lee sprístupnil web (WWW)", extra: "1991" },
+    { id: "e", text: "Vznikol vyhľadávač Google", extra: "1998" },
+    { id: "f", text: "Vznikol YouTube", extra: "2005" }
+  ]},
+  tf: { id: "tf", type: "mc", keep: true, qs: [
+    { id: "1", q: "Internet a web (WWW) sú to isté.", opts: TF, a: 1, why: "Nie. Internet je sieť, web je jedna zo služieb, ktoré po nej fungujú." },
+    { id: "2", q: "Internet je celosvetová sieť navzájom prepojených počítačových sietí.", opts: TF, a: 0, why: "Áno. Spája milióny sietí škôl, firiem, domácností a mobilných operátorov." },
+    { id: "3", q: "E-mail môžeš čítať aj v aplikácii, ktorá nie je webový prehliadač (napríklad Outlook v mobile).", opts: TF, a: 0, why: "Áno. E-mail je samostatná služba internetu, web na ňu nepotrebuješ." },
+    { id: "4", q: "Web vznikol skôr ako internet.", opts: TF, a: 1, why: "Nie. Najprv vznikol internet (ARPANET 1969), web prišiel až v roku 1991." },
+    { id: "5", q: "Keď cez internet nahrávaš súbory na server, nemusíš pri tom používať web.", opts: TF, a: 0, why: "Áno. Na prenos súborov existuje vlastná služba FTP, o ktorej sa dozvieš na zastávke FTP." }
+  ]},
+  cesta: { id: "cesta", type: "order", items: [
+    { id: "a", text: "💻 Tvoj počítač" },
+    { id: "b", text: "📶 Wi-Fi router u vás doma" },
+    { id: "c", text: "🏢 Poskytovateľ internetu (ISP)" },
+    { id: "d", text: "🌍 Internet: siete po celom svete" },
+    { id: "e", text: "🖥️ Server, na ktorom je stránka uložená" }
+  ]},
+  ispsort: { id: "ispsort", type: "sort",
+    buckets: [ { id: "y", label: "✅ Je to ISP" }, { id: "n", label: "🚫 Nie je to ISP" } ],
+    items: [
+      { id: "1", text: "Slovak Telekom", b: "y" }, { id: "2", text: "Orange", b: "y" }, { id: "3", text: "O2", b: "y" },
+      { id: "4", text: "4ka", b: "y" }, { id: "5", text: "SWAN", b: "y" }, { id: "6", text: "Google Chrome", b: "n" },
+      { id: "7", text: "YouTube", b: "n" }, { id: "8", text: "Wi-Fi router", b: "n" }, { id: "9", text: "Windows", b: "n" },
+      { id: "10", text: "Wikipédia", b: "n" }
+    ],
+    after: "Router nie je ISP. Je to zariadenie u vás doma, ktoré pripojenie od poskytovateľa rozdelí medzi mobily, tablety a počítače. Chrome je prehliadač, YouTube a Wikipédia sú stránky a Windows je operačný systém."
+  },
+  urlsort: { id: "urlsort", type: "sort", keep: true, mono: true,
+    buckets: [ { id: "p", label: "Protokol (ako sa doručí)" }, { id: "d", label: "Doména (ktorý server)" }, { id: "c", label: "Cesta (ktorý súbor)" } ],
+    items: [
+      { id: "1", text: "https://", b: "p" }, { id: "2", text: "sk.wikipedia.org", b: "d" }, { id: "3", text: "/wiki/Internet", b: "c" },
+      { id: "4", text: "ftp://", b: "p" }, { id: "5", text: "ftp.skola.sk", b: "d" }, { id: "6", text: "/ulohy/prima.pdf", b: "c" }
+    ]
+  },
+  urlq: { id: "urlq", type: "mc", qs: [
+    { id: "1", q: "Ktorá adresa je napísaná správne?", opts: ["https://www.sme.sk", "https:/www.sme.sk", "https//www.sme.sk", "https://www sme.sk"], a: 0, why: "Za protokolom je vždy dvojbodka a dve lomky (://) a v adrese nesmie byť medzera." },
+    { id: "2", q: "V adrese https://www.skola.sk/rozvrh/prima.html je doménou:", opts: ["www.skola.sk", "https://", "/rozvrh/prima.html", "prima.html"], a: 0, why: "Doména je názov servera. Je medzi :// a prvou lomkou." },
+    { id: "3", q: "Ktorá časť adresy https://www.skola.sk/obrazky/mapa.png hovorí, ktorý súbor sa otvorí?", opts: ["/obrazky/mapa.png", "www.skola.sk", "https://", ".sk"], a: 0, why: "Cesta vedie cez priečinok obrazky až k súboru mapa.png." },
+    { id: "4", q: "Čo sa stane, keď urobíš preklep v doméne, napríklad www.wikipeida.org?", opts: ["Prehliadač nenájde server alebo otvorí úplne inú stránku", "Prehliadač chybu sám opraví a otvorí Wikipédiu", "Otvorí sa správna stránka, len bez obrázkov", "Počítač sa odpojí od internetu"], a: 0, why: "Každé písmeno v doméne je dôležité. Preklep môže zaviesť aj na podvodnú stránku, preto adresy kontroluj." }
+  ]},
+  httpdemo: { id: "httpdemo", type: "custom", max: 1 },
+  httpq: { id: "httpq", type: "mc", qs: [
+    { id: "1", q: "Čo znamená písmeno S v skratke HTTPS?", opts: ["Secure, čiže zabezpečený", "Server, čiže počítač so stránkou", "Speed, čiže rýchly", "Search, čiže vyhľadávanie"], a: 0, why: "HTTPS = HTTP Secure. Údaje sa posielajú zašifrované." },
+    { id: "2", q: "Na ktorej adrese je bezpečnejšie zadať heslo?", opts: ["https://www.banka.sk/prihlasenie", "http://www.banka.sk/prihlasenie", "http://banka-prihlasenie.sk", "www.banka.sk/heslo"], a: 0, why: "Iba prvá adresa používa HTTPS. Pri HTTP by heslo videl každý, kto sleduje sieť." },
+    { id: "3", q: "HTTP je:", opts: ["súbor pravidiel (protokol), podľa ktorých si prehliadač a server posielajú stránky", "program, v ktorom si prezeráš webové stránky", "adresa konkrétnej webovej stránky", "firma, ktorá ti dodáva internet"], a: 0, why: "HTTP = HyperText Transfer Protocol. Program je prehliadač, adresa je URL a firma je ISP." }
+  ]},
+  ftpsim: { id: "ftpsim", type: "custom", max: 3 },
+  ftpq: { id: "ftpq", type: "mc", qs: [
+    { id: "1", q: "Na čo slúži FTP?", opts: ["Na prenos súborov medzi počítačom a serverom", "Na prezeranie webových stránok", "Na posielanie e-mailov", "Na pripojenie domácnosti k internetu"], a: 0, why: "FTP = File Transfer Protocol, protokol na prenos súborov." },
+    { id: "2", q: "Súbor zo servera prenesieš do svojho počítača. Ako sa to volá?", opts: ["Stiahnutie (download)", "Nahratie (upload)", "Zdieľanie (share)", "Pripojenie (connect)"], a: 0, why: "Zo servera k tebe = download. Od teba na server = upload." }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Ako sa volala sieť, z ktorej vznikol internet?", opts: ["ARPANET", "ETHERNET", "INTRANET", "WWW"], a: 0 },
+    { id: "2", q: "Kto vymyslel web (WWW)?", opts: ["Tim Berners-Lee", "Ray Tomlinson", "Bill Gates", "Steve Jobs"], a: 0, why: "Ray Tomlinson poslal prvý e-mail, Tim Berners-Lee vymyslel web." },
+    { id: "3", q: "Ktorý rok sa považuje za narodeniny internetu, keď siete prešli na TCP/IP?", opts: ["1983", "1969", "1991", "1998"], a: 0 },
+    { id: "4", q: "ISP je:", opts: ["firma, ktorá ti poskytuje pripojenie na internet", "zariadenie, ktoré doma vysiela Wi-Fi", "program na prezeranie webu", "adresa webovej stránky"], a: 0 },
+    { id: "5", q: "Ktorá adresa používa zabezpečený prenos?", opts: ["https://edupage.org", "http://edupage.org", "ftp://edupage.org", "www.edupage.org"], a: 0 },
+    { id: "6", q: "Ktorý protokol použije tvorca webu na nahratie súborov na server?", opts: ["FTP", "HTTP", "HTTPS", "URL"], a: 0, why: "URL nie je protokol, ale adresa." },
+    { id: "7", q: "Čo z toho je URL?", opts: ["https://sk.wikipedia.org/wiki/Internet", "Google Chrome", "sk.wikipedia", "Slovak Telekom"], a: 0 }
+  ]}
+};
+
+function maxOf(T) { return T.type === "mc" ? T.qs.length : T.type === "custom" ? T.max : T.items.length; }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+
+function fresh() { return { v: 1, name: "", cls: "Prima", guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, ftp: null, http: [], httpLast: null, pw: "" }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return o; } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function ord(key, ids, keep) {
+  if (!S.ord[key]) {
+    let o = ids.slice();
+    if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); }
+    S.ord[key] = o; save();
+  }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function stepDone(i) {
+  const id = STEPS[i].id;
+  if (id === "start") return !!S.started;
+  if (id === "vysledok") return !!S.t.test;
+  return STEP_TASKS[id].every(t => S.t[t]);
+}
+
+/* ---------- Header ---------- */
+function renderTop() {
+  const reached = i => i <= S.cur || stepDone(i);
+  document.getElementById("top").innerHTML = `
+    <div class="topbar">
+      <div class="brand"><span class="dot" aria-hidden="true"></span>1.2 Vznik a história internetu</div>
+      <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+      <button class="reset" data-reset>↺ Začať odznova</button>
+    </div>
+    <nav class="line" aria-label="Zastávky hodiny">
+      ${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${reached(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}>
+        <span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}
+    </nav>`;
+}
+
+/* ---------- Generic tasks ---------- */
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button>${ready ? "" : `<span class="hint">${hint || "Najprv vyrieš všetko, potom skontroluj."}</span>`}</div>`;
+}
+
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` +
+      o.map(i => {
+        let c = "opt";
+        if (d[q.id] === i) c += " sel";
+        if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+        return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+      }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id), T.keep);
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => {
+    let c = "chip" + (T.mono ? " mono" : "");
+    if (SEL && SEL.t === T.id && SEL.i === id) c += " sel";
+    if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].text}</button>`;
+  };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool ${T.mono ? "urlpool" : ""}" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetky kartičky sú roztriedené. Kartičku presunieš tak, že na ňu klikneš a potom klikneš na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") +
+    checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : 'title="Kliknutím vrátiš kartičku späť"'}><span>${by[id].text}</span>${done && by[id].extra ? `<b class="extra">${by[id].extra}</b>` : ""}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chip" data-place="${T.id}|${id}">${by[id].text}</button>`).join("") : '<span class="empty">Všetko je poukladané. Ak chceš niečo zmeniť, klikni na kartičku hore a vráti sa sem.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box blue"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.text}${x.extra ? ` (${x.extra})` : ""}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : orderHTML(T); }
+
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  S.t[id] = { score: s, max: maxOf(T) };
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+
+function nextBar() {
+  if (S.cur >= STEPS.length - 1) return "";
+  const n = STEPS[S.cur + 1];
+  return `<div class="next"><button class="primary" data-go="${S.cur + 1}">Ďalšia zastávka: ${n.title}</button></div>`;
+}
+const head = () => `<p class="kicker">Zastávka ${S.cur} zo 7${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+
+/* ---------- Views ---------- */
+const VIEWS = {
+  start() {
+    return `<p class="kicker">Informatika, Prima</p>
+    <h1>1.2 Vznik a história internetu</h1>
+    <p class="lead" style="margin-top:-6px"><b>Základné pojmy: ISP, URL, HTTP, FTP</b></p>
+    <p class="lead">Dnes zistíš, ako vznikol internet a čo znamenajú skratky ISP, URL, HTTP a FTP. Prejdeš 7 zastávok, za úlohy zbieraš body a na konci uvidíš svoj výsledok.</p>
+    <div class="task">
+      <label class="f" for="nm">Meno a priezvisko</label>
+      <input type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+      <label class="f" for="cl">Trieda</label>
+      <input type="text" id="cl" data-field="cls" value="${esc(S.cls)}">
+    </div>
+    <h3>Než začneš: tvoj tip</h3>
+    <p>Ako sa podľa teba dostane tvoj počítač doma na internet? Tip sa neboduje. Na zastávke ISP zistíš, či si mal pravdu.</p>
+    <div class="guesses">${GUESSES.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+    <div class="next"><span class="hint muted" id="starthint" style="margin-right:auto;align-self:center">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : ""}</span>
+    <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+  },
+
+  historia() {
+    return head() + `<h2>Ako vznikol internet</h2>
+    <p>Internet nevznikol naraz. Viac ako 50 rokov ho postupne budovali vedci, univerzity aj firmy. Si detektív: prečítaj si stopy a zoraď udalosti od najstaršej po najnovšiu.</p>
+    <div class="box"><p><b>🔎 Stopy</b></p><ul class="clues">
+      <li>Všetko začalo v roku 1969, keď v USA prepojili prvé štyri počítače. Sieť dostala meno ARPANET.</li>
+      <li>Prvý e-mail odišiel, keď mal ARPANET iba 2 roky.</li>
+      <li>Spoločný jazyk sietí TCP/IP sa začal používať 12 rokov po prvom e-maile. Tento rok sa považuje za narodeniny internetu.</li>
+      <li>Web (WWW) sprístupnil Tim Berners-Lee 8 rokov po zavedení TCP/IP.</li>
+      <li>Google vznikol 7 rokov po webe.</li>
+      <li>YouTube je o 7 rokov mladší ako Google.</li>
+    </ul></div>
+    <div class="task"><div class="ins">Klikaj na kartičky v poradí od najstaršej. Kartičku vrátiš kliknutím na ňu v zozname.</div>${taskHTML("hist")}</div>
+    ${S.t.hist ? `<div class="box blue"><p><b>Vedel si?</b> Internet je o viac ako 20 rokov starší ako web. Prvá webová stránka na svete vznikla v laboratóriu CERN vo Švajčiarsku a obsahovala iba text, žiadne obrázky.</p></div>` : ""}
+    ` + nextBar();
+  },
+
+  sluzby() {
+    return head() + `<h2>Internet nie je to isté ako web</h2>
+    <p>Predstav si internet ako sieť ciest, ktorá spája mestá na celom svete. Po cestách jazdia rôzne vozidlá: web (WWW), e-mail, videohovory alebo prenos súborov. <b>Cesty sú internet, vozidlá sú jeho služby.</b></p>
+    <div class="task"><div class="ins">Rozhodni o každom tvrdení, či je pravdivé.</div>${taskHTML("tf")}</div>` + nextBar();
+  },
+
+  isp() {
+    const g = S.guess !== null ? `<div class="box ${S.guess === GUESS_OK ? "blue" : ""}"><p>Na začiatku si tipoval: <b>„${GUESSES[S.guess]}“</b>. ${S.guess === GUESS_OK ? "Trafil si! Presne o tejto firme je táto zastávka." : "Nie celkom. Prečítaj si, ako to naozaj funguje."}</p></div>` : "";
+    return head() + `<h2>Kto ti dodáva internet?</h2>
+    <p>Tvoj počítač sa na internet nepripojí sám. Potrebuje firmu, ktorá ti internet dodáva, podobne ako vodáreň dodáva vodu do vodovodu. Takej firme hovoríme <b>ISP</b> (Internet Service Provider), po slovensky <b>poskytovateľ internetu</b>. Rodičia jej každý mesiac platia za pripojenie.</p>
+    ${g}
+    <h3>Úloha 1: cesta k stránke</h3>
+    <div class="task"><div class="ins">Poskladaj, cez čo prejde tvoja požiadavka, keď otvoríš webovú stránku. Začni pri sebe.</div>${taskHTML("cesta")}</div>
+    <h3>Úloha 2: je to ISP?</h3>
+    <div class="task"><div class="ins">Klikni na kartičku a potom na správny kôš. Na počítači ich môžeš aj ťahať myšou.</div>${taskHTML("ispsort")}</div>` + nextBar();
+  },
+
+  url() {
+    return head() + `<h2>URL: adresa na internete</h2>
+    <p>Každá stránka a každý súbor na internete má svoju adresu, <b>URL</b> (Uniform Resource Locator). Funguje ako adresa na balíku: hovorí, ako zásielku doručiť, do ktorého domu a do ktorej izby.</p>
+    <div class="parts">
+      <div class="part"><b class="p1">Protokol</b><span>Spôsob doručenia, napríklad https:// alebo ftp://</span></div>
+      <div class="part"><b class="p2">Doména</b><span>Názov servera, teda „dom“, kde stránka býva</span></div>
+      <div class="part"><b class="p3">Cesta</b><span>Priečinky a súbor na serveri, teda „izba“</span></div>
+    </div>
+    <h3>Úloha 1: rozober adresy</h3>
+    <div class="task"><div class="ins">Tieto dve adresy sme rozstrihali na kúsky:</div>
+      <div class="urlbar">🔒 ${S.t.urlsort ? '<span class="p1">https://</span><span class="p2">sk.wikipedia.org</span><span class="p3">/wiki/Internet</span>' : "https://sk.wikipedia.org/wiki/Internet"}</div>
+      <div class="urlbar">📁 ${S.t.urlsort ? '<span class="p1">ftp://</span><span class="p2">ftp.skola.sk</span><span class="p3">/ulohy/prima.pdf</span>' : "ftp://ftp.skola.sk/ulohy/prima.pdf"}</div>
+      <div class="ins" style="margin-top:12px">Každý kúsok presuň do správneho koša.</div>${taskHTML("urlsort")}</div>
+    <h3>Úloha 2: adresný detektív</h3>
+    <div class="task">${taskHTML("urlq")}</div>` + nextBar();
+  },
+
+  http() {
+    const L = S.httpLast, tried = S.http || [];
+    let sees = '<span class="muted">zatiaľ nič</span>', cls = "", msg = "";
+    if (L) {
+      if (L.p === "http") { sees = `meno=ziak.prima&amp;heslo=${esc(L.pw)}`; cls = "leak"; msg = "Zvedavec vidí tvoje heslo! Pri HTTP ide všetko ako pohľadnica: prečíta si ju každý, cez koho ruky prejde."; }
+      else { sees = esc(L.x); cls = "safe"; msg = "Zvedavec vidí iba zmes znakov. HTTPS je ako zalepená obálka, ktorú vie otvoriť len server."; }
+    }
+    return head() + `<h2>HTTP a HTTPS: pravidlá rozhovoru</h2>
+    <p>Keď prehliadač pýta od servera stránku, obaja dodržiavajú rovnaké pravidlá. Tie sa volajú <b>HTTP</b> (HyperText Transfer Protocol). Pri <b>HTTPS</b> pribudlo písmeno S ako secure, teda zabezpečený: všetko, čo sa posiela, je zašifrované.</p>
+    <h3>Pokus: kto vidí tvoje heslo?</h3>
+    <div class="task">
+      <div class="ins">Vymysli si heslo (<b>nie tvoje skutočné!</b>) a pošli ho raz cez http:// a raz cez https://. Sleduj, čo vidí zvedavec, ktorý tajne sleduje dáta v sieti.</div>
+      <label class="f" for="pw">Vymyslené heslo</label>
+      <input type="text" id="pw" data-field="pw" value="${esc(S.pw)}" placeholder="napr. mackaMica7" autocomplete="off">
+      <div class="proto-row">
+        <button class="ghost" data-http="http">Odoslať cez http://</button>
+        <button class="ghost" data-http="https">🔒 Odoslať cez https://</button>
+      </div>
+      <div class="wire">
+        <div class="node"><span class="ico">💻</span>Ty</div>
+        <div class="node"><span class="ico">🕵️</span>Zvedavec v sieti<div class="bubble ${cls}">${sees}</div></div>
+        <div class="node"><span class="ico">🖥️</span>Server</div>
+      </div>
+      ${msg ? `<p class="why ${cls === "leak" ? "miss" : "good"}" style="margin-top:12px">${msg}</p>` : ""}
+      <p class="tried">Vyskúšané: ${tried.includes("http") ? "✅" : "⬜"} http:// &nbsp; ${tried.includes("https") ? "✅" : "⬜"} https://</p>
+      ${S.t.httpdemo ? '<div class="checkbar"><span class="score">Pokus hotový, získal si 1 bod</span></div>' : ""}
+    </div>
+    <div class="box blue"><p>💡 Zámok 🔒 pred adresou v prehliadači znamená, že stránka používa HTTPS. Heslá zadávaj iba tam.</p></div>
+    <h3>Otázky</h3>
+    <div class="task">${taskHTML("httpq")}</div>` + nextBar();
+  },
+
+  ftp() {
+    if (!S.ftp) { S.ftp = { local: ["index.html", "obrazok.png", "poznamky.txt"], remote: ["rozvrh.pdf", "ulohy_prima.docx"], sel: null, log: ["220 Pripojené k serveru ftp.skola.sk"], goals: {} }; save(); }
+    const F = S.ftp, icon = n => ({ html: "📄", png: "🖼️", txt: "📝", pdf: "📕", docx: "📘" }[n.split(".").pop()] || "📄");
+    const file = (side, n, isNew) => `<button class="file ${F.sel && F.sel.s === side && F.sel.n === n ? "sel" : ""}" data-fsel="${side}|${n}">${icon(n)} ${n}</button>`;
+    const G = [["up:index.html", "Nahraj na server súbor index.html"], ["up:obrazok.png", "Nahraj na server súbor obrazok.png"], ["down:rozvrh.pdf", "Stiahni zo servera súbor rozvrh.pdf"]];
+    return head() + `<h2>FTP: prenos súborov</h2>
+    <p><b>FTP</b> (File Transfer Protocol) slúži na prenos súborov medzi tvojím počítačom a serverom. Používajú ho napríklad tvorcovia webov, keď svoju stránku nahrávajú na server, aby ju videl celý svet.</p>
+    <div class="box"><p><b>⬆️ Upload (nahratie):</b> z tvojho počítača na server.<br><b>⬇️ Download (stiahnutie):</b> zo servera do tvojho počítača.</p></div>
+    <h3>Simulácia: si správca školského webu</h3>
+    <div class="task">
+      <div class="ins">Klikni na súbor a potom na tlačidlo uprostred.</div>
+      <div class="ftp">
+        <div class="panel"><h4>💻 Môj počítač</h4>${F.local.map(n => file("local", n)).join("")}</div>
+        <div class="mid">
+          <button class="ghost" data-ftp="up" ${F.sel && F.sel.s === "local" ? "" : "disabled"}>Nahrať ➜</button>
+          <button class="ghost" data-ftp="down" ${F.sel && F.sel.s === "remote" ? "" : "disabled"}>⬅ Stiahnuť</button>
+        </div>
+        <div class="panel"><h4>🖥️ Server ftp.skola.sk</h4>${F.remote.map(n => file("remote", n)).join("")}</div>
+      </div>
+      <ul class="goals">${G.map(([k, t]) => `<li><span class="g">${F.goals[k] ? "✅" : "⬜"}</span>${t}</li>`).join("")}</ul>
+      <div class="log" aria-label="Záznam FTP komunikácie" aria-live="polite">${F.log.map(esc).join("\n")}</div>
+      ${S.t.ftpsim ? '<div class="checkbar"><span class="score">Výborne! Všetky úlohy splnené, získal si 3 body</span></div>' : ""}
+    </div>
+    <p class="muted" style="font-size:15px">Riadky v čiernom okne sú skutočné príkazy FTP: STOR znamená ulož na server, RETR znamená pošli mi súbor.</p>
+    <h3>Otázky</h3>
+    <div class="task">${taskHTML("ftpq")}</div>` + nextBar();
+  },
+
+  test() {
+    return head() + `<h2>Záverečný test</h2>
+    <p>Posledná zastávka pred cieľom. Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p>
+    <div class="task">${taskHTML("test")}</div>` +
+    (S.t.test ? `<div class="next"><button class="primary" data-go="${STEPS.length - 1}">Zobraziť môj výsledok</button></div>` : "");
+  },
+
+  vysledok() {
+    if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="7">Prejsť na záverečný test</button>`;
+    const pct = Math.round(total() / MAX * 100);
+    const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+    const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const rows = STEPS.filter(s => STEP_TASKS[s.id].length).map(s => {
+      const ts = STEP_TASKS[s.id], sc = ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx = ts.reduce((a, t) => a + maxOf(TASKS[t]), 0);
+      return { title: s.title, sc, mx, done: ts.every(t => S.t[t]) };
+    });
+    const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+    const txt = `1.2 Vznik a história internetu (Prima) | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+    let formBtn = "";
+    if (RESULTS_FORM.url) {
+      const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" });
+      if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim());
+      if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+      formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`;
+    }
+    return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+    <div class="result">
+      <p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+      <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span>
+        <div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>
+        ${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}
+      </tbody></table></div>
+    </div>
+    <h3>Pošli výsledok učiteľovi</h3>
+    <p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+    <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+    <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+  }
+};
+
+/* ---------- Render ---------- */
+const main = document.getElementById("main");
+function render(toTop) {
+  renderTop();
+  main.innerHTML = VIEWS[STEPS[S.cur].id]();
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+
+function scramble() { const h = "0123456789abcdef"; let s = ""; for (let i = 0; i < 40; i++) s += h[Math.floor(Math.random() * 16)]; return s.replace(/(.{8})/g, "$1 ").trim(); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  const el = e.target.closest("button,[data-bucket]");
+  if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null;
+    const keep = { name: S.name, cls: S.cls };
+    S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.http) {
+    const pw = (S.pw || "").trim() || "mackaMica7";
+    S.httpLast = { p: ds.http, pw, x: scramble() };
+    if (!S.http.includes(ds.http)) S.http.push(ds.http);
+    if (S.http.length === 2 && !S.t.httpdemo) S.t.httpdemo = { score: 1, max: 1 };
+    save(); return render(false);
+  }
+  if (ds.fsel) { const [s, n] = ds.fsel.split("|"); S.ftp.sel = S.ftp.sel && S.ftp.sel.s === s && S.ftp.sel.n === n ? null : { s, n }; save(); return render(false); }
+  if (ds.ftp) {
+    const F = S.ftp, n = F.sel && F.sel.n; if (!n) return;
+    if (ds.ftp === "up") {
+      F.log.push("> STOR " + n);
+      if (F.remote.includes(n)) F.log.push("550 Súbor " + n + " už na serveri je");
+      else { F.remote.push(n); F.log.push("226 Súbor nahraný na server"); F.goals["up:" + n] = true; }
+    } else {
+      F.log.push("> RETR " + n);
+      if (F.local.includes(n)) F.log.push("550 Súbor " + n + " už v počítači máš");
+      else { F.local.push(n); F.log.push("226 Súbor stiahnutý do počítača"); F.goals["down:" + n] = true; }
+    }
+    F.log = F.log.slice(-12); F.sel = null;
+    if (F.goals["up:index.html"] && F.goals["up:obrazok.png"] && F.goals["down:rozvrh.pdf"] && !S.t.ftpsim) S.t.ftpsim = { score: 3, max: 3 };
+    save(); render(false);
+    const lg = document.querySelector(".log"); if (lg) lg.scrollTop = lg.scrollHeight;
+    return;
+  }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+
+function placeSel(t, b) {
+  if (!SEL || SEL.t !== t || S.t[t]) return;
+  const d = S.d[t] = S.d[t] || {};
+  if (b) d[SEL.i] = b; else delete d[SEL.i];
+  SEL = null; save(); render(false);
+}
+
+document.addEventListener("input", e => {
+  const f = e.target.dataset.field; if (!f) return;
+  S[f] = e.target.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint");
+    const ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+
+/* drag & drop for sorting */
+document.addEventListener("dragstart", e => {
+  const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return;
+  const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault();
+  SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); e.dataTransfer.effectAllowed = "move"; } catch (err) {}
+});
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => { document.querySelectorAll(".over").forEach(x => x.classList.remove("over")); });
+
+if (!S.started) S.cur = 0;
+render(true);
+</script>
+</body>
+</html>
