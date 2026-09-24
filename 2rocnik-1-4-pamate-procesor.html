@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.4 Druhy pamätí, procesor, operačná pamäť</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+:root{--bg:#ECEFF1;--acc:#0B7A75;--accSoft:#D3ECEA;--track:#C8D0D6;--border:#D5DBE0;--surface2:#F4F6F7;--ink:#111A22;--muted:#56626E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1418;--surface:#162027;--surface2:#1C2830;--acc:#3BC0B8;--accSoft:#173A38;--track:#2F3D47;--border:#2A3740;--ink:#E6EDF2;--muted:#98A6B2}}
+:root[data-theme="dark"]{--bg:#0E1418;--surface:#162027;--surface2:#1C2830;--acc:#3BC0B8;--accSoft:#173A38;--track:#2F3D47;--border:#2A3740;--ink:#E6EDF2;--muted:#98A6B2}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc h4{margin:8px 0 4px;font-family:var(--head);font-size:17px}
+.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.wide-svg svg{width:100%;height:auto;display:block}
+.lab{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.lab{grid-template-columns:1fr}}
+.lab svg{width:100%;height:auto;display:block}
+.side{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.side h4{font-family:var(--head);margin:0 0 6px;font-size:19px}
+.tag{display:inline-block;font-size:12.5px;font-weight:600;color:var(--acc);background:var(--accSoft);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:15px;margin-top:10px}
+.kv b{font-weight:600;color:var(--muted)}
+.zone{cursor:pointer}
+.zone .hit{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.zone:hover .hit,.zone:focus .hit{stroke:#F5A524;fill:rgba(245,165,36,.16)}
+.zone.on .hit{stroke:#F5A524;fill:rgba(245,165,36,.28);stroke-width:4}
+.zone.seen .hit{stroke:rgba(11,122,117,.6);stroke-dasharray:5 4}
+.zone:focus{outline:none}
+.meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin:8px 0 4px}
+.meter i{display:block;height:100%;background:var(--acc)}
+.cpu{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.cpu{grid-template-columns:1fr}}
+.cpu svg{width:100%;height:auto;display:block}
+.regs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.reg{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:6px 12px;font-family:var(--mono);font-size:15px;min-width:70px;text-align:center}
+.reg b{display:block;font-size:11.5px;color:var(--muted);font-family:var(--font)}
+.reg.ch{border-color:var(--amber);background:var(--amberSoft)}
+.stage{display:flex;gap:6px;margin:6px 0}
+.stage span{flex:1;text-align:center;padding:6px;border-radius:8px;background:var(--surface2);border:1.5px solid var(--border);font-weight:600;font-size:14px}
+.stage span.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.demo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.demo{grid-template-columns:1fr}}
+.box2{border:2px solid var(--border);border-radius:12px;padding:12px;background:var(--surface)}
+.box2 h4{margin:0 0 8px;font-family:var(--head)}
+.box2 .ct{font-family:var(--mono);font-size:14px;min-height:60px;white-space:pre-wrap;background:var(--surface2);border-radius:8px;padding:8px}
+.off{opacity:.35;filter:grayscale(1)}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin:12px 0}
+.gi{margin:0;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px}
+.gi figcaption{font-size:14px;margin-top:6px}
+.gi figcaption b{display:block;font-family:var(--head)}
+.gi figcaption span{color:var(--muted)}
+.qimg{display:block;margin:8px 0;max-width:340px}
+.qimg svg{width:100%;height:auto;display:block}
+.gi.w2{grid-column:span 2}@media (max-width:480px){.gi.w2{grid-column:span 1}}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+/* ---------- realistic component illustrations ---------- */
+const BG = (w, h) => `<rect width="${w}" height="${h}" rx="14" fill="#F4F6F7"/>`;
+const IMG = {
+  cpuTop: `<svg viewBox="0 0 260 180" role="img" aria-label="Procesor zhora">${BG(260, 180)}
+    <rect x="60" y="20" width="140" height="140" rx="6" fill="#1F5B3A"/><rect x="60" y="20" width="140" height="140" rx="6" fill="none" stroke="#154029" stroke-width="3"/>
+    ${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => `<rect x="${68 + i * 13}" y="24" width="6" height="3" fill="#D4AF37"/><rect x="${68 + i * 13}" y="153" width="6" height="3" fill="#D4AF37"/>`).join("")}
+    <rect x="76" y="36" width="108" height="108" rx="8" fill="#C9CED4"/><rect x="76" y="36" width="108" height="108" rx="8" fill="url(#ihs)"/>
+    <defs><linearGradient id="ihs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EEF1F4"/><stop offset=".5" stop-color="#BFC5CC"/><stop offset="1" stop-color="#E3E7EB"/></linearGradient></defs>
+    <text x="130" y="84" text-anchor="middle" font-family="Rubik,sans-serif" font-weight="700" font-size="15" fill="#39414A">CPU</text>
+    <text x="130" y="104" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#56626E">8-CORE · 4.6 GHz</text>
+    <text x="130" y="120" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#7A838C">X64 · 2026</text>
+    <path d="M64 150 l10 0 l-10 -10z" fill="#D4AF37"/></svg>`,
+  cpuBottom: (() => { let s = `<svg viewBox="0 0 260 180" role="img" aria-label="Procesor zospodu s kontaktmi">${BG(260, 180)}<rect x="60" y="20" width="140" height="140" rx="6" fill="#1F5B3A"/>`;
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { if (x > 5 && x < 10 && y > 5 && y < 10) continue; s += `<circle cx="${70 + x * 8}" cy="${30 + y * 8}" r="2.4" fill="#D4AF37"/>`; }
+    return s + `<rect x="114" y="78" width="32" height="24" rx="2" fill="#2E6B47"/><path d="M64 150 l10 0 l-10 -10z" fill="#D4AF37"/></svg>`; })(),
+  ram: `<svg viewBox="0 0 520 150" role="img" aria-label="Modul operačnej pamäte">${BG(520, 150)}
+    <rect x="20" y="30" width="480" height="80" rx="5" fill="#2E7D4F"/><rect x="20" y="30" width="480" height="80" rx="5" fill="none" stroke="#1D5234" stroke-width="2"/>
+    ${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<rect x="${36 + i * 57}" y="42" width="44" height="40" rx="2" fill="#15171A"/><rect x="${40 + i * 57}" y="46" width="12" height="4" fill="#3A3F46"/>`).join("")}
+    <rect x="200" y="86" width="110" height="14" rx="2" fill="#F3F3F3"/><text x="255" y="97" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#333">DDR5 16GB 5600</text>
+    ${Array.from({ length: 58 }, (_, i) => `<rect x="${26 + i * 8.2}" y="104" width="5" height="14" fill="#D4AF37"/>`).join("")}<rect x="250" y="102" width="12" height="18" fill="#F4F6F7"/>
+    <path d="M20 44 q-6 0 -6 6 v20 q0 6 6 6" fill="#F4F6F7"/><path d="M500 44 q6 0 6 6 v20 q0 6 -6 6" fill="#F4F6F7"/></svg>`,
+  m2: `<svg viewBox="0 0 520 130" role="img" aria-label="SSD disk M.2 NVMe">${BG(520, 130)}
+    <rect x="40" y="36" width="440" height="58" rx="4" fill="#15171A"/>
+    ${Array.from({ length: 30 }, (_, i) => i === 5 ? "" : `<rect x="${42 + 0}" y="${40 + i * 1.7}" width="0" height="0"/>`).join("")}
+    <rect x="16" y="40" width="26" height="50" fill="#15171A"/>${Array.from({ length: 12 }, (_, i) => `<rect x="18" y="${42 + i * 4}" width="18" height="2.4" fill="#D4AF37"/>`).join("")}<rect x="16" y="70" width="26" height="5" fill="#F4F6F7"/>
+    <rect x="70" y="44" width="54" height="42" rx="3" fill="#2B2F36"/><text x="97" y="69" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="8" fill="#9AA3AD">RADIČ</text>
+    <rect x="150" y="42" width="120" height="46" rx="3" fill="#2B2F36"/><rect x="290" y="42" width="120" height="46" rx="3" fill="#2B2F36"/>
+    <text x="210" y="69" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#9AA3AD">FLASH NAND</text><text x="350" y="69" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#9AA3AD">FLASH NAND</text>
+    <path d="M466 52 a13 13 0 0 1 0 26" fill="#F4F6F7"/><circle cx="480" cy="65" r="7" fill="#C8CDD3"/>
+    <text x="260" y="118" text-anchor="middle" font-family="Rubik,sans-serif" font-size="12" fill="#56626E">asi 2,2 × 8 cm, ako žuvačka</text></svg>`,
+  ssd25: `<svg viewBox="0 0 260 180" role="img" aria-label="SSD disk 2,5 palca SATA">${BG(260, 180)}
+    <rect x="40" y="24" width="180" height="128" rx="8" fill="#2B2F36"/><rect x="56" y="44" width="148" height="70" rx="4" fill="#E9ECEF"/>
+    <text x="130" y="74" text-anchor="middle" font-family="Rubik,sans-serif" font-weight="700" font-size="16" fill="#111A22">SSD</text><text x="130" y="94" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#56626E">1 TB · SATA 2,5"</text>
+    <rect x="64" y="146" width="42" height="10" rx="2" fill="#15171A"/><rect x="112" y="146" width="66" height="10" rx="2" fill="#15171A"/>
+    <text x="85" y="172" text-anchor="middle" font-family="Rubik,sans-serif" font-size="10" fill="#56626E">dáta</text><text x="145" y="172" text-anchor="middle" font-family="Rubik,sans-serif" font-size="10" fill="#56626E">napájanie</text></svg>`,
+  hdd: `<svg viewBox="0 0 260 180" role="img" aria-label="Otvorený pevný disk HDD">${BG(260, 180)}
+    <rect x="46" y="14" width="168" height="152" rx="8" fill="#A9B1BA"/><rect x="46" y="14" width="168" height="152" rx="8" fill="none" stroke="#7C858F" stroke-width="2"/>
+    <defs><radialGradient id="plt"><stop offset="0" stop-color="#F7F9FB"/><stop offset=".6" stop-color="#C9D1DA"/><stop offset="1" stop-color="#9AA5B1"/></radialGradient></defs>
+    <circle cx="118" cy="84" r="60" fill="url(#plt)"/><circle cx="118" cy="84" r="60" fill="none" stroke="#7C858F"/>
+    <circle cx="118" cy="84" r="14" fill="#7C858F"/><circle cx="118" cy="84" r="6" fill="#C9D1DA"/>
+    <circle cx="188" cy="140" r="12" fill="#5A626C"/><path d="M188 140 L140 60" stroke="#5A626C" stroke-width="8" stroke-linecap="round"/><path d="M140 60 l-6 -6" stroke="#2B2F36" stroke-width="5"/>
+    ${[[54, 22], [206, 22], [54, 158], [206, 158]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3" fill="#5A626C"/>`).join("")}
+    <text x="130" y="178" text-anchor="middle" font-family="Rubik,sans-serif" font-size="10" fill="#56626E">platňa · čítacia hlava na ramienku</text></svg>`,
+  usb: `<svg viewBox="0 0 260 150" role="img" aria-label="USB kľúč">${BG(260, 150)}
+    <rect x="40" y="50" width="130" height="50" rx="12" fill="#1766C2"/><rect x="52" y="62" width="60" height="26" rx="4" fill="#fff" opacity=".9"/><text x="82" y="80" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#1766C2">64 GB</text>
+    <rect x="166" y="58" width="56" height="34" rx="2" fill="#C8CDD3"/><rect x="176" y="66" width="10" height="7" fill="#7C858F"/><rect x="198" y="66" width="10" height="7" fill="#7C858F"/>
+    <circle cx="150" cy="75" r="6" fill="#fff" opacity=".6"/></svg>`,
+  sd: `<svg viewBox="0 0 260 150" role="img" aria-label="Pamäťová karta SD">${BG(260, 150)}
+    <path d="M90 20 h70 l18 18 v94 h-88z" fill="#2B2F36"/><rect x="98" y="60" width="72" height="52" rx="4" fill="#E4572E"/>
+    <text x="134" y="84" text-anchor="middle" font-family="Rubik,sans-serif" font-weight="700" font-size="15" fill="#fff">SD</text><text x="134" y="102" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#fff">128 GB</text>
+    ${[0, 1, 2, 3, 4, 5, 6].map(i => `<rect x="${96 + i * 10}" y="26" width="6" height="16" fill="#D4AF37"/>`).join("")}<rect x="88" y="70" width="4" height="14" fill="#C8CDD3"/></svg>`,
+  bios: `<svg viewBox="0 0 260 150" role="img" aria-label="Čip BIOS na základnej doske">${BG(260, 150)}<rect x="30" y="20" width="200" height="110" rx="8" fill="#163A31"/>
+    <g stroke="#C8CDD3" stroke-width="4">${[0, 1, 2, 3].map(i => `<line x1="${104 + i * 18}" y1="52" x2="${104 + i * 18}" y2="40"/><line x1="${104 + i * 18}" y1="98" x2="${104 + i * 18}" y2="110"/>`).join("")}</g>
+    <rect x="92" y="52" width="78" height="46" rx="3" fill="#15171A"/><circle cx="100" cy="60" r="3" fill="#3A3F46"/><text x="131" y="80" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#9AA3AD">25Q256</text>
+    <text x="131" y="124" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#D6ECE4">BIOS</text></svg>`,
+  cloud: `<svg viewBox="0 0 260 160" role="img" aria-label="Servery v dátovom centre">${BG(260, 160)}
+    ${[0, 1].map(r => `<rect x="${50 + r * 84}" y="18" width="76" height="126" rx="4" fill="#2B2F36"/>${[0, 1, 2, 3, 4, 5, 6].map(i => `<rect x="${56 + r * 84}" y="${24 + i * 17}" width="64" height="13" rx="2" fill="#3A4149"/><circle cx="${112 + r * 84}" cy="${30.5 + i * 17}" r="2.4" fill="${(i + r) % 3 ? "#3CCB8E" : "#F5A524"}"/>${[0, 1, 2, 3].map(k => `<rect x="${60 + r * 84 + k * 9}" y="${28 + i * 17}" width="6" height="5" fill="#15171A"/>`).join("")}`).join("")}`).join("")}
+    <text x="130" y="156" text-anchor="middle" font-family="Rubik,sans-serif" font-size="10" fill="#56626E">servery v dátovom centre</text></svg>`
+};
+const GALLERY = [
+  ["cpuTop", "Procesor (zhora)", "V ňom sú registre a cache. Kovový kryt odvádza teplo do chladiča."],
+  ["cpuBottom", "Procesor (zospodu)", "Stovky až tisíce kontaktov, ktorými sa dotýka pätice."],
+  ["ram", "Modul RAM", "Zasúva sa do slotu DIMM. Zárez zabráni otočeniu naopak."],
+  ["m2", "SSD disk M.2 NVMe", "Malá doštička priskrutkovaná priamo na základnú dosku."],
+  ["ssd25", "SSD disk 2,5\" SATA", "Pripája sa dvoma káblami: dátovým a napájacím."],
+  ["hdd", "Pevný disk HDD (otvorený)", "Otáčajúca sa platňa a hlava na ramienku. Bežne je zatvorený."],
+  ["usb", "USB kľúč", "Prenosná flash pamäť."],
+  ["sd", "Pamäťová karta SD", "Vo fotoaparátoch a niektorých notebookoch. Aj to je flash pamäť."],
+  ["bios", "Čip BIOS/UEFI", "Malý čip s 8 nožičkami na základnej doske."],
+  ["cloud", "Cloud", "Tvoje súbory na diskoch v serveroch niekde vo svete."]
+];
+const LOOK = { reg: ["cpuTop", "Registre nevidno, sú ukryté vo vnútri procesora."], cache: ["cpuTop", "Cache nevidno, je vo vnútri procesora."], ram: ["ram", ""], ssd: ["m2", ""], hdd: ["hdd", ""], cloud: ["cloud", ""] };
+
+const KEY = "pamate-24-v1";
+const LESSON = "1.4 Druhy pamätí, procesor, operačná pamäť";
+const BRAND = "1.4 Pamäte, procesor, RAM";
+const CLASS_DEFAULT = "II.";
+const WIDE = { pamate: 1, procesor: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "pamate", title: "Druhy pamätí", min: 9 },
+  { id: "procesor", title: "Mikroprocesor", min: 11 },
+  { id: "ram", title: "Operačná pamäť", min: 9 },
+  { id: "kde", title: "Kde je čo uložené", min: 5 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { pamate: ["foto", "speed", "vol"], procesor: ["cpuin", "cpuq"], ram: ["ramin", "ramq"], kde: ["kdeq"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 2. ročník",
+  lead: "Počítač má celú rodinu pamätí: od maličkých a bleskovo rýchlych v procesore až po obrovské a pomalšie disky. Pozrieš sa do vnútra procesora, spustíš program krok po kroku a zistíš, prečo neuložený referát zmizne pri výpadku prúdu. 5 zastávok, body a na konci výsledok.",
+  guessQ: "Píšeš referát a ešte si ho neuložil. Kde je v tej chvíli uložený?",
+  guessNote: "Tip sa neboduje. Na zastávke Operačná pamäť zistíš, či si mal pravdu.",
+  guesses: ["Na disku, ukladá sa automaticky", "V operačnej pamäti RAM", "V procesore", "V čipe s BIOS-om"],
+  ok: 1, yes: "Presne tak! A preto sa pri výpadku prúdu stratí.", no: "Nie. Neuložený dokument je iba v operačnej pamäti RAM, a tá bez prúdu všetko zabudne."
+};
+function EXTRA_STATE() { return { seen: [], exp: null, cseen: [], cexp: null, sim: 0, ram: "Referát: Počítačové pamäte\n\nOperačná pamäť je…", disk: "", power: true }; }
+
+/* ---------- memory hierarchy ---------- */
+const MEM = {
+  reg: { n: "Registre", w: "priamo v jadre procesora", t: "menej ako 1 ns", c: "desiatky až stovky bajtov", v: "stratová", k: "🤲 ruky kuchára", i: "Najmenšia a najrýchlejšia pamäť. Sú v nej čísla, s ktorými procesor práve počíta." },
+  cache: { n: "Vyrovnávacia pamäť (cache)", w: "v procesore, úrovne L1, L2, L3", t: "asi 1 až 20 ns", c: "kB až desiatky MB", v: "stratová", k: "🔪 pracovná doska", i: "Drží údaje a inštrukcie, ktoré procesor potrebuje najčastejšie, aby nemusel čakať na pomalšiu RAM." },
+  ram: { n: "Operačná pamäť (RAM)", w: "moduly na základnej doske", t: "asi 60 až 100 ns", c: "8 až 64 GB", v: "stratová", k: "🧊 chladnička", i: "Pracovná pamäť počítača. Sú v nej spustené programy a otvorené súbory." },
+  ssd: { n: "SSD disk", w: "slot M.2 alebo SATA", t: "asi 0,02 až 0,1 ms", c: "0,5 až 4 TB", v: "nestratová", k: "🥫 špajza", i: "Trvalé úložisko bez pohyblivých častí. Je tu systém, programy aj tvoje súbory." },
+  hdd: { n: "Pevný disk (HDD)", w: "SATA, v skrinke alebo externý", t: "asi 5 až 10 ms", c: "1 až 20 TB", v: "nestratová", k: "📦 pivnica", i: "Otáčajúce sa magnetické platne. Lacný a veľký, ale oveľa pomalší ako SSD." },
+  cloud: { n: "Cloud a zálohy", w: "servery na internete", t: "desiatky ms a viac", c: "prakticky neobmedzená", v: "nestratová", k: "🏪 obchod v meste", i: "Úložisko na vzdialených serveroch. Dostupné odkiaľkoľvek, ale závisí od internetu." }
+};
+const MKEYS = Object.keys(MEM);
+function pyramidSVG() {
+  const H = 58, top = 24, cx = 300;
+  let s = `<svg viewBox="0 0 600 ${top + MKEYS.length * H + 40}" role="group" aria-label="Pyramída pamätí"><rect width="600" height="${top + MKEYS.length * H + 40}" rx="14" fill="#F4F6F7"/>`;
+  const cols = ["#C0392B", "#D9480F", "#F5A524", "#0B7A75", "#1766C2", "#6A3FD0"];
+  MKEYS.forEach((k, i) => {
+    const w1 = 110 + i * 60, w2 = 110 + (i + 1) * 60, y = top + i * H;
+    const pts = `${cx - w1 / 2},${y} ${cx + w1 / 2},${y} ${cx + w2 / 2},${y + H - 4} ${cx - w2 / 2},${y + H - 4}`;
+    const cls = (S.exp === k ? "on " : "") + (S.seen.includes(k) ? "seen" : "");
+    s += `<g class="zone ${cls}" data-mz="${k}" tabindex="0" role="button" aria-label="${MEM[k].n}"><polygon points="${pts}" fill="${cols[i]}"/><text x="${cx}" y="${y + H / 2 + 3}" text-anchor="middle" font-family="Rubik,sans-serif" font-weight="700" font-size="${i < 1 ? 16 : 18}" fill="#fff">${MEM[k].n.replace(" (cache)", "").replace(" (RAM)", "").replace(" (HDD)", "")}</text><polygon class="hit" points="${pts}"/></g>`;
+  });
+  const b = top + MKEYS.length * H;
+  s += `<g font-family="Rubik,sans-serif" font-size="13" font-weight="700"><path d="M26 ${b - 10} V${top + 10}" stroke="#C0392B" stroke-width="4" marker-end="url(#pa)"/><text x="38" y="${top + 24}" fill="#C0392B" font-size="15">rýchlejšia</text><text x="38" y="${top + 42}" fill="#C0392B" font-size="15">a drahšia</text>
+  <path d="M574 ${top + 10} V${b - 10}" stroke="#1766C2" stroke-width="4" marker-end="url(#pb)"/><text x="562" y="${top + 24}" text-anchor="end" fill="#1766C2" font-size="15">väčšia</text><text x="562" y="${top + 42}" text-anchor="end" fill="#1766C2" font-size="15">kapacita</text></g>
+  <defs><marker id="pa" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#C0392B"/></marker><marker id="pb" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#1766C2"/></marker></defs>
+  <text x="300" y="${b + 26}" text-anchor="middle" font-family="Rubik,sans-serif" font-size="15" fill="#56626E">Klikni na vrstvu pyramídy</text>`;
+  return s + `</svg>`;
+}
+const KITCHEN = `<svg viewBox="0 0 720 172" role="img" aria-label="Pamäte ako kuchyňa"><rect width="720" height="172" rx="14" fill="#F4F6F7"/>
+  ${[["🤲", "ruky", "registre"], ["🔪", "doska", "cache"], ["🧊", "chladnička", "RAM"], ["🥫", "špajza", "disk"], ["🏪", "obchod", "cloud"]].map((x, i) => `<g transform="translate(${30 + i * 140},18)" font-family="Rubik,sans-serif" text-anchor="middle"><circle cx="50" cy="40" r="34" fill="#fff" stroke="#D5DBE0" stroke-width="2"/><text x="50" y="52" font-size="32">${x[0]}</text><text x="50" y="96" font-size="14" font-weight="700" fill="#111A22">${x[1]}</text><text x="50" y="114" font-size="12.5" fill="#0B7A75" font-weight="600">= ${x[2]}</text>${i < 4 ? `<path d="M92 40 h36" stroke="#9AA7B2" stroke-width="3"/><path d="M122 34 l7 6 l-7 6" fill="none" stroke="#9AA7B2" stroke-width="3"/>` : ""}</g>`).join("")}
+  <text x="360" y="160" text-anchor="middle" font-family="Rubik,sans-serif" font-size="12.5" fill="#56626E">čím ďalej od kuchára, tým viac sa zmestí, ale tým dlhšie trvá priniesť to</text></svg>`;
+
+/* ---------- CPU ---------- */
+const CPUZ = {
+  alu: { n: "ALU (aritmeticko-logická jednotka)", i: "Počíta: sčíta, odčíta, porovná čísla, vykoná logické operácie. Je to „kalkulačka“ procesora." },
+  cu: { n: "Riadiaca jednotka", i: "Načíta inštrukciu z pamäte, zistí, čo znamená (dekóduje ju), a riadi ostatné časti, aby ju vykonali." },
+  regs: { n: "Registre", i: "Pár malých pamätí priamo v jadre. Napríklad PC (adresa ďalšej inštrukcie), IR (aktuálna inštrukcia) a registre na čísla." },
+  l12: { n: "Cache L1 a L2", i: "Súkromná rýchla pamäť každého jadra. L1 je najmenšia a najrýchlejšia." },
+  core: { n: "Ďalšie jadrá", i: "Každé jadro je samostatný „mini procesor“. Viac jadier = viac úloh naraz, napríklad hra, hudba a prehliadač súčasne." },
+  l3: { n: "Cache L3", i: "Spoločná vyrovnávacia pamäť pre všetky jadrá. Väčšia, ale pomalšia ako L1 a L2." },
+  imc: { n: "Radič pamäte", i: "Komunikuje s operačnou pamäťou RAM: posiela jej adresy a prenáša údaje tam a späť." },
+  gpu: { n: "Integrovaná grafika", i: "Grafický čip priamo v procesore. Stačí na bežnú prácu a video, na náročné hry sa používa samostatná grafická karta." }
+};
+function cpuSVG() {
+  const z = (id, rects, inner) => `<g class="zone ${S.cexp === id ? "on" : ""} ${S.cseen.includes(id) ? "seen" : ""}" data-cz="${id}" tabindex="0" role="button" aria-label="${CPUZ[id].n}">${inner}${rects.map(r => `<rect class="hit" x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="6"/>`).join("")}</g>`;
+  const T = (x, y, t, s = 13, c = "#fff") => `<text x="${x}" y="${y}" text-anchor="middle" font-family="Rubik,sans-serif" font-weight="700" font-size="${s}" fill="${c}" pointer-events="none">${t}</text>`;
+  let s = `<svg viewBox="0 0 640 440" role="group" aria-label="Vnútro mikroprocesora"><rect width="640" height="440" rx="14" fill="#F4F6F7"/>
+  <rect x="20" y="20" width="470" height="400" rx="16" fill="#2B3036"/>${T(255, 44, "MIKROPROCESOR (CPU)", 14, "#AEB7C0")}
+  <rect x="36" y="58" width="210" height="200" rx="12" fill="#3A4149" stroke="#0B7A75" stroke-width="2"/>${T(141, 80, "Jadro 1", 14, "#9FE3DE")}`;
+  s += z("cu", [[48, 92, 186, 44]], `<rect x="48" y="92" width="186" height="44" rx="8" fill="#6A3FD0"/>${T(141, 119, "Riadiaca jednotka")}`);
+  s += z("alu", [[48, 144, 90, 50]], `<rect x="48" y="144" width="90" height="50" rx="8" fill="#D9480F"/>${T(93, 174, "ALU")}`);
+  s += z("regs", [[144, 144, 90, 50]], `<rect x="144" y="144" width="90" height="50" rx="8" fill="#C0392B"/>${T(189, 174, "Registre")}`);
+  s += z("l12", [[48, 202, 186, 44]], `<rect x="48" y="202" width="186" height="44" rx="8" fill="#F5A524"/>${T(141, 229, "Cache L1 + L2", 13, "#3A2A00")}`);
+  s += z("core", [[256, 58, 222, 200]], [[256, 58], [370, 58], [256, 160], [370, 160]].slice(0, 3).map(([x, y], i) => `<rect x="${x}" y="${y}" width="${i === 2 ? 222 : 108}" height="94" rx="12" fill="#3A4149" stroke="#56626E" stroke-width="2"/>${T(x + (i === 2 ? 111 : 54), y + 52, "Jadro " + (i + 2), 13, "#AEB7C0")}`).join(""));
+  s += z("l3", [[36, 270, 442, 50]], `<rect x="36" y="270" width="442" height="50" rx="10" fill="#E6B34A"/>${T(257, 301, "Cache L3 (spoločná pre všetky jadrá)", 14, "#3A2A00")}`);
+  s += z("gpu", [[36, 332, 210, 70]], `<rect x="36" y="332" width="210" height="70" rx="10" fill="#12805A"/>${T(141, 372, "Integrovaná grafika")}`);
+  s += z("imc", [[256, 332, 222, 70]], `<rect x="256" y="332" width="222" height="70" rx="10" fill="#1766C2"/>${T(367, 372, "Radič pamäte")}`);
+  s += `<path d="M478 367 H540" stroke="#1766C2" stroke-width="6"/><path d="M530 357 l12 10 l-12 10" fill="none" stroke="#1766C2" stroke-width="5"/>
+  <g transform="translate(548,300)"><rect width="76" height="130" rx="6" fill="#2E7D4F"/>${[0, 1, 2, 3].map(i => `<rect x="14" y="${12 + i * 28}" width="48" height="18" rx="2" fill="#16181B"/>`).join("")}${T(38, -8, "RAM", 14, "#111A22")}</g>`;
+  return s + `</svg>`;
+}
+
+/* ---------- CPU simulator ---------- */
+const PROG = ["LOAD A,[5]", "LOAD B,[6]", "ADD A,B", "STORE A,[7]", "HALT", 5, 7, 0];
+const SIM = (() => {
+  const st = [], m = PROG.slice(); let pc = 0, ir = "–", A = 0, B = 0;
+  const push = (stg, txt, hl, ch) => st.push({ stg, txt, hl, ch, m: m.slice(), pc, ir, A, B });
+  push(-1, "Program aj čísla sú uložené v operačnej pamäti. Procesor začína na adrese 0 (register PC = 0).", null, []);
+  for (let g = 0; g < 6; g++) {
+    ir = m[pc]; const at = pc; pc++;
+    push(0, `NAČÍTANIE: riadiaca jednotka prečíta z adresy ${at} inštrukciu „${ir}“ do registra IR a PC zväčší na ${pc}.`, at, ["ir", "pc"]);
+    const mm = String(ir).match(/^(\w+)(?: (\w),\[?(\w)\]?)?/);
+    const op = mm[1];
+    const dec = { LOAD: `„načítaj do registra ${mm[2]} číslo z adresy ${mm[3]}“`, ADD: "„sčítaj A a B, výsledok daj do A“", STORE: `„ulož register ${mm[2]} na adresu ${mm[3]}“`, HALT: "„koniec programu“" }[op];
+    push(1, `DEKÓDOVANIE: riadiaca jednotka zistí, že inštrukcia znamená ${dec}.`, at, []);
+    if (op === "HALT") { push(2, "VYKONANIE: procesor sa zastaví. Program skončil.", null, []); break; }
+    if (op === "LOAD") { const a = +mm[3]; if (mm[2] === "A") A = m[a]; else B = m[a]; push(2, `VYKONANIE: z adresy ${a} sa prenesie číslo ${m[a]} do registra ${mm[2]}.`, a, [mm[2]]); }
+    if (op === "ADD") { A = A + B; push(2, `VYKONANIE: ALU sčíta ${A - B} + ${B} = ${A} a výsledok uloží do registra A.`, null, ["A"]); }
+    if (op === "STORE") { const a = +mm[3]; m[a] = A; push(2, `VYKONANIE: číslo ${A} z registra A sa zapíše do pamäte na adresu ${a}.`, a, []); }
+  }
+  return st;
+})();
+function simHTML() {
+  const k = Math.min(S.sim, SIM.length - 1), c = SIM[k];
+  const rows = c.m.map((v, a) => `<tr style="${c.hl === a ? "background:var(--amberSoft);font-weight:700" : ""}"><td style="font-family:var(--mono)">${a}</td><td style="font-family:var(--mono)">${v}</td><td class="muted" style="font-size:13px">${a < 5 ? "inštrukcia" : "číslo"}</td></tr>`).join("");
+  const reg = (n, v) => `<div class="reg ${c.ch.includes(n.toLowerCase()) || c.ch.includes(n) ? "ch" : ""}"><b>${n}</b>${v}</div>`;
+  return `<div class="cpu"><div><div class="stage">${["1. Načítanie", "2. Dekódovanie", "3. Vykonanie"].map((t, i) => `<span class="${c.stg === i ? "on" : ""}">${t}</span>`).join("")}</div>
+    <div class="regs">${reg("PC", c.pc)}${reg("IR", c.ir)}${reg("A", c.A)}${reg("B", c.B)}</div>
+    <p style="min-height:72px;font-size:15.5px">${c.txt}</p>
+    <div class="row"><button class="ghost" data-sk="-1" ${k === 0 ? "disabled" : ""}>◀ Späť</button><button class="primary" data-sk="1" ${k >= SIM.length - 1 ? "disabled" : ""}>Ďalší krok ▶</button><button class="ghost" data-sk="0">↺ Od začiatku</button></div>
+    <p class="muted" style="font-size:14px;margin-top:6px">Krok ${k + 1} z ${SIM.length}</p></div>
+    <div><b>Operačná pamäť</b><table style="margin-top:6px"><thead><tr><th>Adresa</th><th>Obsah</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
+/* ---------- RAM art ---------- */
+const RAMSVG = `<svg viewBox="0 0 720 150" role="img" aria-label="Modul operačnej pamäte"><rect width="720" height="150" rx="14" fill="#F4F6F7"/>
+  <rect x="40" y="24" width="640" height="90" rx="6" fill="#2E7D4F"/>${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<rect x="${62 + i * 76}" y="38" width="56" height="44" rx="3" fill="#16181B"/>`).join("")}
+  ${Array.from({ length: 60 }, (_, i) => `<rect x="${52 + i * 10.3}" y="100" width="6" height="14" fill="#D4AF37"/>`).join("")}<rect x="330" y="98" width="14" height="18" fill="#F4F6F7"/>
+  <text x="360" y="140" text-anchor="middle" font-family="Rubik,sans-serif" font-size="13" font-weight="600" fill="#56626E">modul DDR5, 16 GB · zárez medzi kontaktmi zaručí, že sa modul nedá zasunúť naopak</text></svg>`;
+const CELLS = `<svg viewBox="0 0 720 130" role="img" aria-label="Bunky pamäte s adresami"><rect width="720" height="130" rx="14" fill="#F4F6F7"/>
+  ${[72, 104, 101, 106, 33, 0, 255, 17].map((v, i) => `<g transform="translate(${28 + i * 84},30)" font-family="JetBrains Mono,monospace" text-anchor="middle"><rect width="74" height="52" rx="8" fill="#fff" stroke="#0B7A75" stroke-width="2"/><text x="37" y="33" font-size="18" font-weight="700" fill="#111A22">${v}</text><text x="37" y="-8" font-size="13" fill="#56626E">${1000 + i}</text></g>`).join("")}
+  <text x="360" y="112" text-anchor="middle" font-family="Rubik,sans-serif" font-size="13" fill="#56626E">nad bunkou je jej adresa, v bunke je 1 bajt (číslo 0 až 255)</text></svg>`;
+
+const TASKS = {
+  foto: { id: "foto", type: "mc", qs: [
+    { id: "1", q: `Čo je na obrázku?<div class="qimg">${IMG.hdd}</div>`, opts: ["Pevný disk HDD", "SSD disk", "Optická mechanika", "Chladič procesora"], a: 0 },
+    { id: "2", q: `Čo je na obrázku?<div class="qimg">${IMG.m2}</div>`, opts: ["SSD disk M.2", "Modul RAM", "Grafická karta", "Sieťová karta"], a: 0 },
+    { id: "3", q: `Čo je na obrázku?<div class="qimg">${IMG.ram}</div>`, opts: ["Modul operačnej pamäte RAM", "SSD disk M.2", "Rozširujúca karta PCIe", "Batéria CMOS"], a: 0 },
+    { id: "4", q: `Čo je na obrázku?<div class="qimg">${IMG.cpuBottom}</div>`, opts: ["Procesor zospodu", "Čip BIOS", "Pamäťová karta", "Zvuková karta"], a: 0 },
+    { id: "5", q: `Čo je na obrázku?<div class="qimg">${IMG.sd}</div>`, opts: ["Pamäťová karta SD", "SIM karta", "USB kľúč", "Čip BIOS"], a: 0 }
+  ]},
+  speed: { id: "speed", type: "order", items: [{ id: "a", t: "Registre" }, { id: "b", t: "Cache" }, { id: "c", t: "Operačná pamäť RAM" }, { id: "d", t: "SSD disk" }, { id: "e", t: "Pevný disk HDD" }] },
+  vol: { id: "vol", type: "sort",
+    buckets: [{ id: "s", label: "⚡ Stratová (volatilná)", sub: "bez prúdu všetko zabudne" }, { id: "n", label: "💾 Nestratová", sub: "pamätá si aj bez prúdu" }],
+    items: [{ id: "1", t: "Registre", b: "s" }, { id: "2", t: "Cache", b: "s" }, { id: "3", t: "RAM", b: "s" }, { id: "4", t: "SSD disk", b: "n" }, { id: "5", t: "Pevný disk HDD", b: "n" }, { id: "6", t: "USB kľúč", b: "n" }, { id: "7", t: "Pamäťová karta SD", b: "n" }, { id: "8", t: "Flash čip s BIOS/UEFI", b: "n" }],
+    after: "Všetko, čo je v procesore a v RAM, sa po vypnutí stratí. Preto súbory ukladáme na disk, USB kľúč alebo do cloudu." },
+  cpuin: { id: "cpuin", type: "input", qs: [
+    { id: "1", q: "Aké číslo bude po skončení programu na adrese 7?", ok: v => parseNum(v) === 12, show: "12", ph: "?" },
+    { id: "2", q: "Koľko inštrukcií (vrátane HALT) procesor načítal z pamäte?", ok: v => parseNum(v) === 5, show: "5", ph: "?" }
+  ]},
+  cpuq: { id: "cpuq", type: "mc", qs: [
+    { id: "1", q: "Ktorá časť procesora vykonala sčítanie 5 + 7?", opts: ["ALU", "Riadiaca jednotka", "Cache L3", "Radič pamäte"], a: 0 },
+    { id: "2", q: "Procesor má takt 3,5 GHz. Čo to znamená?", opts: ["Vykoná 3,5 miliardy taktov za sekundu", "Má 3,5 GB pamäte cache", "Má 3,5 jadra", "Vykoná 3,5 milióna inštrukcií za hodinu"], a: 0 },
+    { id: "3", q: "Čo prináša viac jadier?", opts: ["Procesor zvládne viac úloh naraz", "Počítač bude mať viac RAM", "Disk bude rýchlejší", "Procesor bude mať vyšší takt"], a: 0 }
+  ]},
+  ramin: { id: "ramin", type: "input", qs: [
+    { id: "1", q: "Koľko MB má modul 16 GB? (1 GB = 1024 MB)", ok: v => parseNum(v) === 16384, show: "16 384", unit: "MB", ph: "?" },
+    { id: "2", q: "Počítač má 2 moduly po 8 GB a v 2 slotoch nič. Koľko GB RAM má spolu?", ok: v => parseNum(v) === 16, show: "16", unit: "GB", ph: "?" }
+  ]},
+  ramq: { id: "ramq", type: "mc", qs: [
+    { id: "1", q: "Pri 30 otvorených kartách je počítač pomalý a disk neustále pracuje. Čo sa deje?", opts: ["Došla RAM a systém odkladá údaje na pomalší disk", "Disk je pokazený", "Procesor sa prehrial", "Internet je pomalý"], a: 0, why: "Keď RAM nestačí, operačný systém presúva menej používané údaje do stránkovacieho súboru na disku. Disk je však oveľa pomalší ako RAM." },
+    { id: "2", q: "Prečo sa dávajú do počítača dva rovnaké moduly RAM namiesto jedného veľkého?", opts: ["Pracujú v dvojkanálovom režime a prenášajú údaje rýchlejšie", "Lebo jeden veľký modul neexistuje", "Aby počítač menej hrial", "Kvôli lepšiemu zvuku"], a: 0 },
+    { id: "3", q: "Čo sa stane s obsahom RAM po vypnutí počítača?", opts: ["Úplne sa vymaže", "Automaticky sa uloží na disk", "Zostane tam do ďalšieho zapnutia", "Presunie sa do procesora"], a: 0 }
+  ]},
+  kdeq: { id: "kdeq", type: "mc", keep: true, qs: [
+    { id: "1", q: "Číslo, ktoré procesor práve teraz sčítava", opts: ["Registre", "Cache", "RAM", "Flash (BIOS)", "Disk", "Cloud"], a: 0 },
+    { id: "2", q: "Inštrukcie cyklu, ktoré procesor opakuje stále dokola", opts: ["Registre", "Cache", "RAM", "Flash (BIOS)", "Disk", "Cloud"], a: 1 },
+    { id: "3", q: "Hra, ktorú máš práve spustenú", opts: ["Registre", "Cache", "RAM", "Flash (BIOS)", "Disk", "Cloud"], a: 2 },
+    { id: "4", q: "Firmvér, ktorý sa spustí ako prvý po zapnutí", opts: ["Registre", "Cache", "RAM", "Flash (BIOS)", "Disk", "Cloud"], a: 3 },
+    { id: "5", q: "Fotky z výletu stiahnuté do počítača", opts: ["Registre", "Cache", "RAM", "Flash (BIOS)", "Disk", "Cloud"], a: 4 },
+    { id: "6", q: "Záloha fotiek, ku ktorej sa dostaneš aj z mobilu", opts: ["Registre", "Cache", "RAM", "Flash (BIOS)", "Disk", "Cloud"], a: 5 }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Ktorá pamäť je najrýchlejšia?", opts: ["Registre", "Cache L3", "Operačná pamäť RAM", "SSD disk"], a: 0 },
+    { id: "2", q: "Volatilná (stratová) pamäť:", opts: ["po vypnutí prúdu stratí obsah", "sa dá iba čítať", "je vždy pomalšia ako disk", "sa používa na zálohy"], a: 0 },
+    { id: "3", q: "ALU v procesore:", opts: ["vykonáva aritmetické a logické operácie", "riadi poradie vykonávania inštrukcií", "komunikuje s RAM", "uchováva BIOS"], a: 0 },
+    { id: "4", q: "Riadiaca jednotka procesora:", opts: ["načíta a dekóduje inštrukcie a riadi ostatné časti", "sčíta a porovnáva čísla", "zobrazuje obraz na monitore", "napája procesor"], a: 0 },
+    { id: "5", q: "Aké je poradie krokov pri vykonávaní inštrukcie?", opts: ["načítanie → dekódovanie → vykonanie", "vykonanie → načítanie → dekódovanie", "dekódovanie → načítanie → vykonanie", "načítanie → vykonanie → dekódovanie"], a: 0 },
+    { id: "6", q: "Takt 4 GHz znamená:", opts: ["4 miliardy taktov za sekundu", "4 milióny taktov za sekundu", "4 GB pamäte", "4 jadrá"], a: 0 },
+    { id: "7", q: "Prečo má procesor pamäť cache?", opts: ["RAM je pre procesor pomalá, cache má najčastejšie údaje blízko", "Aby počítač nepotreboval RAM", "Aby sa údaje zachovali po vypnutí", "Na ukladanie BIOS-u"], a: 0 },
+    { id: "8", q: "Operačná pamäť RAM slúži na:", opts: ["uloženie spustených programov a otvorených údajov", "trvalé uloženie súborov", "uloženie firmvéru BIOS", "pripojenie k internetu"], a: 0 }
+  ]}
+};
+
+/* ---------- views ---------- */
+const VIEWS = {
+  pamate() {
+    const m = S.exp ? MEM[S.exp] : null, n = S.seen.length;
+    return head() + `<h2>Druhy pamätí</h2>
+    <p>Počítač potrebuje pamäť, ktorá je zároveň <b>rýchla</b>, <b>veľká</b> a <b>lacná</b>. Taká neexistuje. Preto má celú <b>hierarchiu</b> pamätí: hore malé a veľmi rýchle, dole veľké a pomalšie. Predstav si kuchyňu:</p>
+    <figure class="fig wide-svg">${KITCHEN}</figure>
+    <h3>Preskúmaj pyramídu pamätí</h3>
+    <div class="lab"><div class="fig" style="margin:0">${pyramidSVG()}</div>
+      <div class="side">${m ? `<div class="wide-svg" style="margin-bottom:10px">${IMG[LOOK[S.exp][0]]}</div>${LOOK[S.exp][1] ? `<p class="muted" style="font-size:13.5px;margin:-4px 0 8px">${LOOK[S.exp][1]}</p>` : ""}<span class="tag">Preskúmané ${n} z 6</span><h4>${m.n}</h4><p style="font-size:15.5px;margin:0">${m.i}</p>
+        <div class="kv"><b>Kde:</b><span>${m.w}</span><b>Čas prístupu:</b><span>${m.t}</span><b>Kapacita:</b><span>${m.c}</span><b>Bez prúdu:</b><span>${m.v === "stratová" ? "⚡ stratí obsah" : "💾 obsah zostane"}</span><b>V kuchyni:</b><span>${m.k}</span></div>`
+        : `<h4>Klikni na vrstvu</h4><p class="muted" style="font-size:15px;margin:0">Pri každej pamäti uvidíš, kde je, aká je rýchla a veľká.</p>`}
+        <div class="meter"><i style="width:${Math.round(n / 6 * 100)}%"></i></div></div></div>
+    <div class="box v"><p><b>ns</b> = nanosekunda, miliardtina sekundy. <b>ms</b> = milisekunda, tisícina sekundy. Pevný disk je teda asi <b>100 000-krát</b> pomalší ako RAM.</p></div>
+    <p>Mimo pyramídy je ešte <b>ROM a flash pamäť</b> na základnej doske. Obsahuje firmvér BIOS/UEFI a zachová si ho aj bez prúdu.</p>
+    <h3>Ako vyzerajú?</h3>
+    <div class="gal">${GALLERY.map(g => `<figure class="gi ${g[0] === "ram" || g[0] === "m2" ? "w2" : ""}"><div class="wide-svg">${IMG[g[0]]}</div><figcaption><b>${g[1]}</b><span>${g[2]}</span></figcaption></figure>`).join("")}</div>
+    <h3>Úloha 1: poznáš ich?</h3><div class="task">${taskHTML("foto")}</div>
+    <h3>Úloha 2: zoraď od najrýchlejšej</h3><div class="task">${taskHTML("speed")}</div>
+    <h3>Úloha 3: čo si pamätá aj bez prúdu?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("vol")}</div>` + nextBar();
+  },
+  procesor() {
+    const c = S.cexp ? CPUZ[S.cexp] : null;
+    return head() + `<h2>Mikroprocesor: mozog počítača</h2>
+    <p><b>Mikroprocesor (CPU)</b> vykonáva inštrukcie programov. Je to jeden čip, v ktorom sú miliardy tranzistorov. Moderný procesor má niekoľko <b>jadier</b> a každé jadro má riadiacu jednotku, ALU, registre a cache.</p>
+    <div class="two" style="margin:14px 0"><figure class="fig" style="margin:0"><div class="wide-svg">${IMG.cpuTop}</div><figcaption>Takto vyzerá procesor zhora. Vo vnútri pod kovovým krytom je malý kremíkový čip.</figcaption></figure>
+      <figure class="fig" style="margin:0"><div class="wide-svg">${IMG.cpuBottom}</div><figcaption>Zospodu má stovky zlatých kontaktov. Zlatý trojuholník v rohu ukazuje, ako ho vložiť do pätice.</figcaption></figure></div>
+    <p>Keby sme kryt odstránili a čip zväčšili, uvideli by sme toto:</p>
+    <div class="lab"><div class="fig" style="margin:0">${cpuSVG()}</div>
+      <div class="side">${c ? `<span class="tag">Časť procesora</span><h4>${c.n}</h4><p style="font-size:15.5px;margin:0">${c.i}</p>` : `<h4>Klikni na časť procesora</h4><p class="muted" style="font-size:15px;margin:0">Preskúmaj, z čoho sa procesor skladá.</p>`}</div></div>
+    <div class="cards"><div class="pc"><h4>⏱️ Takt (GHz)</h4><p>Koľko miliárd taktov urobí za sekundu. Napríklad 4 GHz.</p></div><div class="pc"><h4>🧩 Počet jadier</h4><p>Koľko úloh zvládne naozaj naraz. Bežne 4 až 16.</p></div>
+      <div class="pc"><h4>📦 Cache</h4><p>Čím väčšia, tým menej čaká na RAM.</p></div><div class="pc"><h4>🏗️ Architektúra</h4><p>x64 (Intel, AMD) alebo ARM (mobily, niektoré notebooky).</p></div></div>
+    <h3>Spusti program krok po kroku</h3>
+    <p>Procesor opakuje stále dookola tri kroky: <b>načítaj</b> inštrukciu z pamäte, <b>dekóduj</b> ju a <b>vykonaj</b> ju. Tento program sčíta dve čísla z pamäte. Sleduj registre a pamäť.</p>
+    <div class="task">${simHTML()}</div>
+    <h3>Úloha 1: čo sa stalo?</h3><div class="task">${taskHTML("cpuin")}</div>
+    <h3>Úloha 2: procesor</h3><div class="task">${taskHTML("cpuq")}</div>` + nextBar();
+  },
+  ram() {
+    return head() + `<h2>Operačná pamäť (RAM)</h2>
+    ${guessBox()}
+    <p><b>RAM</b> (Random Access Memory) je pracovná pamäť počítača. Keď spustíš program alebo otvoríš súbor, načíta sa z disku do RAM, lebo je oveľa rýchlejšia. Je <b>stratová</b>: bez prúdu všetko zabudne.</p>
+    <figure class="fig"><div class="wide-svg">${IMG.ram}</div><figcaption>Modul DDR5 s kapacitou 16 GB. Čierne čipy sú pamäťové čipy, zlaté kontakty sa zasúvajú do slotu na doske.</figcaption></figure>
+    <figure class="fig wide-svg">${CELLS}</figure>
+    <div class="cards"><div class="pc"><h4>📏 Kapacita</h4><p>Bežne 8 až 32 GB. Viac RAM = viac programov a kariet naraz.</p></div><div class="pc"><h4>🔢 Typ</h4><p>DDR4 alebo DDR5. Typy nie sú zameniteľné, doska podporuje iba jeden.</p></div>
+      <div class="pc"><h4>⚡ Frekvencia</h4><p>Ako rýchlo prenáša údaje, napr. 5600 MT/s.</p></div><div class="pc"><h4>👯 Dvojkanál</h4><p>Dva rovnaké moduly v správnych slotoch sú rýchlejšie ako jeden.</p></div></div>
+    <h3>Pokus: vypadol prúd!</h3>
+    <p>Píš do dokumentu. Potom skús „vypnúť prúd“ s uložením aj bez neho a sleduj, čo zostane.</p>
+    <div class="task"><div class="demo">
+      <div class="box2 ${S.power ? "" : "off"}"><h4>🧠 RAM (otvorený dokument)</h4><textarea id="ramtxt" rows="5" ${S.power ? "" : "disabled"} aria-label="Dokument v RAM">${esc(S.ram)}</textarea></div>
+      <div class="box2"><h4>💾 Disk (uložený súbor)</h4><div class="ct">${S.disk ? esc(S.disk) : "(zatiaľ nič neuložené)"}</div></div></div>
+      <div class="row">${S.power ? `<button class="ghost" data-pw="save">💾 Uložiť na disk (Ctrl + S)</button><button class="primary" data-pw="off" style="background:#C0392B">⚡ Vypadol prúd</button>` : `<button class="primary" data-pw="on">🔌 Zapnúť počítač</button>`}${S.power && S.disk ? `<button class="ghost" data-pw="open">📂 Otvoriť z disku</button>` : ""}</div>
+      ${!S.power ? `<div class="fb bad">Obsah RAM zmizol. Na disku zostalo iba to, čo si uložil.</div>` : ""}</div>
+    <h3>Úloha 1: výpočty</h3><div class="task">${taskHTML("ramin")}</div>
+    <h3>Úloha 2: RAM v praxi</h3><div class="task">${taskHTML("ramq")}</div>` + nextBar();
+  },
+  kde() {
+    return head() + `<h2>Kde je čo uložené?</h2>
+    <p>Teraz už vieš, že každá pamäť má svoju úlohu. Pri každej situácii urči, v ktorej pamäti sú údaje.</p>
+    <figure class="fig wide-svg">${KITCHEN}</figure>
+    <div class="task">${taskHTML("kdeq")}</div>` + nextBar();
+  },
+  test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
+};
+
+function CUSTOM_CLICK(e) {
+  const mz = e.target.closest && e.target.closest("[data-mz]");
+  if (mz) { const k = mz.dataset.mz; S.exp = k; if (!S.seen.includes(k)) S.seen.push(k); save(); render(false); return true; }
+  const cz = e.target.closest && e.target.closest("[data-cz]");
+  if (cz) { const k = cz.dataset.cz; S.cexp = k; if (!S.cseen.includes(k)) S.cseen.push(k); save(); render(false); return true; }
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.sk !== undefined) { const d = +ds.sk; S.sim = d === 0 ? 0 : Math.max(0, Math.min(SIM.length - 1, S.sim + d)); save(); render(false); return true; }
+  if (ds.pw) {
+    if (ds.pw === "save") S.disk = S.ram;
+    if (ds.pw === "off") { S.power = false; S.ram = ""; }
+    if (ds.pw === "on") { S.power = true; S.ram = ""; }
+    if (ds.pw === "open") S.ram = S.disk;
+    save(); render(false); return true;
+  }
+  return false;
+}
+function CUSTOM_INPUT(e) { if (e.target.id === "ramtxt") { S.ram = e.target.value; save(); return true; } return false; }
+document.addEventListener("keydown", e => {
+  const z = e.target.closest && e.target.closest("[data-mz],[data-cz]");
+  if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s" && STEPS[S.cur].id === "ram" && S.power) { e.preventDefault(); S.disk = S.ram; save(); render(false); }
+});
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
