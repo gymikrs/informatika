@@ -140,6 +140,10 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .goals{list-style:none;padding:0;margin:10px 0 0}
 .goals li{padding:3px 0}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:14px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-family:var(--head);font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
 :root{--bg:#ECEFF1;--acc:#0B7A75;--accSoft:#D3ECEA;--track:#C8D0D6;--border:#D5DBE0;--surface2:#F4F6F7;--ink:#111A22;--muted:#56626E}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1418;--surface:#162027;--surface2:#1C2830;--acc:#3BC0B8;--accSoft:#173A38;--track:#2F3D47;--border:#2A3740;--ink:#E6EDF2;--muted:#98A6B2}}
 :root[data-theme="dark"]{--bg:#0E1418;--surface:#162027;--surface2:#1C2830;--acc:#3BC0B8;--accSoft:#173A38;--track:#2F3D47;--border:#2A3740;--ink:#E6EDF2;--muted:#98A6B2}
@@ -202,6 +206,7 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
+const THEORY = {"hdd": ["<b>HDD</b> má otáčajúce sa magnetické platne a čítaciu hlavu na ramene.", "Platňa je rozdelená na stopy a sektory. Otáčky 5400 alebo 7200 za minútu.", "Je citlivý na otrasy."], "frag": ["<b>Fragmentácia</b> = súbor je uložený po kúskoch na rôznych miestach disku.", "<b>Defragmentácia</b> ich poskladá za sebou. SSD sa nedefragmentuje."], "ssd": ["<b>SSD</b> ukladá údaje do flash čipov, nemá pohyblivé časti.", "Je rýchly, tichý a odolný. HDD je lacnejší za 1 TB."], "karty": ["Pamäťové karty SD a microSD používajú flash pamäť.", "Typy podľa kapacity: SD (do 2 GB), SDHC (do 32 GB), SDXC (do 2 TB).", "Značky rýchlosti: C10, U3, V30 (video 4K)."], "kapacita": ["1 B = 8 bitov, jednotky kB, MB, GB, TB po 1024.", "Výrobcovia počítajú po 1000, preto 1 TB disk ukazuje asi 931 GB."], "kam": ["Pravidlo zálohovania <b>3-2-1</b>: 3 kópie, 2 rôzne médiá, 1 kópia mimo domu."]};
 const BG = (w, h) => `<rect width="${w}" height="${h}" rx="14" fill="#F4F6F7"/>`;
 const IMG = {
   ssd25: `<svg viewBox="0 0 260 180" role="img" aria-label="SSD disk 2,5 palca SATA">${BG(260, 180)}<rect x="40" y="24" width="180" height="128" rx="8" fill="#2B2F36"/><rect x="56" y="44" width="148" height="70" rx="4" fill="#E9ECEF"/><text x="130" y="74" text-anchor="middle" font-family="Rubik,sans-serif" font-weight="700" font-size="16" fill="#111A22">SSD</text><text x="130" y="94" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#56626E">1 TB · SATA 2,5"</text><rect x="64" y="146" width="42" height="10" rx="2" fill="#15171A"/><rect x="112" y="146" width="66" height="10" rx="2" fill="#15171A"/><text x="85" y="172" text-anchor="middle" font-family="Rubik,sans-serif" font-size="10" fill="#56626E">dáta</text><text x="145" y="172" text-anchor="middle" font-family="Rubik,sans-serif" font-size="10" fill="#56626E">napájanie</text></svg>`,
@@ -478,7 +483,9 @@ function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
 function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
-function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { return memoHTML() + nextBar0(); }
+function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
 function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
 
 function renderTop() {
