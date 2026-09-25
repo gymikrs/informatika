@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2.2 IDLE a korytnačia grafika</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+:root{--bg:#EDF2F8;--acc:#1766C2;--accSoft:#DCE8F8;--track:#CBD6E4;--border:#D3DCE8;--surface2:#F4F7FB;--ink:#101A2B;--muted:#526079}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1522;--surface:#162033;--surface2:#1C283F;--acc:#6AA8F5;--accSoft:#1D3355;--track:#2E3D57;--border:#2A3852;--ink:#E7EEF8;--muted:#9AABC6}}
+:root[data-theme="dark"]{--bg:#0E1522;--surface:#162033;--surface2:#1C283F;--acc:#6AA8F5;--accSoft:#1D3355;--track:#2E3D57;--border:#2A3852;--ink:#E7EEF8;--muted:#9AABC6}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc svg{width:54px;height:54px;display:block}
+.pc h4{margin:8px 0 4px;font-family:var(--head);font-size:17.5px}
+.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.code{font-family:var(--mono);font-size:15px;line-height:1.7;background:#0F1A2E;color:#DCE7FF;border-radius:12px;padding:12px 16px;overflow-x:auto;white-space:pre;margin:10px 0}
+.code .k{color:#FFB86B;font-weight:700}.code .s{color:#9BE39B}.code .c{color:#7F93B8}
+.code .ln{display:block;border-radius:4px;padding:0 6px;margin:0 -6px}
+.code .ln.hl{background:#2F5FB0}
+.lab{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.lab{grid-template-columns:1fr}}
+.side{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.side h4{font-family:var(--head);margin:0 0 6px;font-size:19px}
+.goals{list-style:none;padding:0;margin:10px 0 0}.goals li{padding:3px 0}
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14.5px}
+.wt{background:#E9EDF3;padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:13.5px;border-bottom:1px solid #D5DCE6}
+.wt .dots{margin-left:auto;color:#666;letter-spacing:6px}
+.wb{padding:14px 16px}
+.menubar{display:flex;gap:2px;background:#F6F7F9;border-bottom:1px solid #E0E4EA;padding:2px 6px;position:relative}
+.menubar button{border:0;background:none;padding:4px 10px;font-size:13.5px;cursor:pointer;border-radius:4px;color:#1B1B1F}
+.menubar button:hover,.menubar button.on{background:#DCE6F5}
+.drop{position:absolute;top:30px;background:#fff;border:1px solid #BCC6D3;box-shadow:0 8px 20px rgba(0,0,0,.2);border-radius:6px;padding:4px;z-index:3;min-width:190px}
+.drop button{display:block;width:100%;text-align:left;padding:6px 10px}
+.shell{background:#fff;font-family:"Courier New",var(--mono);font-size:15px;padding:10px 12px;min-height:220px;max-height:360px;overflow:auto;white-space:pre-wrap;color:#000}
+.shell .p{color:#7A2E00}.shell .o{color:#0033CC}.shell .e{color:#D10000}.shell .i{color:#000}
+.shell .ban{color:#000}
+.pin{display:flex;align-items:center;gap:6px}
+.pin span{color:#7A2E00;font-family:"Courier New",var(--mono);font-size:15px}
+.pin input{flex:1;border:0;outline:none;font-family:"Courier New",var(--mono);font-size:15px;background:transparent;color:#000}
+.site{background:#fff;color:#1B1B1F}
+.site .hdr{background:#2B4B6F;color:#fff;padding:12px 16px;font-family:var(--head);font-weight:700;display:flex;gap:10px;align-items:center}
+.site .hero{background:linear-gradient(135deg,#3B6A9A,#2B4B6F);color:#fff;padding:22px 18px}
+.dlbtn{background:#FFD43B;color:#1B1B1F;border:0;border-radius:6px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:16px}
+.addr{display:flex;align-items:center;gap:8px;background:#F4F3F8;border:1px solid #D9D5E5;border-radius:999px;padding:5px 12px;font-family:var(--mono);font-size:13.5px;margin:8px 12px}
+.inst{display:grid;grid-template-columns:120px 1fr;min-height:260px}
+.inst .left{background:linear-gradient(#2B4B6F,#3B6A9A);display:grid;place-items:center;font-size:54px}
+.inst .right{padding:16px 18px}
+.opt3{display:block;width:100%;text-align:left;background:none;border:1px solid transparent;border-radius:6px;padding:8px 10px;cursor:pointer;color:#1B1B1F}
+.opt3:hover{background:#EEF3FA;border-color:#C9D6EA}
+.opt3 b{color:#1C4E8A;font-size:16px}
+.opt3 small{display:block;color:#555}
+.chk{display:flex;gap:8px;align-items:center;margin:6px 0;cursor:pointer;color:#1B1B1F}
+.prog{height:14px;border:1px solid #A9A4BD;border-radius:3px;overflow:hidden;background:#F0EFF5;margin:10px 0}
+.prog i{display:block;height:100%;width:100%;background:#12805A;animation:fill 1.2s ease-out}
+@keyframes fill{from{width:0}to{width:100%}}
+.start{background:#1F2530;color:#fff;border-radius:12px;padding:14px;max-width:460px}
+.start input{width:100%;border-radius:999px;border:0;padding:8px 14px;font:inherit;background:#2E3644;color:#fff}
+.start .res{margin-top:10px}
+.start .res button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:#2E3644;color:#fff;border:0;border-radius:8px;padding:8px 10px;cursor:pointer;margin-top:6px}
+.start .res button:hover{background:#3A4456}
+.cfg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:640px){.cfg{grid-template-columns:1fr}}
+.tabs2{display:flex;gap:2px;border-bottom:1px solid #C9D0DA;margin-bottom:10px}
+.tabs2 button{border:1px solid #C9D0DA;border-bottom:0;background:#F1F3F6;border-radius:5px 5px 0 0;padding:4px 12px;cursor:pointer;font-size:13.5px;color:#1B1B1F}
+.tabs2 button.on{background:#fff;font-weight:700}
+.cfg select{border:1px solid #A9A4BD;border-radius:4px;padding:4px 6px;background:#fff;color:#1B1B1F}
+.preview{border:1px solid #C9D0DA;border-radius:6px;padding:10px;font-family:"Courier New",monospace;color:#000;background:#fff;min-height:70px}
+.timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+.tl{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.tl b{display:block;font-family:var(--head);font-size:22px;color:var(--acc)}
+.tl span{font-size:14px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chips span{background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-weight:600;font-size:14.5px}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.tsim{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.tsim{grid-template-columns:1fr}}
+.tsim .shell{min-height:260px;max-height:300px}
+.twin svg{display:block;width:100%;height:auto;background:#fff}
+.twin .empty{height:260px;display:grid;place-items:center;color:#667;background:#F6F7F9;font-size:14px;text-align:center;padding:10px}
+.opts .opt svg{width:100%;height:auto;display:block;border-radius:6px;background:#fff}
+.targets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.targets button{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:600}
+.targets button.on{border-color:var(--acc);background:var(--accSoft)}
+.tprev svg{width:100%;max-width:220px;height:auto;display:block;background:#fff;border:1px solid var(--border);border-radius:10px}
+.compass svg{width:100%;max-width:300px;height:auto;display:block}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const KEY = "python-k22-v1";
+const LESSON = "2.2 IDLE a korytnačia grafika: vytvorenie korytnačky, príkazy na pohyb";
+const BRAND = "2.2 Korytnačka v Pythone";
+const CLASS_DEFAULT = "Kvarta";
+const WIDE = { korytnacka: 1, pohyb: 1, otacanie: 1, kreslime: 1, chyby: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "korytnacka", title: "Korytnačka", min: 6 },
+  { id: "pohyb", title: "Dopredu a dozadu", min: 7 },
+  { id: "otacanie", title: "Otáčanie", min: 8 },
+  { id: "predpoved", title: "Čo nakreslí?", min: 6 },
+  { id: "kreslime", title: "Kreslíme v Shelli", min: 12 },
+  { id: "chyby", title: "Časté chyby", min: 5 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { korytnacka: ["kor"], pohyb: ["kroky", "pohq"], otacanie: ["smer"], predpoved: ["pred"], kreslime: ["draw"], chyby: ["chyby"], test: ["test"] };
+const START = {
+  kicker: "Informatika, Kvarta",
+  lead: "Dnes v Pythone vytvoríš korytnačku a naučíš ju chodiť: dopredu, dozadu, otáčať sa vpravo a vľavo. Pracovať budeš v príkazovom režime v okne Shell. Každý príkaz sa hneď vykoná a korytnačka za sebou kreslí čiaru. Na konci nakreslíš štvorec, trojuholník aj domček. 7 zastávok, body a na konci výsledok.",
+  guessQ: "Kam je natočená korytnačka hneď po vytvorení?",
+  guessNote: "Tip sa neboduje. Na prvej zastávke to uvidíš.",
+  guesses: ["Hore", "Doprava", "Doľava", "Dole"],
+  ok: 1, yes: "Presne tak! Korytnačka stojí v strede okna a pozerá sa k pravému okraju.", no: "Korytnačka sa po vytvorení pozerá doprava, k pravému okraju okna."
+};
+function newWorld() { return { lines: [], hist: [], imp: false, win: false, x: 0, y: 0, h: 0, vis: true, segs: [], errBefore: false }; }
+function EXTRA_STATE() { return { sims: {}, dt: { sel: "stvorec", done: {} }, msg: {} }; }
+
+/* ---------- expression parser (numbers) ---------- */
+function tokenize(s) { const t = []; let i = 0; while (i < s.length) { const c = s[i]; if (c === " ") { i++; continue; } if (/[0-9.]/.test(c)) { let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ n: s.slice(i, j) }); i = j; continue; } if (s.startsWith("**", i) || s.startsWith("//", i)) { t.push({ o: s.slice(i, i + 2) }); i += 2; continue; } if ("+-*/%()".includes(c)) { t.push({ o: c }); i++; continue; } throw "syntax"; } return t; }
+function evalNum(src) {
+  const t = tokenize(src); let p = 0; const peek = () => t[p], eat = o => { if (t[p] && t[p].o === o) { p++; return true; } return false; };
+  function atom() { const x = peek(); if (!x) throw "syntax"; if (x.n !== undefined) { p++; const v = parseFloat(x.n); if (isNaN(v)) throw "syntax"; return v; } if (eat("(")) { const r = add(); if (!eat(")")) throw "syntax"; return r; } if (eat("-")) return -pw(); if (eat("+")) return pw(); throw "syntax"; }
+  function pw() { const b = atom(); if (eat("**")) return Math.pow(b, pw()); return b; }
+  function mul() { let a = pw(); for (;;) { const x = peek(); if (!x || !["*", "/", "//", "%"].includes(x.o)) return a; p++; const b = pw(); if (x.o !== "*" && b === 0) throw "zero"; a = x.o === "*" ? a * b : x.o === "/" ? a / b : x.o === "//" ? Math.floor(a / b) : ((a % b) + b) % b; } }
+  function add() { let a = mul(); for (;;) { const x = peek(); if (!x || !["+", "-"].includes(x.o)) return a; p++; const b = mul(); a = x.o === "+" ? a + b : a - b; } }
+  const r = add(); if (p !== t.length) throw "syntax"; return r;
+}
+const fmtN = v => Number.isInteger(v) ? String(v) : String(+v.toPrecision(15));
+
+/* ---------- turtle interpreter ---------- */
+const CMDS = { forward: ["fd", "distance"], fd: ["fd", "distance"], back: ["bk", "distance"], bk: ["bk", "distance"], backward: ["bk", "distance"], right: ["rt", "angle"], rt: ["rt", "angle"], left: ["lt", "angle"], lt: ["lt", "angle"],
+  reset: ["reset", null], showturtle: ["st", null], st: ["st", null], hideturtle: ["ht", null], ht: ["ht", null], home: ["home", null] };
+const ADDR = { reset: "0x000001F3A2C4E8B0", fd: "0x000001F3A2C4D1F0", forward: "0x000001F3A2C4D1F0", rt: "0x000001F3A2C4D550", right: "0x000001F3A2C4D550" };
+function tStep(W, op, a) {
+  W.win = true;
+  if (op === "fd" || op === "bk") { const d = op === "fd" ? a : -a, r = W.h * Math.PI / 180, nx = W.x + d * Math.cos(r), ny = W.y + d * Math.sin(r); if (d !== 0) W.segs.push([W.x, W.y, nx, ny]); W.x = nx; W.y = ny; }
+  if (op === "rt") W.h = ((W.h - a) % 360 + 360) % 360;
+  if (op === "lt") W.h = ((W.h + a) % 360 + 360) % 360;
+  if (op === "reset") { W.x = 0; W.y = 0; W.h = 0; W.segs = []; W.vis = true; }
+  if (op === "home") { if (W.x || W.y) W.segs.push([W.x, W.y, 0, 0]); W.x = 0; W.y = 0; W.h = 0; }
+  if (op === "st") W.vis = true; if (op === "ht") W.vis = false;
+}
+function execOne(W, c, n) {
+  const tb = (err, line) => `Traceback (most recent call last):\n  File "<pyshell#${n}>", line 1, in <module>\n    ${line}\n${err}`;
+  if (!c) return {};
+  if (/^from\s+turtle\s+import\s+\*$/.test(c)) { W.imp = true; return {}; }
+  if (/^import\s+turtle$/.test(c)) return { note: "V našich hodinách používame zápis <b>from turtle import *</b>." };
+  if (/^[0-9\s+\-*/%().]+$/.test(c)) { try { return { out: fmtN(evalNum(c)) }; } catch (e) { return e === "zero" ? { err: tb("ZeroDivisionError: division by zero", c) } : { err: "SyntaxError: invalid syntax" }; } }
+  let m = c.match(/^([A-Za-z_][A-Za-z_0-9]*)\s*\((.*)\)$/);
+  if (m) {
+    const name = m[1], arg = m[2].trim(), def = CMDS[name];
+    if (!def || !W.imp) { if (!W.imp && def) W.errBefore = true; return { err: tb(`NameError: name '${name}' is not defined`, c) }; }
+    if (def[1]) {
+      if (!arg) return { err: tb(`TypeError: ${name}() missing 1 required positional argument: '${def[1]}'`, c) };
+      let v; try { v = evalNum(arg); } catch (e) { return { err: /^[A-Za-z_]/.test(arg) ? tb(`NameError: name '${arg.match(/^\w+/)[0]}' is not defined`, c) : "SyntaxError: invalid syntax" }; }
+      tStep(W, def[0], v); return { ok: 1 };
+    }
+    if (arg) return { err: tb(`TypeError: ${name}() takes 0 positional arguments but 1 was given`, c) };
+    tStep(W, def[0], 0); return { ok: 1 };
+  }
+  if (/^[A-Za-z_][A-Za-z_0-9]*$/.test(c)) { if (W.imp && CMDS[c]) return { out: `<function ${c} at ${ADDR[c] || "0x000001F3A2C4F2A0"}>`, note: "Chýbajú zátvorky! Bez nich Python iba vypíše, čo je príkaz, ale nevykoná ho. Správne je napr. <b>" + c + "()</b>." }; return { err: tb(`NameError: name '${c}' is not defined`, c) }; }
+  return { err: "SyntaxError: invalid syntax" };
+}
+function runLine(W, line) {
+  const parts = line.split(";").map(s => s.trim()).filter(Boolean); let out = [], err = null, note = "";
+  for (const c of parts) { const r = execOne(W, c, W.hist.length); if (r.out) out.push(r.out); if (r.note) note = r.note; if (r.err) { err = r.err; break; } }
+  return { out: out.join("\n"), err, note };
+}
+function world(k) { if (!S.sims[k]) S.sims[k] = newWorld(); return S.sims[k]; }
+
+/* ---------- drawing ---------- */
+function turtleSVG(segs, x, y, h, vis, opt = {}) {
+  const vb = opt.vb || "-220 -160 440 320";
+  let s = `<svg viewBox="${vb}" role="img" aria-label="${opt.label || "Kresba korytnačky"}">`;
+  if (opt.grid !== false) { s += `<g stroke="#EEF1F5" stroke-width="1">`; for (let i = -200; i <= 200; i += 50) s += `<line x1="${i}" y1="-160" x2="${i}" y2="160"/>`; for (let j = -150; j <= 150; j += 50) s += `<line x1="-220" y1="${j}" x2="220" y2="${j}"/>`; s += `</g>`; }
+  if (opt.start) s += `<circle cx="0" cy="0" r="6" fill="#12805A"/>`;
+  if (opt.ghost) s += `<g stroke="#C9D3E3" stroke-width="6" stroke-linecap="round" fill="none">${opt.ghost.map(g => `<line x1="${g[0]}" y1="${-g[1]}" x2="${g[2]}" y2="${-g[3]}"/>`).join("")}</g>`;
+  s += `<g stroke="${opt.color || "#000"}" stroke-width="${opt.sw || 2}" stroke-linecap="round">${segs.map(g => `<line x1="${g[0].toFixed(2)}" y1="${(-g[1]).toFixed(2)}" x2="${g[2].toFixed(2)}" y2="${(-g[3]).toFixed(2)}"/>`).join("")}</g>`;
+  if (vis) s += `<g transform="translate(${x.toFixed(2)},${(-y).toFixed(2)}) rotate(${-h})"><polygon points="11,0 -6,6 -3,0 -6,-6" fill="#000"/></g>`;
+  return s + `</svg>`;
+}
+function simHTML(k, opt = {}) {
+  const W = world(k);
+  return `<div class="tsim"><div class="win"><div class="wt">🐍 IDLE Shell<span class="dots">— ▢ ✕</span></div>
+    <div class="shell" id="sh-${k}"><span class="ban">Python 3 (64-bit) on win32\nEnter "help" below or click "Help" above for more information.\n</span>${W.lines.map(l => `<span class="p">&gt;&gt;&gt; </span><span class="i">${esc(l.c)}</span>\n${l.out ? `<span class="o">${esc(l.out)}</span>\n` : ""}${l.err ? `<span class="e">${esc(l.err)}</span>\n` : ""}`).join("")}<div class="pin"><span>&gt;&gt;&gt;</span><input data-tin="${k}" autocomplete="off" spellcheck="false" aria-label="Príkaz pre Python"></div></div></div>
+    <div class="win twin"><div class="wt">🐢 Python Turtle Graphics<span class="dots">— ▢ ✕</span></div>${W.win ? turtleSVG(W.segs, W.x, W.y, W.h, W.vis, { ghost: opt.ghost }) : `<div class="empty">Okno s korytnačkou sa otvorí<br>po prvom príkaze pre korytnačku.</div>`}</div></div>
+    ${S.msg[k] ? `<div class="fb info">${S.msg[k]}</div>` : ""}`;
+}
+function run(prog) { const W = newWorld(); W.imp = true; prog.forEach(([o, a]) => tStep(W, o, a || 0)); return W; }
+function fitVB(segs, pad) { let a = [0], b = [0]; segs.forEach(s => { a.push(s[0], s[2]); b.push(-s[1], -s[3]); }); const x0 = Math.min(...a) - pad, x1 = Math.max(...a) + pad, y0 = Math.min(...b) - pad, y1 = Math.max(...b) + pad, w = Math.max(x1 - x0, y1 - y0), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2; return `${cx - w / 2} ${cy - w / 2} ${w} ${w}`; }
+function progSVG(prog, opt = {}) { const W = run(prog); if (opt.fit) opt.vb = fitVB(W.segs, opt.fit); return turtleSVG(W.segs, W.x, W.y, W.h, true, Object.assign({ grid: true, sw: 3 }, opt)); }
+
+/* ---------- compare drawings ---------- */
+function cells(segs, tf) {
+  const set = new Set();
+  segs.forEach(([x1, y1, x2, y2]) => { const L = Math.hypot(x2 - x1, y2 - y1), n = Math.max(1, Math.ceil(L)); for (let i = 0; i <= n; i++) { let x = x1 + (x2 - x1) * i / n, y = y1 + (y2 - y1) * i / n; if (tf) [x, y] = tf(x, y); set.add(Math.round(x / 5) + "," + Math.round(y / 5)); } });
+  let mx = Infinity, my = Infinity; set.forEach(c => { const [a, b] = c.split(",").map(Number); mx = Math.min(mx, a); my = Math.min(my, b); });
+  const out = new Set(); set.forEach(c => { const [a, b] = c.split(",").map(Number); out.add((a - mx) + "," + (b - my)); }); return out;
+}
+const TFS = [(x, y) => [x, y], (x, y) => [-y, x], (x, y) => [-x, -y], (x, y) => [y, -x], (x, y) => [-x, y], (x, y) => [y, x], (x, y) => [x, -y], (x, y) => [-y, -x]];
+function same(a, b) { let d = 0; a.forEach(c => { if (!b.has(c)) d++; }); b.forEach(c => { if (!a.has(c)) d++; }); return d <= Math.max(4, b.size * 0.08); }
+function matches(segs, target) { if (!segs.length) return false; const A = cells(segs); return TFS.some(tf => same(A, cells(target, tf))); }
+
+/* ---------- targets ---------- */
+const R = (n, arr) => Array.from({ length: n }, () => arr).flat();
+const TARGETS = {
+  stvorec: { n: "Štvorec", d: "strana 100", p: R(4, [["fd", 100], ["rt", 90]]) },
+  trojuholnik: { n: "Trojuholník", d: "rovnostranný, strana 100", p: R(3, [["fd", 100], ["rt", 120]]) },
+  obdlznik: { n: "Obdĺžnik", d: "160 × 80", p: [["fd", 160], ["rt", 90], ["fd", 80], ["rt", 90], ["fd", 160], ["rt", 90], ["fd", 80], ["rt", 90]] },
+  domcek: { n: "Domček", d: "štvorec + strecha, strany 100", p: [...R(4, [["fd", 100], ["rt", 90]]).slice(0, 7), ["rt", 30], ["fd", 100], ["rt", 120], ["fd", 100]] },
+  schody: { n: "Schody", d: "3 schody po 40", p: R(3, [["fd", 40], ["lt", 90], ["fd", 40], ["rt", 90]]) }
+};
+TARGETS.domcek.p = [["fd", 100], ["rt", 90], ["fd", 100], ["rt", 90], ["fd", 100], ["rt", 90], ["fd", 100], ["rt", 30], ["fd", 100], ["rt", 120], ["fd", 100]];
+
+/* ---------- prediction ---------- */
+const PRED = [
+  { q: "fd(80)\nbk(40)\nrt(90)\nfd(100)", ok: [["fd", 80], ["bk", 40], ["rt", 90], ["fd", 100]], alt: [[["fd", 80], ["bk", 40], ["lt", 90], ["fd", 100]], [["fd", 80], ["rt", 90], ["fd", 100]], [["fd", 40], ["rt", 90], ["fd", 100]]] },
+  { q: "fd(100)\nlt(90)\nfd(50)", ok: [["fd", 100], ["lt", 90], ["fd", 50]], alt: [[["fd", 100], ["rt", 90], ["fd", 50]], [["fd", 50], ["lt", 90], ["fd", 100]], [["lt", 90], ["fd", 100], ["rt", 90], ["fd", 50]]] },
+  { q: "fd(60)\nrt(90)\nfd(60)\nrt(90)\nfd(60)", ok: [["fd", 60], ["rt", 90], ["fd", 60], ["rt", 90], ["fd", 60]], alt: [[["fd", 60], ["lt", 90], ["fd", 60], ["lt", 90], ["fd", 60]], R(4, [["fd", 60], ["rt", 90]]), [["fd", 60], ["rt", 90], ["fd", 60]]] },
+  { q: "rt(90)\nfd(80)\nlt(90)\nfd(80)", ok: [["rt", 90], ["fd", 80], ["lt", 90], ["fd", 80]], alt: [[["lt", 90], ["fd", 80], ["rt", 90], ["fd", 80]], [["fd", 80], ["rt", 90], ["fd", 80]], [["rt", 90], ["fd", 80], ["rt", 90], ["fd", 80]]] }
+];
+const thumb = (p, vb) => progSVG(p, { vb, grid: false, sw: 4, start: true });
+
+const TASKS = {
+  kor: { id: "kor", type: "custom", max: 2 },
+  kroky: { id: "kroky", type: "input", qs: [
+    { id: "1", q: "Korytnačka vykoná príkazy <code>forward(100)</code>, <code>forward(-90)</code>, <code>forward(80)</code>, <code>forward(-70)</code>, <code>forward(60)</code>, <code>forward(-50)</code>. Koľko krokov spolu prejde?", ok: v => parseNum(v) === 450, show: "450", unit: "krokov", ph: "?", why: "100 + 90 + 80 + 70 + 60 + 50 = 450. Záporné číslo znamená iba pohyb dozadu, kroky sa aj tak počítajú." },
+    { id: "2", q: "Aká dlhá bude nakreslená čiara? Over si to v Shelli hore.", ok: v => parseNum(v) === 100, show: "100", unit: "krokov", ph: "?", why: "Korytnačka sa pohybuje tam a späť po tej istej čiare a nikdy nevyjde za prvých 100 krokov." }
+  ]},
+  pohq: { id: "pohq", type: "mc", qs: [
+    { id: "1", q: "Čo urobí príkaz <code>reset()</code>?", opts: ["Zmaže kresbu a vráti korytnačku do stredu", "Vypne Python", "Otočí korytnačku o 180°", "Zmaže iba poslednú čiaru"], a: 0 },
+    { id: "2", q: "Ktorý príkaz robí to isté ako <code>bk(50)</code>?", opts: ["fd(-50)", "fd(50)", "rt(50)", "bk(-50)"], a: 0 },
+    { id: "3", q: "Aká je skratka príkazu <code>forward(100)</code>?", opts: ["fd(100)", "fw(100)", "f(100)", "for(100)"], a: 0 }
+  ]},
+  smer: { id: "smer", type: "mc", keep: true, qs: [
+    { id: "1", q: "Korytnačka sa pozerá doprava. Kam sa bude pozerať po <code>rt(90)</code>?", opts: ["Hore ⬆", "Dole ⬇", "Doľava ⬅", "Doprava ➡"], a: 1 },
+    { id: "2", q: "Pozerá sa doprava. Kam po <code>lt(90)</code>?", opts: ["Hore ⬆", "Dole ⬇", "Doľava ⬅", "Doprava ➡"], a: 0 },
+    { id: "3", q: "Pozerá sa doprava. Kam po <code>rt(180)</code>?", opts: ["Hore ⬆", "Dole ⬇", "Doľava ⬅", "Doprava ➡"], a: 2 },
+    { id: "4", q: "Pozerá sa doprava. Kam po <code>rt(90)</code> a potom ešte <code>rt(90)</code>?", opts: ["Hore ⬆", "Dole ⬇", "Doľava ⬅", "Doprava ➡"], a: 2 },
+    { id: "5", q: "Aký je vzťah medzi <code>right(90)</code> a <code>left(-90)</code>?", opts: ["Otočia korytnačku rovnako", "Otočia ju opačne", "left(-90) nie je povolené", "right(90) sa otočí viac"], a: 0, why: "Záporný uhol otáča na opačnú stranu. Vľavo o −90 je teda vpravo o 90." },
+    { id: "6", q: "O koľko stupňov sa musí korytnačka otočiť, aby sa pozerala presne opačne?", opts: ["90", "180", "270", "360"], a: 1 }
+  ]},
+  pred: { id: "pred", type: "custom", max: PRED.length },
+  draw: { id: "draw", type: "custom", max: 5 },
+  chyby: { id: "chyby", type: "mc", qs: [
+    { id: "1", q: "<code>&gt;&gt;&gt; fd(100)</code> vypíše <span style=\"color:#D10000\">NameError: name 'fd' is not defined</span>. Čo chýba?", opts: ["Najprv treba zadať from turtle import *", "Chýba medzera pred zátvorkou", "Číslo 100 je príliš veľké", "Treba písať FD(100)"], a: 0 },
+    { id: "2", q: "Po <code>&gt;&gt;&gt; reset</code> sa plocha nezmazala a Python vypísal &lt;function reset at …&gt;. Prečo?", opts: ["Chýbajú prázdne zátvorky: reset()", "Príkaz reset neexistuje", "Treba počkať", "Treba ho napísať dvakrát"], a: 0 },
+    { id: "3", q: "<code>&gt;&gt;&gt; fd()</code> vypíše TypeError … missing 1 required positional argument. Čo je zle?", opts: ["Chýba počet krokov v zátvorke", "Chýba bodkočiarka", "fd sa píše bez zátvoriek", "Korytnačka je skrytá"], a: 0 },
+    { id: "4", q: "<code>&gt;&gt;&gt; Fd(100)</code> vypíše NameError. Prečo?", opts: ["Python rozlišuje veľké a malé písmená", "Chýba import", "100 nie je číslo", "Korytnačka stojí pri okraji"], a: 0 },
+    { id: "5", q: "Ktorý zápis je správny?", opts: ["fd(50)", "fd 50", "fd[50]", "fd:50"], a: 0, why: "Zápis fd (50) s medzerou síce tiež funguje, ale zvykni si písať zátvorku hneď za názov príkazu. Predídeš tým chybám ako pen color('red')." }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Ktorým príkazom povieme Pythonu, že budeme pracovať s korytnačkou?", opts: ["from turtle import *", "import korytnacka", "start turtle", "turtle()"], a: 0 },
+    { id: "2", q: "Kde stojí korytnačka po vytvorení?", opts: ["V strede okna, pozerá sa doprava", "V ľavom hornom rohu", "V strede, pozerá sa hore", "Dole, pozerá sa doľava"], a: 0 },
+    { id: "3", q: "Čo urobí <code>rt(90)</code>?", opts: ["Otočí korytnačku vpravo o 90°", "Posunie ju o 90 krokov vpravo", "Otočí ju vľavo o 90°", "Nakreslí pravý uhol"], a: 0 },
+    { id: "4", q: "Ktorý príkaz posunie korytnačku dozadu?", opts: ["bk(50)", "lt(50)", "rt(50)", "st(50)"], a: 0 },
+    { id: "5", q: "Na nakreslenie rovnostranného trojuholníka sa korytnačka po každej strane otočí o:", opts: ["120°", "60°", "90°", "180°"], a: 0, why: "Korytnačka sa otáča o vonkajší uhol. Vnútorný uhol trojuholníka je 60°, takže sa otočí o 180 − 60 = 120°." },
+    { id: "6", q: "Na nakreslenie štvorca sa korytnačka po každej strane otočí o:", opts: ["90°", "45°", "120°", "360°"], a: 0 },
+    { id: "7", q: "Čo urobí <code>reset()</code>?", opts: ["Zmaže plochu a vráti korytnačku na začiatok", "Ukončí Python", "Skryje korytnačku", "Uloží obrázok"], a: 0 },
+    { id: "8", q: "V príkazovom režime sa príkaz vykoná:", opts: ["hneď po stlačení Enter", "až po uložení", "až po stlačení F5", "až po zatvorení okna"], a: 0 }
+  ]}
+};
+
+/* ---------- views ---------- */
+const COMPASS = `<svg viewBox="0 0 300 300" role="img" aria-label="Otáčanie korytnačky"><rect width="300" height="300" rx="14" fill="#F4F7FB"/>
+  <circle cx="150" cy="150" r="100" fill="none" stroke="#CBD6E4" stroke-width="2" stroke-dasharray="4 6"/>
+  <g font-family="Rubik,sans-serif" font-weight="700" font-size="14" text-anchor="middle">
+  <path d="M150 150 L240 150" stroke="#1766C2" stroke-width="4"/><text x="270" y="155" fill="#1766C2">0°</text>
+  <path d="M150 150 L150 60" stroke="#12805A" stroke-width="4"/><text x="150" y="42" fill="#12805A">lt(90)</text>
+  <path d="M150 150 L150 240" stroke="#D9480F" stroke-width="4"/><text x="150" y="268" fill="#D9480F">rt(90)</text>
+  <path d="M150 150 L60 150" stroke="#6A3FD0" stroke-width="4"/><text x="36" y="155" fill="#6A3FD0">180°</text>
+  <path d="M205 150 A55 55 0 0 1 150 205" fill="none" stroke="#D9480F" stroke-width="3" marker-end="url(#ca)"/><path d="M205 150 A55 55 0 0 0 150 95" fill="none" stroke="#12805A" stroke-width="3" marker-end="url(#cb)"/></g>
+  <defs><marker id="ca" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#D9480F"/></marker><marker id="cb" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#12805A"/></marker></defs>
+  <g transform="translate(150,150)"><polygon points="16,0 -9,9 -4,0 -9,-9" fill="#000"/></g></svg>`;
+const REF = `<table style="max-width:640px"><thead><tr><th>Príkaz</th><th>Skratka</th><th>Čo urobí</th></tr></thead><tbody>
+  ${[["from turtle import *", "", "použi príkazy korytnačky"], ["showturtle()", "st()", "ukáž korytnačku"], ["forward(100)", "fd(100)", "dopredu o 100 krokov"], ["back(50)", "bk(50)", "dozadu o 50 krokov"], ["right(90)", "rt(90)", "otoč sa vpravo o 90°"], ["left(90)", "lt(90)", "otoč sa vľavo o 90°"], ["reset()", "", "zmaž plochu, korytnačku daj do stredu"]].map(r => `<tr><td><code>${r[0]}</code></td><td>${r[1] ? `<code>${r[1]}</code>` : ""}</td><td>${r[2]}</td></tr>`).join("")}</tbody></table>`;
+
+const VIEWS = {
+  korytnacka() {
+    const W = world("k1"), G = (ok, t) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`;
+    return head() + `<h2>Vytvoríme korytnačku</h2>
+    <p>Korytnačka je náš <b>vykonávateľ</b>. Stojí na ploche, vie chodiť a otáčať sa a pri pohybe za sebou kreslí čiaru. Aby Python korytnačku poznal, musíme najprv napísať:</p>
+    <div class="code" style="font-family:var(--mono);background:#0F1A2E;color:#DCE7FF;border-radius:12px;padding:12px 16px;font-size:16px">&gt;&gt;&gt; from turtle import *</div>
+    <p>Tento príkaz oznámi, že budeme pracovať s modulom <b>turtle</b> (anglicky korytnačka). Okno s korytnačkou sa otvorí až po <b>prvom príkaze</b> pre korytnačku, napríklad <code>showturtle()</code> alebo skrátene <code>st()</code>.</p>
+    ${guessBox()}
+    <h3>Vyskúšaj v Shelli</h3>
+    ${simHTML("k1")}
+    <div class="task"><b>Tvoje úlohy:</b><ul class="goals">${G(W.errBefore, "Najprv skús napísať <code>fd(100)</code> ešte <b>pred</b> importom. Čo sa stane?")}${G(W.imp, "Napíš <code>from turtle import *</code>")}${G(W.win, "Ukáž korytnačku príkazom <code>st()</code>")}</ul>
+      ${S.t.kor ? `<div class="checkbar"><span class="score ${S.t.kor.score < 2 ? "part" : ""}">Splnené: ${S.t.kor.score} z 2</span></div>` : ""}</div>
+    <div class="box v"><p>Korytnačka má tvar čiernej šípky, stojí v <b>strede</b> okna a je natočená <b>doprava</b>.</p></div>` + nextBar();
+  },
+  pohyb() {
+    return head() + `<h2>Dopredu a dozadu</h2>
+    ${REF}
+    <p>Počet krokov píšeme do <b>zátvoriek</b> za príkaz. Aj príkazy bez čísla, napríklad <code>reset()</code>, musia mať prázdne zátvorky. Každý príkaz má aj skratku. Na tejto hodine si ich skús používať.</p>
+    <h3>Voľné skúšanie</h3>
+    <p>Skús napríklad <code>fd(100)</code>, <code>bk(50)</code>, <code>fd(-30)</code> a <code>reset()</code>. Viac príkazov naraz oddelíš bodkočiarkou: <code>fd(50); bk(20)</code>.</p>
+    ${simHTML("k2")}
+    <h3>Úloha 1: koľko krokov?</h3><p>Najprv rieš v hlave alebo na papieri. Potom si to over v Shelli.</p><div class="task">${taskHTML("kroky")}</div>
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("pohq")}</div>` + nextBar();
+  },
+  otacanie() {
+    return head() + `<h2>Otáčanie</h2>
+    <div class="two"><div><p><code>right(90)</code>, skrátene <code>rt(90)</code>, otočí korytnačku <b>vpravo</b> o 90 stupňov. <code>left(90)</code>, skrátene <code>lt(90)</code>, ju otočí <b>vľavo</b>.</p><p>Pri otáčaní korytnačka <b>nekreslí</b>, iba sa otočí na mieste. Kreslí až pri pohybe.</p>
+      <div class="box"><p><b>90°</b> = pravý uhol · <b>180°</b> = čelom vzad · <b>360°</b> = celé kolo, pozerá sa znova rovnako</p></div></div>
+      <figure class="fig compass" style="margin:0">${COMPASS}</figure></div>
+    <h3>Vyskúšaj otáčanie</h3><p>Skús: <code>fd(50); rt(90); fd(50)</code>, potom <code>lt(90); fd(50)</code>. Vyskúšaj aj <code>lt(-90)</code>.</p>
+    ${simHTML("k3")}
+    <h3>Úloha: kam sa pozerá korytnačka?</h3><div class="task">${taskHTML("smer")}</div>` + nextBar();
+  },
+  predpoved() {
+    const P = S.pred || (S.pred = { ans: {}, done: false }), done = S.t.pred;
+    return head() + `<h2>Čo nakreslí korytnačka?</h2>
+    <p>Programátor musí vedieť odhadnúť, čo program urobí, <b>ešte pred</b> jeho spustením. Prečítaj si príkazy a vyber obrázok, ktorý korytnačka nakreslí. Začína vždy na zelenej bodke a pozerá sa doprava. Šípka ukazuje, kde korytnačka skončila.</p>
+    <div class="task">${PRED.map((q, qi) => { const o = ord("pred:" + qi, [0, 1, 2, 3]), progs = [q.ok, ...q.alt], vb = fitVB(progs.flatMap(pp => run(pp).segs), 30);
+      return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>Čo nakreslia tieto príkazy?</span></legend><div class="code" style="font-family:var(--mono);background:#0F1A2E;color:#DCE7FF;border-radius:10px;padding:8px 14px;white-space:pre;margin-bottom:10px;max-width:260px">${q.q}</div>
+        <div class="opts" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${o.map(i => { let c = "opt"; if (P.ans[qi] === i) c += " sel"; if (done) { if (i === 0) c += " ok"; else if (P.ans[qi] === i) c += " bad"; } return `<button class="${c}" data-pr="${qi}|${i}" ${done ? "disabled" : ""} aria-label="Možnosť">${thumb(progs[i], vb)}</button>`; }).join("")}</div></fieldset>`; }).join("")}
+      ${done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} bodov</span></div>` : `<div class="checkbar"><button class="primary" data-prcheck ${Object.keys(P.ans).length === PRED.length ? "" : "disabled"}>Skontrolovať</button></div>`}</div>
+    <p class="muted">Po kontrole si môžeš príkazy vyskúšať v Shelli na ďalšej zastávke.</p>` + nextBar();
+  },
+  kreslime() {
+    const D = S.dt, T = TARGETS[D.sel], k = "draw";
+    return head() + `<h2>Kreslíme v Shelli</h2>
+    <p>Nakresli príkazmi útvary podľa predlohy. Korytnačka začína v strede a pozerá sa doprava. Pred každým novým útvarom napíš <code>reset()</code>. Príkazy môžeš písať po jednom alebo viac naraz s bodkočiarkou.</p>
+    <div class="targets">${Object.keys(TARGETS).map(t => `<button class="${D.sel === t ? "on" : ""}" data-tg="${t}">${D.done[t] ? "✅" : "⬜"} ${TARGETS[t].n}</button>`).join("")}</div>
+    <div class="side" style="display:grid;grid-template-columns:200px 1fr;gap:16px;align-items:start;margin-bottom:14px"><div class="tprev">${progSVG(T.p, { fit: 30, grid: false, color: "#1766C2", sw: 4 })}</div>
+      <div><h4>Predloha: ${T.n}</h4><p class="muted" style="font-size:14.5px;margin:0 0 8px">${T.d}</p>
+        <div class="row"><button class="primary" data-dcheck>Skontrolovať kresbu</button></div>
+        ${S.msg.dc ? `<div class="fb ${S.msg.dc.k}">${S.msg.dc.t}</div>` : ""}
+        ${D.sel === "domcek" ? `<p class="muted" style="font-size:14px;margin-top:8px">Tip: domček je štvorec a na ňom trojuholník. Po štvorci sa otoč o 30° a nakresli strechu.</p>` : ""}
+        ${D.sel === "schody" ? `<p class="muted" style="font-size:14px;margin-top:8px">Tip: dopredu, vľavo, dopredu, vpravo… a znova.</p>` : ""}</div></div>
+    ${simHTML(k)}
+    ${S.t.draw ? `<div class="checkbar"><span class="score ${S.t.draw.score < 5 ? "part" : ""}">Nakreslené útvary: ${S.t.draw.score} z 5</span></div>` : ""}` + nextBar();
+  },
+  chyby() {
+    return head() + `<h2>Časté chyby</h2>
+    <p>Tieto chyby robia začiatočníci najčastejšie. Pri každej zisti, čo je zle. Všetky si môžeš vyskúšať v Shelli nižšie.</p>
+    <div class="task">${taskHTML("chyby")}</div>
+    <h3>Vyskúšaj si ich</h3>${simHTML("k4")}` + nextBar();
+  },
+  test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
+};
+
+/* ---------- events ---------- */
+function CUSTOM_CLICK(e) {
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.pr) { if (S.t.pred) return true; const [q, i] = ds.pr.split("|").map(Number); S.pred.ans[q] = i; save(); render(false); return true; }
+  if (ds.prcheck !== undefined) { award("pred", PRED.filter((_, i) => S.pred.ans[i] === 0).length); save(); render(false); return true; }
+  if (ds.tg) { S.dt.sel = ds.tg; S.msg.dc = null; save(); render(false); return true; }
+  if (ds.dcheck !== undefined) {
+    const W = world("draw"), t = S.dt.sel;
+    if (matches(W.segs, run(TARGETS[t].p).segs)) { S.dt.done[t] = true; S.msg.dc = { k: "ok", t: `✅ Výborne, ${TARGETS[t].n.toLowerCase()} je správne! Vyber si ďalší útvar.` }; award("draw", Object.keys(S.dt.done).length); }
+    else S.msg.dc = { k: "bad", t: W.segs.length ? "Kresba sa ešte nezhoduje s predlohou. Skontroluj dĺžky a uhly, potom napíš reset() a skús znova." : "Plocha je prázdna. Najprv kresli v Shelli." };
+    save(); render(false); return true;
+  }
+  return false;
+}
+let HI = {};
+document.addEventListener("keydown", e => {
+  const k = e.target.dataset && e.target.dataset.tin; if (!k) return;
+  const W = world(k);
+  if (e.key === "ArrowUp" || e.key === "ArrowDown") { e.preventDefault(); const H = W.hist; if (!H.length) return; let i = HI[k] === undefined ? H.length : HI[k]; i = e.key === "ArrowUp" ? Math.max(0, i - 1) : Math.min(H.length, i + 1); HI[k] = i; e.target.value = H[i] || ""; return; }
+  if (e.key !== "Enter") return;
+  e.preventDefault(); const c = e.target.value; HI[k] = undefined;
+  const r = runLine(W, c); W.lines.push({ c, out: r.out, err: r.err }); W.lines = W.lines.slice(-40); if (c.trim()) W.hist.push(c);
+  S.msg[k] = r.note || "";
+  if (k === "k1") { const n = (W.imp ? 1 : 0) + (W.win ? 1 : 0); if (n) award("kor", n); }
+  save(); render(false);
+  const o = document.getElementById("sh-" + k); if (o) o.scrollTop = o.scrollHeight; const i = document.querySelector(`[data-tin="${k}"]`); if (i) i.focus({ preventScroll: true });
+});
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
