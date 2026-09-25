@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.3 Zložka (priečinok), stromová štruktúra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+:root{--bg:#F5EFEA;--acc:#C2560C;--accSoft:#FBE3D2;--track:#E0CFC2;--border:#E3D5CA;--surface2:#FAF6F2;--ink:#231812;--muted:#6B5A4E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#17110D;--surface:#221913;--surface2:#2A1F18;--acc:#F28C4B;--accSoft:#3E2616;--track:#3B2D24;--border:#3A2C22;--ink:#F3E9E1;--muted:#BCA898}}
+:root[data-theme="dark"]{--bg:#17110D;--surface:#221913;--surface2:#2A1F18;--acc:#F28C4B;--accSoft:#3E2616;--track:#3B2D24;--border:#3A2C22;--ink:#F3E9E1;--muted:#BCA898}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc h4{margin:8px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.pc .ic{font-size:34px}
+.wide-svg svg{width:100%;height:auto;display:block}
+.lab{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.lab{grid-template-columns:1fr}}
+.side{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.side h4{font-family:var(--head);margin:0 0 6px;font-size:19px}
+.tag{display:inline-block;font-size:12.5px;font-weight:600;color:var(--acc);background:var(--accSoft);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+.meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin:8px 0 4px}.meter i{display:block;height:100%;background:var(--acc)}
+.zone{cursor:pointer}.zone .hit{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.zone:hover .hit,.zone:focus .hit{stroke:#F5A524;fill:rgba(245,165,36,.16)}
+.zone.on .hit{stroke:#F5A524;fill:rgba(245,165,36,.28);stroke-width:4}
+.zone.seen .hit{stroke:rgba(194,86,12,.55);stroke-dasharray:5 4}
+.zone.ok .hit{stroke:#12805A;fill:rgba(18,128,90,.22);stroke-width:4}
+.zone.bad .hit{stroke:#C0392B;fill:rgba(192,57,43,.2);stroke-width:4}
+.zone:focus{outline:none}
+.tm{background:#fff;color:#1B1B1F;border:1px solid #C9CED6;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(30,20,10,.45);font-family:"Segoe UI",var(--font);font-size:14px}
+.tm .wt{background:#EEF0F3;padding:7px 12px;display:flex;gap:8px;border-bottom:1px solid #D9DDE3;font-size:13.5px}
+.tm table{width:100%;border-collapse:collapse}
+.tm th,.tm td{padding:7px 10px;border-bottom:1px solid #EEF0F3;text-align:left}
+.tm td.n{text-align:right;font-family:var(--mono)}
+.tm tr.sel{background:#DCE8FA}
+.tm tr.hang td:first-child::after{content:" (Neodpovedá)";color:#C0392B;font-weight:600}
+.tm tr{cursor:pointer}
+.tm .foot{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#F7F8FA}
+.tm .foot button{border:1px solid #A9B1BC;background:#fff;border-radius:6px;padding:5px 12px;cursor:pointer}
+.tm .foot button:disabled{opacity:.4;cursor:default}
+.bar{display:inline-block;height:8px;border-radius:4px;background:#F2A516;vertical-align:middle;margin-left:6px}
+.path{font-family:var(--mono);background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:15px}
+.path span{padding:2px 6px;border-radius:6px}
+.tree{font-family:var(--mono);font-size:14.5px;line-height:1.9;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;white-space:pre}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.tree svg{width:100%;height:auto;display:block}
+.tnode{cursor:pointer}.tnode rect{transition:stroke .15s}.tnode:hover rect{stroke:#F5A524;stroke-width:3}
+.tnode.on rect{stroke:#F5A524;stroke-width:4}
+.pathbar{font-family:var(--mono);background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;font-size:15px;word-break:break-all}
+.fx{background:#fff;color:#1B1B1F;border:1px solid #C9CED6;border-radius:10px;overflow:hidden;font-family:"Segoe UI",var(--font);font-size:14.5px;box-shadow:0 12px 30px -14px rgba(30,20,10,.4)}
+.fx .tb{display:flex;gap:6px;align-items:center;padding:6px 10px;background:#EEF0F3;border-bottom:1px solid #D9DDE3;flex-wrap:wrap}
+.fx .tb button{border:1px solid #BFC7D5;background:#fff;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:13.5px;color:#1B1B1F}
+.fx .tb button:disabled{opacity:.4;cursor:default}
+.fx .ad{flex:1;min-width:200px;background:#fff;border:1px solid #C9CED6;border-radius:4px;padding:4px 8px;font-family:var(--mono);font-size:13px}
+.fx .body{display:grid;grid-template-columns:200px 1fr;min-height:300px}
+@media (max-width:700px){.fx .body{grid-template-columns:1fr}.fx .nav{display:none}}
+.fx .nav{background:#F7F8FA;border-right:1px solid #E3E6EA;padding:8px;font-size:13.5px}
+.fx .nav button{display:block;width:100%;text-align:left;border:0;background:none;padding:3px 4px;border-radius:4px;cursor:pointer;color:#1B1B1F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx .nav button.on{background:#DCE8FA;font-weight:600}
+.fx .items{padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;align-content:start}
+.fx .item{border:1px solid transparent;border-radius:6px;padding:8px 4px;text-align:center;cursor:pointer;background:none;color:#1B1B1F;font-size:12.5px;word-break:break-all}
+.fx .item:hover{background:#EEF3FB}.fx .item.sel{background:#DCE8FA;border-color:#9DB9EA}
+.fx .item .i{font-size:30px;display:block}
+.fx .foot{display:flex;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid #E3E6EA;background:#FAFBFC;flex-wrap:wrap;font-size:13.5px}
+.fx .foot select,.fx .foot input{border:1px solid #BFC7D5;border-radius:4px;padding:4px 6px;font:inherit;color:#1B1B1F;background:#fff}
+.fx .foot button{border:1px solid #2F6FEB;background:#2F6FEB;color:#fff;border-radius:5px;padding:4px 10px;cursor:pointer}
+.fx .foot button.sec{background:#fff;color:#1B1B1F;border-color:#BFC7D5}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:12px 0}
+.key{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:15px}
+.key kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:1px 7px;font-size:13.5px;margin-right:4px}
+.iqa .in{max-width:100%;width:520px}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const KEY = "priecinky-s13-v1";
+const LESSON = "1.3 Zložka (priečinok), stromová štruktúra";
+const BRAND = "1.3 Priečinky a strom";
+const CLASS_DEFAULT = "Sekunda";
+const WIDE = { strom: 1, upratovanie: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "priecinok", title: "Priečinok", min: 5 },
+  { id: "strom", title: "Stromová štruktúra", min: 9 },
+  { id: "upratovanie", title: "Upratovanie", min: 11 },
+  { id: "navigacia", title: "Navigácia", min: 6 },
+  { id: "operacie", title: "Kopírovať a presúvať", min: 6 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { priecinok: ["prq"], strom: ["stin"], upratovanie: ["upr"], navigacia: ["cesta", "navq"], operacie: ["opq"], test: ["test"] };
+const START = {
+  kicker: "Informatika, Sekunda",
+  lead: "V počítači sú tisíce súborov. Aby si sa v nich vyznal, triedime ich do priečinkov a priečinky zase do ďalších priečinkov. Vznikne tak strom. Naučíš sa ho čítať, zapíšeš cestu k súboru a v simulácii Prieskumníka upraceš neporiadok na ploche. 5 zastávok, body a na konci výsledok.",
+  guessQ: "Môže byť v priečinku ďalší priečinok?",
+  guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
+  guesses: ["Nie, v priečinku môžu byť iba súbory", "Áno, a v ňom zase ďalší priečinok", "Áno, ale najviac jeden", "Iba na disku D:"],
+  ok: 1, yes: "Presne tak! Priečinky sa dajú vkladať do seba takmer bez obmedzenia. Vznikne tak stromová štruktúra.", no: "Áno, v priečinku môžu byť ďalšie priečinky a v nich zase ďalšie. Tak vzniká stromová štruktúra."
+};
+const n2 = v => String(v).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const FILES0 = { "zlomky.docx": "", "rovnice.pdf": "", "python_uloha.py": "", "prezentacia_internet.pptx": "", "more.jpg": "", "tatry.jpg": "", "oslava.png": "", "pesnicka1.mp3": "", "pesnicka2.mp3": "" };
+function EXTRA_STATE() { return { tsel: null, fs: { dirs: [""], files: Object.assign({}, FILES0), cur: "", sel: null, msg: null, nf: "" } }; }
+
+/* ---------- static tree ---------- */
+const TN0 = [["c", "💽 C:", null, 0], ["pou", "📁 Používatelia", "c", 1], ["jana", "📁 Jana", "pou", 2], ["dok", "📁 Dokumenty", "jana", 3], ["sko", "📁 Škola", "dok", 4], ["mat", "📁 Matematika", "sko", 5], ["zlo", "📘 zlomky.docx", "mat", 6], ["dej", "📁 Dejepis", "sko", 5], ["rim", "📙 rimania.pptx", "dej", 6], ["rec", "📝 recept.txt", "dok", 4], ["obr", "📁 Obrázky", "jana", 3], ["more", "🖼️ more.jpg", "obr", 4], ["hud", "📁 Hudba", "jana", 3], ["win", "📁 Windows", "c", 1]];
+const TN = TN0.map((t, i) => ({ id: t[0], n: t[1], p: t[2], x: 16 + t[3] * 44, y: 12 + i * 40 }));
+const TNB = Object.fromEntries(TN.map(t => [t.id, t]));
+function tpath(id) { const parts = []; let t = TNB[id]; while (t) { parts.unshift(t.n.replace(/^\S+\s/, "")); t = TNB[t.p]; } return parts.join("\\").replace(/^C:\\?/, "C:\\"); }
+function treeSVG() {
+  const W = 170, H = 32; let s = `<svg viewBox="0 0 500 ${TN.length * 40 + 24}" role="group" aria-label="Stromová štruktúra priečinkov"><rect width="500" height="${TN.length * 40 + 24}" rx="14" fill="#FAF6F2"/>`;
+  TN.forEach(t => { if (t.p) { const p = TNB[t.p]; s += `<path d="M${p.x + 16} ${p.y + H} V${t.y + H / 2} H${t.x}" fill="none" stroke="#B9A89A" stroke-width="2.5"/>`; } });
+  TN.forEach(t => { const f = /📁|💽/.test(t.n); s += `<g class="tnode ${S.tsel === t.id ? "on" : ""}" data-tn="${t.id}" tabindex="0" role="button" aria-label="${t.n}"><rect x="${t.x}" y="${t.y}" width="${W}" height="${H}" rx="8" fill="${f ? "#FFF6DC" : "#fff"}" stroke="${f ? "#E0A100" : "#C9CED6"}" stroke-width="2"/><text x="${t.x + 8}" y="${t.y + 21}" font-family="Rubik,sans-serif" font-size="13.5" font-weight="600" fill="#231812">${t.n}</text></g>`; });
+  return s + `</svg>`;
+}
+/* ---------- explorer sim ---------- */
+const ICON = f => /\.(jpg|png)$/.test(f) ? "🖼️" : /\.mp3$/.test(f) ? "🎵" : /\.docx$/.test(f) ? "📘" : /\.pdf$/.test(f) ? "📕" : /\.pptx$/.test(f) ? "📙" : /\.py$/.test(f) ? "🐍" : "📄";
+const BASE = "C:\\Používatelia\\Jana\\Plocha";
+const disp = p => BASE + (p ? "\\" + p.split("/").join("\\") : "");
+function fxHTML() {
+  const F = S.fs, sub = F.dirs.filter(d => d && d.split("/").slice(0, -1).join("/") === F.cur).sort(), files = Object.keys(F.files).filter(f => F.files[f] === F.cur).sort();
+  const navDirs = [...F.dirs].sort();
+  return `<div class="fx"><div class="tb"><button data-fx="up" ${F.cur ? "" : "disabled"} aria-label="O úroveň vyššie">⬆ Hore</button><span class="ad">📁 ${esc(disp(F.cur))}</span></div>
+    <div class="body"><div class="nav">${navDirs.map(d => `<button class="${d === F.cur ? "on" : ""}" data-go2="${esc(d)}" style="padding-left:${4 + (d ? d.split("/").length : 0) * 12}px">${d ? "📁 " + esc(d.split("/").pop()) : "🖥️ Plocha"}</button>`).join("")}</div>
+      <div class="items">${sub.map(d => `<button class="item" data-go2="${esc(d)}" title="Otvoriť"><span class="i">📁</span>${esc(d.split("/").pop())}</button>`).join("")}${files.map(f => `<button class="item ${F.sel === f ? "sel" : ""}" data-fsel="${esc(f)}"><span class="i">${ICON(f)}</span>${esc(f)}</button>`).join("")}${!sub.length && !files.length ? `<p style="color:#888;font-size:13px;grid-column:1/-1">Priečinok je prázdny.</p>` : ""}</div></div>
+    <div class="foot"><label>Nový priečinok: <input id="nf" value="${esc(F.nf)}" placeholder="názov" autocomplete="off"></label><button data-fx="new">Vytvoriť</button>
+      <span style="margin-left:auto">${F.sel ? `Presunúť <b>${esc(F.sel)}</b> do: <select id="mv">${F.dirs.map(d => `<option value="${esc(d)}">${d ? esc(d.replace(/\//g, " › ")) : "Plocha"}</option>`).join("")}</select> <button data-fx="move">Presunúť</button>` : `<span style="color:#888">Klikni na súbor, ktorý chceš presunúť.</span>`}</span></div></div>
+    ${F.msg ? `<div class="fb ${F.msg.k}">${F.msg.t}</div>` : ""}`;
+}
+const TARGET = { "skola/matematika": ["zlomky.docx", "rovnice.pdf"], "skola/informatika": ["python_uloha.py", "prezentacia_internet.pptx"], "fotky": ["more.jpg", "tatry.jpg", "oslava.png"], "hudba": ["pesnicka1.mp3", "pesnicka2.mp3"] };
+function uprGoals() {
+  const F = S.fs, dn = new Set(F.dirs.map(n2)), g = {};
+  g.dirs = ["skola", "skola/matematika", "skola/informatika", "fotky", "hudba"].every(d => dn.has(d));
+  Object.keys(TARGET).forEach(t => { g[t] = TARGET[t].every(f => n2(F.files[f]) === t); });
+  return g;
+}
+function uprScore() { const g = uprGoals(), n = Object.values(g).filter(Boolean).length; if (n) { if (!S.t.upr || S.t.upr.score < n) award("upr", n); } return g; }
+
+const pathOk = (v, ans) => n2(v).replace(/\//g, "\\").replace(/\\+$/, "") === n2(ans);
+const TASKS = {
+  prq: { id: "prq", type: "mc", qs: [
+    { id: "1", q: "Čo je priečinok (zložka)?", opts: ["Miesto na disku, do ktorého ukladáme súbory a ďalšie priečinky", "Súbor s príponou .dir", "Program na kreslenie", "Časť procesora"], a: 0 },
+    { id: "2", q: "Ako sa volá priečinok, ktorý je v inom priečinku?", opts: ["Podpriečinok", "Nadpriečinok", "Súbor", "Disk"], a: 0 },
+    { id: "3", q: "Ako sa volá najvyšší priečinok na disku, v ktorom je všetko ostatné?", opts: ["Koreňový priečinok (napr. C:\\)", "Kôš", "Plocha", "Dokumenty"], a: 0 },
+    { id: "4", q: "Môžu byť v jednom priečinku dva súbory s rovnakým menom?", opts: ["Nie", "Áno, vždy", "Áno, ak sú rôzne veľké", "Áno, ak ich vytvorili rôzni ľudia"], a: 0, why: "V rôznych priečinkoch však súbory s rovnakým menom byť môžu." }
+  ]},
+  stin: { id: "stin", type: "input", qs: [
+    { id: "1", q: "Napíš celú cestu k súboru <b>zlomky.docx</b>.", ok: v => pathOk(v, "C:\\Používatelia\\Jana\\Dokumenty\\Škola\\Matematika\\zlomky.docx"), show: "C:\\Používatelia\\Jana\\Dokumenty\\Škola\\Matematika\\zlomky.docx", ph: "C:\\…" },
+    { id: "2", q: "Ktorý priečinok je <b>nadradený</b> priečinku Matematika?", ok: v => n2(v) === "skola", show: "Škola", ph: "?" },
+    { id: "3", q: "Koľko podpriečinkov má priečinok <b>Jana</b>?", ok: v => parseNum(v) === 3, show: "3", ph: "?" },
+    { id: "4", q: "V ktorom priečinku je súbor <b>recept.txt</b>?", ok: v => n2(v) === "dokumenty", show: "Dokumenty", ph: "?" },
+    { id: "5", q: "Napíš cestu k priečinku <b>Dejepis</b>.", ok: v => pathOk(v, "C:\\Používatelia\\Jana\\Dokumenty\\Škola\\Dejepis"), show: "C:\\Používatelia\\Jana\\Dokumenty\\Škola\\Dejepis", ph: "C:\\…" }
+  ]},
+  upr: { id: "upr", type: "custom", max: 5 },
+  cesta: { id: "cesta", type: "order", items: [{ id: "a", t: "C:" }, { id: "b", t: "Používatelia" }, { id: "c", t: "Jana" }, { id: "d", t: "Obrázky" }, { id: "e", t: "Leto" }, { id: "f", t: "more.jpg" }] },
+  navq: { id: "navq", type: "mc", qs: [
+    { id: "1", q: "Čo urobí tlačidlo <b>⬆ Hore</b> v Prieskumníkovi?", opts: ["Presunie ťa do nadradeného priečinka", "Vráti ťa na plochu", "Posunie zoznam súborov hore", "Vytvorí nový priečinok"], a: 0 },
+    { id: "2", q: "Kde v Prieskumníkovi vidíš cestu k priečinku, v ktorom práve si?", opts: ["V adresnom riadku hore", "V Koši", "V ponuke Štart", "Na paneli úloh"], a: 0 },
+    { id: "3", q: "Aký znak oddeľuje priečinky v ceste vo Windows?", opts: ["\\ (spätná lomka)", "@ (zavináč)", ". (bodka)", "# (mriežka)"], a: 0 },
+    { id: "4", q: "Prieskumník otvoríš skratkou:", opts: ["Win + E", "Win + L", "Ctrl + P", "Alt + F4"], a: 0 }
+  ]},
+  opq: { id: "opq", type: "mc", qs: [
+    { id: "1", q: "Aký je rozdiel medzi kopírovaním a presúvaním?", opts: ["Pri kopírovaní originál zostane, pri presúvaní sa premiestni", "Nie je medzi nimi rozdiel", "Kopírovanie maže súbor", "Presúvanie vytvorí dve kópie"], a: 0 },
+    { id: "2", q: "Ktorá skratka <b>vystrihne</b> súbor, aby si ho mohol presunúť?", opts: ["Ctrl + X", "Ctrl + C", "Ctrl + V", "Ctrl + Z"], a: 0 },
+    { id: "3", q: "Ktorou skratkou <b>vložíš</b> skopírovaný súbor?", opts: ["Ctrl + V", "Ctrl + C", "Ctrl + X", "Ctrl + A"], a: 0 },
+    { id: "4", q: "Ktorým klávesom rýchlo <b>premenuješ</b> označený priečinok?", opts: ["F2", "F5", "Delete", "Esc"], a: 0 },
+    { id: "5", q: "Vymazal si priečinok s fotkami. Kde ho ešte nájdeš?", opts: ["V Koši, kým ho nevyprázdniš", "Nikde, je navždy preč", "V ponuke Štart", "Na disku D:"], a: 0 },
+    { id: "6", q: "Čo sa stane so súbormi vo vnútri, keď vymažeš celý priečinok?", opts: ["Vymažú sa spolu s ním", "Presunú sa na plochu", "Zostanú na mieste", "Presunú sa do Dokumentov"], a: 0 }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Štruktúra priečinkov v počítači sa nazýva:", opts: ["stromová", "kruhová", "tabuľková", "reťazová"], a: 0 },
+    { id: "2", q: "Koreňový priečinok disku C: sa zapisuje:", opts: ["C:\\", "C:/koren", "\\C", "root.C"], a: 0 },
+    { id: "3", q: "V ceste C:\\Hry\\Sach\\sach.exe je súbor sach.exe v priečinku:", opts: ["Sach", "Hry", "C:", "exe"], a: 0 },
+    { id: "4", q: "Nadradený priečinok priečinka Sach v ceste C:\\Hry\\Sach je:", opts: ["Hry", "C:", "sach.exe", "žiadny"], a: 0 },
+    { id: "5", q: "Ktorá skratka kopíruje?", opts: ["Ctrl + C", "Ctrl + X", "Ctrl + V", "Ctrl + D"], a: 0 },
+    { id: "6", q: "Môžu byť v rôznych priečinkoch súbory s rovnakým menom?", opts: ["Áno", "Nie", "Iba na USB kľúči", "Iba ak sú prázdne"], a: 0 },
+    { id: "7", q: "Prečo triedime súbory do priečinkov?", opts: ["Aby sme ich rýchlo našli a mali v nich poriadok", "Aby zaberali menej miesta", "Aby sa nedali otvoriť", "Lebo to vyžaduje internet"], a: 0 },
+    { id: "8", q: "Ako sa volá priečinok, v ktorom je iný priečinok?", opts: ["Nadradený priečinok", "Podpriečinok", "Súbor", "Kôš"], a: 0 }
+  ]}
+};
+
+const VIEWS = {
+  priecinok() {
+    return head() + `<h2>Priečinok (zložka)</h2>
+    ${guessBox()}
+    <div class="two"><div><p><b>Priečinok</b> (zložka, adresár) je pomenované miesto na disku, do ktorého ukladáme <b>súbory</b> a ďalšie <b>priečinky</b>. Funguje ako šanón alebo šuplík: do šuplíka môžeš dať krabičky a do krabičiek ďalšie veci.</p>
+      <ul style="padding-left:20px"><li><b>Koreňový priečinok</b>: najvyšší priečinok disku, napríklad <code>C:\\</code></li><li><b>Podpriečinok</b>: priečinok v inom priečinku</li><li><b>Nadradený priečinok</b>: priečinok, v ktorom je iný priečinok</li></ul></div>
+      <div class="box" style="margin:0"><p>📁 ➜ 📁 ➜ 📁 ➜ 📄<br>disk ➜ priečinok ➜ podpriečinok ➜ súbor<br><br>Priečinok sám nemá príponu. Ikona je žltá zložka.</p></div></div>
+    <h3>Úloha: otázky</h3><div class="task">${taskHTML("prq")}</div>` + nextBar();
+  },
+  strom() {
+    return head() + `<h2>Stromová štruktúra</h2>
+    <p>Priečinky tvoria <b>strom</b> otočený hore nohami: navrchu je <b>koreň</b> (disk), z neho vyrastajú <b>vetvy</b> (priečinky) a na konci sú <b>listy</b> (súbory). Cestu k súboru zapíšeme ako zoznam priečinkov oddelených spätnou lomkou <code>\\</code>.</p>
+    <div class="two"><div class="tree">${treeSVG()}</div><div><div class="task" style="margin:0"><p style="margin:0 0 6px"><b>Klikni na priečinok alebo súbor v strome</b> a uvidíš jeho cestu:</p><div class="pathbar">${S.tsel ? esc(tpath(S.tsel)) : "…"}</div></div><div class="box v"><p>Čím je položka viac odsadená doprava, tým je hlbšie v strome. Čiara ukazuje, v ktorom priečinku je.</p></div></div></div>
+    <h3>Úloha: čítaj strom</h3><p>Pri písaní ceste nezáleží na veľkých písmenách ani na diakritike.</p><div class="task">${taskHTML("stin")}</div>` + nextBar();
+  },
+  upratovanie() {
+    const g = uprGoals(), G = (ok, t) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`;
+    return head() + `<h2>Upratovanie plochy</h2>
+    <p>Na ploche je neporiadok. Vytvor priečinky a presuň súbory tak, aby vznikla takáto štruktúra:</p>
+    <div class="two"><div class="task" style="margin:0;font-family:var(--mono);white-space:pre;font-size:14.5px;line-height:1.7">🖥️ Plocha
+├─ 📁 Škola
+│  ├─ 📁 Matematika   (zlomky, rovnice)
+│  └─ 📁 Informatika  (python, prezentácia)
+├─ 📁 Fotky           (3 obrázky)
+└─ 📁 Hudba           (2 pesničky)</div>
+      <div class="task" style="margin:0"><b>Postup:</b><ol style="padding-left:20px;margin:6px 0 0;font-size:15px"><li>Na Ploche vytvor priečinky Škola, Fotky a Hudba.</li><li>Otvor Škola a vytvor v nej Matematika a Informatika.</li><li>Vráť sa na Plochu, klikni na súbor, vyber cieľový priečinok a presuň ho.</li></ol>
+        <ul class="goals">${G(g.dirs, "Všetkých 5 priečinkov")}${G(g["skola/matematika"], "Matematika")}${G(g["skola/informatika"], "Informatika")}${G(g.fotky, "Fotky")}${G(g.hudba, "Hudba")}</ul>
+        ${S.t.upr ? `<div class="checkbar"><span class="score ${S.t.upr.score < 5 ? "part" : ""}">Splnené: ${S.t.upr.score} z 5</span></div>` : ""}</div></div>
+    ${fxHTML()}
+    <div class="row"><button class="ghost" data-fx="reset">↺ Začať upratovanie odznova</button></div>` + nextBar();
+  },
+  navigacia() {
+    return head() + `<h2>Navigácia v Prieskumníkovi</h2>
+    <p>V <b>Prieskumníkovi</b> (Win + E) sa pohybuješ po strome priečinkov. Vľavo vidíš strom, v strede obsah priečinka, hore adresný riadok s cestou.</p>
+    <div class="keys"><div class="key">⬅ <b>Späť</b>: kde si bol predtým</div><div class="key">⬆ <b>Hore</b>: do nadradeného priečinka</div><div class="key">📍 <b>Adresný riadok</b>: celá cesta</div><div class="key">🔍 <b>Hľadať</b>: nájde súbor podľa mena</div></div>
+    <h3>Úloha 1: zlož cestu k fotke</h3><p>Súbor <b>more.jpg</b> je v priečinku Leto, ktorý je v Obrázkoch používateľky Jana. Zoraď časti cesty.</p><div class="task">${taskHTML("cesta")}</div>
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("navq")}</div>` + nextBar();
+  },
+  operacie() {
+    return head() + `<h2>Kopírovať, presúvať, premenovať, mazať</h2>
+    <div class="keys"><div class="key"><kbd>Ctrl</kbd><kbd>C</kbd> kopírovať</div><div class="key"><kbd>Ctrl</kbd><kbd>X</kbd> vystrihnúť</div><div class="key"><kbd>Ctrl</kbd><kbd>V</kbd> vložiť</div><div class="key"><kbd>F2</kbd> premenovať</div><div class="key"><kbd>Delete</kbd> vymazať do Koša</div><div class="key"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>N</kbd> nový priečinok</div></div>
+    <div class="two"><div class="box v" style="margin:0"><p><b>📋 Kopírovať</b> = Ctrl + C a Ctrl + V. Originál zostane, vznikne kópia.</p></div><div class="box" style="margin:0"><p><b>✂️ Presunúť</b> = Ctrl + X a Ctrl + V. Súbor zmizne z pôvodného miesta a objaví sa v novom.</p></div></div>
+    <h3>Úloha: otázky</h3><div class="task">${taskHTML("opq")}</div>` + nextBar();
+  },
+  test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
+};
+
+function CUSTOM_CLICK(e) {
+  const tn = e.target.closest && e.target.closest("[data-tn]");
+  if (tn) { S.tsel = tn.dataset.tn; save(); render(false); return true; }
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, F = S.fs;
+  if (ds.go2 !== undefined) { F.cur = ds.go2; F.sel = null; F.msg = null; save(); render(false); return true; }
+  if (ds.fsel) { F.sel = F.sel === ds.fsel ? null : ds.fsel; save(); render(false); return true; }
+  if (ds.fx) {
+    const a = ds.fx; F.msg = null;
+    if (a === "up") { F.cur = F.cur.split("/").slice(0, -1).join("/"); F.sel = null; }
+    if (a === "new") { const i = document.getElementById("nf"), v = (i ? i.value : "").trim(); F.nf = "";
+      if (!v) F.msg = { k: "bad", t: "Napíš názov priečinka." };
+      else if (/[\\/:*?"<>|]/.test(v)) F.msg = { k: "bad", t: "Názov nemôže obsahovať znaky \\ / : * ? \" &lt; &gt; |" };
+      else { const p = F.cur ? F.cur + "/" + v : v; if (F.dirs.some(d => n2(d) === n2(p))) F.msg = { k: "bad", t: "Priečinok s takým názvom tu už je." }; else { F.dirs.push(p); F.msg = { k: "ok", t: `📁 Priečinok <b>${esc(v)}</b> vytvorený.` }; } } }
+    if (a === "move") { const s = document.getElementById("mv"); if (s && F.sel) { F.files[F.sel] = s.value; F.msg = { k: "ok", t: `Súbor <b>${esc(F.sel)}</b> presunutý do ${s.value ? esc(s.value.replace(/\//g, " › ")) : "Plocha"}.` }; F.sel = null; } }
+    if (a === "reset") { S.fs = { dirs: [""], files: Object.assign({}, FILES0), cur: "", sel: null, msg: null, nf: "" }; }
+    uprScore(); save(); render(false); return true;
+  }
+  return false;
+}
+function CUSTOM_INPUT(e) { if (e.target.id === "nf") { S.fs.nf = e.target.value; save(); return true; } return false; }
+document.addEventListener("keydown", e => {
+  if (e.target.id === "nf" && e.key === "Enter") { e.preventDefault(); const b = document.querySelector('[data-fx="new"]'); if (b) b.click(); setTimeout(() => { const i = document.getElementById("nf"); if (i) i.focus(); }, 0); }
+  const tn = e.target.closest && e.target.closest("[data-tn]"); if (tn && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tn.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+});
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
