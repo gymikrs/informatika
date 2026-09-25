@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.5 Prevody čísel medzi sústavami 2, 8, 10, 16</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+:root{--bg:#F6EEF1;--acc:#B4235A;--accSoft:#FADCE6;--track:#E5CFD8;--border:#E8D6DE;--surface2:#FBF5F7;--ink:#24121A;--muted:#6B4F5B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#170D12;--surface:#22141B;--surface2:#2A1922;--acc:#F07AA6;--accSoft:#3E1A29;--track:#3B2530;--border:#3A2530;--ink:#F5E8ED;--muted:#C3A2AF}}
+:root[data-theme="dark"]{--bg:#170D12;--surface:#22141B;--surface2:#2A1922;--acc:#F07AA6;--accSoft:#3E1A29;--track:#3B2530;--border:#3A2530;--ink:#F5E8ED;--muted:#C3A2AF}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+sub{font-size:.7em}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc h4{margin:6px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.pc .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--acc)}
+.pv{overflow-x:auto}
+.pv table{border-collapse:separate;border-spacing:6px 4px;margin:6px 0}
+.pv td{text-align:center;font-family:var(--mono);min-width:54px}
+.pv .d{font-size:26px;font-weight:700;background:var(--surface);border:2px solid var(--acc);border-radius:10px;padding:6px 0}
+.pv .w{font-size:13px;color:var(--muted)}
+.pv .pr{font-size:14px;color:var(--acc);font-weight:700}
+.bits{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.bit{width:78px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;padding:10px 4px;text-align:center;font-family:var(--mono)}
+.bit .v{font-size:20px;font-weight:800}.bit .b{font-size:26px;font-weight:800;color:var(--muted)}
+.bit.on{background:var(--acc);border-color:var(--acc);color:#fff}.bit.on .b{color:#fff}
+.bit .dots{height:22px;display:flex;flex-wrap:wrap;justify-content:center;gap:1px;margin:4px 0}
+.bit .dots i{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6}
+.big2{font-family:var(--mono);font-size:30px;font-weight:800}
+.dv{font-family:var(--mono);font-size:17px;border-collapse:collapse;margin:8px 0}
+.dv td{padding:5px 12px;border-bottom:1px dashed var(--border)}
+.dv td.r{color:var(--acc);font-weight:800;text-align:center;background:var(--accSoft)}
+.grp{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.grp .g{border:2px solid var(--acc);border-radius:10px;padding:6px 10px;text-align:center;font-family:var(--mono)}
+.grp .g b{display:block;font-size:20px}.grp .g span{font-size:20px;color:var(--acc);font-weight:800}
+.grp .g small{display:block;color:var(--muted);font-size:12px}
+.nib{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin:10px 0;font-family:var(--mono);font-size:14.5px}
+.nib div{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between}
+.nib b{color:var(--acc)}
+.sw{width:120px;height:120px;border-radius:16px;border:2px solid var(--border)}
+.colrow{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.ctl .in{max-width:180px;font-family:var(--mono)}
+.ctl select{border:1.5px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface2);color:var(--ink);font:inherit}
+.err{color:#C0392B;font-weight:600}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const KEY = "sustavy-n15-v1";
+const LESSON = "1.5 Prevody čísel medzi sústavami 2, 8, 10, 16";
+const BRAND = "1.5 Prevody medzi sústavami";
+const CLASS_DEFAULT = "I.";
+const WIDE = { pozicne: 1, do10: 1, z10: 1, skratka: 1, farby: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "pozicne", title: "Pozičné sústavy", min: 6 },
+  { id: "do10", title: "Do desiatkovej", min: 9 },
+  { id: "z10", title: "Z desiatkovej", min: 9 },
+  { id: "skratka", title: "Skratka 2 ↔ 8 ↔ 16", min: 8 },
+  { id: "farby", title: "Hex vo farbách", min: 5 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { pozicne: ["pozq"], do10: ["bitgoal", "do10in"], z10: ["z10in"], skratka: ["skin"], farby: ["farin", "farq"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 1. ročník",
+  lead: "Počítač počíta v dvojkovej sústave, programátori radi používajú šestnástkovú a my ľudia desiatkovú. Naučíš sa prevádzať čísla medzi sústavami 2, 8, 10 a 16 a vyskúšaš si pri tom interaktívne pomôcky: bitové kartičky, kalkulačku delenia a zoskupovanie bitov. Na záver uvidíš, ako sa šestnástková sústava používa pri farbách. 5 zastávok, body a na konci výsledok.",
+  guessQ: "Koľko je dvojkové číslo 1010 v desiatkovej sústave?",
+  guessNote: "Tip sa neboduje. Na zastávke Do desiatkovej si to overíš.",
+  guesses: ["1010", "10", "8", "12"],
+  ok: 1, yes: "Presne! 1·8 + 0·4 + 1·2 + 0·1 = 10.", no: "1010₂ = 1·8 + 0·4 + 1·2 + 0·1 = 10."
+};
+const DIG = "0123456789ABCDEF";
+function EXTRA_STATE() { return { pv: { b: 2, n: "1011" }, bits: [0, 0, 0, 0, 0, 0, 0, 0], bdone: {}, dv: { n: "100", b: 2, k: 0 }, gr: { bin: "1011010", g: 4 }, col: "#1E90FF" }; }
+const clean = v => String(v).toUpperCase().replace(/\s|\(.*?\)|_|₂|₈|₁₆|₁₀/g, "").replace(/^#/, "").replace(/^0+(?=.)/, "");
+const eq = (a, b) => clean(a) === clean(b);
+function toBase(n, b) { return n.toString(b).toUpperCase(); }
+function valid(s, b) { return s.length > 0 && [...s.toUpperCase()].every(c => DIG.indexOf(c) >= 0 && DIG.indexOf(c) < b); }
+
+/* ---------- widgets ---------- */
+function pvHTML() {
+  const P = S.pv, s = P.n.toUpperCase().trim(), ok = valid(s, P.b);
+  let body = "";
+  if (!ok) body = `<p class="err">Číslo ${esc(s) || "(prázdne)"} nie je v sústave so základom ${P.b} platné. Povolené cifry: ${DIG.slice(0, P.b).split("").join(", ")}.</p>`;
+  else {
+    const L = s.length, cols = [...s].map((c, i) => ({ c, v: DIG.indexOf(c), p: L - 1 - i }));
+    const sum = cols.reduce((a, x) => a + x.v * Math.pow(P.b, x.p), 0);
+    body = `<div class="pv"><table><tr>${cols.map(x => `<td class="w">${P.b}<sup>${x.p}</sup> = ${Math.pow(P.b, x.p)}</td>`).join("")}</tr><tr>${cols.map(x => `<td class="d">${x.c}</td>`).join("")}</tr><tr>${cols.map(x => `<td class="pr">${x.v}·${Math.pow(P.b, x.p)}</td>`).join("")}</tr></table></div>
+      <p style="font-family:var(--mono);font-size:16px">${cols.map(x => `${x.v}·${Math.pow(P.b, x.p)}`).join(" + ")} = <b style="font-size:20px;color:var(--acc)">${sum}</b><sub>10</sub></p>`;
+  }
+  return `<div class="ctl"><label>Sústava: <select data-pvb>${[2, 8, 10, 16].map(b => `<option value="${b}" ${P.b === b ? "selected" : ""}>${b}</option>`).join("")}</select></label><label>Číslo: <input class="in" data-pvn value="${esc(P.n)}" autocomplete="off"></label></div><div id="pvout">${body}</div>`;
+}
+const BV = [128, 64, 32, 16, 8, 4, 2, 1], BGOALS = [13, 100, 255];
+function bitsHTML() {
+  const v = S.bits.reduce((a, b, i) => a + b * BV[i], 0);
+  return `<div class="bits">${BV.map((w, i) => `<button class="bit ${S.bits[i] ? "on" : ""}" data-bit="${i}" aria-pressed="${!!S.bits[i]}" aria-label="Bit s hodnotou ${w}"><div class="v">${w}</div><div class="dots">${w <= 32 ? "<i></i>".repeat(w) : ""}</div><div class="b">${S.bits[i]}</div></button>`).join("")}</div>
+    <p style="margin:6px 0">Dvojkovo: <span class="big2">${S.bits.join("")}</span> &nbsp;=&nbsp; desiatkovo: <span class="big2" style="color:var(--acc)">${v}</span></p>
+    <ul class="goals" style="list-style:none;padding:0">${BGOALS.map(g => `<li>${S.bdone[g] ? "✅" : "⬜"} Nastav kartičky tak, aby vyšlo <b>${g}</b></li>`).join("")}</ul>
+    <div class="row"><button class="ghost" data-bclr>Vynulovať kartičky</button></div>`;
+}
+function dvSteps(n, b) { const r = []; if (n === 0) r.push([0, 0, 0]); while (n > 0) { r.push([n, Math.floor(n / b), n % b]); n = Math.floor(n / b); } return r; }
+function dvHTML() {
+  const D = S.dv, n = parseInt(D.n, 10);
+  if (isNaN(n) || n < 0 || n > 100000) return `<div class="ctl"><label>Číslo (desiatkovo): <input class="in" data-dvn value="${esc(D.n)}"></label></div><p class="err">Zadaj celé číslo od 0 do 100 000.</p>`;
+  const st = dvSteps(n, D.b), k = Math.min(D.k, st.length), res = st.map(s => DIG[s[2]]).reverse().join("");
+  return `<div class="ctl"><label>Číslo (desiatkovo): <input class="in" data-dvn value="${esc(D.n)}" autocomplete="off"></label><label>do sústavy: <select data-dvb>${[2, 8, 16].map(b => `<option value="${b}" ${D.b === b ? "selected" : ""}>${b}</option>`).join("")}</select></label></div>
+    <table class="dv"><tbody>${st.slice(0, k).map(s => `<tr><td>${s[0]} : ${D.b}</td><td>= ${s[1]}</td><td>zvyšok</td><td class="r">${s[2]}${D.b === 16 && s[2] > 9 ? ` (${DIG[s[2]]})` : ""}</td></tr>`).join("")}</tbody></table>
+    <div class="row"><button class="primary" data-dvk="1" ${k >= st.length ? "disabled" : ""}>Ďalší krok ▶</button><button class="ghost" data-dvk="all">Všetky kroky</button><button class="ghost" data-dvk="0">↺</button></div>
+    ${k >= st.length ? `<p style="font-size:17px;margin-top:10px">Zvyšky čítame <b>odspodu nahor</b> ⬆: ${n}<sub>10</sub> = <b style="font-family:var(--mono);font-size:22px;color:var(--acc)">${res}</b><sub>${D.b}</sub></p>` : ""}`;
+}
+function grHTML() {
+  const G = S.gr, s = G.bin.replace(/\s/g, "");
+  if (!/^[01]+$/.test(s)) return `<div class="ctl"><label>Dvojkové číslo: <input class="in" data-grb value="${esc(G.bin)}"></label></div><p class="err">Dvojkové číslo smie obsahovať iba 0 a 1.</p>`;
+  const pad = s.padStart(Math.ceil(s.length / G.g) * G.g, "0"), groups = pad.match(new RegExp(`.{${G.g}}`, "g")), res = groups.map(x => DIG[parseInt(x, 2)]).join("");
+  return `<div class="ctl"><label>Dvojkové číslo: <input class="in" data-grb value="${esc(G.bin)}" autocomplete="off"></label><label>skupiny po: <select data-grg><option value="3" ${G.g === 3 ? "selected" : ""}>3 bity → osmičková</option><option value="4" ${G.g === 4 ? "selected" : ""}>4 bity → šestnástková</option></select></label></div>
+    <div class="grp">${groups.map(x => `<div class="g"><b>${x}</b><span>${DIG[parseInt(x, 2)]}</span><small>${parseInt(x, 2)}</small></div>`).join("")}</div>
+    <p style="font-size:17px">${s}<sub>2</sub> = <b style="font-family:var(--mono);font-size:22px;color:var(--acc)">${res}</b><sub>${G.g === 3 ? 8 : 16}</sub> ${pad.length > s.length ? `<span class="muted" style="font-size:14px">(zľava sme doplnili nuly: ${pad})</span>` : ""}</p>`;
+}
+function colHTML() {
+  const c = S.col.trim(), m = c.match(/^#?([0-9a-fA-F]{6})$/);
+  if (!m) return `<div class="ctl"><label>Kód farby: <input class="in" data-col value="${esc(S.col)}"></label></div><p class="err">Kód má tvar #RRGGBB, napr. #FF8800.</p>`;
+  const h = m[1].toUpperCase(), r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return `<div class="ctl"><label>Kód farby: <input class="in" data-col value="${esc(S.col)}" autocomplete="off"></label></div>
+    <div class="colrow"><div class="sw" style="background:#${h}"></div><div style="font-family:var(--mono);font-size:16px;line-height:1.9">
+      <span style="color:#C0392B;font-weight:700">R</span> = ${h.slice(0, 2)}<sub>16</sub> = ${r}<br><span style="color:#12805A;font-weight:700">G</span> = ${h.slice(2, 4)}<sub>16</sub> = ${g}<br><span style="color:#1766C2;font-weight:700">B</span> = ${h.slice(4, 6)}<sub>16</sub> = ${b}</div></div>`;
+}
+const NIB = Array.from({ length: 16 }, (_, i) => `<div><span>${i.toString(2).padStart(4, "0")}</span><b>${DIG[i]}</b></div>`).join("");
+
+/* ---------- tasks ---------- */
+const inq = (id, q, ans, why) => ({ id, q, ok: v => eq(v, ans), show: ans, ph: "?", why });
+const TASKS = {
+  pozq: { id: "pozq", type: "mc", qs: [
+    { id: "1", q: "Ktoré cifry používa šestnástková sústava?", opts: ["0 až 9 a A až F", "0 až 16", "0 až 9 a A až G", "iba 0 a 1"], a: 0 },
+    { id: "2", q: "Aká je hodnota cifry F v šestnástkovej sústave?", opts: ["15", "16", "14", "6"], a: 0 },
+    { id: "3", q: "Ktoré číslo NIE JE platné v osmičkovej sústave?", opts: ["129", "127", "70", "1"], a: 0, why: "V osmičkovej sústave sú iba cifry 0 až 7. Cifra 9 tam neexistuje." },
+    { id: "4", q: "Akú váhu má tretia cifra sprava v dvojkovej sústave?", opts: ["4", "3", "8", "2"], a: 0, why: "Váhy sprava: 2⁰ = 1, 2¹ = 2, 2² = 4." },
+    { id: "5", q: "Prečo počítače používajú dvojkovú sústavu?", opts: ["Obvod rozlíši dva stavy: je prúd / nie je prúd", "Je najkratšia", "Ľudia ju tak vymysleli kvôli hrám", "Iné sústavy sa nedajú zapísať"], a: 0 }
+  ]},
+  bitgoal: { id: "bitgoal", type: "custom", max: 3 },
+  do10in: { id: "do10in", type: "input", qs: [
+    inq("1", "1011<sub>2</sub> = ?<sub>10</sub>", "11"), inq("2", "110010<sub>2</sub> = ?<sub>10</sub>", "50"), inq("3", "17<sub>8</sub> = ?<sub>10</sub>", "15"),
+    inq("4", "237<sub>8</sub> = ?<sub>10</sub>", "159", "2·64 + 3·8 + 7·1 = 128 + 24 + 7 = 159"), inq("5", "2F<sub>16</sub> = ?<sub>10</sub>", "47", "2·16 + 15·1 = 47"), inq("6", "FF<sub>16</sub> = ?<sub>10</sub>", "255")
+  ]},
+  z10in: { id: "z10in", type: "input", qs: [
+    inq("1", "25<sub>10</sub> = ?<sub>2</sub>", "11001"), inq("2", "100<sub>10</sub> = ?<sub>2</sub>", "1100100"), inq("3", "100<sub>10</sub> = ?<sub>8</sub>", "144"),
+    inq("4", "59<sub>10</sub> = ?<sub>8</sub>", "73"), inq("5", "200<sub>10</sub> = ?<sub>16</sub>", "C8", "200 : 16 = 12 zv. 8, 12 : 16 = 0 zv. 12 (C). Odspodu: C8."), inq("6", "250<sub>10</sub> = ?<sub>16</sub>", "FA")
+  ]},
+  skin: { id: "skin", type: "input", qs: [
+    inq("1", "110101<sub>2</sub> = ?<sub>8</sub>", "65", "110 | 101 → 6 | 5"), inq("2", "11111111<sub>2</sub> = ?<sub>16</sub>", "FF"), inq("3", "1011010<sub>2</sub> = ?<sub>16</sub>", "5A", "0101 | 1010 → 5 | A (doplníme nulu zľava)"),
+    inq("4", "3F<sub>16</sub> = ?<sub>2</sub>", "111111", "3 → 0011, F → 1111, úvodné nuly vynecháme"), inq("5", "57<sub>8</sub> = ?<sub>2</sub>", "101111", "5 → 101, 7 → 111"), inq("6", "A5<sub>16</sub> = ?<sub>8</sub>", "245", "A5 → 1010 0101 → 010 100 101 → 2 4 5")
+  ]},
+  farin: { id: "farin", type: "input", qs: [
+    inq("1", "Farba #1E90FF: koľko je zložka R (1E<sub>16</sub>) desiatkovo?", "30"), inq("2", "Koľko je zložka G (90<sub>16</sub>) desiatkovo?", "144"), inq("3", "Napíš kód čistej červenej farby (R = 255, G = 0, B = 0).", "FF0000")
+  ]},
+  farq: { id: "farq", type: "mc", qs: [
+    { id: "1", q: "Aká farba je #00FF00?", opts: ["Zelená", "Červená", "Modrá", "Biela"], a: 0 },
+    { id: "2", q: "Aká farba je #FFFFFF?", opts: ["Biela", "Čierna", "Sivá", "Žltá"], a: 0 },
+    { id: "3", q: "Koľko rôznych hodnôt má jedna zložka farby (00 až FF)?", opts: ["256", "255", "16", "100"], a: 0 }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "101<sub>2</sub> = ?<sub>10</sub>", opts: ["5", "101", "3", "6"], a: 0 },
+    { id: "2", q: "12<sub>10</sub> = ?<sub>2</sub>", opts: ["1100", "1010", "1001", "0011"], a: 0 },
+    { id: "3", q: "1F<sub>16</sub> = ?<sub>10</sub>", opts: ["31", "25", "115", "16"], a: 0 },
+    { id: "4", q: "20<sub>8</sub> = ?<sub>10</sub>", opts: ["16", "20", "10", "18"], a: 0 },
+    { id: "5", q: "Pri prevode z dvojkovej do šestnástkovej zoskupujeme bity po:", opts: ["4", "3", "2", "8"], a: 0 },
+    { id: "6", q: "Pri prevode z desiatkovej sústavy delením čítame zvyšky:", opts: ["odspodu nahor", "zhora nadol", "náhodne", "iba posledný"], a: 0 },
+    { id: "7", q: "11110000<sub>2</sub> = ?<sub>16</sub>", opts: ["F0", "0F", "E0", "FF"], a: 0 },
+    { id: "8", q: "Najväčšie číslo zapísané 8 bitmi je:", opts: ["255", "256", "128", "8"], a: 0 }
+  ]}
+};
+
+/* ---------- views ---------- */
+const VIEWS = {
+  pozicne() {
+    return head() + `<h2>Pozičné číselné sústavy</h2>
+    <p>V <b>pozičnej sústave</b> záleží na tom, na ktorom mieste cifra stojí. Každé miesto má <b>váhu</b>, ktorá je mocninou <b>základu</b> sústavy. V desiatkovej sústave: 352 = 3·100 + 5·10 + 2·1.</p>
+    <div class="cards"><div class="pc"><div class="big">2</div><h4>Dvojková (binárna)</h4><p>cifry 0, 1 · jazyk počítača</p></div><div class="pc"><div class="big">8</div><h4>Osmičková (oktálová)</h4><p>cifry 0 až 7</p></div>
+      <div class="pc"><div class="big">10</div><h4>Desiatková (decimálna)</h4><p>cifry 0 až 9 · používame bežne</p></div><div class="pc"><div class="big">16</div><h4>Šestnástková (hexadecimálna)</h4><p>cifry 0 až 9, A = 10, B = 11, C = 12, D = 13, E = 14, F = 15</p></div></div>
+    <p>Základ sústavy píšeme ako malé číslo za číslo: 1010<sub>2</sub>, 17<sub>8</sub>, 255<sub>10</sub>, FF<sub>16</sub>.</p>
+    <h3>Rozlož si číslo</h3><p>Vyber sústavu a napíš číslo. Uvidíš váhy jednotlivých miest a jeho hodnotu v desiatkovej sústave.</p>
+    <div class="task">${pvHTML()}</div>
+    <h3>Úloha: otázky</h3><div class="task">${taskHTML("pozq")}</div>` + nextBar();
+  },
+  do10() {
+    return head() + `<h2>Prevod do desiatkovej sústavy</h2>
+    ${guessBox()}
+    <div class="box v"><p><b>Postup:</b> každú cifru vynásob jej váhou (mocninou základu) a všetko sčítaj.<br>
+    <code>1101<sub>2</sub> = 1·8 + 1·4 + 0·2 + 1·1 = 13</code><br><code>2F<sub>16</sub> = 2·16 + 15·1 = 47</code></p></div>
+    <h3>Bitové kartičky</h3><p>Každá kartička je jeden bit. Kliknutím ju otočíš (1 = zapnutá). Hodnota čísla je súčet zapnutých kartičiek.</p>
+    <div class="task">${bitsHTML()}${S.t.bitgoal ? `<div class="checkbar"><span class="score ${S.t.bitgoal.score < 3 ? "part" : ""}">Splnené: ${S.t.bitgoal.score} z 3</span></div>` : ""}</div>
+    <h3>Úloha: preveď do desiatkovej</h3><p>Pomôcť si môžeš rozkladom na zastávke 1.</p><div class="task">${taskHTML("do10in")}</div>` + nextBar();
+  },
+  z10() {
+    return head() + `<h2>Prevod z desiatkovej sústavy</h2>
+    <div class="box v"><p><b>Postup:</b> číslo opakovane <b>celočíselne deľ</b> základom novej sústavy a zapisuj <b>zvyšky</b>. Keď vyjde podiel 0, skonči. Výsledok sú zvyšky čítané <b>odspodu nahor</b>. V šestnástkovej sústave zvyšky 10 až 15 zapíšeš ako A až F.</p></div>
+    <h3>Kalkulačka delenia krok za krokom</h3><div class="task">${dvHTML()}</div>
+    <h3>Úloha: preveď</h3><p>Rieš na papieri, kalkulačkou si výsledok môžeš overiť.</p><div class="task">${taskHTML("z10in")}</div>` + nextBar();
+  },
+  skratka() {
+    return head() + `<h2>Skratka medzi sústavami 2, 8 a 16</h2>
+    <p>Pretože 8 = 2<sup>3</sup> a 16 = 2<sup>4</sup>, zodpovedajú každej osmičkovej cifre presne <b>3 bity</b> a každej šestnástkovej cifre presne <b>4 bity</b>. Nemusíme preto prevádzať cez desiatkovú sústavu.</p>
+    <div class="two"><div class="box v" style="margin:0"><p><b>2 → 8 alebo 16:</b> rozdeľ bity <b>sprava</b> do skupín po 3 (alebo 4), zľava doplň nuly a každú skupinu nahraď cifrou.</p></div>
+      <div class="box" style="margin:0"><p><b>8 alebo 16 → 2:</b> každú cifru nahraď 3 (alebo 4) bitmi. Úvodné nuly na začiatku môžeš vynechať.</p></div></div>
+    <h3>Tabuľka štvoríc bitov</h3><div class="nib">${NIB}</div>
+    <h3>Zoskupovanie bitov</h3><div class="task">${grHTML()}</div>
+    <h3>Úloha: preveď cez skupiny bitov</h3><div class="task">${taskHTML("skin")}</div>` + nextBar();
+  },
+  farby() {
+    return head() + `<h2>Šestnástková sústava vo farbách</h2>
+    <p>Na webe a v grafických programoch sa farby zapisujú kódom <code>#RRGGBB</code>. Sú to tri dvojciferné šestnástkové čísla: množstvo <b style="color:#C0392B">červenej</b>, <b style="color:#12805A">zelenej</b> a <b style="color:#1766C2">modrej</b>, každé od 00 (nič) po FF (255, najviac).</p>
+    <div class="task">${colHTML()}<p class="muted" style="font-size:14px;margin-top:8px">Skús: #FF0000, #FFFF00, #000000, #808080, #B4235A</p></div>
+    <h3>Úloha 1: počítaj</h3><div class="task">${taskHTML("farin")}</div>
+    <h3>Úloha 2: aká je to farba?</h3><div class="task">${taskHTML("farq")}</div>` + nextBar();
+  },
+  test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
+};
+
+/* ---------- events ---------- */
+function CUSTOM_CLICK(e) {
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.bit !== undefined) { const i = +ds.bit; S.bits[i] = S.bits[i] ? 0 : 1; const v = S.bits.reduce((a, b, j) => a + b * BV[j], 0); if (BGOALS.includes(v)) S.bdone[v] = true; const n = Object.keys(S.bdone).length; if (n) award("bitgoal", n); save(); render(false); return true; }
+  if (ds.bclr !== undefined) { S.bits = [0, 0, 0, 0, 0, 0, 0, 0]; save(); render(false); return true; }
+  if (ds.dvk) { const st = dvSteps(parseInt(S.dv.n, 10) || 0, S.dv.b); S.dv.k = ds.dvk === "all" ? st.length : ds.dvk === "0" ? 0 : S.dv.k + 1; save(); render(false); return true; }
+  return false;
+}
+function refocus(sel, pos) { const n = document.querySelector(sel); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }
+function CUSTOM_INPUT(e) {
+  const t = e.target, ds = t.dataset, pos = t.selectionStart;
+  if (ds.pvb !== undefined) { S.pv.b = +t.value; save(); render(false); return true; }
+  if (ds.pvn !== undefined) { S.pv.n = t.value; save(); render(false); refocus("[data-pvn]", pos); return true; }
+  if (ds.dvn !== undefined) { S.dv.n = t.value; S.dv.k = 0; save(); render(false); refocus("[data-dvn]", pos); return true; }
+  if (ds.dvb !== undefined) { S.dv.b = +t.value; S.dv.k = 0; save(); render(false); return true; }
+  if (ds.grb !== undefined) { S.gr.bin = t.value; save(); render(false); refocus("[data-grb]", pos); return true; }
+  if (ds.grg !== undefined) { S.gr.g = +t.value; save(); render(false); return true; }
+  if (ds.col !== undefined) { S.col = t.value; save(); render(false); refocus("[data-col]", pos); return true; }
+  return false;
+}
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
