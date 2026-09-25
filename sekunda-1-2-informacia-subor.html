@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.2 Pojem informácia, údaj, jednotky informácie, súbor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+:root{--bg:#F5EFEA;--acc:#C2560C;--accSoft:#FBE3D2;--track:#E0CFC2;--border:#E3D5CA;--surface2:#FAF6F2;--ink:#231812;--muted:#6B5A4E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#17110D;--surface:#221913;--surface2:#2A1F18;--acc:#F28C4B;--accSoft:#3E2616;--track:#3B2D24;--border:#3A2C22;--ink:#F3E9E1;--muted:#BCA898}}
+:root[data-theme="dark"]{--bg:#17110D;--surface:#221913;--surface2:#2A1F18;--acc:#F28C4B;--accSoft:#3E2616;--track:#3B2D24;--border:#3A2C22;--ink:#F3E9E1;--muted:#BCA898}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc h4{margin:8px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.pc .ic{font-size:34px}
+.wide-svg svg{width:100%;height:auto;display:block}
+.lab{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.lab{grid-template-columns:1fr}}
+.side{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.side h4{font-family:var(--head);margin:0 0 6px;font-size:19px}
+.tag{display:inline-block;font-size:12.5px;font-weight:600;color:var(--acc);background:var(--accSoft);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+.meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin:8px 0 4px}.meter i{display:block;height:100%;background:var(--acc)}
+.zone{cursor:pointer}.zone .hit{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.zone:hover .hit,.zone:focus .hit{stroke:#F5A524;fill:rgba(245,165,36,.16)}
+.zone.on .hit{stroke:#F5A524;fill:rgba(245,165,36,.28);stroke-width:4}
+.zone.seen .hit{stroke:rgba(194,86,12,.55);stroke-dasharray:5 4}
+.zone.ok .hit{stroke:#12805A;fill:rgba(18,128,90,.22);stroke-width:4}
+.zone.bad .hit{stroke:#C0392B;fill:rgba(192,57,43,.2);stroke-width:4}
+.zone:focus{outline:none}
+.tm{background:#fff;color:#1B1B1F;border:1px solid #C9CED6;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(30,20,10,.45);font-family:"Segoe UI",var(--font);font-size:14px}
+.tm .wt{background:#EEF0F3;padding:7px 12px;display:flex;gap:8px;border-bottom:1px solid #D9DDE3;font-size:13.5px}
+.tm table{width:100%;border-collapse:collapse}
+.tm th,.tm td{padding:7px 10px;border-bottom:1px solid #EEF0F3;text-align:left}
+.tm td.n{text-align:right;font-family:var(--mono)}
+.tm tr.sel{background:#DCE8FA}
+.tm tr.hang td:first-child::after{content:" (Neodpovedá)";color:#C0392B;font-weight:600}
+.tm tr{cursor:pointer}
+.tm .foot{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#F7F8FA}
+.tm .foot button{border:1px solid #A9B1BC;background:#fff;border-radius:6px;padding:5px 12px;cursor:pointer}
+.tm .foot button:disabled{opacity:.4;cursor:default}
+.bar{display:inline-block;height:8px;border-radius:4px;background:#F2A516;vertical-align:middle;margin-left:6px}
+.path{font-family:var(--mono);background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:15px}
+.path span{padding:2px 6px;border-radius:6px}
+.tree{font-family:var(--mono);font-size:14.5px;line-height:1.9;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;white-space:pre}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.bulbs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.bulb{width:70px;border:2px solid var(--border);border-radius:12px;background:var(--surface);padding:8px 4px;cursor:pointer;text-align:center}
+.bulb .i{font-size:30px;filter:grayscale(1) opacity(.45)}
+.bulb.on{border-color:#F2A516;background:#FFF6DC}.bulb.on .i{filter:none}
+.bulb .b{font-family:var(--mono);font-size:22px;font-weight:800}
+.bulb small{display:block;font-size:11.5px;color:var(--muted)}
+.bigc{font-family:var(--mono);font-size:44px;font-weight:800;color:var(--acc);display:inline-block;min-width:60px;text-align:center;border:2px dashed var(--border);border-radius:12px;padding:2px 12px}
+.exp{background:#fff;color:#1B1B1F;border:1px solid #C9CED6;border-radius:10px;overflow:hidden;font-family:"Segoe UI",var(--font);font-size:14.5px;box-shadow:0 12px 30px -14px rgba(30,20,10,.4)}
+.exp .wt{background:#EEF0F3;padding:7px 12px;border-bottom:1px solid #D9DDE3;font-size:13.5px}
+.exp .fr{display:grid;grid-template-columns:1fr 110px 80px 90px;gap:8px;align-items:center;padding:7px 12px;border-bottom:1px solid #F0F2F5}
+.exp .fr.h{font-size:12.5px;color:#666;background:#FAFBFC}
+.exp .fr input{font:inherit;border:1.5px solid #2F6FEB;border-radius:3px;padding:2px 4px;width:100%;color:#1B1B1F;background:#fff}
+.exp .fr .nm{display:flex;gap:6px;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.exp .fr button{border:1px solid #BFC7D5;background:#fff;border-radius:5px;padding:2px 8px;cursor:pointer;font-size:12.5px}
+.exp .tip{position:relative;background:#FFF4E5;border:1px solid #E0A100;border-radius:6px;padding:8px 10px;margin:6px 12px;font-size:13px;color:#6B4A00}
+.sizes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.sizes div{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}
+.sizes b{display:block;font-size:28px}.sizes span{display:block;font-weight:700;font-family:var(--mono);color:var(--acc)}.sizes small{color:var(--muted)}
+.fname{font-family:var(--mono);font-size:clamp(20px,3vw,28px);font-weight:700;display:flex;gap:2px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.fname span{padding:4px 10px;border-radius:8px}.fname small{display:block;font-family:var(--font);font-size:12px;text-align:center}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const KEY = "info-s12-v1";
+const LESSON = "1.2 Pojem informácia, údaj, jednotky informácie, súbor, meno a typ súboru";
+const BRAND = "1.2 Informácia a súbor";
+const CLASS_DEFAULT = "Sekunda";
+const WIDE = { bity: 1, subor: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "info", title: "Informácia a údaj", min: 7 },
+  { id: "bity", title: "Bit a bajt", min: 8 },
+  { id: "jednotky", title: "Jednotky", min: 8 },
+  { id: "subor", title: "Súbor a jeho meno", min: 8 },
+  { id: "typ", title: "Typ súboru", min: 6 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { info: ["infoq", "formy"], bity: ["bulbgoal", "bitin"], jednotky: ["jporadie", "velk", "jin"], subor: ["ren", "msort"], typ: ["tsort", "typq"], test: ["test"] };
+const START = {
+  kicker: "Informatika, Sekunda",
+  lead: "Počítač pracuje s údajmi, my z nich získavame informácie. Zistíš, aký je medzi nimi rozdiel, čo je bit a bajt, ako veľké sú fotky, pesničky a filmy, a ako sa správne pomenúvajú súbory. Rozsvietiš žiarovky, aby vzniklo písmeno, a v simulácii Prieskumníka premenuješ súbory. 5 zastávok, body a na konci výsledok.",
+  guessQ: "Čo je menšie: bit, alebo bajt?",
+  guessNote: "Tip sa neboduje. Na zastávke Bit a bajt zistíš, či si mal pravdu.",
+  guesses: ["Bajt", "Bit", "Sú rovnako veľké", "Nedajú sa porovnať"],
+  ok: 1, yes: "Presne tak! Bit je najmenšia jednotka, bajt má 8 bitov.", no: "Menší je bit, najmenšia jednotka informácie. Bajt má 8 bitov."
+};
+function EXTRA_STATE() { return { bulbs: [0, 0, 0, 0, 0, 0, 0, 0], bdone: {}, files: [{ n: "Dokument1.docx", s: "24 kB" }, { n: "IMG_2034.jpg", s: "3,2 MB" }, { n: "Nový textový dokument.txt", s: "1 kB" }], edit: null, err: null, rg: {} }; }
+const FORBID = /[\\/:*?"<>|]/;
+
+/* ---------- tasks ---------- */
+const TASKS = {
+  infoq: { id: "infoq", type: "mc", qs: [
+    { id: "1", q: "Na papieri je napísané iba <b>38,5</b>. Čo to je?", opts: ["Údaj: nevieme, čo znamená", "Informácia: presne vieme, čo znamená", "Súbor", "Bajt"], a: 0 },
+    { id: "2", q: "Mama povie: <b>„Máš horúčku 38,5 °C, zostaneš doma.“</b> Čo to je?", opts: ["Informácia: údaj s významom, ktorý nám niečo hovorí", "Iba údaj bez významu", "Program", "Prípona súboru"], a: 0 },
+    { id: "3", q: "Kedy sa z údaja stane informácia?", opts: ["Keď mu rozumieme a niečo nové sa z neho dozvieme", "Keď ho uložíme na disk", "Keď ho vytlačíme", "Keď má viac ako 8 bitov"], a: 0 },
+    { id: "4", q: "Počítač spracúva:", opts: ["údaje, ktoré sú uložené ako bity", "iba informácie", "iba čísla od 1 do 10", "iba obrázky"], a: 0 }
+  ]},
+  formy: { id: "formy", type: "sort",
+    buckets: [{ id: "t", label: "📝 Text" }, { id: "o", label: "🖼️ Obrázok" }, { id: "z", label: "🔊 Zvuk" }, { id: "v", label: "🎬 Video" }],
+    items: [{ id: "1", t: "SMS správa", b: "t" }, { id: "2", t: "Kniha", b: "t" }, { id: "3", t: "Fotka z výletu", b: "o" }, { id: "4", t: "Mapa", b: "o" }, { id: "5", t: "Pesnička", b: "z" }, { id: "6", t: "Hlasová správa", b: "z" }, { id: "7", t: "Film", b: "v" }, { id: "8", t: "Videohovor", b: "v" }],
+    after: "Všetky tieto formy počítač nakoniec uloží rovnako: ako jednotky a nuly, teda bity." },
+  bulbgoal: { id: "bulbgoal", type: "custom", max: 2 },
+  bitin: { id: "bitin", type: "input", qs: [
+    { id: "1", q: "Koľko bitov má 1 bajt?", ok: v => parseNum(v) === 8, show: "8", ph: "?", unit: "bitov" },
+    { id: "2", q: "Koľko bitov majú 3 bajty?", ok: v => parseNum(v) === 24, show: "24", ph: "?", unit: "bitov" },
+    { id: "3", q: "Koľko rôznych stavov má 1 bit?", ok: v => parseNum(v) === 2, show: "2", ph: "?", why: "0 alebo 1, zapnuté alebo vypnuté." },
+    { id: "4", q: "Koľko rôznych kombinácií dávajú 2 bity? (00, 01, …)", ok: v => parseNum(v) === 4, show: "4", ph: "?", why: "00, 01, 10, 11. Každý ďalší bit počet možností zdvojnásobí." },
+    { id: "5", q: "Koľko rôznych kombinácií má 1 bajt (8 bitov)?", ok: v => parseNum(v) === 256, show: "256", ph: "?", why: "2·2·2·2·2·2·2·2 = 256. Preto sa do 1 bajtu zmestí jeden znak." }
+  ]},
+  jporadie: { id: "jporadie", type: "order", items: [{ id: "a", t: "bit" }, { id: "b", t: "bajt (B)" }, { id: "c", t: "kilobajt (kB)" }, { id: "d", t: "megabajt (MB)" }, { id: "e", t: "gigabajt (GB)" }, { id: "f", t: "terabajt (TB)" }] },
+  velk: { id: "velk", type: "order", items: [{ id: "a", t: "💬 SMS správa" }, { id: "b", t: "📄 Referát v editore" }, { id: "c", t: "📷 Fotka z mobilu" }, { id: "d", t: "🎬 Film" }, { id: "e", t: "💽 Celý disk počítača" }] },
+  jin: { id: "jin", type: "input", qs: [
+    { id: "1", q: "1 kB = ? B", ok: v => parseNum(v) === 1024, show: "1024", ph: "?", unit: "B" },
+    { id: "2", q: "2 MB = ? kB", ok: v => parseNum(v) === 2048, show: "2048", ph: "?", unit: "kB" },
+    { id: "3", q: "Koľko GB má 1 TB?", ok: v => parseNum(v) === 1024, show: "1024", ph: "?", unit: "GB" },
+    { id: "4", q: "Na USB kľúč s voľným miestom 1 GB (1024 MB) ukladáš pesničky po 4 MB. Koľko sa ich zmestí?", ok: v => parseNum(v) === 256, show: "256", ph: "?", unit: "pesničiek" }
+  ]},
+  ren: { id: "ren", type: "custom", max: 3 },
+  msort: { id: "msort", type: "sort",
+    buckets: [{ id: "y", label: "✅ Povolený názov" }, { id: "n", label: "❌ Nepovolený názov", sub: "Windows ho nedovolí" }],
+    items: [{ id: "1", t: "vylet_tatry.jpg", b: "y" }, { id: "2", t: "referat-vtaky.docx", b: "y" }, { id: "3", t: "Úloha 3.txt", b: "y" }, { id: "4", t: "2026-09-25 rozvrh.pdf", b: "y" },
+      { id: "5", t: "otazky?.txt", b: "n" }, { id: "6", t: "a/b.docx", b: "n" }, { id: "7", t: "\"citat\".txt", b: "n" }, { id: "8", t: "hra*.exe", b: "n" }],
+    after: "Zakázané znaky: \\ / : * ? \" < > |. Medzery a diakritika sú povolené, ale pri posielaní súborov cez internet je lepšie ich nepoužívať." },
+  tsort: { id: "tsort", type: "sort",
+    buckets: [{ id: "t", label: "📄 Text a dokumenty" }, { id: "o", label: "🖼️ Obrázky" }, { id: "z", label: "🎵 Zvuk" }, { id: "v", label: "🎬 Video" }, { id: "p", label: "⚙️ Programy" }, { id: "a", label: "🗜️ Archívy" }],
+    items: [{ id: "1", t: ".docx", b: "t" }, { id: "2", t: ".pdf", b: "t" }, { id: "3", t: ".txt", b: "t" }, { id: "4", t: ".jpg", b: "o" }, { id: "5", t: ".png", b: "o" }, { id: "6", t: ".mp3", b: "z" }, { id: "7", t: ".wav", b: "z" }, { id: "8", t: ".mp4", b: "v" }, { id: "9", t: ".exe", b: "p" }, { id: "10", t: ".zip", b: "a" }] },
+  typq: { id: "typq", type: "mc", qs: [
+    { id: "1", q: "Podľa čoho Windows vie, ktorým programom má súbor otvoriť?", opts: ["Podľa prípony", "Podľa veľkosti", "Podľa dátumu", "Podľa farby ikony"], a: 0 },
+    { id: "2", q: "Premenoval si fotka.jpg na fotka.txt. Čo sa stane?", opts: ["Súbor sa otvorí v Poznámkovom bloku ako nezmyselné znaky, obsah sa nezmenil", "Fotka sa zmení na text", "Súbor zmizne", "Fotka sa zmenší"], a: 0, why: "Prípona iba hovorí, čo je v súbore. Keď ju zmeníš, obsah zostane rovnaký, len ho Windows otvorí zlým programom." },
+    { id: "3", q: "Prípony nevidíš. Kde ich zapneš?", opts: ["V Prieskumníkovi: Zobraziť → Prípony názvov súborov", "V Koši", "V Správcovi úloh", "V ponuke Štart → Vypnúť"], a: 0 },
+    { id: "4", q: "Prečo je nebezpečný súbor s názvom <code>fotka.jpg.exe</code>?", opts: ["Tvári sa ako fotka, ale je to program, ktorý môže byť vírus", "Je príliš veľký", "Nedá sa otvoriť", "Nie je nebezpečný"], a: 0 }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", q: "Najmenšia jednotka informácie je:", opts: ["bit", "bajt", "kilobajt", "znak"], a: 0 },
+    { id: "2", q: "1 bajt má:", opts: ["8 bitov", "10 bitov", "1024 bitov", "2 bity"], a: 0 },
+    { id: "3", q: "1 MB je:", opts: ["1024 kB", "1000 B", "1024 GB", "8 kB"], a: 0 },
+    { id: "4", q: "Ktoré je najväčšie?", opts: ["1 TB", "900 GB", "1000 MB", "2 GB"], a: 0 },
+    { id: "5", q: "V názve <code>rozvrh.pdf</code> je prípona:", opts: ["pdf", "rozvrh", "rozvrh.pdf", ".rozvrh"], a: 0 },
+    { id: "6", q: "Ktorý znak sa NESMIE použiť v názve súboru?", opts: ["?", "_", "-", "medzera"], a: 0 },
+    { id: "7", q: "Súbor s príponou .mp3 obsahuje:", opts: ["zvuk", "obrázok", "text", "program"], a: 0 },
+    { id: "8", q: "Rozdiel medzi údajom a informáciou:", opts: ["informácia je údaj, ktorému rozumieme a má pre nás význam", "údaj je vždy väčší", "informácia je iba na papieri", "nie je medzi nimi rozdiel"], a: 0 }
+  ]}
+};
+
+/* ---------- widgets ---------- */
+const BV = [128, 64, 32, 16, 8, 4, 2, 1];
+function bulbsHTML() {
+  const v = S.bulbs.reduce((a, b, i) => a + b * BV[i], 0), ch = v >= 33 && v <= 126 ? String.fromCharCode(v) : v === 32 ? "␣" : "·";
+  return `<div class="bulbs">${S.bulbs.map((b, i) => `<button class="bulb ${b ? "on" : ""}" data-bulb="${i}" aria-pressed="${!!b}" aria-label="Bit ${i + 1}"><div class="i">💡</div><div class="b">${b}</div><small>${BV[i]}</small></button>`).join("")}</div>
+    <p style="font-size:17px">Bity: <b style="font-family:var(--mono);font-size:22px">${S.bulbs.join("")}</b> · číslo <b>${v}</b> · znak: <span class="bigc">${ch}</span></p>
+    <ul class="goals">${[["65", "A"], ["97", "a"]].map(([n, c]) => `<li>${S.bdone[c] ? "✅" : "⬜"} Rozsvieť žiarovky tak, aby vzniklo písmeno <b>${c}</b> (číslo ${n})</li>`).join("")}</ul>
+    <div class="row"><button class="ghost" data-bclr>Zhasnúť všetko</button></div>`;
+}
+function expHTML() {
+  const F = S.files, G = S.rg;
+  return `<div class="exp"><div class="wt">📁 Dokumenty</div><div class="fr h"><span>Názov</span><span>Typ</span><span>Veľkosť</span><span></span></div>
+    ${F.map((f, i) => { const ext = f.n.includes(".") ? f.n.split(".").pop().toLowerCase() : "";
+      return S.edit === i ? `<div class="fr"><input id="rn" value="${esc(S.typed != null ? S.typed : f.n)}" aria-label="Nový názov súboru" autocomplete="off"><span></span><span>${f.s}</span><button data-rok="${i}">OK</button></div>${S.err ? `<div class="tip">${S.err}</div>` : ""}`
+        : `<div class="fr"><span class="nm">${ICON[ext] || "📄"} ${esc(f.n)}</span><span style="font-size:13px;color:#555">${TYPEN[ext] || "Súbor"}</span><span style="font-size:13px">${f.s}</span><button data-ren="${i}">Premenovať</button></div>`; }).join("")}</div>
+    <ul class="goals">${[["a", "Premenuj <b>IMG_2034.jpg</b> na <b>vylet_tatry.jpg</b>"], ["b", "Premenuj <b>Dokument1.docx</b> na <b>referat_vtaky.docx</b>"], ["c", "Skús dať súboru názov s otáznikom a pozri, čo povie Windows"]].map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`;
+}
+const ICON = { docx: "📘", jpg: "🖼️", txt: "📝", pdf: "📕", mp3: "🎵", mp4: "🎬", exe: "⚙️", zip: "🗜️", png: "🖼️" };
+const TYPEN = { docx: "Dokument Word", jpg: "Obrázok JPG", txt: "Textový dokument", pdf: "Dokument PDF", png: "Obrázok PNG" };
+
+/* ---------- views ---------- */
+const VIEWS = {
+  info() {
+    return head() + `<h2>Informácia a údaj</h2>
+    <div class="two"><div class="box" style="margin:0"><p><b>📊 Údaj</b> (dáta) je zápis čísla, textu, obrázka alebo zvuku. Sám osebe nemusí nič znamenať.<br>Príklad: <code>38,5</code></p></div>
+      <div class="box v" style="margin:0"><p><b>💡 Informácia</b> je údaj, ktorému rozumieme a ktorý nám niečo nové povie.<br>Príklad: <i>„Máš horúčku 38,5 °C, zostaneš doma.“</i></p></div></div>
+    <p>Počítač pracuje s <b>údajmi</b>. Informácie z nich získavame my, ľudia, keď im rozumieme. Informácie môžu mať rôznu podobu: text, obrázok, zvuk aj video.</p>
+    <h3>Úloha 1: údaj, alebo informácia?</h3><div class="task">${taskHTML("infoq")}</div>
+    <h3>Úloha 2: aká je to forma informácie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("formy")}</div>` + nextBar();
+  },
+  bity() {
+    return head() + `<h2>Bit a bajt</h2>
+    ${guessBox()}
+    <div class="two"><div class="box v" style="margin:0"><p><b>Bit</b> je najmenšia jednotka informácie. Má iba dva stavy: <b>0 alebo 1</b>, ako žiarovka zhasnutá alebo rozsvietená.</p></div>
+      <div class="box" style="margin:0"><p><b>Bajt</b> (B) je <b>8 bitov</b>. Do jedného bajtu sa zmestí jeden znak, napríklad písmeno A.</p></div></div>
+    <h3>Žiarovky: rozsvieť písmeno</h3><p>Každá žiarovka je jeden bit. Spolu je ich 8, teda jeden bajt. Počítač má každé písmeno uložené ako číslo: A = 65, B = 66 … a = 97.</p>
+    <div class="task">${bulbsHTML()}${S.t.bulbgoal ? `<div class="checkbar"><span class="score ${S.t.bulbgoal.score < 2 ? "part" : ""}">Splnené: ${S.t.bulbgoal.score} z 2</span></div>` : ""}</div>
+    <h3>Úloha: počítaj s bitmi</h3><div class="task">${taskHTML("bitin")}</div>` + nextBar();
+  },
+  jednotky() {
+    return head() + `<h2>Jednotky informácie</h2>
+    <p>Väčšie jednotky sú vždy <b>1024-krát</b> väčšie ako menšie (1024 = 2<sup>10</sup>):</p>
+    <div class="task" style="font-family:var(--mono);font-size:16px;line-height:1.9">1 B = 8 bitov<br>1 kB (kilobajt) = 1024 B<br>1 MB (megabajt) = 1024 kB<br>1 GB (gigabajt) = 1024 MB<br>1 TB (terabajt) = 1024 GB</div>
+    <p>Aké veľké bývajú súbory?</p>
+    <div class="sizes"><div><b>💬</b><span>≈ 100 B</span><small>SMS správa</small></div><div><b>📄</b><span>≈ 30 kB</span><small>referát</small></div><div><b>📷</b><span>≈ 3 MB</span><small>fotka z mobilu</small></div><div><b>🎵</b><span>≈ 5 MB</span><small>pesnička MP3</small></div><div><b>🎬</b><span>≈ 2 GB</span><small>film</small></div><div><b>💽</b><span>≈ 1 TB</span><small>disk počítača</small></div></div>
+    <h3>Úloha 1: zoraď jednotky od najmenšej</h3><div class="task">${taskHTML("jporadie")}</div>
+    <h3>Úloha 2: zoraď súbory od najmenšieho</h3><div class="task">${taskHTML("velk")}</div>
+    <h3>Úloha 3: prepočítaj</h3><div class="task">${taskHTML("jin")}</div>` + nextBar();
+  },
+  subor() {
+    return head() + `<h2>Súbor a jeho meno</h2>
+    <p><b>Súbor</b> je pomenovaný celok údajov uložený na disku: fotka, pesnička, referát aj hra. Každý súbor má <b>meno</b>, ktoré sa skladá z <b>názvu</b> a <b>prípony</b>, oddelených bodkou.</p>
+    <div class="fname"><span style="background:#DDF3EA;color:#0B6B47">vylet_tatry<small>názov</small></span><span style="background:#FDF1D3;color:#8A5A00">.<small>bodka</small></span><span style="background:#FBE3D2;color:#C2560C">jpg<small>prípona</small></span></div>
+    <div class="box"><p><b>Pravidlá pre meno súboru:</b> názov by mal vystihovať obsah · nesmie obsahovať znaky <code>\\ / : * ? " &lt; &gt; |</code> · v jednom priečinku nemôžu byť dva súbory s rovnakým menom · príponu pri premenovaní nemeň.</p></div>
+    <h3>Úloha 1: premenuj súbory</h3><p>Klikni na Premenovať, napíš nové meno a potvrď Enterom alebo tlačidlom OK.</p>
+    <div class="task">${expHTML()}${S.t.ren ? `<div class="checkbar"><span class="score ${S.t.ren.score < 3 ? "part" : ""}">Splnené: ${S.t.ren.score} z 3</span></div>` : ""}</div>
+    <h3>Úloha 2: povolený, alebo nepovolený názov?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("msort")}</div>` + nextBar();
+  },
+  typ() {
+    return head() + `<h2>Typ súboru</h2>
+    <p><b>Prípona</b> hovorí, aký je to <b>typ súboru</b>: či je v ňom text, obrázok, zvuk alebo program. Podľa prípony Windows vie, ktorým programom má súbor otvoriť, a zobrazí mu správnu ikonu.</p>
+    <table style="max-width:620px"><thead><tr><th>Prípona</th><th>Typ</th><th>Otvorí sa napríklad v</th></tr></thead><tbody>
+      ${[[".txt", "textový dokument", "Poznámkový blok"], [".docx", "dokument Word", "Microsoft Word"], [".pdf", "dokument PDF", "prehliadač, Adobe Reader"], [".jpg, .png", "obrázok", "Fotografie"], [".mp3", "zvuk", "prehrávač médií"], [".mp4", "video", "prehrávač médií"], [".exe", "program", "spustí sa priamo"], [".zip", "archív", "Prieskumník, 7-Zip"]].map(r => `<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}</tbody></table>
+    <h3>Úloha 1: roztrieď prípony</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("tsort")}</div>
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("typq")}</div>` + nextBar();
+  },
+  test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
+};
+
+/* ---------- events ---------- */
+function doRename(i) {
+  const inp = document.getElementById("rn"); if (!inp) return; const v = inp.value.trim(), F = S.files, old = F[i].n; S.typed = inp.value;
+  if (FORBID.test(v)) { S.err = `⚠️ Názov súboru nemôže obsahovať žiadny z nasledujúcich znakov: \\ / : * ? " &lt; &gt; |`; S.rg.c = true; scoreRen(); return; }
+  if (!v) { S.err = "Názov nesmie byť prázdny."; return; }
+  if (F.some((f, j) => j !== i && f.n.toLowerCase() === v.toLowerCase())) { S.err = "V tomto priečinku už súbor s takým menom existuje."; return; }
+  const oe = old.split(".").pop().toLowerCase(), ne = v.includes(".") ? v.split(".").pop().toLowerCase() : "";
+  if (oe !== ne && !S.warned) { S.warned = true; S.err = "⚠️ Ak zmeníte príponu súboru, súbor sa môže stať nepoužiteľným. Naozaj ju chcete zmeniť? (Klikni znova na OK, alebo príponu oprav.)"; return; }
+  F[i].n = v; S.edit = null; S.err = null; S.warned = false; S.typed = null;
+  if (old === "IMG_2034.jpg" && v === "vylet_tatry.jpg") S.rg.a = true;
+  if (old === "Dokument1.docx" && v === "referat_vtaky.docx") S.rg.b = true;
+  if (F.some(f => f.n === "vylet_tatry.jpg")) S.rg.a = true; if (F.some(f => f.n === "referat_vtaky.docx")) S.rg.b = true;
+  scoreRen();
+}
+function scoreRen() { const n = ["a", "b", "c"].filter(k => S.rg[k]).length; if (n) award("ren", n); }
+function CUSTOM_CLICK(e) {
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.bulb !== undefined) { const i = +ds.bulb; S.bulbs[i] = S.bulbs[i] ? 0 : 1; const v = S.bulbs.reduce((a, b, j) => a + b * BV[j], 0); if (v === 65) S.bdone.A = true; if (v === 97) S.bdone.a = true; const n = Object.keys(S.bdone).length; if (n) award("bulbgoal", n); save(); render(false); return true; }
+  if (ds.bclr !== undefined) { S.bulbs = [0, 0, 0, 0, 0, 0, 0, 0]; save(); render(false); return true; }
+  if (ds.ren !== undefined) { S.edit = +ds.ren; S.err = null; S.warned = false; S.typed = null; save(); render(false); const i = document.getElementById("rn"); if (i) { i.focus(); const d = i.value.lastIndexOf("."); i.setSelectionRange(0, d > 0 ? d : i.value.length); } return true; }
+  if (ds.rok !== undefined) { doRename(+ds.rok); save(); render(false); const i = document.getElementById("rn"); if (i) i.focus(); return true; }
+  return false;
+}
+document.addEventListener("keydown", e => { if (e.target.id === "rn" && e.key === "Enter") { e.preventDefault(); doRename(S.edit); save(); render(false); const i = document.getElementById("rn"); if (i) i.focus(); } if (e.target.id === "rn" && e.key === "Escape") { S.edit = null; S.err = null; save(); render(false); } });
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function nextBar() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
