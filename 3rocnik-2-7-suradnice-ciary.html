@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2.7 Súradnice bodov a kreslenie čiar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:14px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-family:var(--head);font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+:root{--bg:#ECF3F0;--acc:#0E7A5C;--accSoft:#D5EEE5;--track:#C6D8D1;--border:#D0DED8;--surface2:#F3F8F6;--ink:#0F1F1A;--muted:#4E645C}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1614;--surface:#15221E;--surface2:#1B2B26;--acc:#4CC9A0;--accSoft:#173A31;--track:#2C403A;--border:#284039;--ink:#E4F1EC;--muted:#98B3AA}}
+:root[data-theme="dark"]{--bg:#0D1614;--surface:#15221E;--surface2:#1B2B26;--acc:#4CC9A0;--accSoft:#173A31;--track:#2C403A;--border:#284039;--ink:#E4F1EC;--muted:#98B3AA}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc svg{width:54px;height:54px;display:block}
+.pc h4{margin:8px 0 4px;font-family:var(--head);font-size:17px}
+.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.code{font-family:var(--mono);font-size:15px;line-height:1.7;background:#0F1F1A;color:#DDF3EA;border-radius:12px;padding:12px 16px;overflow-x:auto;white-space:pre;margin:10px 0}
+.code .k{color:#FFB86B;font-weight:700}.code .s{color:#9BE39B}
+.code .ln{display:block;border-radius:4px;padding:0 6px;margin:0 -6px}
+.code .ln.hl{background:#1F7A5C}
+.wide-svg svg{width:100%;height:auto;display:block}
+.game{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:800px){.game{grid-template-columns:1fr}}
+.game svg{width:100%;height:auto;display:block;border-radius:14px}
+.hist{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hist span{font-family:var(--mono);font-size:14px;border-radius:6px;padding:2px 8px;background:var(--surface2);border:1px solid var(--border)}
+.coinbtn{border:0;background:none;cursor:pointer;padding:0}
+.coinbtn svg{width:64px;height:64px}
+.coins{display:flex;gap:6px;flex-wrap:wrap}
+.picked{display:flex;gap:4px;flex-wrap:wrap;min-height:48px;background:var(--surface2);border:1.5px dashed var(--border);border-radius:12px;padding:6px;margin-top:8px}
+.picked button svg{width:40px;height:40px}
+.fcwrap{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:800px){.fcwrap{grid-template-columns:1fr}}
+.fc svg{width:100%;height:auto;display:block}
+.fs{cursor:pointer}.fs:hover .sh{stroke:#F2A516;stroke-width:4}
+.tray{display:grid;gap:8px}
+.card2{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;cursor:pointer;font-family:var(--mono);font-size:15px}
+.card2.sel{border-color:var(--amber);background:var(--amberSoft)}
+.console{font-family:var(--mono);font-size:14px;background:#0F1F1A;color:#9BE39B;border-radius:10px;padding:10px 14px;min-height:70px;white-space:pre-wrap;margin-top:10px}
+.vars{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.var{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:6px 14px;font-family:var(--mono);font-size:16px;min-width:80px;text-align:center}
+.var b{display:block;font-size:12px;color:var(--muted);font-family:var(--font)}
+.var.ch{border-color:var(--amber);background:var(--amberSoft)}
+.mono .chipb,.mono .slotbtn{font-family:var(--mono);white-space:pre;font-size:15px}
+.qimg{display:block;margin:8px 0;max-width:420px}
+.qimg svg{width:100%;height:auto;display:block;border-radius:10px}
+.rv g[data-rv]{cursor:pointer}
+.rv g[data-rv]:hover rect{stroke:#F2A516;stroke-width:4}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}.theory h4{margin:12px 0 4px;font-family:var(--head)}
+.pcode{font-family:var(--mono);background:#0F1A2E;color:#DCE7FF;border-radius:12px;padding:12px 16px;font-size:15px;white-space:pre;overflow-x:auto;margin:10px 0;line-height:1.55}
+.pcode .k{color:#FF9E64}.pcode .s{color:#9ECE6A}.pcode .c{color:#6B7B99}.pcode .n{color:#E0AF68}
+.ide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:900px){.ide{grid-template-columns:1fr}}
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14px}
+.win .wt{background:#E9EDF3;padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:13px;border-bottom:1px solid #D5DCE6}
+.win .wt .dots{margin-left:auto;color:#666;letter-spacing:6px}
+.win .tb{display:flex;gap:6px;padding:6px 8px;background:#F6F7F9;border-bottom:1px solid #E0E4EA}
+.win .tb button{border:1px solid #BFC7D5;background:#fff;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:13px}
+.win .tb .run{background:#2E7D4F;border-color:#2E7D4F;color:#fff;font-weight:700}
+.win textarea{width:100%;min-height:230px;border:0;outline:none;resize:vertical;font-family:"Courier New",var(--mono);font-size:15px;line-height:1.5;padding:10px 12px;color:#000;background:#fff}
+.shell{background:#fff;font-family:"Courier New",var(--mono);font-size:13.5px;padding:8px 10px;min-height:54px;max-height:170px;overflow:auto;white-space:pre-wrap;border-top:1px solid #E0E4EA;color:#000}
+.shell .e{color:#D10000}.shell .o{color:#0033CC}
+.tkwin .body{padding:8px;background:#F0F0F0;display:flex;justify-content:center;align-items:flex-start;min-height:200px;overflow:auto}
+.tkempty{padding:30px 16px;text-align:center;color:#666;font-size:14px;line-height:1.7}
+.chal{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chal button{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 12px;cursor:pointer;font-weight:600}
+.chal button.on{border-color:var(--acc);background:var(--accSoft)}
+.coord{position:relative;display:inline-block;max-width:100%}
+.coord svg{display:block;max-width:100%;height:auto;cursor:crosshair;background:#fff;border:1px solid #BCC6D3}
+.coord .tip{position:absolute;pointer-events:none;background:#1B1B1F;color:#fff;font-family:var(--mono);font-size:12px;padding:2px 6px;border-radius:5px;transform:translate(10px,-24px);white-space:nowrap}
+.lines{display:grid;gap:6px;margin:10px 0}
+.lines label{display:flex;gap:10px;align-items:center;font-family:var(--mono);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;cursor:pointer}
+.lines label small{font-family:var(--font);color:var(--muted);margin-left:auto}
+.qimg{display:block;margin:8px 0;max-width:260px}
+.cmdt td,.cmdt th{padding:6px 8px;font-size:14.5px;vertical-align:top}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.tgt{display:grid;grid-template-columns:230px 1fr;gap:14px;align-items:start;margin:8px 0}
+@media (max-width:700px){.tgt{grid-template-columns:1fr}}
+.tgt .pv svg{border:1px solid var(--border);border-radius:8px}
+.drawbox{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.drawbox{grid-template-columns:1fr}}
+#drawsvg{cursor:crosshair;background:#fff;border:1px solid #BCC6D3;display:block;max-width:100%;height:auto}
+.gen{font-family:var(--mono);background:#0F1A2E;color:#DCE7FF;border-radius:12px;padding:10px 14px;font-size:14px;white-space:pre-wrap;word-break:break-all;min-height:60px}
+.fp{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}
+.fp label{font-weight:600;font-size:14px}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const THEORY = {"body": ["(0, 0) je vľavo hore, x rastie doprava, y nadol. Vyššie položený bod má menšie y.", "Bod vyznačíme malým krúžkom: create_oval(x − 3, y − 3, x + 3, y + 3)."], "usecka": ["<code>create_line(x1, y1, x2, y2)</code>. Rovnaké y = vodorovná, rovnaké x = zvislá úsečka.", "Parametre: fill (farba), width (hrúbka), dash=(10, 5) (prerušovaná), arrow='first' / 'last' / 'both'."], "lomena": ["Lomená čiara: create_line s viacerými bodmi, počet súradníc je vždy párny.", "Uzavretý útvar: posledný bod = prvý bod."], "obrazky": ["Postup: náčrt, pomenovanie bodov, súradnice, poradie spájania.", "Útvar jedným ťahom = jedna lomená čiara, každá hrana práve raz."], "chyby": ["Nepárny počet súradníc = TclError, chýbajúca čiarka = SyntaxError.", "Obrázok hore nohami: pomýlená os y."]};
+/* ---------- mini tkinter.Canvas interpreter (subset of Python) ---------- */
+const TKCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
+function tkColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (TKCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
+function tkTokens(s) {
+  const t = []; let i = 0;
+  while (i < s.length) { const c = s[i];
+    if (c === " " || c === "\t") { i++; continue; }
+    if (c === "'" || c === '"') { let j = i + 1; while (j < s.length && s[j] !== c) j++; if (j >= s.length) throw { syn: "unterminated string literal" }; t.push({ s: s.slice(i + 1, j) }); i = j + 1; continue; }
+    if (/[0-9.]/.test(c)) { let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ n: parseFloat(s.slice(i, j)) }); i = j; continue; }
+    if (/[A-Za-z_]/.test(c)) { let j = i; while (j < s.length && /[A-Za-z_0-9]/.test(s[j])) j++; t.push({ id: s.slice(i, j) }); i = j; continue; }
+    if (s.startsWith("//", i) || s.startsWith("**", i)) { t.push({ o: s.slice(i, i + 2) }); i += 2; continue; }
+    if ("+-*/%(),=.".includes(c)) { t.push({ o: c }); i++; continue; }
+    throw { syn: "invalid syntax" }; }
+  return t;
+}
+function tkEval(src, env) {
+  const t = tkTokens(src); let p = 0; const pk = () => t[p], eat = o => { if (t[p] && t[p].o === o) { p++; return true; } return false; };
+  function atom() { const x = pk(); if (!x) throw { syn: "invalid syntax" };
+    if (x.n !== undefined) { p++; return x.n; } if (x.s !== undefined) { p++; return x.s; }
+    if (x.id) { p++; if (x.id === "True") return true; if (x.id === "False") return false; if (env.fn && env.fn[x.id] && t[p] && t[p].o === "(") { p++; const args = []; if (!eat(")")) { do { args.push(add()); } while (eat(",")); if (!eat(")")) throw { syn: "invalid syntax" }; } return env.fn[x.id](...args); }
+      if (x.id === "random" && eat(".")) { const m = pk(); p++; if (!eat("(")) throw { syn: "invalid syntax" }; const args = []; if (!eat(")")) { do { args.push(add()); } while (eat(",")); if (!eat(")")) throw { syn: "invalid syntax" }; } if (!env.imp.random) throw { name: "random" }; if (m.id === "randint") return Math.floor(Math.random() * (args[1] - args[0] + 1)) + args[0]; if (m.id === "randrange") return args.length === 1 ? Math.floor(Math.random() * args[0]) : args[0] + Math.floor(Math.random() * (args[1] - args[0])); if (m.id === "choice") return args[0][Math.floor(Math.random() * args[0].length)]; throw { attr: ["module 'random'", m.id] }; }
+      if (x.id in env.vars) return env.vars[x.id]; throw { name: x.id }; }
+    if (eat("(")) { const v = add(); if (eat(",")) { const arr = [v]; if (!(t[p] && t[p].o === ")")) { do { arr.push(add()); } while (eat(",") && !(t[p] && t[p].o === ")")); } if (!eat(")")) throw { syn: "invalid syntax" }; return arr; } if (!eat(")")) throw { syn: "'(' was never closed" }; return v; }
+    if (eat("-")) return -unary(); if (eat("+")) return unary(); throw { syn: "invalid syntax" }; }
+  function unary() { const b = atom(); if (eat("**")) return Math.pow(b, unary()); return b; }
+  function mul() { let a = unary(); for (;;) { const x = pk(); if (!x || !["*", "/", "//", "%"].includes(x.o)) return a; p++; const b = unary(); if (typeof a === "string" || typeof b === "string") { if (x.o === "*") { a = typeof a === "string" ? a.repeat(b) : b.repeat(a); continue; } throw { type: "unsupported operand type(s)" }; } if (x.o !== "*" && b === 0) throw { zero: 1 }; a = x.o === "*" ? a * b : x.o === "/" ? a / b : x.o === "//" ? Math.floor(a / b) : ((a % b) + b) % b; } }
+  function add() { let a = mul(); for (;;) { const x = pk(); if (!x || !["+", "-"].includes(x.o)) return a; p++; const b = mul(); if (x.o === "+") { if ((typeof a === "string") !== (typeof b === "string")) throw { type: 'can only concatenate str (not "int") to str' }; a = a + b; } else a = a - b; } }
+  const r = add(); if (p !== t.length) throw { syn: "invalid syntax" }; return r;
+}
+function tkSplitArgs(s) { const out = []; let d = 0, q = null, cur = ""; for (const c of s) { if (q) { cur += c; if (c === q) q = null; continue; } if (c === "'" || c === '"') { q = c; cur += c; continue; } if (c === "(") d++; if (c === ")") d--; if (c === "," && d === 0) { out.push(cur); cur = ""; continue; } cur += c; } if (cur.trim()) out.push(cur); return out.map(x => x.trim()); }
+function tkArgs(s, env) { const pos = [], kw = {}; tkSplitArgs(s).forEach(a => { const m = a.match(/^([A-Za-z_]\w*)\s*=(?!=)\s*(.+)$/); if (m) kw[m[1]] = tkEval(m[2], env); else pos.push(tkEval(a, env)); }); return { pos, kw }; }
+const TKMETH = ["create_line", "create_rectangle", "create_oval", "create_text", "create_polygon", "delete", "pack", "mainloop", "update", "after", "config", "configure"];
+function tkStrip(l) { let q = null; for (let i = 0; i < l.length; i++) { const c = l[i]; if (q) { if (c === q) q = null; } else if (c === "'" || c === '"') q = c; else if (c === "#") return l.slice(0, i); } return l; }
+function tkRun(code, opt = {}) {
+  const env = { vars: {}, imp: {}, canv: null, cname: null, shapes: [], packed: false, out: [], fn: opt.fn || {} };
+  const lines = code.split("\n"), fname = opt.file || "program.py";
+  const tb = (i, msg) => ({ err: `Traceback (most recent call last):\n  File "${fname}", line ${i + 1}, in <module>\n    ${lines[i].trim()}\n${msg}`, line: i + 1 });
+  for (let i = 0; i < lines.length; i++) {
+    let L = tkStrip(lines[i]).trimEnd(); if (!L.trim()) continue;
+    if (/^\s+/.test(L)) return Object.assign(env, { err: `  File "${fname}", line ${i + 1}\n    ${lines[i].trim()}\nIndentationError: unexpected indent`, line: i + 1 });
+    L = L.trim();
+    try {
+      let m;
+      if (/^import\s+tkinter$/.test(L)) { env.imp.tkinter = true; continue; }
+      if (/^from\s+tkinter\s+import\s+\*$/.test(L)) { env.imp.star = true; continue; }
+      if (/^import\s+random$/.test(L)) { env.imp.random = true; continue; }
+      if (/^import\s+\w+$/.test(L)) { const mod = L.split(/\s+/)[1]; return Object.assign(env, tb(i, `ModuleNotFoundError: No module named '${mod}'`)); }
+      if ((m = L.match(/^([A-Za-z_]\w*)\s*=\s*(tkinter\.)?(\w+)\s*\((.*)\)$/)) && (m[2] || m[3] === "Canvas" || m[3] === "Tk") && /^(Canvas|Tk|canvas)$/.test(m[3])) {
+        if (m[2] && !env.imp.tkinter) throw { name: "tkinter" }; if (!m[2] && !env.imp.star) throw { name: m[3] };
+        if (m[3] === "canvas") throw { attr: ["module 'tkinter'", "canvas"] };
+        if (m[3] === "Tk") { env.vars[m[1]] = { tk: true }; continue; }
+        const a = tkArgs(m[4], env); const w = a.kw.width !== undefined ? a.kw.width : 380, h = a.kw.height !== undefined ? a.kw.height : 265;
+        env.canv = { w, h, bg: a.kw.bg !== undefined ? tkColor(a.kw.bg) : (a.kw.background !== undefined ? tkColor(a.kw.background) : "#F0F0F0"), bgSet: a.kw.bg !== undefined || a.kw.background !== undefined }; env.cname = m[1]; env.vars[m[1]] = { canvas: true }; continue; }
+      if ((m = L.match(/^([A-Za-z_]\w*)\.(\w+)\s*\((.*)\)$/))) {
+        const obj = m[1], meth = m[2];
+        if (obj === "tkinter" || obj === "random") { if (obj === "tkinter" && meth === "mainloop") { if (!env.imp.tkinter) throw { name: "tkinter" }; continue; } if (obj === "random") { tkEval(L, env); continue; } throw { attr: ["module 'tkinter'", meth] }; }
+        if (!(obj in env.vars)) throw { name: obj };
+        const o = env.vars[obj]; if (o.tk) { if (meth === "mainloop") continue; throw { attr: ["'Tk' object", meth] }; }
+        if (!o.canvas) throw { attr: [`'${typeof o === "number" ? "int" : "str"}' object`, meth] };
+        if (!TKMETH.includes(meth)) throw { attr: ["'Canvas' object", meth] };
+        if (meth === "pack") { env.packed = true; continue; } if (meth === "mainloop" || meth === "update") continue;
+        const a = tkArgs(m[3], env); let pts = a.pos.flat(Infinity);
+        if (meth === "delete") { if (pts[0] === "all") env.shapes = []; continue; }
+        if (meth === "config" || meth === "configure") { if (a.kw.bg) env.canv.bg = tkColor(a.kw.bg); if (a.kw.width) env.canv.w = a.kw.width; if (a.kw.height) env.canv.h = a.kw.height; continue; }
+        pts.forEach(v => { if (typeof v !== "number") throw { type: "could not convert string to float: '" + v + "'" }; });
+        const need = { create_line: 4, create_rectangle: 4, create_oval: 4, create_text: 2, create_polygon: 6 }[meth];
+        if (pts.length < need || (meth !== "create_text" && pts.length % 2)) throw { tcl: `wrong # coordinates: expected ${meth === "create_text" ? 2 : meth === "create_polygon" ? "at least 6" : meth === "create_line" ? "at least 4" : 4}, got ${pts.length}` };
+        const K = a.kw, sh = { t: meth.slice(7), pts, line: i + 1 };
+        if (meth === "create_line") { sh.fill = K.fill !== undefined ? tkColor(K.fill) : "black"; sh.width = K.width || 1; if (K.arrow) { if (!["first", "last", "both", "none"].includes(K.arrow)) throw { tcl: `bad arrow spec "${K.arrow}": must be none, first, last, or both` }; sh.arrow = K.arrow; } if (K.dash) sh.dash = [].concat(K.dash); }
+        if (meth === "create_rectangle" || meth === "create_oval") { sh.fill = K.fill !== undefined ? tkColor(K.fill) : ""; sh.outline = K.outline !== undefined ? tkColor(K.outline) : "black"; sh.width = K.width !== undefined ? K.width : 1; }
+        if (meth === "create_polygon") { sh.fill = K.fill !== undefined ? tkColor(K.fill) : "black"; sh.outline = K.outline !== undefined ? tkColor(K.outline) : ""; sh.width = K.width || 1; }
+        if (meth === "create_text") { sh.text = K.text !== undefined ? String(K.text) : ""; sh.fill = K.fill !== undefined ? tkColor(K.fill) : "black"; sh.anchor = K.anchor || "center"; let f = K.font; sh.font = Array.isArray(f) ? { fam: f[0], size: f[1] || 12, style: f.slice(2).join(" ") } : typeof f === "string" ? { fam: f.split(" ")[0], size: +f.split(" ")[1] || 12, style: f.split(" ").slice(2).join(" ") } : { fam: "TkDefaultFont", size: 9, style: "" }; }
+        if (!env.canv) throw { name: obj };
+        env.shapes.push(sh); continue; }
+      if ((m = L.match(/^([A-Za-z_]\w*)\s*=(?!=)\s*(.+)$/))) { env.vars[m[1]] = tkEval(m[2], env); continue; }
+      if ((m = L.match(/^print\s*\((.*)\)$/))) { const a = tkArgs(m[1], env); env.out.push(a.pos.map(v => typeof v === "number" && !Number.isInteger(v) ? +v.toPrecision(15) : v).join(" ")); continue; }
+      if ((m = L.match(/^([A-Za-z_]\w*)\s*\(/))) throw { name: m[1] };
+      if (/^[A-Za-z_]\w*$/.test(L)) { if (L in env.vars) continue; throw { name: L }; }
+      throw { syn: "invalid syntax" };
+    } catch (e) {
+      if (e.syn) return Object.assign(env, { err: `  File "${fname}", line ${i + 1}\n    ${lines[i].trim()}\nSyntaxError: ${e.syn}`, line: i + 1 });
+      if (e.name) return Object.assign(env, tb(i, `NameError: name '${e.name}' is not defined`));
+      if (e.attr) return Object.assign(env, tb(i, `AttributeError: ${e.attr[0]} has no attribute '${e.attr[1]}'`));
+      if (e.tcl) return Object.assign(env, tb(i, `_tkinter.TclError: ${e.tcl}`));
+      if (e.type) return Object.assign(env, tb(i, `TypeError: ${e.type}`));
+      if (e.zero) return Object.assign(env, tb(i, "ZeroDivisionError: division by zero"));
+      return Object.assign(env, tb(i, "Error: " + (e.message || e)));
+    }
+  }
+  return env;
+}
+function tkSVG(env, opt = {}) {
+  const C = env.canv; if (!C) return `<div class="tkempty">Grafická plocha zatiaľ neexistuje.<br><code>canvas = tkinter.Canvas()</code></div>`;
+  if (!env.packed) return `<div class="tkempty">Plocha je vytvorená, ale nie je umiestnená do okna.<br>Chýba <code>canvas.pack()</code></div>`;
+  const W = C.w, H = C.h; let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" style="max-width:100%;height:auto;display:block;background:${C.bg}" role="img" aria-label="Grafická plocha ${W} × ${H}">`;
+  if (opt.grid) { s += `<g stroke="rgba(0,0,0,.08)" stroke-width="1">`; for (let x = 50; x < W; x += 50) s += `<line x1="${x}" y1="0" x2="${x}" y2="${H}"/>`; for (let y = 50; y < H; y += 50) s += `<line x1="0" y1="${y}" x2="${W}" y2="${y}"/>`; s += `</g>`; }
+  env.shapes.forEach(sh => { const p = sh.pts;
+    if (sh.t === "line") { const aw = Math.max(8, sh.width * 3), arr = (x1, y1, x2, y2) => { const a = Math.atan2(y2 - y1, x2 - x1), L = aw * 1.3, W2 = aw / 2; return `<polygon points="${x2},${y2} ${x2 - L * Math.cos(a) + W2 * Math.sin(a)},${y2 - L * Math.sin(a) - W2 * Math.cos(a)} ${x2 - L * Math.cos(a) - W2 * Math.sin(a)},${y2 - L * Math.sin(a) + W2 * Math.cos(a)}" fill="${sh.fill}"/>`; };
+      s += `<polyline points="${p.join(" ")}" fill="none" stroke="${sh.fill}" stroke-width="${sh.width}" stroke-linecap="butt" stroke-linejoin="miter"${sh.dash ? ` stroke-dasharray="${sh.dash.join(" ")}"` : ""}/>`;
+      const n = p.length; if (sh.arrow === "last" || sh.arrow === "both") s += arr(p[n - 4], p[n - 3], p[n - 2], p[n - 1]); if (sh.arrow === "first" || sh.arrow === "both") s += arr(p[2], p[3], p[0], p[1]); }
+    if (sh.t === "rectangle") s += `<rect x="${Math.min(p[0], p[2])}" y="${Math.min(p[1], p[3])}" width="${Math.abs(p[2] - p[0])}" height="${Math.abs(p[3] - p[1])}" fill="${sh.fill || "none"}" stroke="${sh.outline || "none"}" stroke-width="${sh.width}"/>`;
+    if (sh.t === "oval") s += `<ellipse cx="${(p[0] + p[2]) / 2}" cy="${(p[1] + p[3]) / 2}" rx="${Math.abs(p[2] - p[0]) / 2}" ry="${Math.abs(p[3] - p[1]) / 2}" fill="${sh.fill || "none"}" stroke="${sh.outline || "none"}" stroke-width="${sh.width}"/>`;
+    if (sh.t === "polygon") s += `<polygon points="${p.join(" ")}" fill="${sh.fill || "none"}" stroke="${sh.outline || "none"}" stroke-width="${sh.width}"/>`;
+    if (sh.t === "text") { const A = sh.anchor, ta = /w$/.test(A) || A === "w" ? "start" : /e$/.test(A) || A === "e" ? "end" : "middle", db = /^n/.test(A) ? "hanging" : /^s/.test(A) ? "alphabetic" : "central"; s += `<text x="${p[0]}" y="${p[1]}" fill="${sh.fill}" font-family="${esc(sh.font.fam)}, Segoe UI, sans-serif" font-size="${Math.abs(sh.font.size) * 1.33}" font-weight="${/bold/.test(sh.font.style) ? 700 : 400}" font-style="${/italic/.test(sh.font.style) ? "italic" : "normal"}" text-anchor="${ta}" dominant-baseline="${db}">${esc(sh.text)}</text>`; } });
+  return s + `</svg>`;
+}
+
+/* ===== shared helpers for 3. ročník tkinter lessons ===== */
+function hl(code) {
+  return code.split("\n").map(line => { let out = "", i = 0; while (i < line.length) { const c = line[i];
+    if (c === "#") { out += `<span class="c">${esc(line.slice(i))}</span>`; break; }
+    if (c === "'" || c === '"') { let j = line.indexOf(c, i + 1); if (j < 0) j = line.length - 1; out += `<span class="s">${esc(line.slice(i, j + 1))}</span>`; i = j + 1; continue; }
+    if (/[0-9]/.test(c) && !/[A-Za-z_]/.test(line[i - 1] || "")) { let j = i; while (j < line.length && /[0-9.]/.test(line[j])) j++; out += `<span class="n">${line.slice(i, j)}</span>`; i = j; continue; }
+    if (/[A-Za-z_]/.test(c)) { let j = i; while (j < line.length && /\w/.test(line[j])) j++; const w = line.slice(i, j); out += /^(import|from|as)$/.test(w) ? `<span class="k">${w}</span>` : w; i = j; continue; }
+    out += esc(c); i++; } return out; }).join("\n");
+}
+function ideHTML(k, def, extra) {
+  const code = S.code[k] !== undefined ? S.code[k] : def, R = S.run[k];
+  const env = R ? tkRun(R, { file: "C:\\Users\\ziak\\" + k + ".py" }) : null;
+  return `<div class="ide"><div class="win"><div class="wt">📝 ${k}.py – IDLE<span class="dots">— ▢ ✕</span></div><div class="tb"><button class="run" data-irun="${k}">▶ Run Module (F5)</button><button data-ireset="${k}">↺ Pôvodný kód</button></div>
+    <textarea data-ied="${k}" spellcheck="false" wrap="off" aria-label="Program v Pythone">${esc(code)}</textarea>
+    <div class="shell" id="sh-${k}">${env ? `<span>===== RESTART: C:\\Users\\ziak\\${k}.py =====</span>\n${env.out.map(o => `<span class="o">${esc(o)}</span>\n`).join("")}${env.err ? `<span class="e">${esc(env.err)}</span>` : ""}` : `<span style="color:#888">Tu sa zobrazia správy a chyby po spustení.</span>`}</div></div>
+    <div class="win tkwin"><div class="wt">🪶 tk<span class="dots">— ▢ ✕</span></div><div class="body">${env ? (env.err && !env.canv ? `<div class="tkempty">Program skončil chybou, okno sa neotvorilo.</div>` : tkSVG(env, { grid: false })) : `<div class="tkempty">Okno sa otvorí po spustení programu.</div>`}</div></div></div>${extra || ""}`;
+}
+function envOf(k) { return S.run[k] ? tkRun(S.run[k]) : null; }
+const near = (a, b, t = 6) => Math.abs(a - b) <= t;
+function hasShape(env, t, pts, f) { return env.shapes.some(s => s.t === t && s.pts.length === pts.length && s.pts.every((v, i) => near(v, pts[i])) && (!f || f(s))); }
+
+function chalHTML(task, k) {
+  const L = CH[task], sel = S.chsel[task] || 0, c = L[sel], D = S.ch[task] || {};
+  return `<div class="chal">${L.map((x, i) => `<button class="${i === sel ? "on" : ""}" data-chs="${task}|${i}">${D[i] ? "✅" : "⬜"} Úloha ${x.n}</button>`).join("")}</div>
+    <div class="box v"><p>${c.t}</p><div class="row"><button class="primary" data-chk="${task}|${k}">✔ Skontrolovať</button></div></div>
+    ${S.chmsg && S.chmsg.task === task ? `<div class="fb ${S.chmsg.k}">${S.chmsg.t}</div>` : ""}
+    ${S.t[task] ? `<div class="checkbar"><span class="score ${S.t[task].score < S.t[task].max ? "part" : ""}">Splnené: ${S.t[task].score} z ${S.t[task].max}</span></div>` : ""}`;
+}
+
+
+function runIde(k) { const ta = document.querySelector(`[data-ied="${k}"]`); if (ta) S.code[k] = ta.value; S.run[k] = S.code[k] !== undefined ? S.code[k] : ""; save(); render(false); const n = document.querySelector(`[data-ied="${k}"]`); if (n) n.focus({ preventScroll: true }); }
+function segsOf(env) { const out = []; env.shapes.filter(s => s.t === "line").forEach(s => { for (let i = 0; i + 3 < s.pts.length; i += 2) out.push({ a: [s.pts[i], s.pts[i + 1]], b: [s.pts[i + 2], s.pts[i + 3]], s }); }); return out; }
+function segEq(g, a, b, t = 4) { const d = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]) <= t; return (d(g.a, a) && d(g.b, b)) || (d(g.a, b) && d(g.b, a)); }
+function sameSegs(env, target, extraOK) { const S0 = segsOf(env).filter(g => Math.hypot(g.a[0] - g.b[0], g.a[1] - g.b[1]) > 0.5); const used = new Set(); for (const [a, b] of target) { const i = S0.findIndex((g, j) => !used.has(j) && segEq(g, a, b)); if (i < 0) return false; used.add(i); } return extraOK || used.size === S0.length; }
+function tkClick(e) {
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.irun) { runIde(ds.irun); return true; }
+  if (ds.ireset) { delete S.code[ds.ireset]; delete S.run[ds.ireset]; save(); render(false); return true; }
+  if (ds.chs) { const [t, i] = ds.chs.split("|"); S.chsel[t] = +i; S.chmsg = null; save(); render(false); return true; }
+  if (ds.chk) {
+    const [t, k] = ds.chk.split("|"), ta = document.querySelector(`[data-ied="${k}"]`); if (ta) { S.code[k] = ta.value; S.run[k] = ta.value; }
+    const src = S.run[k] || "", env = tkRun(src), sel = S.chsel[t] || 0, c = CH[t][sel];
+    if (env.err) S.chmsg = { task: t, k: "bad", t: "Program skončil chybou. Najprv ju oprav (pozri červený text pod editorom)." };
+    else if (!env.packed) S.chmsg = { task: t, k: "bad", t: "Plocha nie je vidieť: chýba canvas.pack()." };
+    else { const r = c.ok(env, src); if (r === true) { S.ch[t] = S.ch[t] || {}; S.ch[t][sel] = true; award(t, Object.keys(S.ch[t]).length); S.chmsg = { task: t, k: "ok", t: `✅ Úloha ${c.n} je splnená!` }; const nx = CH[t].findIndex((_, i) => !S.ch[t][i]); if (nx >= 0) S.chsel[t] = nx; } else S.chmsg = { task: t, k: "bad", t: typeof r === "string" ? r : "Ešte to nie je ono. Skontroluj súradnice, farby a hrúbky." }; }
+    save(); render(false); return true;
+  }
+  return false;
+}
+function tkInput(e) { const t = e.target; if (t.dataset.ied) { S.code[t.dataset.ied] = t.value; save(); return true; } return false; }
+document.addEventListener("keydown", e => {
+  const k = e.target.dataset && e.target.dataset.ied; if (!k) return;
+  if (e.key === "F5") { e.preventDefault(); runIde(k); }
+  if (e.key === "Tab") { e.preventDefault(); const t = e.target, s = t.selectionStart; t.value = t.value.slice(0, s) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 4; S.code[k] = t.value; save(); }
+});
+
+const KEY = "py3-r27-v1";
+const LESSON = "2.7 Súradnice bodov a kreslenie čiar";
+const BRAND = "2.7 Súradnice a čiary";
+const CLASS_DEFAULT = "III.";
+const WIDE = { body: 1, usecka: 1, lomena: 1, obrazky: 1, chyby: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "body", title: "Súradnice bodov", min: 7 },
+  { id: "usecka", title: "Úsečka a jej vlastnosti", min: 9 },
+  { id: "lomena", title: "Lomená čiara", min: 10 },
+  { id: "obrazky", title: "Obrázky z čiar", min: 10 },
+  { id: "chyby", title: "Časté chyby", min: 4 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { body: ["bodin"], usecka: ["c_us", "usq"], lomena: ["c_lom"], obrazky: ["c_obr"], chyby: ["chq"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 3. ročník",
+  lead: "Každý útvar na grafickej ploche je určený súradnicami bodov. Dnes budeš čítať súradnice z obrázka, kresliť úsečky rôznej farby, hrúbky, prerušované aj so šípkou, lomené čiary cez viac bodov a nakoniec celé obrázky z čiar: trojuholník, hviezdu aj domček jedným ťahom. 5 zastávok, body a na konci výsledok.",
+  guessQ: "Koľko čísel treba zapísať do create_line, aby vznikla lomená čiara cez 3 body?",
+  guessNote: "Tip sa neboduje. Na zastávke Lomená čiara zistíš, či si mal pravdu.",
+  guesses: ["3", "4", "6", "9"],
+  ok: 2, yes: "Presne tak! Každý bod má dve súradnice x a y, teda 3 body = 6 čísel.", no: "Treba 6 čísel: každý bod má dve súradnice (x, y), takže 3 body = 6 čísel."
+};
+const D1 = "import tkinter\ncanvas = tkinter.Canvas(width=400, height=300, bg='white')\ncanvas.pack()\n";
+function EXTRA_STATE() { return { code: {}, run: {}, ch: {}, chsel: {}, draw: { pts: [], fill: "black", width: 2 }, bx: { i: 0, res: [] } }; }
+
+/* ---------- read coordinates ---------- */
+const BP = [[150, 100], [300, 50], [50, 250], [350, 200], [200, 150]];
+function readSVG(i) { let s = `<svg viewBox="-30 -24 460 348" width="460" style="max-width:100%;height:auto" role="img" aria-label="Plocha 400 × 300 s bodom"><rect x="0" y="0" width="400" height="300" fill="#fff" stroke="#9FB0C8"/>`;
+  for (let x = 0; x <= 400; x += 50) s += `<line x1="${x}" y1="0" x2="${x}" y2="300" stroke="#E6EAF0"/><text x="${x}" y="-8" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#667">${x}</text>`;
+  for (let y = 0; y <= 300; y += 50) s += `<line x1="0" y1="${y}" x2="400" y2="${y}" stroke="#E6EAF0"/><text x="-6" y="${y + 4}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="11" fill="#667">${y}</text>`;
+  const p = BP[i]; s += `<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#0E7490"/><text x="${p[0] + 10}" y="${p[1] - 8}" font-family="Rubik,sans-serif" font-weight="700" font-size="14" fill="#0E7490">${"ABCDE"[i]}</text>`;
+  return s + `</svg>`; }
+
+/* ---------- drawing tool ---------- */
+function drawSVG() { const D = S.draw; let s = `<svg id="drawsvg" viewBox="0 0 400 300" width="400" role="img" aria-label="Kresliaca plocha 400 × 300">`;
+  for (let x = 50; x < 400; x += 50) s += `<line x1="${x}" y1="0" x2="${x}" y2="300" stroke="#F0F2F5"/>`; for (let y = 50; y < 300; y += 50) s += `<line x1="0" y1="${y}" x2="400" y2="${y}" stroke="#F0F2F5"/>`;
+  if (D.pts.length >= 2) s += `<polyline points="${D.pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="${D.fill}" stroke-width="${D.width}"/>`;
+  D.pts.forEach((p, i) => s += `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#E5484D"/><text x="${p[0] + 6}" y="${p[1] - 6}" font-size="10" font-family="JetBrains Mono,monospace" fill="#555">(${p[0]}, ${p[1]})</text>`);
+  return s + `</svg>`; }
+function drawCode() { const D = S.draw; if (D.pts.length < 2) return "Klikni na plochu aspoň dvakrát."; return `canvas.create_line(${D.pts.map(p => p.join(", ")).join(", ")}${D.fill !== "black" ? `, fill='${D.fill}'` : ""}${D.width !== 1 ? `, width=${D.width}` : ""})`; }
+
+/* ---------- challenges ---------- */
+const PRE = D1;
+const tri = [[[200, 50], [350, 250]], [[350, 250], [50, 250]], [[50, 250], [200, 50]]];
+const star = (() => { const P = [[200, 40], [260, 240], [100, 115], [300, 115], [140, 240]]; return [[P[0], P[1]], [P[1], P[2]], [P[2], P[3]], [P[3], P[4]], [P[4], P[0]]]; })();
+const DOM = { A: [100, 280], B: [300, 280], C: [300, 140], D: [100, 140], E: [200, 50] };
+const domSegs = [["A", "B"], ["B", "C"], ["C", "D"], ["D", "A"], ["A", "C"], ["B", "D"], ["D", "E"], ["E", "C"]].map(([p, q]) => [DOM[p], DOM[q]]);
+const CH = {
+  c_us: [
+    { n: "A", t: "Nakresli <b>červenú</b> vodorovnú úsečku z bodu (50, 150) do bodu (350, 150) s hrúbkou <b>5</b>.", ref: PRE + "canvas.create_line(50, 150, 350, 150, fill='red', width=5)\n", ok: e => sameSegs(e, [[[50, 150], [350, 150]]]) && segsOf(e)[0].s.fill === "red" && segsOf(e)[0].s.width === 5 || "Skontroluj body, farbu red a width=5." },
+    { n: "B", t: "Nakresli <b>modrú prerušovanú</b> zvislú úsečku z (200, 30) do (200, 270). Prerušovanú čiaru dostaneš parametrom <code>dash=(10, 5)</code>.", ref: PRE + "canvas.create_line(200, 30, 200, 270, fill='blue', dash=(10, 5))\n", ok: e => sameSegs(e, [[[200, 30], [200, 270]]]) && segsOf(e)[0].s.fill === "blue" && !!segsOf(e)[0].s.dash || "Úsečka má byť modrá, prerušovaná (dash) a ísť z (200, 30) do (200, 270)." },
+    { n: "C", t: "Nakresli <b>zelenú šípku</b> z (50, 250) do (350, 50). Hrot má byť na konci: <code>arrow='last'</code>, hrúbka <b>3</b>.", ref: PRE + "canvas.create_line(50, 250, 350, 50, fill='green', width=3, arrow='last')\n", ok: e => { const g = segsOf(e); return g.length === 1 && Math.hypot(g[0].a[0] - 50, g[0].a[1] - 250) < 4 && Math.hypot(g[0].b[0] - 350, g[0].b[1] - 50) < 4 && g[0].s.fill === "green" && g[0].s.width === 3 && g[0].s.arrow === "last" || "Šípka má ísť z (50, 250) do (350, 50) s hrotom na konci, zelená, width=3."; } },
+    { n: "D", t: "Nakresli <b>obe uhlopriečky</b> plochy 400 × 300 (dve úsečky cez celú plochu z rohu do rohu).", ref: PRE + "canvas.create_line(0, 0, 400, 300)\ncanvas.create_line(400, 0, 0, 300)\n", ok: e => sameSegs(e, [[[0, 0], [400, 300]], [[400, 0], [0, 300]]]) || "Majú tam byť presne dve úsečky: z (0, 0) do (400, 300) a z (400, 0) do (0, 300)." }
+  ],
+  c_lom: [
+    { n: "A", t: "Nakresli <b>trojuholník</b> s vrcholmi (200, 50), (350, 250) a (50, 250) <b>jediným</b> príkazom <code>create_line</code>. Aby bol uzavretý, posledný bod musí byť rovnaký ako prvý.", ref: PRE + "canvas.create_line(200, 50, 350, 250, 50, 250, 200, 50, width=3)\n", ok: (e, src) => (src.match(/create_line/g) || []).length === 1 && sameSegs(e, tri) || "Použi jediný create_line so 4 bodmi: 3 vrcholy a na konci znova prvý." },
+    { n: "B", t: "Nakresli <b>cik-cak</b> (lomenú čiaru) cez body (20, 250), (80, 50), (140, 250), (200, 50), (260, 250), (320, 50), (380, 250) oranžovou farbou s hrúbkou 4.", ref: PRE + "canvas.create_line(20, 250, 80, 50, 140, 250, 200, 50, 260, 250, 320, 50, 380, 250, fill='orange', width=4)\n", ok: e => { const P = [[20, 250], [80, 50], [140, 250], [200, 50], [260, 250], [320, 50], [380, 250]]; return sameSegs(e, P.slice(1).map((p, i) => [P[i], p])) && segsOf(e).every(g => g.s.fill === "orange") || "Skontroluj body a oranžovú farbu."; } },
+    { n: "C", t: "Nakresli <b>päťcípu hviezdu</b> jedným ťahom. Vrcholy: A(200, 40), B(260, 240), C(100, 115), D(300, 115), E(140, 240). Choď v poradí A, B, C, D, E a späť do A. Farba <b>gold</b>, hrúbka 3.", ref: PRE + "canvas.create_line(200, 40, 260, 240, 100, 115, 300, 115, 140, 240, 200, 40, fill='gold', width=3)\n", ok: e => sameSegs(e, star) && segsOf(e).every(g => g.s.fill === "gold") || "Skontroluj poradie vrcholov A, B, C, D, E, A a farbu gold." }
+  ],
+  c_obr: [
+    { n: "A", t: "Nakresli <b>domček jedným ťahom</b> (každú čiaru presne raz, bez zdvihnutia ceruzky). Body: A(100, 280), B(300, 280), C(300, 140), D(100, 140), E(200, 50). Čiary: štvorec ABCD, obe uhlopriečky AC a BD a strecha DE, EC. Stačí jeden <code>create_line</code>.", ref: PRE + "canvas.create_line(100, 280, 300, 280, 300, 140, 100, 280, 100, 140, 300, 140, 200, 50, 100, 140, 300, 280, width=3)\n", ok: (e, src) => sameSegs(e, domSegs) || "Kresba nesedí. Treba presne 8 čiar: AB, BC, CD, DA, AC, BD, DE, EC." },
+    { n: "B", t: "Nakresli <b>plot</b>: 5 zvislých latiek s x = 60, 130, 200, 270, 340, každá od y = 120 po y = 270, a dve vodorovné priečky od x = 40 po x = 360 vo výške y = 160 a y = 240. Farba <b>brown</b>, hrúbka <b>6</b>.", ref: PRE + ["60", "130", "200", "270", "340"].map(x => `canvas.create_line(${x}, 120, ${x}, 270, fill='brown', width=6)`).join("\n") + "\ncanvas.create_line(40, 160, 360, 160, fill='brown', width=6)\ncanvas.create_line(40, 240, 360, 240, fill='brown', width=6)\n", ok: e => sameSegs(e, [60, 130, 200, 270, 340].map(x => [[x, 120], [x, 270]]).concat([[[40, 160], [360, 160]], [[40, 240], [360, 240]]])) && segsOf(e).every(g => g.s.fill === "brown" && g.s.width === 6) || "Skontroluj súradnice latiek a priečok, farbu brown a width=6." },
+    { n: "C", t: "Nakresli <b>súradnicové osi</b>: vodorovnú šípku z (20, 150) do (380, 150) a zvislú šípku z (200, 280) do (200, 20), obe s hrotom na konci. Potom nakresli <b>rovnobežník</b> s vrcholmi (220, 130), (340, 130), (310, 50), (190, 50) červenou farbou.", ref: PRE + "canvas.create_line(20, 150, 380, 150, arrow='last')\ncanvas.create_line(200, 280, 200, 20, arrow='last')\ncanvas.create_line(220, 130, 340, 130, 310, 50, 190, 50, 220, 130, fill='red', width=2)\n", ok: e => { const g = segsOf(e); const arrows = g.filter(x => x.s.arrow === "last"); if (arrows.length < 2) return "Obe osi majú mať hrot na konci (arrow='last')."; return sameSegs(e, [[[20, 150], [380, 150]], [[200, 280], [200, 20]], [[220, 130], [340, 130]], [[340, 130], [310, 50]], [[310, 50], [190, 50]], [[190, 50], [220, 130]]]) && g.filter(x => x.s.fill === "red").length === 4 || "Skontroluj osi a vrcholy červeného rovnobežníka."; } }
+  ]
+};
+function chalHTML(task, k) {
+  const L = CH[task], sel = S.chsel[task] || 0, c = L[sel], D = S.ch[task] || {};
+  return `<div class="chal">${L.map((x, i) => `<button class="${i === sel ? "on" : ""}" data-chs="${task}|${i}">${D[i] ? "✅" : "⬜"} Úloha ${x.n}</button>`).join("")}</div>
+    <div class="tgt"><div class="pv">${tkSVG(tkRun(c.ref))}</div><div><p style="margin:0 0 8px">${c.t}</p><div class="row"><button class="primary" data-chk="${task}|${k}">✔ Skontrolovať</button></div>${S.chmsg && S.chmsg.task === task ? `<div class="fb ${S.chmsg.k}">${S.chmsg.t}</div>` : ""}</div></div>
+    ${S.t[task] ? `<div class="checkbar"><span class="score ${S.t[task].score < S.t[task].max ? "part" : ""}">Splnené: ${S.t[task].score} z ${S.t[task].max}</span></div>` : ""}`;
+}
+
+/* ---------- tasks ---------- */
+const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const TASKS = {
+  bodin: { id: "bodin", type: "custom", max: BP.length },
+  c_us: { id: "c_us", type: "custom", max: 4 },
+  usq: { id: "usq", type: "mc", qs: [
+    { id: "1", ...Q("Ktorý parameter určuje hrúbku čiary?", ["width", "fill", "size", "dash"], 0) },
+    { id: "2", ...Q("Ktorý parameter určuje farbu čiary?", ["fill", "outline", "color", "bg"], 0) },
+    { id: "3", ...Q("Čo urobí <code>arrow='both'</code>?", ["pridá hroty na oba konce", "nakreslí dve čiary", "zdvojnásobí hrúbku", "nič"], 0) },
+    { id: "4", ...Q("Úsečka z (50, 50) do (50, 250) je:", ["zvislá", "vodorovná", "šikmá", "bod"], 0, "Obe body majú rovnaké x, líši sa iba y.") }
+  ]},
+  c_lom: { id: "c_lom", type: "custom", max: 3 },
+  c_obr: { id: "c_obr", type: "custom", max: 3 },
+  chq: { id: "chq", type: "mc", qs: [
+    { id: "1", ...Q("<code>canvas.create_line(10, 20, 30)</code> vypíše chybu. Prečo?", ["Súradníc musí byť párny počet (x a y pre každý bod)", "Chýba farba", "Čísla sú príliš malé", "Chýba pack()"], 0) },
+    { id: "2", ...Q("Čiara mala byť hore, ale je dole. Čo je najpravdepodobnejšie?", ["pomýlil som os y: malé y je hore", "zlá farba", "chýba width", "zlá veľkosť plochy"], 0) },
+    { id: "3", ...Q("<code>canvas.create_line(10, 20 30, 40)</code>. Čo vypíše Python?", ["SyntaxError: chýba čiarka", "nakreslí čiaru", "TclError", "nič"], 0) },
+    { id: "4", ...Q("Trojuholník z create_line nie je uzavretý. Čo chýba?", ["na konci znova prvý bod", "parameter close=True", "width", "fill"], 0) }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", ...Q("Bod (0, 0) je na ploche:", ["vľavo hore", "vľavo dole", "v strede", "vpravo hore"], 0) },
+    { id: "2", ...Q("Ktorý bod je bližšie k hornému okraju?", ["(100, 20)", "(20, 100)", "(100, 200)", "(300, 150)"], 0) },
+    { id: "3", ...Q("Koľko bodov má lomená čiara <code>create_line(0, 0, 100, 50, 200, 0, 300, 50)</code>?", ["4", "8", "3", "2"], 0) },
+    { id: "4", ...Q("Ako nakreslíš prerušovanú čiaru?", ["dash=(10, 5)", "style='dash'", "width=0", "arrow='dash'"], 0) },
+    { id: "5", ...Q("Úsečka z (50, 100) do (300, 100) je:", ["vodorovná", "zvislá", "šikmá", "uzavretá"], 0) },
+    { id: "6", ...Q("Ako uzavrieš útvar kreslený cez create_line?", ["posledný bod = prvý bod", "pridám close()", "nedá sa", "arrow='last'"], 0) },
+    { id: "7", ...Q("Aké súradnice má stred plochy 600 × 400?", ["(300, 200)", "(200, 300)", "(600, 400)", "(0, 0)"], 0) },
+    { id: "8", ...Q("Čo nakreslí <code>create_line(0, 300, 400, 0)</code> na ploche 400 × 300?", ["uhlopriečku z ľavého dolného do pravého horného rohu", "vodorovnú čiaru", "uhlopriečku zľava hore doprava dole", "nič"], 0) }
+  ]}
+};
+
+/* ---------- views ---------- */
+const VIEWS = {
+  body() { const C = S.bx, done = S.t.bodin;
+    return head() + `<h2>Súradnice bodov</h2>
+    <div class="theory"><p>Pripomeňme si: plocha sa skladá z <b>pixelov</b>, každý má súradnice <b>(x, y)</b>. <b>x</b> rastie zľava doprava, <b>y</b> zhora nadol, počiatok <b>(0, 0)</b> je v <b>ľavom hornom rohu</b>. Bod, ktorý je vyššie, má <b>menšie y</b>.</p>
+      <p>Samotný bod (jeden pixel) je na obrazovke skoro neviditeľný. Keď chceme bod vyznačiť, nakreslíme okolo neho malý krúžok, napríklad <code>canvas.create_oval(x - 3, y - 3, x + 3, y + 3, fill='red')</code>.</p>
+      <p>Pred kreslením si obrázok načrtni na štvorčekový papier a <b>zapíš súradnice všetkých dôležitých bodov</b>. Program je potom iba prepisom týchto čísel.</p></div>
+    <h3>Úloha: odčítaj súradnice bodu</h3>
+    <div class="ide"><div>${readSVG(Math.min(C.i, BP.length - 1))}</div><div class="task" style="margin:0">${done ? `<b>Hotovo</b><div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} bodov</span></div>` : `<p><b>Aké súradnice má bod ${"ABCDE"[C.i]}?</b> (bod ${C.i + 1} z ${BP.length})</p><div class="fp"><label>x = <input class="in" id="bx" inputmode="numeric" style="max-width:100px"></label><label>y = <input class="in" id="by" inputmode="numeric" style="max-width:100px"></label></div><div class="row"><button class="primary" data-bok>Potvrdiť</button></div>${C.last ? `<div class="fb ${C.last.ok ? "ok" : "bad"}">${C.last.msg}</div>` : ""}`}</div></div>` + nextBar(); },
+  usecka() { return head() + `<h2>Úsečka a jej vlastnosti</h2>
+    <div class="theory"><p>Úsečku nakreslíme príkazom <code>canvas.create_line(x1, y1, x2, y2)</code>, kde (x1, y1) je začiatok a (x2, y2) koniec. Ak majú oba body rovnaké <b>y</b>, úsečka je <b>vodorovná</b>. Ak majú rovnaké <b>x</b>, je <b>zvislá</b>.</p>
+      <table class="cmdt"><thead><tr><th>Parameter</th><th>Význam</th><th>Príklad</th></tr></thead><tbody>
+        <tr><td><code>fill</code></td><td>farba čiary</td><td><code>fill='red'</code></td></tr><tr><td><code>width</code></td><td>hrúbka v pixeloch (predvolená 1)</td><td><code>width=5</code></td></tr>
+        <tr><td><code>dash</code></td><td>prerušovaná čiara: dĺžka čiarky a medzery</td><td><code>dash=(10, 5)</code></td></tr><tr><td><code>arrow</code></td><td>šípka: <code>'first'</code>, <code>'last'</code>, <code>'both'</code></td><td><code>arrow='last'</code></td></tr></tbody></table>
+      <div class="pcode">${hl("canvas.create_line(50, 50, 350, 50, fill='red', width=5)\ncanvas.create_line(50, 100, 350, 100, dash=(10, 5))\ncanvas.create_line(50, 150, 350, 150, arrow='last', width=3)")}</div></div>
+    <h3>Úloha 1: kresli úsečky</h3><p>Pri každej úlohe si uprav program v editore, spusti ho a daj Skontrolovať. Obrázok vľavo ukazuje, ako má výsledok vyzerať.</p>
+    ${chalHTML("c_us", "usecka")}${ideHTML("usecka", D1)}
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("usq")}</div>` + nextBar(); },
+  lomena() { const D = S.draw; return head() + `<h2>Lomená čiara</h2>
+    ${guessBox()}
+    <div class="theory"><p>Do <code>create_line</code> môžeme zapísať aj <b>viac bodov</b>. tkinter body spojí postupne za sebou a vznikne <b>lomená čiara</b>:</p>
+      <div class="pcode">${hl("canvas.create_line(x1, y1, x2, y2, x3, y3, x4, y4)")}</div>
+      <p>Každý bod pridá <b>dve</b> čísla, preto je počet súradníc vždy <b>párny</b>. Ak chceme útvar <b>uzavrieť</b> (trojuholník, hviezda), ako posledný bod zopakujeme prvý. Parametre <code>fill</code>, <code>width</code> a <code>dash</code> platia pre celú lomenú čiaru.</p></div>
+    <h3>Kresliaci nástroj</h3><p>Klikaj na plochu a nástroj ti vytvorí príkaz <code>create_line</code> s týmito bodmi. Hodí sa na zistenie súradníc.</p>
+    <div class="drawbox"><div>${drawSVG()}</div><div><div class="gen" id="gencode">${esc(drawCode())}</div><div class="fp"><label>Farba <select id="dfill">${["black", "red", "blue", "green", "orange", "purple", "gold", "brown"].map(c => `<option ${D.fill === c ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Hrúbka <select id="dwidth">${[1, 2, 3, 5, 8].map(w => `<option ${D.width === w ? "selected" : ""}>${w}</option>`).join("")}</select></label></div>
+      <div class="row"><button class="ghost" data-dundo>↶ Späť</button><button class="ghost" data-dclr>Vymazať</button><button class="ghost" data-dclose ${D.pts.length > 2 ? "" : "disabled"}>Uzavrieť útvar</button><button class="primary" data-dcopy>⤵ Vložiť do editora</button></div></div></div>
+    <h3>Úlohy</h3>${chalHTML("c_lom", "lomena")}${ideHTML("lomena", D1)}` + nextBar(); },
+  obrazky() { return head() + `<h2>Obrázky z čiar</h2>
+    <div class="theory"><p>Zložitejšie obrázky skladáme z viacerých čiar. Niektoré útvary sa dajú nakresliť <b>jedným ťahom</b> (lomenou čiarou), iné potrebujú viac príkazov. Postup: nakresli obrázok na papier, pomenuj body písmenami, zapíš ich súradnice a potom rozhodni, v akom poradí ich spojíš.</p>
+      <p><b>Domček jedným ťahom</b> je známa hádanka: dá sa nakresliť bez zdvihnutia ceruzky, ak začneš v jednom z dolných rohov. Každá čiara sa pritom nakreslí práve raz.</p></div>
+    <h3>Úlohy</h3>${chalHTML("c_obr", "obrazky")}${ideHTML("obrazky", D1)}` + nextBar(); },
+  chyby() { return head() + `<h2>Časté chyby</h2>
+    <div class="theory"><p><b>Nepárny počet súradníc</b>: Python vypíše <code>TclError: wrong # coordinates</code>. <b>Chýbajúca čiarka</b> medzi číslami: <code>SyntaxError</code>. <b>Prehodené x a y</b> alebo zabudnutý <b>smer osi y</b>: obrázok je zrkadlovo otočený. <b>Neuzavretý útvar</b>: na konci lomenej čiary chýba prvý bod.</p></div>
+    <h3>Nájdi chybu</h3><div class="task">${taskHTML("chq")}</div>` + nextBar(); },
+  test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
+};
+
+/* ---------- events ---------- */
+function drawRefresh() { const s = document.getElementById("drawsvg"); if (s) s.outerHTML = drawSVG(); const g = document.getElementById("gencode"); if (g) g.textContent = drawCode(); const c = document.querySelector("[data-dclose]"); if (c) c.disabled = S.draw.pts.length <= 2; }
+function CUSTOM_CLICK(e) {
+  const el = e.target.closest("button"); if (el) { const ds = el.dataset, D = S.draw;
+    if (ds.bok !== undefined) { const C = S.bx, x = parseNum(document.getElementById("bx").value), y = parseNum(document.getElementById("by").value), p = BP[C.i];
+      if (C.last) { C.last = null; C.i++; if (C.i >= BP.length) award("bodin", C.res.filter(Boolean).length); save(); render(false); return true; }
+      if (isNaN(x) || isNaN(y)) return true; const ok = Math.abs(x - p[0]) <= 5 && Math.abs(y - p[1]) <= 5; C.res[C.i] = ok; C.last = { ok, msg: ok ? `✅ Správne, bod má súradnice (${p[0]}, ${p[1]}). Klikni na Potvrdiť pre ďalší bod.` : `❌ Správne je (${p[0]}, ${p[1]}). Pozor: x čítaj hore, y vľavo. Klikni na Potvrdiť pre ďalší bod.` }; save(); render(false); return true; }
+    if (ds.dundo !== undefined) { D.pts.pop(); save(); drawRefresh(); return true; }
+    if (ds.dclr !== undefined) { D.pts = []; save(); drawRefresh(); return true; }
+    if (ds.dclose !== undefined) { if (D.pts.length > 2) D.pts.push(D.pts[0].slice()); save(); drawRefresh(); return true; }
+    if (ds.dcopy !== undefined) { if (D.pts.length < 2) return true; const k = "lomena", cur = S.code[k] !== undefined ? S.code[k] : D1; S.code[k] = cur.replace(/\n*$/, "\n") + drawCode() + "\n"; save(); render(false); const t = document.querySelector(`[data-ied="${k}"]`); if (t) t.scrollIntoView({ block: "center" }); return true; }
+  }
+  return tkClick(e);
+}
+function CUSTOM_INPUT(e) { const t = e.target; if (t.id === "dfill") { S.draw.fill = t.value; save(); drawRefresh(); return true; } if (t.id === "dwidth") { S.draw.width = +t.value; save(); drawRefresh(); return true; } return tkInput(e); }
+document.addEventListener("click", ev => { const s = ev.target.closest && ev.target.closest("#drawsvg"); if (!s) return; const p = s.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const q = p.matrixTransform(s.getScreenCTM().inverse()); const x = Math.max(0, Math.min(400, Math.round(q.x / 5) * 5)), y = Math.max(0, Math.min(300, Math.round(q.y / 5) * 5)); S.draw.pts.push([x, y]); save(); drawRefresh(); });
+document.addEventListener("keydown", e => { if ((e.target.id === "bx" || e.target.id === "by") && e.key === "Enter") { e.preventDefault(); const b = document.querySelector("[data-bok]"); if (b) b.click(); } });
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { return memoHTML() + nextBar0(); }
+function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
