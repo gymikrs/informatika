@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>3.3 Použitie nástroja Analýza dát</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:14px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-family:var(--head);font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}.theory h4{margin:12px 0 4px;font-family:var(--head)}.theory ul{margin:6px 0;padding-left:22px}.theory li{margin:3px 0}
+.theory table,.tbl{border-collapse:collapse;margin:8px 0;font-size:14.5px}.theory td,.theory th,.tbl td,.tbl th{border:1px solid var(--border);padding:5px 9px;text-align:left;vertical-align:top}.theory th,.tbl th{background:var(--surface2)}
+.zone{cursor:pointer}
+.zone .hit{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.zone:hover .hit,.zone:focus .hit{stroke:#F5A524;fill:rgba(245,165,36,.16)}
+.zone.on .hit{stroke:#F5A524;fill:rgba(245,165,36,.28);stroke-width:4}
+.zone.seen .hit{stroke:rgba(11,122,117,.55);stroke-dasharray:5 4}
+.zone.ok .hit{stroke:#12805A;fill:rgba(18,128,90,.22);stroke-width:4}
+.zone.bad .hit{stroke:#C0392B;fill:rgba(192,57,43,.2);stroke-width:4}
+.zone:focus{outline:none}
+.scr{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.scr{grid-template-columns:1fr}}
+.scr svg{width:100%;height:auto;display:block}
+.side{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.side h4{font-family:var(--head);margin:0 0 6px;font-size:19px}
+.tag{display:inline-block;font-size:12.5px;font-weight:600;color:var(--acc);background:var(--accSoft);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+.meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin:8px 0 4px}.meter i{display:block;height:100%;background:var(--acc)}
+.prompt{font-size:17px;font-weight:600;margin:4px 0 10px}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:12px 0}
+.key{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:15px}
+.key kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:1px 7px;font-size:13.5px;margin-right:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc .ic{font-size:30px}.pc h4{margin:6px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.xl{background:#fff;color:#1B1F2A;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;font-family:"Segoe UI",var(--font);margin:10px 0}
+.xl .fb2{display:flex;gap:6px;align-items:center;padding:6px;border-bottom:1px solid #DADADA;background:#F7F7F7}
+.xl .nb{width:64px;border:1px solid #C9C9C9;padding:4px 6px;font-family:var(--mono);font-size:13px;background:#fff}
+.xl .fx{font-style:italic;color:#666;padding:0 4px}
+.xl .fi{flex:1;border:1px solid #C9C9C9;padding:5px 8px;font-family:var(--mono);font-size:14px;color:#1B1F2A;background:#fff}
+.xl .gridw{overflow-x:auto}
+.xl table{border-collapse:collapse;font-size:13.5px;min-width:100%}
+.xl th{background:#EFEFEF;color:#555;font-weight:600;border:1px solid #D8D8D8;padding:3px 6px;min-width:34px}
+.xl th.hl{background:#D5E8D4;color:#1B5E20}
+.xl td{border:1px solid #E3E3E3;padding:3px 6px;min-width:92px;height:24px;cursor:cell;white-space:nowrap}
+.xl td.num{text-align:right;font-family:var(--mono)}
+.xl td.sel{outline:2px solid #107C41;outline-offset:-2px;background:#F1F8F2}
+.xl td.err{color:#C0392B;font-weight:700}
+.xl td.hd{font-weight:700;background:#FAFAF5}
+.xl .tabs2{display:flex;gap:2px;background:#F3F3F3;border-top:1px solid #DADADA;padding:3px 6px;font-size:12.5px}
+.xl .tabs2 span{padding:3px 12px;border-radius:0 0 6px 6px}.xl .tabs2 span.on{background:#fff;color:#107C41;font-weight:700;border-bottom:2px solid #107C41}
+.xl .stat{display:flex;gap:18px;justify-content:flex-end;padding:4px 10px;font-size:12.5px;color:#555;background:#F3F3F3;border-top:1px solid #E3E3E3}
+.xtools{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.xl td.b{font-weight:700}
+.xl.brd td{border:1px solid #555}
+.xl .xtb{display:flex;gap:6px;flex-wrap:wrap;padding:5px 6px;background:#F3F3F3;border-bottom:1px solid #DADADA;align-items:center;font-size:13px}
+.xl .xtb button{border:1px solid #C9C9C9;background:#fff;border-radius:5px;padding:3px 9px;cursor:pointer;font-size:13px;color:#1B1F2A}
+.xl .xtb button.on{background:#D5E8D4;border-color:#107C41}
+.chartw{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px}
+.chartw svg{width:100%;height:auto;display:block}
+.cb{display:grid;grid-template-columns:280px minmax(0,1fr);gap:14px;align-items:start}@media (max-width:860px){.cb{grid-template-columns:1fr}}
+.cb .ctl{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px}
+.cb .ctl label{display:block;font-size:13px;font-weight:600;margin:8px 0 3px}
+.cb .ctl input[type=text],.cb .ctl select{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font:inherit;background:var(--surface2);color:var(--ink)}
+.types{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.types button{border:1.5px solid var(--border);background:var(--surface);border-radius:8px;padding:6px 2px;cursor:pointer;font-size:20px;color:var(--ink)}.types button.on{border-color:var(--acc);background:var(--accSoft)}.types small{display:block;font-size:10px}
+.dsb{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.dsb button{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:600;color:var(--ink)}.dsb button.on{border-color:var(--acc);background:var(--accSoft)}
+.sal{display:flex;align-items:flex-end;gap:6px;height:180px;border-bottom:2px solid var(--border);padding:0 6px}
+.sal div{flex:1;background:#90CAF9;border-radius:4px 4px 0 0;position:relative;min-width:18px}.sal div span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:11px;font-family:var(--mono)}
+.stat2{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.stat2 div{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}.stat2 b{display:block;font-size:22px;font-family:var(--mono);color:var(--acc)}
+.dlg{background:#fff;color:#1B1F2A;border:1px solid #9AA;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.18);max-width:520px;font-family:"Segoe UI",var(--font);font-size:14px}
+.dlg .tt{background:#F3F3F3;padding:8px 12px;border-bottom:1px solid #DDD;font-weight:700;border-radius:10px 10px 0 0}
+.dlg .bd{padding:12px}.dlg select,.dlg input[type=text]{border:1px solid #AAA;border-radius:4px;padding:4px 6px;font:inherit}
+.dlg label{display:flex;gap:6px;align-items:center;margin:6px 0}
+.tools{display:grid;grid-template-columns:1fr;border:1px solid #AAA;max-height:170px;overflow:auto;margin:6px 0}.tools button{border:0;background:#fff;text-align:left;padding:4px 8px;cursor:pointer;font:inherit;color:#111}.tools button.on{background:#CCE4F7}.tools button:disabled{color:#999;cursor:default}
+.otab{border-collapse:collapse;font-size:13.5px;margin-top:8px;background:#fff;color:#111}.otab td,.otab th{border:1px solid #CCC;padding:3px 10px}.otab td:last-child{text-align:right;font-family:var(--mono)}
+.seq{display:flex;flex-wrap:wrap;gap:6px}.seq button{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 10px;cursor:pointer;color:var(--ink);font:inherit;font-size:14px}.seq button.done{background:#DCF3E6;border-color:#12805A}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const THEORY = {"zapnutie": ["Súbor › Možnosti › Doplnky › Spravovať: Doplnky programu Excel › Prejsť › Analytické nástroje › OK; potom Údaje › Analýza dát."], "popisna": ["Popisná štatistika: vstupný rozsah, Menovky v prvom riadku, Súhrnná štatistika; výstup je statický (neprepočítava sa)."], "histogram": ["Histogram: vstup + rozsah tried (horné hranice), riadok Ďalšie; výstup s grafom."], "korelacia": ["Korelácia r od −1 do 1: 1 priama, −1 nepriama, 0 žiadna lineárna; =CORREL; korelácia nedokazuje príčinu."]};
+/* ===== generic explore + find on clickable SVG screens ===== */
+function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
+function efSVG(k, ctx) {
+  const x = XS(k), Z = SCRS[k].zones;
+  const st = id => { if (ctx === "explore") return (x.exp === id ? "on " : "") + (x.seen.includes(id) ? "seen" : ""); const L = x.last; if (!L) return ""; if (id === L.correct) return "ok"; if (id === L.clicked && !L.ok) return "bad"; return ""; };
+  const z = (id, hit, inner) => `<g class="zone ${st(id)}" data-sz="${k}|${id}|${ctx}" tabindex="0" role="button" aria-label="${ctx === "explore" ? Z[id][0] : "Časť obrazovky"}">${inner}${hit.map(r => `<rect class="hit" x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="5"/>`).join("")}</g>`;
+  return SCRS[k].svg(z);
+}
+function efExplore(k, hint) { const x = XS(k), Z = SCRS[k].zones, keys = Object.keys(Z), e = x.exp ? Z[x.exp] : null;
+  return `<div class="scr"><div class="fig" style="margin:0">${efSVG(k, "explore")}</div><div class="side">${e ? `<span class="tag">Preskúmané ${x.seen.length} z ${keys.length}</span><h4>${e[0]}</h4><p style="font-size:15.5px;margin:0">${e[1]}</p>` : `<h4>Klikni na časť obrázka</h4><p class="muted" style="font-size:15px;margin:0">${hint || "Zisti, na čo slúžia jednotlivé časti."}</p>`}<div class="meter"><i style="width:${Math.round(x.seen.length / keys.length * 100)}%"></i></div></div></div>`; }
+function efFind(k) { const x = XS(k), Z = SCRS[k].zones, F = SCRS[k].find, done = S.t["f_" + k]; let fs;
+  if (done) fs = `<div class="side"><h4>Hotovo</h4><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} bodov</span></div>`;
+  else { const L = x.last; fs = `<div class="side"><span class="tag">Otázka ${x.fi + 1} z ${F.length}</span><div class="prompt">${F[x.fi][1]}</div>${L ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne!" : "❌ To je: " + Z[L.clicked][0] + ". Správne miesto svieti nazeleno."}</div><div class="row"><button class="primary" data-sn="${k}">${x.fi + 1 < F.length ? "Ďalšia otázka" : "Dokončiť"}</button></div>` : `<p class="muted" style="font-size:14.5px">Klikni na správne miesto. Máš jeden pokus.</p>`}</div>`; }
+  return `<div class="scr"><div class="fig" style="margin:0">${efSVG(k, "find")}</div>${fs}</div>`; }
+function efClick(e) {
+  const z = e.target.closest && e.target.closest("[data-sz]");
+  if (z) { const [k, id, ctx] = z.dataset.sz.split("|"), x = XS(k);
+    if (ctx === "explore") { x.exp = id; if (!x.seen.includes(id)) x.seen.push(id); }
+    else { if (S.t["f_" + k] || x.last) return true; const F = SCRS[k].find, ok = id === F[x.fi][0]; x.res[x.fi] = ok; x.last = { clicked: id, correct: F[x.fi][0], ok }; }
+    save(); render(false); return true; }
+  const el = e.target.closest("button"); if (el && el.dataset.sn) { const k = el.dataset.sn, x = XS(k), F = SCRS[k].find; x.last = null; x.fi++; if (x.fi >= F.length) { x.fi = F.length - 1; award("f_" + k, x.res.filter(Boolean).length); } save(); render(false); return true; }
+  return false;
+}
+document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-sz]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
+const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
+const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
+
+/* ===== shared spreadsheet engine + charts ===== */
+const XFN = { SUM: "sum", "SÚČET": "sum", AVERAGE: "avg", PRIEMER: "avg", MIN: "min", MAX: "max", COUNT: "cnt", "POČET": "cnt", ROUND: "round", "ZAOKRÚHLIŤ": "round", MEDIAN: "med", "MEDIÁN": "med", MODE: "mode", "MODE.SNGL": "mode", MODUS: "mode", STDEV: "sds", "STDEV.S": "sds", "STDEV.P": "sdp", VAR: "vars", "VAR.S": "vars", "VAR.P": "varp", COUNTIF: "cif", "COUNTIF": "cif" };
+const XC = n => Array.from({ length: n }, (_, i) => String.fromCharCode(65 + i));
+function xNum(s) { s = String(s).trim().replace(/\s/g, ""); if (/^-?\d+([.,]\d+)?$/.test(s)) return parseFloat(s.replace(",", ".")); return null; }
+function xCell(sh, ref, seen, NR) { seen = seen || {}; const raw = sh[ref]; if (raw === undefined || raw === "") return 0; if (String(raw)[0] !== "=") { const n = xNum(raw); return n === null ? String(raw) : n; }
+  if (seen[ref]) throw "#CYKLUS!"; seen[ref] = 1; const v = xExpr(sh, String(raw).slice(1), seen, NR); delete seen[ref]; return v; }
+function xRange(sh, a, b, seen, NR) { const c1 = a.charCodeAt(0) - 65, c2 = b.charCodeAt(0) - 65, r1 = +a.slice(1), r2 = +b.slice(1), out = []; for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++) { const v = xCell(sh, String.fromCharCode(65 + c) + r, seen, NR); if (typeof v === "number" && sh[String.fromCharCode(65 + c) + r] !== undefined && sh[String.fromCharCode(65 + c) + r] !== "") out.push(v); } return out; }
+function xExpr(sh, src, seen, NR) { NR = NR || 20; const s = src.toUpperCase().replace(/\$/g, ""); let p = 0; const ws = () => { while (s[p] === " ") p++; };
+  function atom() { ws(); let m;
+    if ((m = s.slice(p).match(/^([A-ZÁ-Ž][A-ZÁ-Ž.]*)\(/)) && !/^[A-J]\d/.test(s.slice(p))) { const f = XFN[m[1]]; p += m[0].length; if (!f) throw "#NÁZOV?"; const vals = []; ws();
+      if (f === "cif") { const r = s.slice(p).match(/^([A-J][1-9]\d?):([A-J][1-9]\d?)/); if (!r) throw "#HODNOTA!"; p += r[0].length; ws(); if (s[p] !== ";" && s[p] !== ",") throw "#HODNOTA!"; p++; ws(); let crit; const q = src.replace(/\$/g, "").slice(p).match(/^"([^"]*)"/); if (q) { crit = q[1]; p += q[0].length; } else { crit = String(add()); } ws(); if (s[p] !== ")") throw "#HODNOTA!"; p++; const cm = crit.replace(/\s/g, "").match(/^(<=|>=|<>|=|<|>)?(-?\d+(?:[.,]\d+)?)$/); if (!cm) throw "#HODNOTA!"; const op = cm[1] || "=", x = parseFloat(cm[2].replace(",", ".")); return xRange(sh, r[1], r[2], seen, NR).filter(v => ({ "=": v === x, "<>": v !== x, "<": v < x, ">": v > x, "<=": v <= x, ">=": v >= x })[op]).length; }
+      while (s[p] !== ")") { ws(); let r; if ((r = s.slice(p).match(/^([A-J][1-9]\d?):([A-J][1-9]\d?)/))) { p += r[0].length; vals.push(...xRange(sh, r[1], r[2], seen, NR)); } else { const v = add(); if (typeof v !== "number") throw "#HODNOTA!"; vals.push(v); } ws(); if (s[p] === ";" || s[p] === ",") p++; else if (s[p] !== ")") throw "#HODNOTA!"; if (p >= s.length) throw "#HODNOTA!"; }
+      p++; if (f === "round") { const d = vals[1] || 0; return Math.round(vals[0] * Math.pow(10, d)) / Math.pow(10, d); } if (f === "sum") return vals.reduce((a, b) => a + b, 0); if (f === "cnt") return vals.length; if (!vals.length) throw f === "avg" ? "#DELENIENULOU!" : "#HODNOTA!"; if (f === "avg") return vals.reduce((a, b) => a + b, 0) / vals.length; if (f === "min") return Math.min(...vals); if (f === "max") return Math.max(...vals);
+      const n = vals.length, mean = vals.reduce((a, b) => a + b, 0) / n, ss = vals.reduce((a, b) => a + (b - mean) ** 2, 0);
+      if (f === "med") { const o = [...vals].sort((a, b) => a - b); return n % 2 ? o[(n - 1) / 2] : (o[n / 2 - 1] + o[n / 2]) / 2; }
+      if (f === "mode") { const c = new Map(); vals.forEach(v => c.set(v, (c.get(v) || 0) + 1)); let best = null, bc = 1; for (const v of vals) if (c.get(v) > bc) { bc = c.get(v); best = v; } if (best === null) throw "#NEDOSTUPNÝ"; return best; }
+      if (f === "sdp") return Math.sqrt(ss / n); if (f === "varp") return ss / n; if (n < 2) throw "#DELENIENULOU!"; if (f === "sds") return Math.sqrt(ss / (n - 1)); return ss / (n - 1); }
+    if ((m = s.slice(p).match(/^[A-J][1-9]\d?/))) { p += m[0].length; if (+m[0].slice(1) > NR) throw "#ODKAZ!"; const v = xCell(sh, m[0], seen, NR); if (typeof v !== "number") { if (sh[m[0]] === undefined || sh[m[0]] === "") return 0; throw "#HODNOTA!"; } return v; }
+    if ((m = s.slice(p).match(/^\d+([.,]\d+)?/))) { p += m[0].length; return parseFloat(m[0].replace(",", ".")); }
+    if (s[p] === "(") { p++; const v = add(); ws(); if (s[p] !== ")") throw "#HODNOTA!"; p++; return v; }
+    if (s[p] === "-") { p++; return -atom(); }
+    if (/[A-Z]/.test(s[p] || "")) throw "#NÁZOV?"; throw "#HODNOTA!"; }
+  function pw() { let a = atom(); ws(); while (s[p] === "^") { p++; a = Math.pow(a, atom()); ws(); } return a; }
+  function mul() { let a = pw(); for (;;) { ws(); const o = s[p]; if (o !== "*" && o !== "/") return a; p++; const b = pw(); if (o === "/" && b === 0) throw "#DELENIENULOU!"; a = o === "*" ? a * b : a / b; } }
+  function add() { let a = mul(); for (;;) { ws(); const o = s[p]; if (o !== "+" && o !== "-") return a; p++; const b = mul(); a = o === "+" ? a + b : a - b; } }
+  const v = add(); ws(); if (p !== s.length) throw "#HODNOTA!"; return v; }
+function xVal(sh, ref, NR) { try { return xCell(sh, ref, null, NR); } catch (e) { return { err: typeof e === "string" ? e : "#HODNOTA!" }; } }
+function xFmt(v, dp) { if (v && v.err) return v.err; if (typeof v === "number") { const r = dp !== undefined ? v.toFixed(dp) : String(Math.round(v * 1e6) / 1e6); return r.replace(".", ","); } return String(v); }
+function xShift(f, dr) { return f.replace(/(\$?)([A-J])(\$?)(\d+)/g, (m, a, c, b, r) => a + c + b + (b ? r : (+r + dr))); }
+/* sheet UI: state in S.X[k] = {sh, sel, fmt:{ref:{b,dp}}, brd, cols, rows} */
+function XLS(k, init) { S.X = S.X || {}; if (!S.X[k]) S.X[k] = Object.assign({ sh: {}, sel: "A1", fmt: {}, brd: false, cols: 6, rows: 12 }, init ? JSON.parse(JSON.stringify(init)) : {}); return S.X[k]; }
+function xSheetHTML(k, opt = {}) { const X = XLS(k), sh = X.sh, sel = X.sel, cur = sh[sel] || "", COLS = XC(X.cols), F = X.fmt;
+  const colDp = c => F["col" + c] && F["col" + c].dp;
+  const body = Array.from({ length: X.rows }, (_, i) => i + 1).map(r => `<tr><th class="${+sel.slice(1) === r ? "hl" : ""}">${r}</th>${COLS.map(c => { const ref = c + r, v = xVal(sh, ref, X.rows), isN = typeof v === "number", raw = sh[ref], f = F[ref] || {}; const dp = f.dp !== undefined ? f.dp : colDp(c); return `<td class="${ref === sel ? "sel" : ""} ${isN ? "num" : ""} ${v && v.err ? "err" : ""} ${f.b ? "b" : ""}" data-xc="${k}|${ref}">${raw === undefined || raw === "" ? "" : esc(xFmt(v, isN ? dp : undefined))}</td>`; }).join("")}</tr>`).join("");
+  const tb = opt.tools ? `<div class="xtb"><button data-xb="${k}" class="${(F[sel] || {}).b ? "on" : ""}"><b>B</b> Tučné</button><button data-xrow="${k}">Tučný celý riadok</button><button data-xdp="${k}|-1">,0 ←</button><button data-xdp="${k}|1">→ ,00</button><span style="font-size:12px;color:#666">desatinné miesta stĺpca ${sel[0]}: ${colDp(sel[0]) === undefined ? "auto" : colDp(sel[0])}</span><button data-xbrd="${k}" class="${X.brd ? "on" : ""}">▦ Orámovanie</button><button data-xfill="${k}">⬇ Vyplniť nadol</button></div>` : "";
+  return `<div class="xl ${X.brd ? "brd" : ""}" id="xl-${k}"><div class="fb2"><input class="nb" value="${sel}" readonly aria-label="Pole názvov"><span class="fx">fx</span><input class="fi" id="fi-${k}" data-xfi="${k}" value="${esc(cur)}" placeholder="Napíš hodnotu alebo vzorec a stlač Enter" aria-label="Riadok vzorcov"></div>${tb}
+    <div class="gridw"><table><thead><tr><th></th>${COLS.map(c => `<th class="${sel[0] === c ? "hl" : ""}">${c}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table></div><div class="tabs2"><span class="on">${opt.tab || "Hárok1"}</span><span>+</span></div></div>`; }
+function xRefresh(k) { const el = document.getElementById("xl-" + k); if (!el) return render(false); const tmp = document.createElement("div"); tmp.innerHTML = xSheetHTML(k, { tools: !!el.querySelector(".xtb"), tab: el.querySelector(".tabs2 .on").textContent }); el.replaceWith(tmp.firstElementChild); if (typeof XCHANGE === "function") XCHANGE(k); }
+function xClick(e) { const td = e.target.closest && e.target.closest("[data-xc]"); if (td) { const [k, ref] = td.dataset.xc.split("|"); XLS(k).sel = ref; save(); xRefresh(k); const fi = document.getElementById("fi-" + k); if (fi) fi.focus({ preventScroll: true }); return true; }
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.xb) { const X = XLS(ds.xb); X.fmt[X.sel] = X.fmt[X.sel] || {}; X.fmt[X.sel].b = !X.fmt[X.sel].b; save(); xRefresh(ds.xb); return true; }
+  if (ds.xrow) { const X = XLS(ds.xrow), r = X.sel.slice(1); XC(X.cols).forEach(c => { X.fmt[c + r] = X.fmt[c + r] || {}; X.fmt[c + r].b = true; }); save(); xRefresh(ds.xrow); return true; }
+  if (ds.xdp) { const [k, d] = ds.xdp.split("|"), X = XLS(k), c = X.sel[0], key = "col" + c; X.fmt[key] = X.fmt[key] || {}; const cur = X.fmt[key].dp === undefined ? 1 : X.fmt[key].dp; X.fmt[key].dp = Math.max(0, Math.min(4, cur + (+d))); save(); xRefresh(k); return true; }
+  if (ds.xbrd) { const X = XLS(ds.xbrd); X.brd = !X.brd; save(); xRefresh(ds.xbrd); return true; }
+  if (ds.xfill) { const k = ds.xfill, X = XLS(k), sh = X.sh, sel = X.sel, f = sh[sel]; if (!f) return true; const c = sel[0], r = +sel.slice(1); for (let rr = r + 1; rr <= X.rows; rr++) { const any = XC(X.cols).some(cc => cc !== c && sh[cc + rr] !== undefined && sh[cc + rr] !== "" && !String(sh[cc + rr]).startsWith("=")); if (!any) break; sh[c + rr] = String(f).startsWith("=") ? xShift(f, rr - r) : f; } save(); xRefresh(k); return true; }
+  return false; }
+document.addEventListener("keydown", e => { const t = e.target; if (!(t.dataset && t.dataset.xfi) || e.key !== "Enter") return; e.preventDefault(); const k = t.dataset.xfi, X = XLS(k), v = t.value.trim(); if (v === "") delete X.sh[X.sel]; else X.sh[X.sel] = v; const r = +X.sel.slice(1); if (r < X.rows) X.sel = X.sel[0] + (r + 1); save(); xRefresh(k); const n = document.getElementById("fi-" + k); if (n) n.focus({ preventScroll: true }); });
+/* ---------- charts ---------- */
+const CPAL = ["#1565C0", "#E53935", "#43A047", "#FB8C00", "#8E24AA", "#00ACC1", "#6D4C41", "#FDD835", "#546E7A", "#D81B60"];
+const CTYPES = [["bar", "📊", "stĺpcový"], ["hbar", "📶", "pruhový"], ["line", "📈", "čiarový"], ["pie", "🥧", "koláčový"], ["xy", "⁘", "bodový XY"]];
+function nice(max) { if (max <= 0) return 1; const e = Math.pow(10, Math.floor(Math.log10(max))), f = max / e; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * e; }
+function chartSVG(c) { const W = 560, H = 340, L = c.labels || [], V = c.values || [], T = c.type, fmt = v => String(Math.round(v * 100) / 100).replace(".", ","); let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif"><rect width="${W}" height="${H}" fill="#fff"/>`;
+  if (c.title) s += `<text x="${W / 2}" y="26" text-anchor="middle" font-size="17" font-weight="700" fill="#222">${esc(c.title)}</text>`;
+  if (!V.length) return s + `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" fill="#888">Žiadne údaje</text></svg>`;
+  if (T === "pie") { const tot = V.reduce((a, b) => a + Math.max(0, b), 0) || 1; let a0 = -Math.PI / 2; const cx = 200, cy = 185, r = 120; V.forEach((v, i) => { const a1 = a0 + Math.max(0, v) / tot * Math.PI * 2, large = a1 - a0 > Math.PI ? 1 : 0; s += `<path d="M${cx} ${cy} L${cx + r * Math.cos(a0)} ${cy + r * Math.sin(a0)} A${r} ${r} 0 ${large} 1 ${cx + r * Math.cos(a1)} ${cy + r * Math.sin(a1)}Z" fill="${CPAL[i % 10]}" stroke="#fff" stroke-width="2"/>`; if (c.dl) { const am = (a0 + a1) / 2; s += `<text x="${cx + r * 0.65 * Math.cos(am)}" y="${cy + r * 0.65 * Math.sin(am) + 5}" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">${Math.round(v / tot * 100)} %</text>`; } a0 = a1; });
+    if (c.legend !== false) L.forEach((l, i) => s += `<rect x="360" y="${70 + i * 24}" width="14" height="14" fill="${CPAL[i % 10]}"/><text x="380" y="${82 + i * 24}" font-size="13" fill="#333">${esc(String(l))}</text>`); return s + `</svg>`; }
+  const x0 = 70, y0 = H - 60, pw = W - x0 - 30, ph = y0 - 50, numX = T === "xy";
+  const min0 = c.ymin !== undefined ? c.ymin : 0, vmax = Math.max(...V), vmin = Math.min(...V, min0), top = nice(vmax - vmin) + vmin, span = top - vmin || 1;
+  const xs = numX ? L.map(Number) : null, xmax = numX ? nice(Math.max(...xs)) : 0;
+  if (T === "hbar") { const bh = ph / V.length * 0.7; for (let i = 0; i <= 5; i++) { const v = vmin + span * i / 5, x = x0 + 40 + (pw - 40) * i / 5; s += `<line x1="${x}" y1="50" x2="${x}" y2="${y0}" stroke="#EEE"/><text x="${x}" y="${y0 + 16}" text-anchor="middle" font-size="11" fill="#666">${fmt(v)}</text>`; }
+    V.forEach((v, i) => { const y = 50 + ph / V.length * (i + 0.15), w = (v - vmin) / span * (pw - 40); s += `<rect x="${x0 + 40}" y="${y}" width="${Math.max(0, w)}" height="${bh}" fill="${CPAL[0]}"/><text x="${x0 + 34}" y="${y + bh / 2 + 4}" text-anchor="end" font-size="12" fill="#333">${esc(String(L[i]))}</text>${c.dl ? `<text x="${x0 + 44 + w}" y="${y + bh / 2 + 4}" font-size="11" fill="#333">${fmt(v)}</text>` : ""}`; }); }
+  else { for (let i = 0; i <= 5; i++) { const v = vmin + span * i / 5, y = y0 - ph * i / 5; s += `<line x1="${x0}" y1="${y}" x2="${x0 + pw}" y2="${y}" stroke="#EEE"/><text x="${x0 - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#666">${fmt(v)}</text>`; }
+    const px = i => numX ? x0 + xs[i] / (xmax || 1) * pw : x0 + pw / V.length * (i + 0.5), py = v => y0 - (v - vmin) / span * ph;
+    if (numX) for (let i = 0; i <= 5; i++) { const v = xmax * i / 5; s += `<text x="${x0 + pw * i / 5}" y="${y0 + 16}" text-anchor="middle" font-size="11" fill="#666">${fmt(v)}</text>`; }
+    else L.forEach((l, i) => s += `<text x="${px(i)}" y="${y0 + 16}" text-anchor="middle" font-size="11.5" fill="#333">${esc(String(l)).slice(0, 12)}</text>`);
+    if (T === "bar") V.forEach((v, i) => { const bw = pw / V.length * 0.6, x = px(i) - bw / 2; s += `<rect x="${x}" y="${py(v)}" width="${bw}" height="${Math.max(0, y0 - py(v))}" fill="${CPAL[0]}"/>${c.dl ? `<text x="${px(i)}" y="${py(v) - 5}" text-anchor="middle" font-size="11" fill="#333">${fmt(v)}</text>` : ""}`; });
+    if (T === "line") { s += `<polyline points="${V.map((v, i) => px(i) + "," + py(v)).join(" ")}" fill="none" stroke="${CPAL[1]}" stroke-width="3"/>`; V.forEach((v, i) => s += `<circle cx="${px(i)}" cy="${py(v)}" r="4" fill="${CPAL[1]}"/>${c.dl ? `<text x="${px(i)}" y="${py(v) - 8}" text-anchor="middle" font-size="11" fill="#333">${fmt(v)}</text>` : ""}`); }
+    if (T === "xy") { V.forEach((v, i) => s += `<circle cx="${px(i)}" cy="${py(v)}" r="5" fill="${CPAL[2]}"/>`); if (c.trend && V.length > 1) { const n = V.length, mx = xs.reduce((a, b) => a + b, 0) / n, my = V.reduce((a, b) => a + b, 0) / n, k = xs.reduce((a, x, i) => a + (x - mx) * (V[i] - my), 0) / (xs.reduce((a, x) => a + (x - mx) ** 2, 0) || 1), q = my - k * mx; s += `<clipPath id="pcl"><rect x="${x0}" y="50" width="${pw}" height="${ph}"/></clipPath><line clip-path="url(#pcl)" x1="${x0}" y1="${py(q)}" x2="${x0 + pw}" y2="${py(k * xmax + q)}" stroke="#999" stroke-dasharray="6 4"/>`; } }
+    s += `<line x1="${x0}" y1="${y0}" x2="${x0 + pw}" y2="${y0}" stroke="#333"/><line x1="${x0}" y1="50" x2="${x0}" y2="${y0}" stroke="#333"/>`; }
+  if (c.xt) s += `<text x="${x0 + pw / 2}" y="${H - 18}" text-anchor="middle" font-size="13" fill="#333">${esc(c.xt)}</text>`;
+  if (c.yt) s += `<text transform="translate(18 ${50 + ph / 2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#333">${esc(c.yt)}</text>`;
+  return s + `</svg>`; }
+function dlText(name, text, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+
+const KEY = "analyza-r33-v1";
+const LESSON = "3.3 Použitie nástroja Analýza dát";
+const BRAND = "3.3 Analýza dát";
+const CLASS_DEFAULT = "III.";
+const WIDE = { zapnutie: 1, popisna: 1, histogram: 1, korelacia: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "zapnutie", title: "Zapnutie doplnku", min: 5 },
+  { id: "popisna", title: "Popisná štatistika", min: 12 },
+  { id: "histogram", title: "Histogram", min: 10 },
+  { id: "korelacia", title: "Korelácia", min: 9 },
+  { id: "test", title: "Záverečný test", min: 5 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { zapnutie: ["g_on"], popisna: ["g_desc", "dq"], histogram: ["g_hist", "hq"], korelacia: ["g_corr", "kq"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 3. ročník",
+  lead: "Excel má ukrytý doplnok Analýza dát (Analysis ToolPak), ktorý jedným kliknutím vytvorí celú tabuľku štatistík, histogram aj koreláciu. Naučíš sa ho zapnúť, na výsledkoch 20 žiakov spustíš Popisnú štatistiku, Histogram a Koreláciu a výsledky vysvetlíš: súvisí počet hodín prípravy s bodmi z testu? 4 zastávky, body a na konci výsledok.",
+  guessQ: "Korelačný koeficient r = 0,85 medzi hodinami prípravy a bodmi znamená:",
+  guessNote: "Tip sa neboduje. Na zastávke Korelácia zistíš, či si mal pravdu.",
+  guesses: ["Žiadna súvislosť", "Silná priama súvislosť: viac prípravy, viac bodov", "Nepriama súvislosť", "Príprava spôsobuje presne 85 % bodov"],
+  ok: 1, yes: "Presne tak! Hodnota blízko 1 znamená silnú priamu (kladnú) závislosť. Pozor: korelácia sama nedokazuje príčinu.", no: "Silná priama súvislosť: s viac hodinami prípravy rastú body. Hodnota blízko 1 = silná kladná závislosť, korelácia však sama nedokazuje príčinu."
+};
+const HR = [2, 5, 1, 7, 4, 3, 6, 8, 2, 5, 4, 6, 3, 7, 1, 5, 9, 4, 6, 3], BO = [22, 35, 15, 44, 31, 27, 40, 47, 20, 37, 30, 38, 25, 42, 18, 33, 49, 29, 41, 28], BINS = [10, 20, 30, 40, 50];
+const shD = { A1: "Hodiny", B1: "Body", D1: "Triedy" }; HR.forEach((h, i) => { shD["A" + (i + 2)] = String(h); shD["B" + (i + 2)] = String(BO[i]); }); BINS.forEach((b, i) => shD["D" + (i + 2)] = String(b));
+const COLS = { A: HR, B: BO };
+function EXTRA_STATE() { return { seq: [], dlg: false, tool: null, o: { inp: "B", lab: true, sum: true, bins: "D", chart: true, inp2: "A" }, out: {}, omsg: "" }; }
+const SEQ = ["Súbor", "Možnosti", "Doplnky", "Spravovať: Doplnky programu Excel › Prejsť…", "Zaškrtnúť Analytické nástroje › OK", "Karta Údaje › Analýza dát"];
+const SEQM = [3, 0, 5, 2, 4, 1];
+function desc(x) { const n = x.length, m = x.reduce((a, b) => a + b, 0) / n, s = Math.sqrt(x.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)), o = [...x].sort((a, b) => a - b), med = n % 2 ? o[(n - 1) / 2] : (o[n / 2 - 1] + o[n / 2]) / 2;
+  const c = new Map(); x.forEach(v => c.set(v, (c.get(v) || 0) + 1)); let mode = "#N/A", bc = 1; x.forEach(v => { if (c.get(v) > bc) { bc = c.get(v); mode = v; } });
+  const z3 = x.reduce((a, v) => a + ((v - m) / s) ** 3, 0), z4 = x.reduce((a, v) => a + ((v - m) / s) ** 4, 0);
+  return [["Stredná hodnota", m], ["Chyba strednej hodnoty", s / Math.sqrt(n)], ["Medián", med], ["Modus", mode], ["Smerodajná odchýlka", s], ["Rozptyl výberu", s * s], ["Špicatosť", n * (n + 1) / ((n - 1) * (n - 2) * (n - 3)) * z4 - 3 * (n - 1) ** 2 / ((n - 2) * (n - 3))], ["Šikmosť", n / ((n - 1) * (n - 2)) * z3], ["Rozsah", o[n - 1] - o[0]], ["Minimum", o[0]], ["Maximum", o[n - 1]], ["Súčet", x.reduce((a, b) => a + b, 0)], ["Počet", n]]; }
+function hist(x, bins) { let prev = -Infinity; const r = bins.map(b => { const c = x.filter(v => v > prev && v <= b).length; prev = b; return [b, c]; }); r.push(["Ďalšie", x.filter(v => v > bins[bins.length - 1]).length]); return r; }
+function corr(a, b) { const n = a.length, ma = a.reduce((s, v) => s + v, 0) / n, mb = b.reduce((s, v) => s + v, 0) / n; let sab = 0, sa = 0, sb = 0; for (let i = 0; i < n; i++) { sab += (a[i] - ma) * (b[i] - mb); sa += (a[i] - ma) ** 2; sb += (b[i] - mb) ** 2; } return sab / Math.sqrt(sa * sb); }
+const f4 = v => typeof v === "number" ? (Math.round(v * 10000) / 10000).toString().replace(".", ",") : v;
+function outHTML(k) { const O = S.out[k]; if (!O) return `<p class="muted">Výstup sa zobrazí po potvrdení dialógu.</p>`;
+  if (k === "desc") return `<table class="otab"><tr><th colspan="2">${O.lab}</th></tr>${O.rows.map(([a, b]) => `<tr><td>${a}</td><td>${f4(b)}</td></tr>`).join("")}</table>`;
+  if (k === "hist") return `<div class="two" style="display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start"><table class="otab"><tr><th>Triedy</th><th>Početnosť</th></tr>${O.rows.map(([a, b]) => `<tr><td>${a}</td><td>${b}</td></tr>`).join("")}</table>${O.chart ? `<div class="chartw">${chartSVG({ type: "bar", title: "Histogram", xt: "Triedy", yt: "Početnosť", labels: O.rows.map(r => r[0]), values: O.rows.map(r => r[1]), dl: true })}</div>` : ""}</div>`;
+  return `<table class="otab"><tr><th></th><th>Hodiny</th><th>Body</th></tr><tr><td>Hodiny</td><td>1</td><td></td></tr><tr><td>Body</td><td>${f4(O.r)}</td><td>1</td></tr></table>`; }
+function dlgHTML(k) { const o = S.o, T = { desc: "Popisná štatistika", hist: "Histogram", corr: "Korelácia" };
+  if (!S.dlg) return `<div class="row"><button class="primary" data-dlg="${k}">📊 Údaje › Analýza dát</button></div>`;
+  if (!S.tool) return `<div class="dlg"><div class="tt">Analýza dát</div><div class="bd">Analytické nástroje<div class="tools">${["Anova: jeden faktor", "Korelácia", "Kovariancia", "Popisná štatistika", "Exponenciálne vyrovnávanie", "F-test", "Histogram", "Kĺzavý priemer", "Regresia", "t-test"].map(t => { const id = { "Korelácia": "corr", "Popisná štatistika": "desc", "Histogram": "hist" }[t]; return `<button ${id ? `data-tool="${id}"` : "disabled"}>${t}</button>`; }).join("")}</div><div class="row"><button class="ghost" data-dlgx>Zrušiť</button></div></div></div>`;
+  const colSel = (key) => `<select data-o="${key}"><option value="A" ${o[key] === "A" ? "selected" : ""}>$A$1:$A$21 (Hodiny)</option><option value="B" ${o[key] === "B" ? "selected" : ""}>$B$1:$B$21 (Body)</option><option value="D" ${o[key] === "D" ? "selected" : ""}>$D$1:$D$6 (Triedy)</option></select>`;
+  return `<div class="dlg"><div class="tt">${T[S.tool]}</div><div class="bd">${S.tool === "corr" ? `<label>Vstupný rozsah: ${colSel("inp2")} a ${colSel("inp")}</label>` : `<label>Vstupný rozsah: ${colSel("inp")}</label>`}
+    ${S.tool === "hist" ? `<label>Rozsah tried: ${colSel("bins")}</label>` : ""}<label><input type="checkbox" data-o="lab" ${o.lab ? "checked" : ""}> Menovky v prvom riadku</label>
+    ${S.tool === "desc" ? `<label><input type="checkbox" data-o="sum" ${o.sum ? "checked" : ""}> Súhrnná štatistika</label>` : ""}${S.tool === "hist" ? `<label><input type="checkbox" data-o="chart" ${o.chart ? "checked" : ""}> Výstup s grafom</label>` : ""}
+    <label>Možnosti výstupu: ◉ Nový hárok</label>${S.omsg ? `<div class="fb bad">${S.omsg}</div>` : ""}<div class="row"><button class="primary" data-run2>OK</button><button class="ghost" data-dlgx>Zrušiť</button></div></div></div>`; }
+const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const D = desc(BO), H = hist(BO, BINS), R = corr(HR, BO);
+const inq = (id, q, ans, tol) => ({ id, q, ok: v => Math.abs(parseNum(v) - ans) <= tol, show: String(Math.round(ans * 100) / 100).replace(".", ","), ph: "?" });
+const TASKS = {
+  g_on: { id: "g_on", type: "custom", max: 1 },
+  g_desc: { id: "g_desc", type: "custom", max: 1 }, g_hist: { id: "g_hist", type: "custom", max: 1 }, g_corr: { id: "g_corr", type: "custom", max: 1 },
+  dq: { id: "dq", type: "input", qs: [inq("1", "Stredná hodnota (priemer) bodov? (na 2 desatinné)", D[0][1], 0.01), inq("2", "Medián bodov?", D[2][1], 0.01), inq("3", "Smerodajná odchýlka? (na 2 desatinné)", D[4][1], 0.01), inq("4", "Rozsah (rozpätie)?", D[8][1], 0.01)] },
+  hq: { id: "hq", type: "input", qs: [inq("1", "Koľko žiakov má body v triede (30; 40]?", H[3][1], 0), inq("2", "Koľko žiakov má 20 bodov alebo menej?", H[0][1] + H[1][1], 0), { id: "3", q: "Horná hranica triedy s najväčšou početnosťou?", ok: v => { const mx = Math.max(...H.map(r => r[1])); return H.some(r => r[1] === mx && String(r[0]) === String(v).trim()); }, show: String(H.reduce((a, r) => r[1] > a[1] ? r : a)[0]), ph: "?" }] },
+  kq: { id: "kq", type: "input", qs: [inq("1", "Korelačný koeficient medzi hodinami a bodmi? (na 2 desatinné)", R, 0.01)] },
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", ...Q("Kde nájdeš Analýzu dát po zapnutí doplnku?", ["na karte Údaje", "na karte Domov", "v ponuke Súbor", "na karte Vložiť"], 0) },
+    { id: "2", ...Q("Čo vytvorí nástroj Histogram?", ["tabuľku početností v zadaných triedach (a graf)", "priemer", "koreláciu", "kontingenčnú tabuľku"], 0) },
+    { id: "3", ...Q("Korelačný koeficient r = −0,9 znamená:", ["silnú nepriamu závislosť (jedna rastie, druhá klesá)", "žiadnu závislosť", "slabú priamu", "chybu výpočtu"], 0) },
+    { id: "4", ...Q("Výstup Analýzy dát sa pri zmene údajov:", ["neprepočíta automaticky, treba nástroj spustiť znova", "prepočíta okamžite", "vymaže", "zmení na graf"], 0) },
+    { id: "5", ...Q("Čo znamená „Menovky v prvom riadku“?", ["prvá bunka rozsahu je nadpis, nie hodnota", "výstup bude mať farby", "údaje sú text", "zoradenie"], 0) },
+    { id: "6", ...Q("Vysoká korelácia dvoch veličín dokazuje, že jedna spôsobuje druhú?", ["nie, korelácia nie je príčinná súvislosť", "áno, vždy", "iba pri r = 1", "iba v Exceli"], 0) }
+  ]}
+};
+const VIEWS = {
+  zapnutie: () => head() + `<h2>Zapnutie doplnku Analýza dát</h2>
+    <div class="theory"><p><b>Analýza dát</b> (Analysis ToolPak) je doplnok Excelu vo Windows. Na začiatku býva vypnutý. Zapneš ho raz a potom ho nájdeš na karte <b>Údaje</b> vpravo. Na Macu je postup podobný (Nástroje › Doplnky programu Excel). V Exceli pre web doplnok nie je; tam treba funkcie alebo desktopovú verziu.</p></div>
+    <h3>Úloha: klikaj kroky v správnom poradí</h3><div class="task"><div class="seq">${SEQM.map(i => `<button class="${S.seq.includes(i) ? "done" : ""}" data-sq="${i}">${S.seq.includes(i) ? (S.seq.indexOf(i) + 1) + ". " : ""}${SEQ[i]}</button>`).join("")}</div>${S.sqmsg ? `<div class="fb ${S.sqmsg.k}">${S.sqmsg.t}</div>` : ""}</div>` + nextBar(),
+  popisna: () => { XLS("an", { cols: 6, rows: 21, sh: shD, sel: "B2" }); return head() + `<h2>Popisná štatistika</h2>
+    <div class="theory"><p>V hárku sú hodiny prípravy a body z testu 20 žiakov. Otvor <b>Údaje › Analýza dát</b>, zvoľ <b>Popisná štatistika</b>, vstupný rozsah stĺpca <b>Body</b> s menovkou v prvom riadku a zaškrtni <b>Súhrnná štatistika</b>. Výsledok je statická tabuľka so 13 charakteristikami.</p></div>
+    ${xSheetHTML("an", { tab: "Výsledky" })}<div class="tool">${S.tool === "desc" || !S.tool || !S.dlg ? dlgHTML("desc") : dlgHTML("desc")}${outHTML("desc")}</div>
+    <h3>Úloha: prečítaj z výstupu</h3><div class="task">${taskHTML("dq")}</div>` + nextBar(); },
+  histogram: () => { XLS("an", { cols: 6, rows: 21, sh: shD, sel: "B2" }); return head() + `<h2>Histogram</h2>
+    <div class="theory"><p><b>Histogram</b> ukazuje, koľko hodnôt padne do jednotlivých <b>tried</b> (intervalov). Hranice tried sú v stĺpci D: 10, 20, 30, 40, 50. Trieda 30 obsahuje hodnoty väčšie ako 20 a najviac 30. Riadok <b>Ďalšie</b> sú hodnoty nad poslednou hranicou. Zvoľ vstup Body, rozsah tried Triedy a výstup s grafom.</p></div>
+    ${xSheetHTML("an", { tab: "Výsledky" })}<div class="tool">${dlgHTML("hist")}${outHTML("hist")}</div>
+    <h3>Úloha: prečítaj z histogramu</h3><div class="task">${taskHTML("hq")}</div>` + nextBar(); },
+  korelacia: () => head() + `<h2>Korelácia</h2>${guessBox()}
+    <div class="theory"><p><b>Korelačný koeficient</b> r (od −1 do 1) meria, ako silno spolu súvisia dve číselné veličiny: blízko <b>1</b> silná priama závislosť, blízko <b>−1</b> silná nepriama, okolo <b>0</b> žiadna lineárna závislosť. Zvoľ nástroj Korelácia a oba stĺpce (Hodiny a Body). Rovnaký výsledok dá funkcia <code>=CORREL(A2:A21;B2:B21)</code>. Pozor: korelácia <b>nedokazuje príčinu</b>.</p></div>
+    <div class="chartw" style="max-width:560px">${chartSVG({ type: "xy", title: "Hodiny prípravy a body", xt: "hodiny", yt: "body", labels: HR, values: BO, trend: true })}</div>
+    <div class="tool">${dlgHTML("corr")}${outHTML("corr")}</div>
+    <h3>Úloha</h3><div class="task">${taskHTML("kq")}</div>` + nextBar(),
+  test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
+};
+function CUSTOM_CLICK(e) { if (xClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.sq !== undefined) { const i = +ds.sq; if (S.seq.includes(i)) return true; if (i === S.seq.length) { S.seq.push(i); S.sqmsg = S.seq.length === 6 ? { k: "ok", t: "✅ Doplnok je zapnutý, nájdeš ho na karte Údaje." } : null; if (S.seq.length === 6) award("g_on", 1); } else S.sqmsg = { k: "bad", t: "Tento krok ešte nie je na rade." }; save(); render(false); return true; }
+  if (ds.dlg) { S.dlg = true; S.tool = null; S.omsg = ""; save(); render(false); return true; }
+  if (ds.dlgx !== undefined) { S.dlg = false; S.tool = null; save(); render(false); return true; }
+  if (ds.tool) { const want = STEPS[S.cur].id === "popisna" ? "desc" : STEPS[S.cur].id === "histogram" ? "hist" : "corr"; if (ds.tool !== want) { S.omsg = ""; } S.tool = ds.tool; save(); render(false); return true; }
+  if (ds.run2 !== undefined) { const o = S.o, T = S.tool;
+    if (!o.lab) { S.omsg = "Rozsah začína menovkou (nadpisom). Zaškrtni Menovky v prvom riadku, inak Excel ohlási, že vstup obsahuje nečíselné údaje."; save(); render(false); return true; }
+    if (T === "desc") { if (o.inp === "D") { S.omsg = "Vyber stĺpec s bodmi alebo hodinami."; save(); render(false); return true; } if (!o.sum) { S.omsg = "Bez voľby Súhrnná štatistika sa tabuľka charakteristík nevytvorí."; save(); render(false); return true; } S.out.desc = { lab: o.inp === "B" ? "Body" : "Hodiny", rows: desc(COLS[o.inp]) }; if (o.inp === "B") award("g_desc", 1); }
+    if (T === "hist") { if (o.bins !== "D" || o.inp === "D") { S.omsg = "Vstup majú byť Body a rozsah tried stĺpec Triedy."; save(); render(false); return true; } S.out.hist = { rows: hist(COLS[o.inp], BINS), chart: o.chart }; if (o.inp === "B") award("g_hist", 1); }
+    if (T === "corr") { if (o.inp === o.inp2 || o.inp === "D" || o.inp2 === "D") { S.omsg = "Zvoľ dva rôzne stĺpce: Hodiny a Body."; save(); render(false); return true; } S.out.corr = { r: corr(HR, BO) }; award("g_corr", 1); }
+    S.dlg = false; S.tool = null; S.omsg = ""; save(); render(false); return true; }
+  return false; }
+function CUSTOM_INPUT(e) { const t = e.target, k = t.dataset && t.dataset.o; if (!k) return false; S.o[k] = t.type === "checkbox" ? t.checked : t.value; S.omsg = ""; save(); return true; }
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { return memoHTML() + nextBar0(); }
+function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
