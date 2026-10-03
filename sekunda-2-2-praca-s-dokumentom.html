@@ -237,7 +237,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"teoria": ["Nový: Ctrl + N (prázdny dokument alebo šablóna). Uložiť: Ctrl + S. Otvoriť: Ctrl + O, Nedávne.", "Prvé uloženie = Uložiť ako: miesto, názov, formát. Uložiť ako vytvorí nový súbor, pôvodný zostane."], "praca": ["Postup: nový dokument → písanie → uložiť (miesto, názov, formát) → priebežne Ctrl + S → zavrieť → otvoriť z Nedávne."], "formaty": [".docx (Word), .pdf (odoslanie, tlač), .odt (LibreOffice), .txt (čistý text).", "Automatické ukladanie v OneDrive, Obnovenie dokumentov po páde Wordu."]};
+const THEORY = {"precvic": ["PDF na čítanie a tlač, .docx na úpravy, .dotx šablóna, OneDrive pre prácu odkiaľkoľvek, Uložiť ako pre novú verziu."], "teoria": ["Nový: Ctrl + N (prázdny dokument alebo šablóna). Uložiť: Ctrl + S. Otvoriť: Ctrl + O, Nedávne.", "Prvé uloženie = Uložiť ako: miesto, názov, formát. Uložiť ako vytvorí nový súbor, pôvodný zostane."], "praca": ["Postup: nový dokument → písanie → uložiť (miesto, názov, formát) → priebežne Ctrl + S → zavrieť → otvoriť z Nedávne."], "formaty": [".docx (Word), .pdf (odoslanie, tlač), .odt (LibreOffice), .txt (čistý text).", "Automatické ukladanie v OneDrive, Obnovenie dokumentov po páde Wordu."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -275,20 +275,21 @@ const STEPS = [
   { id: "teoria", title: "Nový, uložiť, otvoriť", min: 8 },
   { id: "praca", title: "Vyskúšaj vo Worde", min: 16 },
   { id: "formaty", title: "Formáty a obnovenie", min: 6 },
+  { id: "precvic", title: "Precvičovanie: kam a ako uložiť?", min: 12 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { teoria: ["tq"], praca: ["g_w"], formaty: ["fq"], test: ["test"] };
+const STEP_TASKS = { teoria: ["tq", "nsort", "pin"], praca: ["g_w", "wq"], formaty: ["fq", "aq"], precvic: ["g_sv"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Každá práca vo Worde sa začína novým dokumentom a končí uložením. Naučíš sa vytvoriť dokument, správne ho uložiť (kam, ako ho nazvať a v akom formáte), otvoriť ho znova a nestratiť prácu, keď zabudneš uložiť. Všetko si vyskúšaš v simulácii Wordu. 3 zastávky, body a na konci výsledok.",
+  lead: "Každá práca vo Worde sa začína novým dokumentom a končí uložením. Naučíš sa vytvoriť dokument, správne ho uložiť (kam, ako ho nazvať a v akom formáte), otvoriť ho znova a nestratiť prácu, keď zabudneš uložiť. Všetko si vyskúšaš v simulácii Wordu. 4 zastávky, body a na konci výsledok.",
   guessQ: "Aký je rozdiel medzi Uložiť a Uložiť ako?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Nie je rozdiel", "Uložiť prepíše súbor, Uložiť ako vytvorí nový súbor s iným menom, miestom alebo formátom", "Uložiť ako vymaže starý súbor", "Uložiť funguje iba v OneDrive"],
   ok: 1, yes: "Presne tak! Pri prvom uložení sa Uložiť správa ako Uložiť ako.", no: "Uložiť zapíše zmeny do toho istého súboru. Uložiť ako vytvorí nový súbor, v ktorom zvolíš meno, miesto alebo formát."
 };
 const DIRS = ["Dokumenty", "Dokumenty/Škola", "Dokumenty/Škola/Biológia", "Plocha", "Stiahnuté", "OneDrive"];
-function EXTRA_STATE() { return { W: { view: "home", doc: null, text: "", dirty: false, dlg: null, files: [{ n: "rozvrh.docx", d: "Dokumenty/Škola" }, { n: "list_babke.docx", d: "Dokumenty" }], recent: [] }, wg: {} }; }
+function EXTRA_STATE() { return { sv: {}, svd: false, W: { view: "home", doc: null, text: "", dirty: false, dlg: null, files: [{ n: "rozvrh.docx", d: "Dokumenty/Škola" }, { n: "list_babke.docx", d: "Dokumenty" }], recent: [] }, wg: {} }; }
 function wScore() { const n = Object.keys(S.wg).length; if (n) award("g_w", n); }
 function wHTML() { const W = S.W;
   const ttl = `<div class="ttl"><span>W ${W.doc ? esc(W.doc.n) + (W.dirty ? " •" : " – Uložené") : "Word"}</span><span>${W.doc && W.view === "doc" ? `<button data-w="close">✕ Zavrieť</button>` : ""}</span></div>`;
@@ -320,6 +321,26 @@ const TASKS = {
     { id: "4", ...Q("Čo robí Automatické ukladanie?", ["dokument v OneDrive ukladá priebežne sám", "tlačí dokument", "posiela ho e-mailom", "zmení formát"], 0) },
     { id: "5", ...Q("Súbor .txt:", ["uloží iba čistý text bez formátovania a obrázkov", "zachová obrázky", "je PDF", "je obrázok"], 0) }
   ]},
+  nsort: { id: "nsort", type: "sort", buckets: [{ id: "y", label: "✅ Povolený názov súboru" }, { id: "n", label: "⛔ Windows ho nepovolí" }],
+    items: [{ id: "1", t: "referat_biologia_2026.docx", b: "y" }, { id: "2", t: "uloha 3.docx", b: "y" }, { id: "3", t: "Ľudovít Štúr.docx", b: "y" }, { id: "4", t: "projekt-v2.docx", b: "y" }, { id: "5", t: "biologia:bunka.docx", b: "n" }, { id: "6", t: "co je to?.docx", b: "n" }, { id: "7", t: "uloha*final.docx", b: "n" }, { id: "8", t: "matika/geometria.docx", b: "n" }],
+    after: "V názve súboru vo Windows nesmú byť znaky \\ / : * ? \" < > |" },
+  pin: { id: "pin", type: "input", qs: [
+    { id: "1", q: "Súbor je uložený ako <code>C:\\Používatelia\\Jana\\Dokumenty\\Škola\\referat.docx</code>. Ako sa volá súbor (bez prípony)?", ok: v => String(v).trim().toLowerCase() === "referat", show: "referat", ph: "?" },
+    { id: "2", q: "Aká je prípona súboru (bez bodky)?", ok: v => String(v).trim().toLowerCase().replace(".", "") === "docx", show: "docx", ph: "?" },
+    { id: "3", q: "V ktorom priečinku je súbor priamo uložený?", ok: v => /^(škola|skola)$/i.test(String(v).trim()), show: "Škola", ph: "?" }
+  ]},
+  aq: { id: "aq", type: "mc", qs: [
+    { id: "1", q: "Čo robí Automatické ukladanie (AutoSave) vo Worde 365?", opts: ["priebežne ukladá dokument uložený na OneDrive", "tlačí dokument", "posiela dokument e-mailom", "zmenší dokument"], a: 0 },
+    { id: "2", q: "Omylom si prepísal polovicu textu a uložil. Ako sa dostaneš k staršej verzii dokumentu na OneDrive?", opts: ["Súbor › Informácie › História verzií", "nedá sa", "Ctrl + P", "Revízia › Pravopis"], a: 0 },
+    { id: "3", q: "Aký je rozdiel medzi Uložiť a Uložiť ako?", opts: ["Uložiť ako vytvorí nový súbor (iný názov, miesto alebo formát)", "žiadny", "Uložiť ako dokument zmaže", "Uložiť funguje iba v PDF"], a: 0 },
+    { id: "4", q: "Ktoré dokumenty uvidíš rýchlo cez Súbor › Otvoriť?", opts: ["naposledy otvorené dokumenty", "iba fotky", "iba e-maily", "nič"], a: 0 }
+  ]},
+  wq: { id: "wq", type: "mc", qs: [
+    { id: "1", q: "Ktorou skratkou vytvoríš nový prázdny dokument?", opts: ["Ctrl + N", "Ctrl + S", "Ctrl + O", "Ctrl + W"], a: 0 },
+    { id: "2", q: "Ktorou skratkou otvoríš existujúci dokument?", opts: ["Ctrl + O", "Ctrl + N", "Ctrl + P", "Ctrl + B"], a: 0 },
+    { id: "3", q: "Čo urobí Word, keď zatváraš neuložený dokument?", opts: ["opýta sa, či chceš zmeny uložiť", "uloží ho do Koša", "vymaže ho bez pýtania", "vytlačí ho"], a: 0 }
+  ]},
+  g_sv: { id: "g_sv", type: "custom", max: 8 },
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Prípona dokumentu Word je:", [".docx", ".doc.pdf", ".xls", ".png"], 0) },
     { id: "2", ...Q("Uložiť ako použiješ, keď chceš:", ["uložiť kópiu pod iným menom, miestom alebo formátom", "zatvoriť dokument", "vytlačiť", "vložiť obrázok"], 0) },
@@ -332,14 +353,21 @@ const VIEWS = {
   teoria: () => head() + `<h2>Nový, uložiť, otvoriť</h2>${guessBox()}
     <div class="theory"><ul><li><b>Nový dokument</b>: po spustení Wordu <i>Prázdny dokument</i>, alebo Súbor › Nový (Ctrl + N). Môžeš vybrať aj <b>šablónu</b> (list, životopis, leták).</li><li><b>Uložiť</b> (Ctrl + S) zapíše zmeny do toho istého súboru. Pri <b>prvom uložení</b> sa otvorí okno <b>Uložiť ako</b>: vyberieš <b>miesto</b> (priečinok, OneDrive), <b>názov</b> súboru a <b>formát</b>.</li><li><b>Uložiť ako</b> vytvorí nový súbor (iné meno, miesto alebo formát). Pôvodný zostane.</li><li><b>Otvoriť</b> (Ctrl + O): Súbor › Otvoriť, zoznam <b>Nedávne</b> alebo dvojklik na súbor v Prieskumníkovi.</li><li><b>Zavrieť</b>: ak máš neuložené zmeny, Word sa opýta, či ich chceš uložiť.</li></ul>
       <p>Meno súboru vyber <b>výstižné</b> (čo, kto): <code>Referat_Vtaky_Novakova.docx</code>. Ukladaj priebežne, nie až na konci.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>
+    <h3>Úloha 2: povolený názov?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>
+    <h3>Úloha 3: cesta k súboru</h3><div class="task">${taskHTML("pin")}</div>` + nextBar(),
   praca: () => { const G = S.wg; return head() + `<h2>Vyskúšaj vo Worde</h2>
     <div class="task"><ul class="goals">${[["new", "Vytvor nový prázdny dokument a napíš doň nadpis <b>Vtáky Slovenska</b>."], ["save", "Ulož ho do priečinka <b>Dokumenty › Škola › Biológia</b> s názvom <b>Referat_vtaky</b> vo formáte .docx."], ["pdf", "Ulož jeho kópiu vo formáte <b>PDF</b> do toho istého priečinka."], ["close", "Dopíš vetu, zavri dokument a pri otázke zvoľ <b>Uložiť</b>."], ["open", "Dokument znova otvor (zo zoznamu Nedávne alebo cez Otvoriť)."]].map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t.g_w ? `<div class="checkbar"><span class="score ${S.t.g_w.score < 5 ? "part" : ""}">Splnené: ${S.t.g_w.score} z 5</span></div>` : ""}</div>
-    <div id="wbox">${wHTML()}</div><div class="row"><button class="ghost" data-wreset>↺ Začať znova</button></div>` + nextBar(); },
+    <div id="wbox">${wHTML()}</div><div class="row"><button class="ghost" data-wreset>↺ Začať znova</button></div>
+    <h3>Otázky</h3><div class="task">${taskHTML("wq")}</div>` + nextBar(); },
   formaty: () => head() + `<h2>Formáty a obnovenie</h2>
     <div class="theory"><table><thead><tr><th>Formát</th><th>Kedy</th></tr></thead><tbody><tr><td><b>.docx</b></td><td>štandardný dokument Wordu, dá sa ďalej upravovať</td></tr><tr><td><b>.pdf</b></td><td>na odoslanie a tlač, vyzerá všade rovnako, ťažko sa upravuje</td></tr><tr><td><b>.odt</b></td><td>otvorený formát (LibreOffice Writer)</td></tr><tr><td><b>.txt</b></td><td>iba čistý text bez formátovania</td></tr></tbody></table>
       <p>Ak je dokument v <b>OneDrive</b>, <b>Automatické ukladanie</b> ho ukladá priebežne a máš k nemu prístup z každého zariadenia. Keď Word nečakane spadne, po opätovnom spustení ponúkne <b>Obnovenie dokumentov</b>. Neuložené súbory nájdeš aj cez Súbor › Informácie › Spravovať dokument › Obnoviť neuložené dokumenty.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("fq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("fq")}</div>
+    <h3>Úloha 2: ukladanie vo Worde 365</h3><div class="task">${taskHTML("aq")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: kam a ako uložiť?</h2>
+    <div class="theory"><p>Pri každej situácii vyber najvhodnejší spôsob uloženia alebo formát. Myslí sa na to, kto dokument bude čítať, či ho má upravovať a kde s ním budeš pracovať.</p></div>
+    ${S.t.g_sv ? `<div class="checkbar"><span class="score ${S.t.g_sv.score < 8 ? "part" : ""}">Správne: ${S.t.g_sv.score} z 8</span></div>` : ""}<div class="tool">${selBlock("sv", SVI, SVO)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function syncText() { const t = document.getElementById("wtext"); if (t) { if (t.value !== S.W.text) { S.W.text = t.value; S.W.dirty = true; } } }
@@ -347,7 +375,16 @@ function doSave(D) { const W = S.W, name = D.name.trim(), ext = D.type; if (!nam
   const fn = name.replace(/\.(docx|pdf|odt|txt)$/i, "") + "." + ext; const ex = W.files.find(f => f.n === fn && f.d === D.dir); if (!ex) W.files.push({ n: fn, d: D.dir, text: W.text }); else ex.text = W.text;
   if (ext !== "pdf") { W.doc = { n: fn, d: D.dir }; W.dirty = false; } W.recent = [{ n: fn, d: D.dir }].concat(W.recent.filter(r => !(r.n === fn && r.d === D.dir))).slice(0, 5); W.dlg = null; W.dmsg = null;
   const G = S.wg; if (fn.toLowerCase() === "referat_vtaky.docx" && D.dir === "Dokumenty/Škola/Biológia" && /vt[aá]ky slovenska/i.test(W.text)) G.save = true; if (fn.toLowerCase() === "referat_vtaky.pdf" && D.dir === "Dokumenty/Škola/Biológia") G.pdf = true; wScore(); return true; }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key]; return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 230px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k];
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k][i] = t.value; save(); return true; } return false; }
+
+const SVI = [["Posielaš hotový referát učiteľke, ktorá ho má iba prečítať a vytlačiť.", "pdf", "PDF vyzerá všade rovnako a nedá sa ľahko meniť."], ["Na referáte chceš pracovať v škole aj doma.", "od", "Na OneDrive ho otvoríš odkiaľkoľvek."], ["Chceš, aby každý nový list mal rovnakú hlavičku a štýly.", "dotx", "Šablóna .dotx je predloha pre nové dokumenty."], ["Dokument má zostať upraviteľný vo Worde.", "docx", ""], ["Chceš mať starú aj novú verziu dokumentu.", "ako", "Uložiť ako s iným názvom vytvorí kópiu."], ["Potrebuješ čistý text bez formátovania pre iný program.", "txt", ""], ["Word spadol skôr, ako si uložil.", "obn", "Po spustení Word ponúkne obnovenie neuloženého dokumentu."], ["Píšeš dlhú prácu a bojíš sa, že niečo stratíš.", "ctrl", "Ukladaj často (Ctrl + S) alebo zapni Automatické ukladanie."]];
+const SVO = [["", "— vyber —"], ["docx", "Uložiť ako .docx"], ["pdf", "Uložiť ako PDF"], ["dotx", "Uložiť ako šablónu .dotx"], ["txt", "Uložiť ako obyčajný text .txt"], ["od", "Uložiť na OneDrive"], ["ako", "Uložiť ako s iným názvom"], ["obn", "Obnoviť neuložený dokument"], ["ctrl", "Často Ctrl + S / AutoSave"]];
 function CUSTOM_CLICK(e) {
+  if (selClick(e, { sv: [SVI, "g_sv"] })) return true;
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, W = S.W, G = S.wg;
   if (el.closest(".wapp")) syncText();
   if (ds.wreset !== undefined) { S.W = EXTRA_STATE().W; save(); render(false); return true; }
@@ -367,7 +404,8 @@ function CUSTOM_CLICK(e) {
   if (a === "msave") { W.modal = false; if (!W.doc.d) { W.afterSave = true; W.dlg = { dir: "Dokumenty", name: "Dokument1", type: "docx" }; save(); render(false); return true; } const f = W.files.find(x => x.n === W.doc.n && x.d === W.doc.d); if (f) f.text = W.text; if (W.doc.n.toLowerCase() === "referat_vtaky.docx") G.close = true; W.doc = null; W.text = ""; W.view = "home"; W.dirty = false; wScore(); save(); render(false); return true; }
   return false;
 }
-function CUSTOM_INPUT(e) { if (e.target.id === "wtext") { S.W.text = e.target.value; if (!S.W.dirty) { S.W.dirty = true; save(); const tt = document.querySelector(".wapp .ttl span"); if (tt && S.W.doc) tt.textContent = "W " + S.W.doc.n + " •"; } else save(); if (/vt[aá]ky slovenska/i.test(S.W.text) && !S.wg.new) { S.wg.new = true; wScore(); } return true; } return false; }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; if (e.target.id === "wtext") { S.W.text = e.target.value; if (!S.W.dirty) { S.W.dirty = true; save(); const tt = document.querySelector(".wapp .ttl span"); if (tt && S.W.doc) tt.textContent = "W " + S.W.doc.n + " •"; } else save(); if (/vt[aá]ky slovenska/i.test(S.W.text) && !S.wg.new) { S.wg.new = true; wScore(); } return true; } return false; }
 document.addEventListener("keydown", e => { if (e.target.id === "wtext" && e.ctrlKey && e.key.toLowerCase() === "s") { e.preventDefault(); const b = document.querySelector('[data-w="save"]'); if (b) b.click(); } });
 
 /* ===== shared lesson engine ===== */
