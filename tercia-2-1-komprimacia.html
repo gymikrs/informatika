@@ -186,7 +186,7 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"preco": ["<b>Komprimácia</b> zmenšuje veľkosť súboru, aby zaberal menej miesta a rýchlejšie sa posielal.", "Komprimovaný súbor treba pred použitím <b>dekomprimovať</b> (rozbaliť)."], "rle": ["Metóda <b>RLE</b> nahrádza opakujúce sa znaky počtom opakovaní: AAAAABB → 5A2B.", "Funguje dobre pri veľkých jednofarebných plochách."], "slovnik": ["<b>Slovníková metóda</b> nahrádza opakujúce sa slová alebo časti textu krátkymi značkami.", "Takto pracuje napríklad formát ZIP."], "strata": ["<b>Bezstratová</b> komprimácia (ZIP, PNG) zachová všetky údaje.", "<b>Stratová</b> komprimácia (JPG, MP3) zahodí časť údajov, ktorú oko či ucho takmer nepostrehne. Súbor je oveľa menší."], "pomer": ["<b>Kompresný pomer</b> = pôvodná veľkosť : komprimovaná veľkosť.", "Napríklad 10 MB → 2 MB je pomer 5 : 1, súbor je 5-krát menší."]};
+const THEORY = {"precvic": ["Čím viac opakovaní a vzorov, tým lepšia komprimácia; náhodné dáta sa takmer nezmenšia.", "Už komprimované súbory (JPG, MP3, MP4, PNG) sa v ZIP takmer nezmenšia."], "preco": ["<b>Komprimácia</b> zmenšuje veľkosť súboru, aby zaberal menej miesta a rýchlejšie sa posielal.", "Komprimovaný súbor treba pred použitím <b>dekomprimovať</b> (rozbaliť)."], "rle": ["Metóda <b>RLE</b> nahrádza opakujúce sa znaky počtom opakovaní: AAAAABB → 5A2B.", "Funguje dobre pri veľkých jednofarebných plochách."], "slovnik": ["<b>Slovníková metóda</b> nahrádza opakujúce sa slová alebo časti textu krátkymi značkami.", "Takto pracuje napríklad formát ZIP."], "strata": ["<b>Bezstratová</b> komprimácia (ZIP, PNG) zachová všetky údaje.", "<b>Stratová</b> komprimácia (JPG, MP3) zahodí časť údajov, ktorú oko či ucho takmer nepostrehne. Súbor je oveľa menší."], "pomer": ["<b>Kompresný pomer</b> = pôvodná veľkosť : komprimovaná veľkosť.", "Napríklad 10 MB → 2 MB je pomer 5 : 1, súbor je 5-krát menší."]};
 const KEY = "komprimacia-21-v1";
 const LESSON = "2.1 Komprimácia údajov";
 const BRAND = "2.1 Komprimácia údajov";
@@ -199,14 +199,15 @@ const STEPS = [
   { id: "slovnik", title: "Slovník", min: 7 },
   { id: "strata", title: "So stratou a bez", min: 10 },
   { id: "pomer", title: "Kompresný pomer", min: 5 },
+  { id: "precvic", title: "Precvičovanie: laboratórium", min: 14 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { preco: ["precoq"], rle: ["rlecode", "rleq"], slovnik: ["dict", "gzq"], strata: ["jpegq", "formaty", "scen"], pomer: ["ratio"], test: ["test"] };
+const STEP_TASKS = { precvic: ["g_lab", "labq", "zsort"], preco: ["precoq", "kin"], rle: ["rlecode", "rleq", "rle2"], slovnik: ["dict", "gzq"], strata: ["jpegq", "formaty", "scen"], pomer: ["ratio"], test: ["test"] };
 const START = {
   kicker: "Informatika, Tercia",
   hero: "",
-  lead: "Zistíš, ako sa dá súbor zmenšiť bez toho, aby sa z neho niečo stratilo, a kedy sa naopak oplatí niečo obetovať. Vyskúšaš si komprimáciu vlastnými rukami: zakóduješ obrázok, vytvoríš slovník a pokazíš fotku. 6 zastávok, body a na konci výsledok.",
+  lead: "Zistíš, ako sa dá súbor zmenšiť bez toho, aby sa z neho niečo stratilo, a kedy sa naopak oplatí niečo obetovať. Vyskúšaš si komprimáciu vlastnými rukami: zakóduješ obrázok, vytvoríš slovník a pokazíš fotku. 7 zastávok, body a na konci výsledok.",
   guessQ: "Kamarátovi pošleš fotku zabalenú do archívu ZIP. Aká bude fotka, keď si ju rozbalí?",
   guessNote: "Tip sa neboduje. Na zastávke So stratou a bez zistíš, či si mal pravdu.",
   guesses: ["Trochu rozmazanejšia ako pôvodná", "Presne taká istá ako pôvodná", "Čiernobiela, aby bola menšia", "Menšia na šírku aj výšku"],
@@ -248,7 +249,7 @@ async function gzipSize(str) {
 }
 const bytes = s => new TextEncoder().encode(s).length;
 
-function EXTRA_STATE() { return { paint: BOAT.slice(), brush: "M", dict: [], gzKey: "pesnicka", gzText: GZ.pesnicka.t, gzSeen: {}, q: 60, calc: { a: "100", b: "25" } }; }
+function EXTRA_STATE() { return { lab: { t: "", r: null, g: {} }, paint: BOAT.slice(), brush: "M", dict: [], gzKey: "pesnicka", gzText: GZ.pesnicka.t, gzSeen: {}, q: 60, calc: { a: "100", b: "25" } }; }
 
 const TASKS = {
   precoq: { id: "precoq", type: "mc", qs: [
@@ -287,6 +288,26 @@ const TASKS = {
     { id: "1", q: "Súbor mal 80 MB, archív má 20 MB. Aký je kompresný pomer?", ok: v => Math.abs(parseNum(v) - 4) < 0.01, show: "4 : 1", unit: ": 1", ph: "?" },
     { id: "2", q: "Súbor mal 50 MB, archív má 10 MB. Koľko percent miesta sa ušetrilo?", ok: v => Math.abs(parseNum(v) - 80) < 0.6, show: "80 %", unit: "%", ph: "?" },
     { id: "3", q: "Fotky JPG mali 12 MB, po zabalení do ZIP majú 11,4 MB. Koľko percent sa ušetrilo?", ok: v => Math.abs(parseNum(v) - 5) < 0.6, show: "5 %", unit: "%", ph: "?", why: "Iba 0,6 MB z 12 MB, teda 5 %. Fotky JPG sú už skomprimované, a tak v nich ZIP nenájde veľa opakovaní." }
+  ]},
+  kin: { id: "kin", type: "input", qs: [
+    { id: "1", q: "Pošleš 12 fotiek po 4 MB. Koľko MB to je spolu?", ok: v => parseNum(v) === 48, show: "48", ph: "?" },
+    { id: "2", q: "Textový súbor má 800 kB, po komprimácii 200 kB. Koľko kB sa ušetrilo?", ok: v => parseNum(v) === 600, show: "600", ph: "?" },
+    { id: "3", q: "Koľko percent pôvodnej veľkosti má komprimovaný súbor z otázky 2?", ok: v => parseNum(v) === 25, show: "25", ph: "?" }
+  ]},
+  rle2: { id: "rle2", type: "input", qs: [
+    { id: "1", q: "Rozbaľ RLE zápis <code>4A3B2C</code>:", ok: v => String(v).trim().toUpperCase() === "AAAABBBCC", show: "AAAABBBCC", ph: "?" },
+    { id: "2", q: "Zakóduj metódou RLE: <code>WWWWWBBBWW</code>", ok: v => String(v).trim().toUpperCase().replace(/\s/g, "") === "5W3B2W", show: "5W3B2W", ph: "?" },
+    { id: "3", q: "Koľko znakov má RLE zápis riadku <code>ABCD</code>? (1A1B1C1D)", ok: v => parseNum(v) === 8, show: "8", ph: "?", why: "RLE sa nevypláca, keď sa znaky neopakujú: zo 4 znakov je 8." }
+  ]},
+  zsort: { id: "zsort", type: "sort", buckets: [{ id: "y", label: "📦 Oplatí sa zabaliť do ZIP" }, { id: "n", label: "🚫 Takmer sa nezmenší (už je komprimovaný)" }],
+    items: [{ id: "1", t: "referat.txt", b: "y" }, { id: "2", t: "tabulka.csv", b: "y" }, { id: "3", t: "obrazok.bmp", b: "y" }, { id: "4", t: "nahravka.wav", b: "y" }, { id: "5", t: "fotka.jpg", b: "n" }, { id: "6", t: "pesnicka.mp3", b: "n" }, { id: "7", t: "video.mp4", b: "n" }, { id: "8", t: "obrazok.png", b: "n" }],
+    after: "JPG, MP3, MP4 a PNG sú už komprimované. Opätovná komprimácia ich takmer nezmenší." },
+  g_lab: { id: "g_lab", type: "custom", max: 3 },
+  labq: { id: "labq", type: "mc", qs: [
+    { id: "1", q: "Ktorý text sa skomprimuje najlepšie?", opts: ["„ha ha ha ha ha ha ha ha ha ha“", "náhodné znaky „x7#Qp!z9Lm2“", "krátke slovo „ahoj“", "všetky rovnako"], a: 0 },
+    { id: "2", q: "Prečo sa veľmi krátky text po komprimácii niekedy aj zväčší?", opts: ["komprimovaný súbor má hlavičku a slovník, ktoré zaberú miesto", "počítač sa pomýlil", "kvôli diakritike", "nezväčší sa nikdy"], a: 0 },
+    { id: "3", q: "Prečo sa náhodné znaky takmer nedajú skomprimovať?", opts: ["nemajú opakovania ani vzory, ktoré by sa dali nahradiť", "sú príliš krátke", "majú veľké písmená", "obsahujú čísla"], a: 0 },
+    { id: "4", q: "Aký kompresný pomer je lepší?", opts: ["20 % pôvodnej veľkosti", "80 % pôvodnej veľkosti", "100 %", "120 %"], a: 0 }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", q: "Ktorý formát je stratový?", opts: ["MP3", "ZIP", "PNG", "FLAC"], a: 0 },
@@ -445,7 +466,8 @@ const VIEWS = {
         <li>posielaš súbory e-mailom a príloha má limit,</li><li>chceš ušetriť miesto na disku alebo v mobile,</li>
         <li>chceš rýchlejšie nahrať súbory na internet,</li><li>chceš veľa súborov spojiť do jedného <b>archívu</b>.</li></ul></div>
     </div>
-    <h3>Otázky</h3><div class="task">${taskHTML("precoq")}</div>` + nextBar();
+    <h3>Otázky</h3><div class="task">${taskHTML("precoq")}</div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("kin")}</div>` + nextBar();
   },
   rle() {
     const hl = [3, 6, 7];
@@ -463,7 +485,8 @@ const VIEWS = {
       <div class="pix" id="pix">${S.paint.map((r, y) => Array.from(r).map((ch, x) => `<button class="px" data-px="${y},${x}" style="background:${COL[ch]}" aria-label="pixel ${y + 1},${x + 1}"></button>`).join("")).join("")}</div>
       <div class="row"><button class="ghost" data-paint="boat">⛵ Loďka</button><button class="ghost" data-paint="one">⬜ Jedna farba</button><button class="ghost" data-paint="stripes">〰️ Pruhy</button><button class="ghost" data-paint="noise">🎲 Náhodný šum</button></div>
     </div><div class="stat" id="rlestats">${rleStats()}</div></div>
-    <div class="task">${taskHTML("rleq")}</div>` + nextBar();
+    <div class="task">${taskHTML("rleq")}</div>
+    <h3>Ďalšie RLE úlohy</h3><div class="task">${taskHTML("rle2")}</div>` + nextBar();
   },
   slovnik() {
     const r = dictCalc(S.dict), done = S.t.dict;
@@ -518,6 +541,13 @@ const VIEWS = {
       <p id="cres" style="margin:12px 0 0">${calcText(a, b, okc)}</p></div>
     <h3>Úloha: vypočítaj</h3><div class="task"><div class="ins">Najprv počítaj sám, kalkulačkou si výsledok môžeš overiť.</div>${taskHTML("ratio")}</div>` + nextBar();
   },
+  precvic() { return head() + `<h2>Precvičovanie: kompresné laboratórium</h2>
+    <div class="theory"><p>Toto laboratórium naozaj komprimuje text v tvojom prehliadači metódou <b>gzip</b> (rovnakou, akú používajú webové stránky). Píš alebo vlož text, prípadne použi tlačidlá, a sleduj, koľko percent pôvodnej veľkosti zostane.</p></div>
+    <div class="task"><ul class="goals" style="list-style:none;padding:0" id="labgl">${labGoalsHTML()}</ul></div>
+    <div class="tool"><textarea id="labt" rows="6" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:8px;font-family:var(--mono);background:var(--surface2);color:var(--ink)">${esc(S.lab.t)}</textarea>
+    <div class="row"><button class="ghost" data-lab="rep">🔁 Opakovaný text</button><button class="ghost" data-lab="rnd">🎲 Náhodné znaky</button><button class="ghost" data-lab="sk">📖 Slovenský text</button><button class="primary" data-lab="go">🗜️ Komprimovať</button></div><div id="labout">${labOut()}</div></div>
+    <h3>Otázky</h3><div class="task">${taskHTML("labq")}</div>
+    <h3>Oplatí sa zabaliť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("zsort")}</div>` + nextBar(); },
   test() {
     return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar();
   }
@@ -539,7 +569,19 @@ function paintCell(el) {
 document.addEventListener("mousedown", e => { const c = e.target.closest && e.target.closest("[data-px]"); if (c) { PAINTING = true; paintCell(c); e.preventDefault(); } });
 document.addEventListener("mouseover", e => { if (!PAINTING) return; const c = e.target.closest && e.target.closest("[data-px]"); if (c) paintCell(c); });
 document.addEventListener("mouseup", () => { PAINTING = false; });
+
+const LABT = { rep: Array(200).fill("ha ").join(""), sk: "Komprimácia zmenšuje veľkosť súboru tak, že nahradí opakujúce sa časti kratším zápisom. Texty v slovenčine obsahujú veľa opakujúcich sa slov a slabík, preto sa dajú dobre skomprimovať. Fotky a hudba sa komprimujú so stratou, texty a programy bez straty." };
+function rndText(n) { const c = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#%&*+-?@"; let s = ""; for (let i = 0; i < n; i++) s += c[Math.floor(Math.random() * c.length)]; return s; }
+function labOut() { const r = S.lab.r; if (!r) return `<p class="muted">Výsledok sa zobrazí po stlačení Komprimovať.</p>`; return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;text-align:center">${[["Pôvodne", r.a + " B"], ["Po komprimácii", r.b + " B"], ["Pomer", r.p + " %"]].map(([a, b]) => `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px">${a}<b style="display:block;font-size:20px;font-family:var(--mono)">${b}</b></div>`).join("")}</div>`; }
+function labGoals() { const g = S.lab.g || {}; return [[g.low, "skomprimuj text aspoň na 20 % (dlhý text s opakovaním)"], [g.high, "nájdi text, ktorý zostane nad 80 % (aspoň 50 znakov)"], [g.mid, "skomprimuj slovenský text aspoň 100 znakov dlhý"]]; }
+function labGoalsHTML() { return labGoals().map(([o, t]) => `<li>${o ? "✅" : "⬜"} ${t}</li>`).join(""); }
+async function gzSize(t) { const bytes = new TextEncoder().encode(t); if (typeof CompressionStream === "undefined") return null; const st = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip")); const buf = await new Response(st).arrayBuffer(); return [bytes.length, buf.byteLength]; }
+async function labRun() { const t = S.lab.t; if (!t) return; const r = await gzSize(t); if (!r) { document.getElementById("labout").innerHTML = `<div class="fb bad">Tento prehliadač nepodporuje kompresiu. Skús Chrome, Edge alebo Firefox.</div>`; return; } const p = Math.round(r[1] / r[0] * 1000) / 10; S.lab.r = { a: r[0], b: r[1], p: String(p).replace(".", ",") }; S.lab.g = S.lab.g || {};
+  if (r[0] >= 50 && p <= 20) S.lab.g.low = true; if (r[0] >= 50 && p >= 80) S.lab.g.high = true; if (t.length >= 100 && /[áäčďéíĺľňóôŕšťúýž]/i.test(t) && p < 100) S.lab.g.mid = true;
+  const n = Object.values(S.lab.g).filter(Boolean).length; if (n && (!S.t.g_lab || S.t.g_lab.score < n)) award("g_lab", n); save(); document.getElementById("labout").innerHTML = labOut(); document.getElementById("labgl").innerHTML = labGoalsHTML(); }
+
 function CUSTOM_CLICK(e) {
+  { const el0 = e.target.closest && e.target.closest("[data-lab]"); if (el0) { const k = el0.dataset.lab; if (k === "go") { labRun(); return true; } S.lab.t = k === "rnd" ? rndText(200) : LABT[k]; save(); const ta = document.getElementById("labt"); if (ta) ta.value = S.lab.t; labRun(); return true; } }
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.px) return true;
   if (ds.brush) { S.brush = ds.brush; save(); render(false); return true; }
@@ -557,6 +599,7 @@ function CUSTOM_CLICK(e) {
   return false;
 }
 function CUSTOM_INPUT(e) {
+  if (e.target.id === "labt") { S.lab.t = e.target.value; save(); return true; }
   const t = e.target;
   if (t.id === "q") { S.q = t.value; save(); updateJpeg(); return true; }
   if (t.id === "gztext") { S.gzText = t.value; save(); updateGz(); return true; }
