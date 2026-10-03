@@ -254,7 +254,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"formy": ["Synchrónna (v reálnom čase): chat, četovacie aplikácie, hovory, videohovory.", "Asynchrónna (s odstupom): e-mail, fórum, komentáre."], "chat": ["Četovacie aplikácie: WhatsApp, Messenger, Signal, Discord, Teams. Skupiny, stav online, fajky, reakcie, odpoveď na správu, stlmenie.", "Neznámeho, ktorý obťažuje: neodpovedať, zablokovať, nahlásiť. Účet väčšinou od 13 rokov."], "video": ["Pred hovorom: mikrofón, kamera, slúchadlá, pozadie. Mikrofón vypni, keď nehovoríš, ozvi sa zdvihnutím ruky.", "Nahrávať sa smie iba so súhlasom účastníkov."], "pravidla": ["Mysli, kým pošleš: správy tvoria digitálnu stopu a dajú sa uložiť.", "Neznámym nedávaj osobné údaje ani fotky. Pri kyberšikane sa nepridávaj, urob snímku a povedz dospelému."]};
+const THEORY = {"precvic": ["Formálne veci a prílohy e-mailom, rýchle dohody chatom, keď chceš vidieť človeka videohovorom, súrne veci telefonátom, rady pre viac ľudí na fóre."], "formy": ["Synchrónna (v reálnom čase): chat, četovacie aplikácie, hovory, videohovory.", "Asynchrónna (s odstupom): e-mail, fórum, komentáre."], "chat": ["Četovacie aplikácie: WhatsApp, Messenger, Signal, Discord, Teams. Skupiny, stav online, fajky, reakcie, odpoveď na správu, stlmenie.", "Neznámeho, ktorý obťažuje: neodpovedať, zablokovať, nahlásiť. Účet väčšinou od 13 rokov."], "video": ["Pred hovorom: mikrofón, kamera, slúchadlá, pozadie. Mikrofón vypni, keď nehovoríš, ozvi sa zdvihnutím ruky.", "Nahrávať sa smie iba so súhlasom účastníkov."], "pravidla": ["Mysli, kým pošleš: správy tvoria digitálnu stopu a dajú sa uložiť.", "Neznámym nedávaj osobné údaje ani fotky. Pri kyberšikane sa nepridávaj, urob snímku a povedz dospelému."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -293,19 +293,20 @@ const STEPS = [
   { id: "chat", title: "Chat a skupiny", min: 11 },
   { id: "video", title: "Videohovory", min: 9 },
   { id: "pravidla", title: "Pravidlá a bezpečnosť", min: 7 },
+  { id: "precvic", title: "Precvičovanie: vyber nástroj", min: 12 },
   { id: "test", title: "Záverečný test", min: 6 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { formy: ["ksort"], chat: ["g_chat", "chq"], video: ["f_vc", "vq"], pravidla: ["prq"], test: ["test"] };
+const STEP_TASKS = { formy: ["ksort"], chat: ["g_chat", "chq"], video: ["f_vc", "vq"], pravidla: ["prq", "skq"], precvic: ["g_tool", "vcsort"], test: ["test"] };
 const START = {
   kicker: "Informatika, Prima",
-  lead: "E-mail aj fórum čakajú, kým si správu niekto prečíta. Pri interaktívnej komunikácii sa rozprávame v reálnom čase: v chate, v četovacích aplikáciách alebo vo videohovore. Vyskúšaš si triedny chat, pripojíš sa na online hodinu a naučíš sa pravidlá, vďaka ktorým bude komunikácia príjemná aj bezpečná. 4 zastávky, body a na konci výsledok.",
+  lead: "E-mail aj fórum čakajú, kým si správu niekto prečíta. Pri interaktívnej komunikácii sa rozprávame v reálnom čase: v chate, v četovacích aplikáciách alebo vo videohovore. Vyskúšaš si triedny chat, pripojíš sa na online hodinu a naučíš sa pravidlá, vďaka ktorým bude komunikácia príjemná aj bezpečná. 5 zastávok, body a na konci výsledok.",
   guessQ: "Ktorá komunikácia prebieha v reálnom čase?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["E-mail", "Videohovor", "Príspevok na fóre", "Pohľadnica"],
   ok: 1, yes: "Presne tak! Vo videohovore sa rozprávate hneď, ako pri stretnutí.", no: "Videohovor. Pri ňom počuješ a vidíš druhého hneď, v reálnom čase. E-mail či fórum čakajú, kým ich niekto prečíta."
 };
-function EXTRA_STATE() { return { cv: "trieda", chat: null, cg: {}, rep: null, emj: null, muted: false, blocked: false }; }
+function EXTRA_STATE() { return { tl: {}, tld: false, cv: "trieda", chat: null, cg: {}, rep: null, emj: null, muted: false, blocked: false }; }
 
 /* ---------- chat ---------- */
 function CH0() { return { trieda: [
@@ -372,6 +373,15 @@ const TASKS = {
     { id: "4", ...Q("Kedy je slušné písať do triednej skupiny?", ["v rozumnom čase a k veci, nie o polnoci", "kedykoľvek v noci", "iba veľkými písmenami", "stále dookola"], 0) },
     { id: "5", ...Q("Môže správa, ktorú pošleš, „zmiznúť navždy“?", ["nie, niekto si ju mohol uložiť alebo odfotiť", "áno, vždy", "áno, keď ju vymažem", "áno, po týždni"], 0) }
   ]},
+  skq: { id: "skq", type: "mc", qs: [
+    { id: "1", q: "Čo znamená skratka <b>BRB</b> v chate?", opts: ["hneď som späť (be right back)", "najlepší kamarát", "ďakujem", "dobrú noc"], a: 0 },
+    { id: "2", q: "Čo znamená <b>LOL</b>?", opts: ["nahlas sa smejem", "som stratený", "uvidíme sa", "neviem"], a: 0 },
+    { id: "3", q: "Čo znamená <b>ASAP</b>?", opts: ["čo najskôr", "nikdy", "možno zajtra", "pozdravujem"], a: 0 },
+    { id: "4", q: "Prečo nepísať pani učiteľke „thx, brb“?", opts: ["skratky a slang sa nehodia do formálnej komunikácie", "je to zakázané zákonom", "učiteľky nevedia angličtinu", "je to príliš dlhé"], a: 0 }
+  ]},
+  g_tool: { id: "g_tool", type: "custom", max: 8 },
+  vcsort: { id: "vcsort", type: "sort", buckets: [{ id: "y", label: "✅ Pred videohovorom urobím" }, { id: "n", label: "❌ Toto nerobím" }],
+    items: [{ id: "1", t: "Skontrolujem, čo je za mnou v pozadí", b: "y" }, { id: "2", t: "Vyskúšam mikrofón a kameru", b: "y" }, { id: "3", t: "Keď nehovorím, stíšim mikrofón", b: "y" }, { id: "4", t: "Počas hovoru jem a mľaskám do mikrofónu", b: "n" }, { id: "5", t: "Bez opýtania nahrávam spolužiakov", b: "n" }, { id: "6", t: "Zdieľam celú obrazovku s otvorenými súkromnými správami", b: "n" }] },
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Interaktívna komunikácia prebieha:", ["v reálnom čase", "iba poštou", "iba cez fórum", "bez internetu"], 0) },
     { id: "2", ...Q("Ktorá je asynchrónna?", ["e-mail", "videohovor", "telefonát", "živý chat"], 0) },
@@ -402,7 +412,12 @@ const VIEWS = {
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("vq")}</div>` + nextBar(); },
   pravidla() { return head() + `<h2>Pravidlá a bezpečnosť</h2>
     <div class="theory"><ul><li><b>Píš slušne</b> a k veci. Aj v chate platí netiketa: bez kriku, urážok a spamu.</li><li><b>Mysli, kým pošleš.</b> Každá správa či fotka sa dá uložiť, odfotiť a preposlať. Vytvára tvoju <b>digitálnu stopu</b>.</li><li><b>Neznámym</b> neposielaj fotky, adresu, školu ani telefónne číslo. Ak ťa niekto obťažuje, <b>neodpovedaj, zablokuj, nahlás</b> a povedz to <b>rodičom</b>.</li><li>Keď je niekto v skupine terčom posmechu (<b>kyberšikana</b>), nepridávaj sa. Urob snímku obrazovky a povedz to dospelému.</li><li>Rešpektuj <b>čas</b> druhých: do triednej skupiny nepíš v noci.</li></ul></div>
-    <h3>Úloha: čo urobíš?</h3><div class="task">${taskHTML("prq")}</div>` + nextBar(); },
+    <h3>Úloha: čo urobíš?</h3><div class="task">${taskHTML("prq")}</div>
+    <h3>Úloha 2: skratky v chate</h3><div class="task">${taskHTML("skq")}</div>` + nextBar(); },
+  precvic() { return head() + `<h2>Precvičovanie: vyber správny nástroj</h2>
+    <div class="theory"><p>Nie každá správa sa hodí do chatu. Pri každej situácii vyber najvhodnejší spôsob komunikácie a potom roztrieď, čo robiť pred videohovorom.</p></div>
+    ${S.t.g_tool ? `<div class="checkbar"><span class="score ${S.t.g_tool.score < 8 ? "part" : ""}">Správne: ${S.t.g_tool.score} z 8</span></div>` : ""}<div class="tool">${toolHTML()}</div>
+    <h3>Pred videohovorom</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("vcsort")}</div>` + nextBar(); },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
 function sendMsg() { const i = document.getElementById("chin"); if (!i) return; const t = i.value.trim(); if (!t) return; const C = CHT(), k = S.cv, list = C[k], q = S.rep ? (list.find(m => m.id === S.rep) || {}).t : null;
@@ -412,7 +427,16 @@ function sendMsg() { const i = document.getElementById("chin"); if (!i) return; 
   if (k === "cudzi") S.cmsg2 = { k: "bad", t: "Neznámemu neodpisuj. Zablokuj ho a nahlás, a povedz to rodičom." };
   if (k === "ema") list.push({ id: Date.now() + 1, w: "Ema", t: "Super, vďaka! 😊", r: "" });
   S.rep = null; chatScore(); save(); render(false); const m = document.getElementById("msgs"); if (m) m.scrollTop = m.scrollHeight; const n = document.getElementById("chin"); if (n) n.focus({ preventScroll: true }); }
+
+const TL = [["Posielaš pani učiteľke referát ako prílohu.", "mail"], ["Chceš sa rýchlo opýtať kamaráta, či ide von.", "chat"], ["Celá trieda sa dohaduje, čo kúpi pani učiteľke k narodeninám.", "skup"], ["Chceš babke ukázať, ako si postavil robota, a vidieť ju.", "video"], ["Hľadáš radu od ľudí, ktorí sa vyznajú do akvaristiky, aj s odpoveďami pre ďalších.", "forum"], ["Stalo sa niečo vážne a potrebuješ hneď hovoriť s rodičmi.", "tel"], ["Online hodina s celou triedou a zdieľaním prezentácie.", "video"], ["Posielaš riaditeľovi školy oficiálnu žiadosť.", "mail"]];
+const TLO = [["", "— vyber —"], ["mail", "✉️ E-mail"], ["chat", "💬 Súkromný chat"], ["skup", "👥 Skupinový chat"], ["video", "🎥 Videohovor"], ["forum", "🗂️ Diskusné fórum"], ["tel", "📞 Telefonát"]];
+function toolHTML() { const D = S.tld; return TL.map(([t, ok], i) => `<div style="display:grid;grid-template-columns:1fr 200px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${S.tl[i] === ok ? "✔️ správne" : "❌ vhodnejšie: " + TLO.find(o => o[0] === ok)[1]}</small>` : ""}</span><select data-tl="${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${TLO.map(([v, l]) => `<option value="${v}" ${S.tl[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-tlr>↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-tlok>✔ Vyhodnotiť</button></div>`); }
+
+function CUSTOM_INPUT(e) {
+  if (e.target.dataset && e.target.dataset.tl !== undefined) { S.tl[e.target.dataset.tl] = e.target.value; save(); return true; }
+  return false; }
 function CUSTOM_CLICK(e) {
+  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.tlok !== undefined) { if (TL.some((_, i) => !S.tl[i])) { alert("Vyber nástroj pri všetkých situáciách."); return true; } S.tld = true; const n = TL.filter((x, i) => S.tl[i] === x[1]).length; if (n && (!S.t.g_tool || S.t.g_tool.score < n)) award("g_tool", n); save(); render(false); return true; } if (el0 && el0.dataset.tlr !== undefined) { S.tld = false; S.tl = {}; save(); render(false); return true; } }
   if (efClick(e)) return true;
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.cv) { S.cv = ds.cv; S.rep = null; S.emj = null; save(); render(false); return true; }

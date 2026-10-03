@@ -293,7 +293,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"forum": ["Fórum: kategórie → témy (vlákna) → príspevky. Príspevky zostávajú uložené, dá sa v nich hľadať.", "Registrácia, prezývka, pravidlá; moderátor dohliada na pravidlá."], "netiketa": ["Netiketa = pravidlá slušnosti na internete: slušne, nekričať VEĽKÝMI, najprv hľadať, písať k téme, žiadny spam.", "Rešpektuj autorské práva a súkromie, poďakuj za pomoc."], "vlakno": ["Nahlasujeme porušenie pravidiel (krik, urážka, spam, osobné údaje), nie názory, ktoré sa nám nepáčia."], "tema": ["Dobrá téma: výstižný názov, opis problému, čo si skúsil, konkrétna otázka.", "Bez veľkých písmen a bez osobných údajov."], "bezpecne": ["Troll provokuje, kyberšikana ubližuje: neodpovedaj, urob snímku, nahlás, povedz dospelému.", "Hoaxy neposielaj ďalej. S neznámym sa nestretávaj."]};
+const THEORY = {"precvic": ["Dobrá odpoveď na fóre je k téme, slušná a užitočná; príspevok patrí do správnej sekcie."], "forum": ["Fórum: kategórie → témy (vlákna) → príspevky. Príspevky zostávajú uložené, dá sa v nich hľadať.", "Registrácia, prezývka, pravidlá; moderátor dohliada na pravidlá."], "netiketa": ["Netiketa = pravidlá slušnosti na internete: slušne, nekričať VEĽKÝMI, najprv hľadať, písať k téme, žiadny spam.", "Rešpektuj autorské práva a súkromie, poďakuj za pomoc."], "vlakno": ["Nahlasujeme porušenie pravidiel (krik, urážka, spam, osobné údaje), nie názory, ktoré sa nám nepáčia."], "tema": ["Dobrá téma: výstižný názov, opis problému, čo si skúsil, konkrétna otázka.", "Bez veľkých písmen a bez osobných údajov."], "bezpecne": ["Troll provokuje, kyberšikana ubližuje: neodpovedaj, urob snímku, nahlás, povedz dospelému.", "Hoaxy neposielaj ďalej. S neznámym sa nestretávaj."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -333,19 +333,20 @@ const STEPS = [
   { id: "vlakno", title: "Moderátorom na skúšku", min: 9 },
   { id: "tema", title: "Nová téma", min: 8 },
   { id: "bezpecne", title: "Bezpečne na fóre", min: 5 },
+  { id: "precvic", title: "Precvičovanie: odpovedaj vo fóre", min: 12 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { forum: ["f_fo", "foq"], netiketa: ["nsort"], vlakno: ["g_mod"], tema: ["g_new"], bezpecne: ["bzq"], test: ["test"] };
+const STEP_TASKS = { forum: ["f_fo", "foq"], netiketa: ["nsort"], vlakno: ["g_mod"], tema: ["g_new"], bezpecne: ["bzq", "bsort"], precvic: ["g_rep", "secsort"], test: ["test"] };
 const START = {
   kicker: "Informatika, Prima",
-  lead: "Na diskusných fórach sa ľudia radia, pomáhajú si a debatujú o spoločných záujmoch: o hrách, programovaní či chovaní zvierat. Aby to fungovalo, platia na nich pravidlá, netiketa. Spoznáš, ako je fórum usporiadané, vyskúšaš si prácu moderátora a napíšeš vlastnú tému tak, aby ti ľudia radi odpovedali. 5 zastávok, body a na konci výsledok.",
+  lead: "Na diskusných fórach sa ľudia radia, pomáhajú si a debatujú o spoločných záujmoch: o hrách, programovaní či chovaní zvierat. Aby to fungovalo, platia na nich pravidlá, netiketa. Spoznáš, ako je fórum usporiadané, vyskúšaš si prácu moderátora a napíšeš vlastnú tému tak, aby ti ľudia radi odpovedali. 6 zastávok, body a na konci výsledok.",
   guessQ: "Čo znamená na internete, keď niekto píše CELÉ VEĽKÝMI PÍSMENAMI?",
   guessNote: "Tip sa neboduje. Na zastávke Netiketa zistíš, či si mal pravdu.",
   guesses: ["Že je dôležitý", "Že kričí", "Že píše na mobile", "Nič, je to jedno"],
   ok: 1, yes: "Presne tak! Veľké písmená pôsobia ako krik a sú neslušné.", no: "Veľké písmená sa na internete berú ako krik. Je to neslušné, preto ich nepoužívame."
 };
-function EXTRA_STATE() { return { fl: {}, modDone: false, nt: { t: "", x: "", msg: null, sat: {} } }; }
+function EXTRA_STATE() { return { rp: {}, rpd: false, fl: {}, modDone: false, nt: { t: "", x: "", msg: null, sat: {} } }; }
 
 const SCRS = { fo: { zones: {
       kat: ["Kategórie (sekcie)", "Fórum je rozdelené podľa tém: Hry, Programovanie, Zvieratá… Každá kategória obsahuje veľa tém."],
@@ -418,6 +419,11 @@ const TASKS = {
     { id: "3", ...Q("„Kamarát“ z fóra ťa pozýva, aby ste sa stretli osobne. Čo urobíš?", ["poviem to rodičom, sám sa s neznámym nestretnem", "pôjdem sám", "dám mu adresu", "nepoviem to nikomu"], 0) },
     { id: "4", ...Q("Na fóre je správa, že „zajtra bude vypnutý internet na celom svete, pošli ďalej“. Čo to je?", ["hoax, poplašná nepravdivá správa", "oficiálna správa", "pravidlo fóra", "reklama"], 0) }
   ]},
+  bsort: { id: "bsort", type: "sort", buckets: [{ id: "y", label: "✅ Bezpečné" }, { id: "n", label: "⚠️ Riskantné" }],
+    items: [{ id: "1", t: "Prezývka bez skutočného mena", b: "y" }, { id: "2", t: "Profilový obrázok bez tváre", b: "y" }, { id: "3", t: "Nahlásim urážlivý príspevok moderátorovi", b: "y" }, { id: "4", t: "Do podpisu dám názov školy a triedy", b: "n" }, { id: "5", t: "Pošlem neznámemu z fóra svoje číslo", b: "n" }, { id: "6", t: "Rovnaké heslo ako do e-mailu", b: "n" }] },
+  g_rep: { id: "g_rep", type: "custom", max: 5 },
+  secsort: { id: "secsort", type: "sort", buckets: [{ id: "h", label: "🎮 Hry" }, { id: "s", label: "📚 Škola a učenie" }, { id: "t", label: "💻 Technika a počítače" }],
+    items: [{ id: "1", t: "Ako prejsť 5. level v hre Bridge Builder?", b: "h" }, { id: "2", t: "Hľadám spoluhráčov na turnaj", b: "h" }, { id: "3", t: "Neviem vypočítať zlomky, poradíte?", b: "s" }, { id: "4", t: "Tipy na učenie slovíčok z angličtiny", b: "s" }, { id: "5", t: "Notebook sa po zapnutí reštartuje", b: "t" }, { id: "6", t: "Ktorú myš kúpiť do 30 €?", b: "t" }] },
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Diskusné fórum je:", ["webová stránka na diskusie rozdelené do tém", "e-mailový klient", "operačný systém", "hra"], 0) },
     { id: "2", ...Q("Kto maže nevhodné príspevky?", ["moderátor", "každý návštevník", "troll", "poskytovateľ internetu"], 0) },
@@ -452,10 +458,20 @@ const VIEWS = {
   bezpecne() { return head() + `<h2>Bezpečne na fóre</h2>
     <div class="theory"><p>Nie každý na internete je tým, za koho sa vydáva. <b>Troll</b> schválne provokuje, <b>kyberšikana</b> je opakované ubližovanie cez internet. Na provokácie <b>neodpovedaj</b>, urob <b>snímku obrazovky</b> ako dôkaz, <b>nahlás</b> príspevok moderátorovi a povedz to <b>rodičom</b> alebo učiteľovi.</p>
       <p>Neposielaj ďalej <b>hoaxy</b> (poplašné nepravdivé správy). S neznámym človekom z internetu sa nikdy nestretávaj sám a nikomu neposielaj svoje fotky ani údaje.</p></div>
-    <h3>Úloha: čo urobíš?</h3><div class="task">${taskHTML("bzq")}</div>` + nextBar(); },
+    <h3>Úloha: čo urobíš?</h3><div class="task">${taskHTML("bzq")}</div>
+    <h3>Úloha 2: bezpečné, alebo riskantné?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("bsort")}</div>` + nextBar(); },
+  precvic() { return head() + `<h2>Precvičovanie: odpovedaj vo fóre</h2>
+    <div class="theory"><p>Dobrá odpoveď na fóre je <b>k téme</b>, <b>slušná</b> a <b>užitočná</b>. Pri každej otázke vyber najlepšiu odpoveď a potom zaraď nové príspevky do správnej sekcie fóra, aby ich ostatní našli.</p></div>
+    ${S.t.g_rep ? `<div class="checkbar"><span class="score ${S.t.g_rep.score < 5 ? "part" : ""}">Správne: ${S.t.g_rep.score} z 5</span></div>` : ""}<div class="tool">${repHTML()}</div>
+    <h3>Do ktorej sekcie patrí príspevok?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("secsort")}</div>` + nextBar(); },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
+
+const RP = [["🧒 matej11", "Ako sa v hre Minecraft robí pochodeň?", ["Daj palicu pod uhlie na pracovnom stole, vzniknú 4 pochodne. 🙂", "To nevieš? Si úplný začiatočník!", "Kúpte si moju hru za 5 € na mojej stránke!"], 0], ["👧 eva_kresli", "Kde nájdem obrázky, ktoré môžem použiť do referátu?", ["Kopíruj z Googlu hocičo, nikto to nezistí.", "Skús Pixabay alebo Unsplash a nezabudni uviesť zdroj.", "Nechce sa mi to vysvetľovať."], 1], ["🧑 tomas_g", "Môj notebook je veľmi hlučný, čo s tým?", ["Napíš mi adresu, prídem sa pozrieť.", "Je to tým, že máš zlý notebook, ha ha.", "Skontroluj, či nie sú zanesené vetracie otvory, a nepoužívaj ho na posteli."], 2], ["👦 adam_007", "Ktorá kniha sa vám páčila na čítanie do školy?", ["Malý princ, je krátky a zaujímavý.", "Čítanie je nuda, kto číta knihy?", "PIŠ VEĽKÝMI PÍSMENAMI, ABY SI ŤA VŠIMLI"], 0], ["👧 lenka_s", "Niekto mi tu poslal súkromnú správu a chce moju fotku. Čo mám robiť?", ["Pošli mu ju, aby nebol smutný.", "Nič mu neposielaj, zablokuj ho, nahlás moderátorovi a povedz to rodičom.", "Daj mu radšej svoje číslo."], 1]];
+function repHTML() { const D = S.rpd; return RP.map(([u, q, opts, ok], i) => `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:8px 0"><b>${u}:</b> ${q}<div style="display:grid;gap:6px;margin-top:6px">${opts.map((o, j) => `<button class="${S.rp[i] === j ? "primary" : "ghost"}" data-rp="${i}|${j}" ${D ? "disabled" : ""} style="text-align:left">${o}</button>`).join("")}</div>${D ? `<div style="font-size:13px;margin-top:4px">${S.rp[i] === ok ? "✔️ Správne." : "❌ Najlepšia je: " + opts[ok]}</div>` : ""}</div>`).join("") + (D ? `<div class="row"><button class="ghost" data-rpr>↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-rpok>✔ Vyhodnotiť</button></div>`); }
+
 function CUSTOM_CLICK(e) {
+  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.rp) { const [i, j] = el0.dataset.rp.split("|").map(Number); S.rp[i] = j; save(); render(false); return true; } if (el0 && el0.dataset.rpok !== undefined) { if (RP.some((_, i) => S.rp[i] === undefined)) { alert("Vyber odpoveď pri všetkých otázkach."); return true; } S.rpd = true; const n = RP.filter((r, i) => S.rp[i] === r[3]).length; if (n && (!S.t.g_rep || S.t.g_rep.score < n)) award("g_rep", n); save(); render(false); return true; } if (el0 && el0.dataset.rpr !== undefined) { S.rpd = false; S.rp = {}; save(); render(false); return true; } }
   if (efClick(e)) return true;
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.flag !== undefined) { const i = +ds.flag; S.fl[i] = !S.fl[i]; save(); render(false); return true; }
