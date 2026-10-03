@@ -220,7 +220,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"plocha": ["Pracovná plocha: ikony, zástupcovia (šípka), Kôš, okná.", "Panel úloh (stavový riadok): Štart, vyhľadávanie, zobrazenie úloh, pripnuté a spustené aplikácie, oblasť oznámení."], "startm": ["Ponuka Štart: vyhľadávanie, Pripnuté, Všetky aplikácie, Odporúčané, konto, Napájanie.", "Pravý klik na Štart alebo Win + X: ponuka pre pokročilých."], "panel": ["Stavový riadok systému = panel úloh; stavový riadok okna = pruh na spodku okna (počet položiek, strán, slov).", "Oblasť oznámení: ikony na pozadí (^), sieť, zvuk, batéria, hodiny; Win + N = centrum oznámení."], "okno": ["Časti okna: záhlavie, minimalizovať/maximalizovať/zavrieť, panel príkazov, adresný riadok, navigačná tabla, obsah, posuvník, stavový riadok."], "skratky": ["Win, Win + D, Win + E, Win + X, Win + Tab, Alt + Tab, Alt + F4, Win + šípky (Snap), Win + L, Ctrl + Shift + Esc."]};
+const THEORY = {"precvic": ["Win + L zamknúť, Alt + Tab prepínať, Win + D plocha, Win + E Prieskumník, Win + Shift + S snímka, Win + I Nastavenia, Win + šípka prichytiť okno, Ctrl + Shift + Esc Správca úloh."], "plocha": ["Pracovná plocha: ikony, zástupcovia (šípka), Kôš, okná.", "Panel úloh (stavový riadok): Štart, vyhľadávanie, zobrazenie úloh, pripnuté a spustené aplikácie, oblasť oznámení."], "startm": ["Ponuka Štart: vyhľadávanie, Pripnuté, Všetky aplikácie, Odporúčané, konto, Napájanie.", "Pravý klik na Štart alebo Win + X: ponuka pre pokročilých."], "panel": ["Stavový riadok systému = panel úloh; stavový riadok okna = pruh na spodku okna (počet položiek, strán, slov).", "Oblasť oznámení: ikony na pozadí (^), sieť, zvuk, batéria, hodiny; Win + N = centrum oznámení."], "okno": ["Časti okna: záhlavie, minimalizovať/maximalizovať/zavrieť, panel príkazov, adresný riadok, navigačná tabla, obsah, posuvník, stavový riadok."], "skratky": ["Win, Win + D, Win + E, Win + X, Win + Tab, Alt + Tab, Alt + F4, Win + šípky (Snap), Win + L, Ctrl + Shift + Esc."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -260,19 +260,20 @@ const STEPS = [
   { id: "panel", title: "Stavový riadok a oznámenia", min: 6 },
   { id: "okno", title: "Okno a jeho stavový riadok", min: 9 },
   { id: "skratky", title: "Práca s oknami a skratky", min: 5 },
+  { id: "precvic", title: "Precvičovanie: Windows výzva", min: 12 },
   { id: "test", title: "Záverečný test", min: 6 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { plocha: ["f_desk"], startm: ["f_smenu", "stq"], panel: ["panq"], okno: ["f_win"], skratky: ["skq"], test: ["test"] };
+const STEP_TASKS = { precvic: ["g_win"], plocha: ["f_desk", "dsort"], startm: ["f_smenu", "stq"], panel: ["panq"], okno: ["f_win", "osort"], skratky: ["skq"], test: ["test"] };
 const START = {
   kicker: "Informatika, 2. ročník",
-  lead: "Windows používaš denne, ale vieš presne pomenovať všetky jeho časti? Preskúmaš pracovnú plochu, panel úloh (stavový riadok), ponuku Štart, oblasť oznámení aj okno aplikácie a jeho stavový riadok. Naučíš sa pracovať s oknami a užitočné klávesové skratky. 5 zastávok, body a na konci výsledok.",
+  lead: "Windows používaš denne, ale vieš presne pomenovať všetky jeho časti? Preskúmaš pracovnú plochu, panel úloh (stavový riadok), ponuku Štart, oblasť oznámení aj okno aplikácie a jeho stavový riadok. Naučíš sa pracovať s oknami a užitočné klávesové skratky. 6 zastávok, body a na konci výsledok.",
   guessQ: "Ktorá klávesová skratka otvorí skrytú ponuku s odkazmi na Správcu zariadení, Správu diskov či Terminál?",
   guessNote: "Tip sa neboduje. Na zastávke Ponuka Štart zistíš, či si mal pravdu.",
   guesses: ["Win + X (alebo pravý klik na Štart)", "Ctrl + Alt + Del", "Alt + F4", "Win + L"],
   ok: 0, yes: "Presne tak! Win + X otvorí ponuku pre pokročilých používateľov.", no: "Je to Win + X, prípadne pravý klik na tlačidlo Štart. Otvorí ponuku pre pokročilých používateľov."
 };
-function EXTRA_STATE() { return {}; }
+function EXTRA_STATE() { return { wx: {}, wxd: false, }; }
 
 const SCRS = {
   desk: { zones: {
@@ -364,6 +365,11 @@ const TASKS = {
     { id: "3", ...Q("Chceš prepnúť na iné otvorené okno.", SK, 2) }, { id: "4", ...Q("Odchádzaš od počítača a chceš ho zamknúť.", SK, 3) },
     { id: "5", ...Q("Chceš okno prichytiť na ľavú polovicu obrazovky.", SK, 4) }, { id: "6", ...Q("Program zamrzol, chceš otvoriť Správcu úloh.", SK, 5) }
   ]},
+  dsort: { id: "dsort", type: "sort", buckets: [{ id: "z", label: "↗️ Zástupca" }, { id: "s", label: "📄 Súbor" }, { id: "p", label: "📁 Priečinok" }],
+    items: [{ id: "1", t: "Ikona so šípkou vľavo dole, odkazuje na program", b: "z" }, { id: "2", t: "Po zmazaní zostane program nainštalovaný", b: "z" }, { id: "3", t: "referat.docx na ploche", b: "s" }, { id: "4", t: "Po zmazaní je obsah preč (v Koši)", b: "s" }, { id: "5", t: "Žltá ikona, môže obsahovať ďalšie súbory", b: "p" }, { id: "6", t: "Fotky z výletu, do ktorých vojdeš dvojklikom", b: "p" }] },
+  osort: { id: "osort", type: "sort", buckets: [{ id: "min", label: "➖ Minimalizovať" }, { id: "max", label: "⬜ Maximalizovať / obnoviť" }, { id: "x", label: "✖️ Zavrieť" }, { id: "v", label: "↔️ Zmeniť veľkosť" }],
+    items: [{ id: "1", t: "tlačidlo —", b: "min" }, { id: "2", t: "Win + ↓ (pri bežnom okne)", b: "min" }, { id: "3", t: "tlačidlo ☐", b: "max" }, { id: "4", t: "dvojklik na záhlavie okna", b: "max" }, { id: "5", t: "Win + ↑", b: "max" }, { id: "6", t: "tlačidlo ✕", b: "x" }, { id: "7", t: "Alt + F4", b: "x" }, { id: "8", t: "ťahanie za roh okna", b: "v" }] },
+  g_win: { id: "g_win", type: "custom", max: 8 },
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Zástupca na ploche je:", ["odkaz na program alebo súbor uložený inde", "kópia programu", "vymazaný súbor", "priečinok"], 0) },
     { id: "2", ...Q("Kde je stavový riadok okna Prieskumníka?", ["na spodku okna", "v záhlaví", "v ponuke Štart", "na ploche"], 0) },
@@ -380,7 +386,8 @@ const VIEWS = {
     <div class="theory"><p>Po prihlásení sa zobrazí <b>pracovná plocha</b> (desktop). Je to pracovný priestor, na ktorom sú <b>ikony</b> (súbory, priečinky, Kôš) a <b>zástupcovia</b> (odkazy s malou šípkou) a nad ňou sa otvárajú <b>okná</b> aplikácií.</p>
       <p>Na spodku obrazovky je <b>panel úloh</b> (v slovenskej literatúre často <b>stavový riadok</b> alebo hlavný panel). Obsahuje tlačidlo <b>Štart</b>, <b>vyhľadávanie</b>, <b>zobrazenie úloh</b>, <b>pripnuté a spustené aplikácie</b> a vpravo <b>oblasť oznámení</b> s hodinami. Jeho vzhľad nastavíš pravým klikom → Nastavenia panela úloh.</p></div>
     <h3>Preskúmaj plochu</h3>${efExplore("desk")}
-    <h3>Úloha: nájdi na ploche</h3>${efFind("desk")}` + nextBar(); },
+    <h3>Úloha: nájdi na ploche</h3>${efFind("desk")}
+    <h3>Úloha 2: zástupca, súbor, alebo priečinok?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("dsort")}</div>` + nextBar(); },
   startm() { return head() + `<h2>Ponuka Štart</h2>
     ${guessBox()}
     <div class="theory"><p>Tlačidlo <b>Štart</b> (alebo kláves Windows) otvorí <b>ponuku Štart</b>. Hore je <b>vyhľadávanie</b> (stačí začať písať), potom <b>pripnuté</b> aplikácie a tlačidlo <b>Všetky aplikácie</b>, nižšie <b>odporúčané</b> súbory a dole <b>konto</b> používateľa a tlačidlo <b>Napájanie</b>.</p>
@@ -396,14 +403,27 @@ const VIEWS = {
   okno() { return head() + `<h2>Okno a jeho stavový riadok</h2>
     <div class="theory"><p>Každá aplikácia pracuje v <b>okne</b>. Okná majú spoločné časti: <b>záhlavie</b> s názvom, tlačidlá <b>minimalizovať, maximalizovať, zavrieť</b>, ponuku alebo <b>panel s nástrojmi</b>, pracovnú plochu okna, <b>posuvníky</b> a <b>stavový riadok</b>. Okno <b>Prieskumníka</b> má navyše adresný riadok, vyhľadávacie pole a navigačnú tablu.</p></div>
     <h3>Preskúmaj okno Prieskumníka</h3>${efExplore("win")}
-    <h3>Úloha: nájdi v okne</h3>${efFind("win")}` + nextBar(); },
+    <h3>Úloha: nájdi v okne</h3>${efFind("win")}
+    <h3>Úloha 2: ovládanie okna</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("osort")}</div>` + nextBar(); },
   skratky() { return head() + `<h2>Práca s oknami a skratky</h2>
     <div class="theory"><p>Okná <b>presúvame</b> ťahaním za záhlavie a <b>meníme ich veľkosť</b> ťahaním za okraj. Ťahom k okraju obrazovky alebo skratkou Win + šípka okno <b>prichytíš</b> (Snap) na polovicu alebo štvrtinu obrazovky. Medzi oknami prepínaš cez Alt + Tab alebo kliknutím na panel úloh.</p></div>
     <div class="keys"><div class="key"><kbd>Win</kbd> ponuka Štart</div><div class="key"><kbd>Win</kbd><kbd>D</kbd> zobraziť plochu</div><div class="key"><kbd>Win</kbd><kbd>E</kbd> Prieskumník</div><div class="key"><kbd>Win</kbd><kbd>X</kbd> ponuka pre pokročilých</div><div class="key"><kbd>Win</kbd><kbd>Tab</kbd> zobrazenie úloh</div><div class="key"><kbd>Alt</kbd><kbd>Tab</kbd> prepínanie okien</div><div class="key"><kbd>Alt</kbd><kbd>F4</kbd> zavrieť okno</div><div class="key"><kbd>Win</kbd><kbd>←</kbd>/<kbd>→</kbd> prichytiť okno</div><div class="key"><kbd>Win</kbd><kbd>L</kbd> zamknúť</div><div class="key"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Esc</kbd> Správca úloh</div></div>
     <h3>Úloha: ktorá skratka?</h3><p>Každú si vyskúšaj aj na svojom počítači.</p><div class="task">${taskHTML("skq")}</div>` + nextBar(); },
+  precvic() { return head() + `<h2>Precvičovanie: Windows výzva</h2>
+    <div class="theory"><p>Kto pozná skratky, pracuje rýchlejšie. Pri každej úlohe vyber najrýchlejší spôsob a potom klikni na Vyhodnotiť. Potom si ich vyskúšaj aj na svojom počítači.</p></div>
+    ${S.t.g_win ? `<div class="checkbar"><span class="score ${S.t.g_win.score < 8 ? "part" : ""}">Správne: ${S.t.g_win.score} z 8</span></div>` : ""}<div class="tool">${wxHTML()}</div>` + nextBar(); },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
-function CUSTOM_CLICK(e) { return efClick(e); }
+
+const WX = [["Odchádzaš od počítača a chceš ho rýchlo zamknúť.", "wl"], ["Prepni medzi otvorenými oknami.", "at"], ["Skry všetky okná a ukáž plochu.", "wd"], ["Otvor Prieskumník.", "we"], ["Urob snímku časti obrazovky.", "wss"], ["Otvor Nastavenia.", "wi"], ["Pripni okno na ľavú polovicu obrazovky.", "wl2"], ["Program zamrzol, otvor Správcu úloh.", "cse"]];
+const WXO = [["", "— vyber —"], ["wl", "Win + L"], ["at", "Alt + Tab"], ["wd", "Win + D"], ["we", "Win + E"], ["wss", "Win + Shift + S"], ["wi", "Win + I"], ["wl2", "Win + ←"], ["cse", "Ctrl + Shift + Esc"]];
+function wxHTML() { const D = S.wxd; return WX.map(([t, ok], i) => `<div style="display:grid;grid-template-columns:1fr 190px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${S.wx[i] === ok ? "✔️ správne" : "❌ správne je " + WXO.find(o => o[0] === ok)[1]}</small>` : ""}</span><select data-wx="${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${WXO.map(([v, l]) => `<option value="${v}" ${S.wx[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-wxr>↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-wxok>✔ Vyhodnotiť</button></div>`); }
+
+function CUSTOM_INPUT(e) {
+  if (e.target.dataset && e.target.dataset.wx !== undefined) { S.wx[e.target.dataset.wx] = e.target.value; save(); return true; }
+  return false; }
+function CUSTOM_CLICK(e) {
+  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.wxok !== undefined) { if (WX.some((_, i) => !S.wx[i])) { alert("Vyber skratku pri všetkých úlohách."); return true; } S.wxd = true; const n = WX.filter((w, i) => S.wx[i] === w[1]).length; if (n && (!S.t.g_win || S.t.g_win.score < n)) award("g_win", n); save(); render(false); return true; } if (el0 && el0.dataset.wxr !== undefined) { S.wxd = false; S.wx = {}; save(); render(false); return true; } } return efClick(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
