@@ -189,7 +189,7 @@ sub{font-size:.7em}
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"pozicne": ["Sústavy: dvojková (0, 1), osmičková (0 – 7), desiatková (0 – 9), šestnástková (0 – 9, A – F).", "Hodnota čísla = súčet (cifra × váha pozície)."], "do10": ["Do desiatkovej: každú cifru vynásob mocninou základu a sčítaj.", "1101₂ = 8 + 4 + 0 + 1 = 13."], "z10": ["Z desiatkovej: opakovane <b>deľ základom</b> a zapisuj zvyšky.", "Výsledok sú zvyšky čítané <b>odspodu nahor</b>."], "skratka": ["Jedna osmičková cifra = <b>3 bity</b>, jedna šestnástková cifra = <b>4 bity</b>.", "Bity delíme do skupín <b>sprava</b>, zľava doplníme nuly."]};
+const THEORY = {"precvic": ["Postup: najprv do desiatkovej (rozklad podľa pozícií), potom delením so zvyškom do cieľovej sústavy; medzi 2, 8 a 16 skupiny po 3 a 4 bitoch."], "pozicne": ["Sústavy: dvojková (0, 1), osmičková (0 – 7), desiatková (0 – 9), šestnástková (0 – 9, A – F).", "Hodnota čísla = súčet (cifra × váha pozície)."], "do10": ["Do desiatkovej: každú cifru vynásob mocninou základu a sčítaj.", "1101₂ = 8 + 4 + 0 + 1 = 13."], "z10": ["Z desiatkovej: opakovane <b>deľ základom</b> a zapisuj zvyšky.", "Výsledok sú zvyšky čítané <b>odspodu nahor</b>."], "skratka": ["Jedna osmičková cifra = <b>3 bity</b>, jedna šestnástková cifra = <b>4 bity</b>.", "Bity delíme do skupín <b>sprava</b>, zľava doplníme nuly."]};
 const KEY = "sustavy-n15-v1";
 const LESSON = "1.5 Prevody čísel medzi sústavami 2, 8, 10, 16";
 const BRAND = "1.5 Prevody medzi sústavami";
@@ -201,20 +201,21 @@ const STEPS = [
   { id: "do10", title: "Do desiatkovej", min: 9 },
   { id: "z10", title: "Z desiatkovej", min: 9 },
   { id: "skratka", title: "Skratka 2 ↔ 8 ↔ 16", min: 8 },
+  { id: "precvic", title: "Precvičovanie: prevodová časovka", min: 14 },
   { id: "test", title: "Záverečný test", min: 6 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { pozicne: ["pozq"], do10: ["bitgoal", "do10in"], z10: ["z10in"], skratka: ["skin"], test: ["test"] };
+const STEP_TASKS = { pozicne: ["pozq", "pin"], do10: ["bitgoal", "do10in"], z10: ["z10in", "z10b"], skratka: ["skin", "sk2"], precvic: ["g_dr"], test: ["test"] };
 const START = {
   kicker: "Informatika, 1. ročník",
-  lead: "Počítač počíta v dvojkovej sústave, programátori radi používajú šestnástkovú a my ľudia desiatkovú. Naučíš sa prevádzať čísla medzi sústavami 2, 8, 10 a 16 a vyskúšaš si pri tom interaktívne pomôcky: bitové kartičky, kalkulačku delenia a zoskupovanie bitov. 4 zastávky, body a na konci výsledok.",
+  lead: "Počítač počíta v dvojkovej sústave, programátori radi používajú šestnástkovú a my ľudia desiatkovú. Naučíš sa prevádzať čísla medzi sústavami 2, 8, 10 a 16 a vyskúšaš si pri tom interaktívne pomôcky: bitové kartičky, kalkulačku delenia a zoskupovanie bitov. 5 zastávok, body a na konci výsledok.",
   guessQ: "Koľko je dvojkové číslo 1010 v desiatkovej sústave?",
   guessNote: "Tip sa neboduje. Na zastávke Do desiatkovej si to overíš.",
   guesses: ["1010", "10", "8", "12"],
   ok: 1, yes: "Presne! 1·8 + 0·4 + 1·2 + 0·1 = 10.", no: "1010₂ = 1·8 + 0·4 + 1·2 + 0·1 = 10."
 };
 const DIG = "0123456789ABCDEF";
-function EXTRA_STATE() { return { pv: { b: 2, n: "1011" }, bits: [0, 0, 0, 0, 0, 0, 0, 0], bdone: {}, dv: { n: "100", b: 2, k: 0 }, gr: { bin: "1011010", g: 4 }, col: "#1E90FF" }; }
+function EXTRA_STATE() { return { dr: { q: null, n: 0, ok: 0, m: null, a: "" }, pv: { b: 2, n: "1011" }, bits: [0, 0, 0, 0, 0, 0, 0, 0], bdone: {}, dv: { n: "100", b: 2, k: 0 }, gr: { bin: "1011010", g: 4 }, col: "#1E90FF" }; }
 const clean = v => String(v).toUpperCase().replace(/\s|\(.*?\)|_|₂|₈|₁₆|₁₀/g, "").replace(/^#/, "").replace(/^0+(?=.)/, "");
 const eq = (a, b) => clean(a) === clean(b);
 function toBase(n, b) { return n.toString(b).toUpperCase(); }
@@ -271,6 +272,7 @@ const NIB = Array.from({ length: 16 }, (_, i) => `<div><span>${i.toString(2).pad
 
 /* ---------- tasks ---------- */
 const inq = (id, q, ans, why) => ({ id, q, ok: v => eq(v, ans), show: ans, ph: "?", why });
+const UPC = c => v => String(v).trim().toUpperCase().replace(/\s/g, "").replace(/^0+(?=.)/, "") === c;
 const TASKS = {
   pozq: { id: "pozq", type: "mc", qs: [
     { id: "1", q: "Ktoré cifry používa šestnástková sústava?", opts: ["0 až 9 a A až F", "0 až 16", "0 až 9 a A až G", "iba 0 a 1"], a: 0 },
@@ -292,6 +294,23 @@ const TASKS = {
     inq("1", "110101<sub>2</sub> = ?<sub>8</sub>", "65", "110 | 101 → 6 | 5"), inq("2", "11111111<sub>2</sub> = ?<sub>16</sub>", "FF"), inq("3", "1011010<sub>2</sub> = ?<sub>16</sub>", "5A", "0101 | 1010 → 5 | A (doplníme nulu zľava)"),
     inq("4", "3F<sub>16</sub> = ?<sub>2</sub>", "111111", "3 → 0011, F → 1111, úvodné nuly vynecháme"), inq("5", "57<sub>8</sub> = ?<sub>2</sub>", "101111", "5 → 101, 7 → 111"), inq("6", "A5<sub>16</sub> = ?<sub>8</sub>", "245", "A5 → 1010 0101 → 010 100 101 → 2 4 5")
   ]},
+  pin: { id: "pin", type: "input", qs: [
+    { id: "1", q: "Akú hodnotu má cifra 3 v čísle 352 (desiatková sústava)?", ok: v => parseNum(v) === 300, show: "300", ph: "?" },
+    { id: "2", q: "Akú hodnotu má jednotka v čísle 1000₂ (v desiatkovej sústave)?", ok: v => parseNum(v) === 8, show: "8", ph: "?" },
+    { id: "3", q: "Aká je najväčšia cifra v osmičkovej sústave?", ok: v => parseNum(v) === 7, show: "7", ph: "?" },
+    { id: "4", q: "Akú hodnotu (v desiatkovej) má cifra F v šestnástkovej sústave?", ok: v => parseNum(v) === 15, show: "15", ph: "?" }
+  ]},
+  z10b: { id: "z10b", type: "input", qs: [
+    { id: "1", q: "Preveď 100₁₀ do dvojkovej sústavy.", ok: UPC("1100100"), show: "1100100", ph: "?" },
+    { id: "2", q: "Preveď 200₁₀ do šestnástkovej sústavy.", ok: UPC("C8"), show: "C8", ph: "?" },
+    { id: "3", q: "Preveď 64₁₀ do osmičkovej sústavy.", ok: UPC("100"), show: "100", ph: "?" }
+  ]},
+  sk2: { id: "sk2", type: "input", qs: [
+    { id: "1", q: "Preveď 11110000₂ do šestnástkovej sústavy.", ok: UPC("F0"), show: "F0", ph: "?" },
+    { id: "2", q: "Preveď 3F₁₆ do dvojkovej sústavy.", ok: UPC("111111"), show: "111111", ph: "?" },
+    { id: "3", q: "Preveď 101011₂ do osmičkovej sústavy.", ok: UPC("53"), show: "53", ph: "?" }
+  ]},
+  g_dr: { id: "g_dr", type: "custom", max: 10 },
   test: { id: "test", type: "mc", qs: [
     { id: "1", q: "101<sub>2</sub> = ?<sub>10</sub>", opts: ["5", "101", "3", "6"], a: 0 },
     { id: "2", q: "12<sub>10</sub> = ?<sub>2</sub>", opts: ["1100", "1010", "1001", "0011"], a: 0 },
@@ -314,7 +333,8 @@ const VIEWS = {
     <p>Základ sústavy píšeme ako malé číslo za číslo: 1010<sub>2</sub>, 17<sub>8</sub>, 255<sub>10</sub>, FF<sub>16</sub>.</p>
     <h3>Rozlož si číslo</h3><p>Vyber sústavu a napíš číslo. Uvidíš váhy jednotlivých miest a jeho hodnotu v desiatkovej sústave.</p>
     <div class="task">${pvHTML()}</div>
-    <h3>Úloha: otázky</h3><div class="task">${taskHTML("pozq")}</div>` + nextBar();
+    <h3>Úloha: otázky</h3><div class="task">${taskHTML("pozq")}</div>
+    <h3>Úloha 2: hodnota cifry</h3><div class="task">${taskHTML("pin")}</div>` + nextBar();
   },
   do10() {
     return head() + `<h2>Prevod do desiatkovej sústavy</h2>
@@ -329,7 +349,8 @@ const VIEWS = {
     return head() + `<h2>Prevod z desiatkovej sústavy</h2>
     <div class="box v"><p><b>Postup:</b> číslo opakovane <b>celočíselne deľ</b> základom novej sústavy a zapisuj <b>zvyšky</b>. Keď vyjde podiel 0, skonči. Výsledok sú zvyšky čítané <b>odspodu nahor</b>. V šestnástkovej sústave zvyšky 10 až 15 zapíšeš ako A až F.</p></div>
     <h3>Kalkulačka delenia krok za krokom</h3><div class="task">${dvHTML()}</div>
-    <h3>Úloha: preveď</h3><p>Rieš na papieri, kalkulačkou si výsledok môžeš overiť.</p><div class="task">${taskHTML("z10in")}</div>` + nextBar();
+    <h3>Úloha: preveď</h3><p>Rieš na papieri, kalkulačkou si výsledok môžeš overiť.</p><div class="task">${taskHTML("z10in")}</div>
+    <h3>Úloha 2: ďalšie prevody</h3><div class="task">${taskHTML("z10b")}</div>` + nextBar();
   },
   skratka() {
     return head() + `<h2>Skratka medzi sústavami 2, 8 a 16</h2>
@@ -338,13 +359,25 @@ const VIEWS = {
       <div class="box" style="margin:0"><p><b>8 alebo 16 → 2:</b> každú cifru nahraď 3 (alebo 4) bitmi. Úvodné nuly na začiatku môžeš vynechať.</p></div></div>
     <h3>Tabuľka štvoríc bitov</h3><div class="nib">${NIB}</div>
     <h3>Zoskupovanie bitov</h3><div class="task">${grHTML()}</div>
-    <h3>Úloha: preveď cez skupiny bitov</h3><div class="task">${taskHTML("skin")}</div>` + nextBar();
+    <h3>Úloha: preveď cez skupiny bitov</h3><div class="task">${taskHTML("skin")}</div>
+    <h3>Úloha 2: ďalšie skupiny bitov</h3><div class="task">${taskHTML("sk2")}</div>` + nextBar();
   },
+  precvic() { return head() + `<h2>Precvičovanie: prevodová časovka</h2>
+    <div class="theory"><p>Dostaneš 10 náhodných prevodov medzi sústavami 2, 8, 10 a 16. Počítaj na papieri, kalkulačku nepoužívaj. Za každý správny prevod je hviezdička. Kolo môžeš zopakovať, ráta sa najlepší výsledok.</p></div>
+    <div class="tool" id="drbox">${drHTML()}</div>` + nextBar(); },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
 
 /* ---------- events ---------- */
+
+const BN = { 2: "₂", 8: "₈", 10: "₁₀", 16: "₁₆" };
+function drNew() { const B = [2, 8, 10, 16]; let f = B[Math.floor(Math.random() * 4)], t; do { t = B[Math.floor(Math.random() * 4)]; } while (t === f); const n = 5 + Math.floor(Math.random() * 251); return { n, f, t }; }
+function drHTML() { const D = S.dr; if (D.n >= 10) return `<div class="fb ${D.ok >= 8 ? "ok" : "info"}">🏁 Koniec kola: <b>${D.ok} z 10</b> správne. Najlepší výsledok: ${(S.t.g_dr || {}).score || 0} z 10.</div><div class="row"><button class="primary" data-dr="new">↺ Nové kolo</button></div>`;
+  if (!D.q) return `<div class="row"><button class="primary" data-dr="new">▶ Štart</button></div>`;
+  const q = D.q; return `<p class="muted">Príklad ${D.n + 1} z 10 · správne ${D.ok}</p><p style="font-size:22px">Preveď <b style="font-family:var(--mono)">${q.n.toString(q.f).toUpperCase()}${BN[q.f]}</b> do sústavy so základom <b>${q.t}</b>.</p><div class="row"><input type="text" id="dra" value="${esc(D.a)}" autocomplete="off" style="font-family:var(--mono);font-size:20px;width:220px;border:1.5px solid var(--border);border-radius:10px;padding:6px 10px;background:var(--surface2);color:var(--ink)"><button class="primary" data-dr="ok">✔ Over</button></div>${D.m ? `<div class="fb ${D.m.k}">${D.m.t}</div>` : ""}`; }
+function drCheck() { const D = S.dr, q = D.q, want = q.n.toString(q.t).toUpperCase(), got = String(D.a).trim().toUpperCase().replace(/\s/g, "").replace(/^0+(?=.)/, ""); const ok = got === want; if (ok) D.ok++; D.m = { k: ok ? "ok" : "bad", t: (ok ? "✅ Správne! " : `❌ Správne je ${want}. `) + `${q.n.toString(q.f).toUpperCase()}${BN[q.f]} = ${q.n}₁₀ = ${want}${BN[q.t]}` }; D.n++; D.a = ""; if (D.ok && (!S.t.g_dr || S.t.g_dr.score < D.ok)) award("g_dr", D.ok); D.q = D.n < 10 ? drNew() : null; }
 function CUSTOM_CLICK(e) {
+  { const el0 = e.target.closest && e.target.closest("[data-dr]"); if (el0) { if (el0.dataset.dr === "new") S.dr = { q: drNew(), n: 0, ok: 0, m: null, a: "" }; else { const i = document.getElementById("dra"); if (i) S.dr.a = i.value; drCheck(); } save(); document.getElementById("drbox").innerHTML = drHTML(); const i2 = document.getElementById("dra"); if (i2) i2.focus(); return true; } }
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.bit !== undefined) { const i = +ds.bit; S.bits[i] = S.bits[i] ? 0 : 1; const v = S.bits.reduce((a, b, j) => a + b * BV[j], 0); if (BGOALS.includes(v)) S.bdone[v] = true; const n = Object.keys(S.bdone).length; if (n) award("bitgoal", n); save(); render(false); return true; }
   if (ds.bclr !== undefined) { S.bits = [0, 0, 0, 0, 0, 0, 0, 0]; save(); render(false); return true; }
@@ -353,6 +386,7 @@ function CUSTOM_CLICK(e) {
 }
 function refocus(sel, pos) { const n = document.querySelector(sel); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} } }
 function CUSTOM_INPUT(e) {
+  if (e.target.id === "dra") { S.dr.a = e.target.value; save(); return true; }
   const t = e.target, ds = t.dataset, pos = t.selectionStart;
   if (ds.pvb !== undefined) { S.pv.b = +t.value; save(); render(false); return true; }
   if (ds.pvn !== undefined) { S.pv.n = t.value; save(); render(false); refocus("[data-pvn]", pos); return true; }
@@ -363,6 +397,8 @@ function CUSTOM_INPUT(e) {
   if (ds.col !== undefined) { S.col = t.value; save(); render(false); refocus("[data-col]", pos); return true; }
   return false;
 }
+
+document.addEventListener("keydown", e => { if (e.target && e.target.id === "dra" && e.key === "Enter") { e.preventDefault(); S.dr.a = e.target.value; drCheck(); save(); document.getElementById("drbox").innerHTML = drHTML(); const i = document.getElementById("dra"); if (i) i.focus(); } });
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
