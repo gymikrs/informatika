@@ -230,7 +230,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"obdlznik": ["create_rectangle(x1, y1, x2, y2): dva protiľahlé rohy; šírka x2 − x1, výška y2 − y1.", "fill = výplň, outline = obrys ('' bez obrysu), width = hrúbka. Neskorší tvar prekryje skorší."], "elipsa": ["create_oval vpíše elipsu do obdĺžnika; štvorec → kruh.", "Kruh so stredom (sx, sy) a polomerom r: create_oval(sx − r, sy − r, sx + r, sy + r)."], "obrazky": ["Najprv náčrt a súradnice, kresli od pozadia k detailom."]};
+const THEORY = {"precvic": ["Šírka x2 − x1, výška y2 − y1. Kruh = create_oval vo štvorci alebo zo stredu a polomeru.", "fill výplň, outline obrys, width hrúbka. Neskôr nakreslené je navrchu."], "obdlznik": ["create_rectangle(x1, y1, x2, y2): dva protiľahlé rohy; šírka x2 − x1, výška y2 − y1.", "fill = výplň, outline = obrys ('' bez obrysu), width = hrúbka. Neskorší tvar prekryje skorší."], "elipsa": ["create_oval vpíše elipsu do obdĺžnika; štvorec → kruh.", "Kruh so stredom (sx, sy) a polomerom r: create_oval(sx − r, sy − r, sx + r, sy + r)."], "obrazky": ["Najprv náčrt a súradnice, kresli od pozadia k detailom."]};
 /* ---------- mini tkinter.Canvas interpreter (subset of Python) ---------- */
 const TKCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
 function tkColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (TKCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
@@ -405,13 +405,14 @@ const STEPS = [
   { id: "obdlznik", title: "Obdĺžnik a štvorec", min: 12 },
   { id: "elipsa", title: "Elipsa a kruh", min: 12 },
   { id: "obrazky", title: "Obrázky z tvarov", min: 15 },
+  { id: "precvic", title: "Precvičovanie: oprav tvar", min: 7 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { obdlznik: ["c_rect", "rq"], elipsa: ["c_ov", "oq"], obrazky: ["c_obr"], test: ["test"] };
+const STEP_TASKS = { obdlznik: ["c_rect", "rq", "rin"], elipsa: ["c_ov", "oq", "oin"], obrazky: ["c_obr", "psort"], precvic: ["g_sit"], test: ["test"] };
 const START = {
   kicker: "Informatika, 3. ročník",
-  lead: "Čiary už kreslíš. Teraz pridáme plné tvary: obdĺžniky, štvorce, elipsy a kruhy s farebnou výplňou a obrysom. Naučíš sa, prečo sa kruh zadáva štvorcom okolo neho, ako nakresliť kruh so stredom a polomerom a z tvarov zostavíš snehuliaka, semafor a robota. 3 zastávky, body a na konci výsledok.",
+  lead: "Čiary už kreslíš. Teraz pridáme plné tvary: obdĺžniky, štvorce, elipsy a kruhy s farebnou výplňou a obrysom. Naučíš sa, prečo sa kruh zadáva štvorcom okolo neho, ako nakresliť kruh so stredom a polomerom a z tvarov zostavíš snehuliaka, semafor a robota. 4 zastávky, body a na konci výsledok.",
   guessQ: "Čo nakreslí canvas.create_oval(100, 50, 300, 250)?",
   guessNote: "Tip sa neboduje. Na zastávke Elipsa a kruh zistíš, či si mal pravdu.",
   guesses: ["Kruh so stredom (100, 50) a polomerom 300", "Kruh vpísaný do štvorca s rohmi (100, 50) a (300, 250)", "Obdĺžnik", "Elipsu so stredom (300, 250)"],
@@ -429,8 +430,10 @@ function chalHTML(task, k) {
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const sh = (env, t) => env.shapes.filter(s => s.t === t);
 const has = (env, t, pts, f) => env.shapes.some(s => s.t === t && s.pts.length === pts.length && s.pts.every((v, i) => Math.abs(v - pts[i]) <= 3) && (!f || f(s)));
-function CUSTOM_CLICK(e) { return tkClick(e); }
-function CUSTOM_INPUT(e) { return tkInput(e); }
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return tkClick(e); }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; return tkInput(e); }
 const CH = {
   c_rect: [
     { n: "A", t: "Nakresli <b>štvorec</b> s ľavým horným rohom (50, 50) a stranou 100. Výplň <b>yellow</b>.", ref: PRE + "canvas.create_rectangle(50, 50, 150, 150, fill='yellow')", ok: e => has(e, "rectangle", [50, 50, 150, 150], s => s.fill === "yellow") || "Štvorec s rohmi (50, 50) a (150, 150) so žltou výplňou nevidím." },
@@ -448,6 +451,8 @@ const CH = {
     { n: "C", t: "Nakresli <b>vlastného robota</b> aspoň zo 6 tvarov (obdĺžniky aj elipsy/kruhy), použi aspoň 3 rôzne farby výplne.", ref: PRE + "canvas.create_rectangle(140, 110, 260, 250, fill='gray')\ncanvas.create_rectangle(155, 40, 245, 110, fill='silver')\ncanvas.create_oval(170, 60, 190, 80, fill='red')\ncanvas.create_oval(210, 60, 230, 80, fill='red')\ncanvas.create_rectangle(100, 130, 140, 150, fill='orange')\ncanvas.create_rectangle(260, 130, 300, 150, fill='orange')", ok: e => { const r = sh(e, "rectangle").length, o = sh(e, "oval").length, f = new Set(e.shapes.map(s => s.fill).filter(Boolean)); return (r + o >= 6 && r >= 1 && o >= 1 && f.size >= 3) || `Máš ${r} obdĺžnikov, ${o} elíps a ${f.size} farby. Treba aspoň 6 tvarov a 3 farby.`; } }
   ]
 };
+const PX_I = [["Obdĺžnik je prázdny, má byť žltý.", "fill", ""], ["Obrys kruhu má byť červený.", "outline", ""], ["Obrys je príliš tenký.", "width", ""], ["Kruh nemá mať čierny okraj.", "noout", ""], ["Z create_oval vyšla elipsa, má byť kruh.", "square", "obdĺžnik okolo musí byť štvorec"], ["Oči robota nevidno, lebo ich prekryla hlava.", "order", ""], ["Chceš kruh zadať stredom a polomerom.", "center", ""]];
+const PX_O = [["", "— vyber —"], ["fill", "fill='yellow'"], ["outline", "outline='red'"], ["width", "width=5"], ["noout", "outline=''"], ["square", "Rovnaká šírka a výška"], ["order", "Presunúť príkaz nižšie (kresliť neskôr)"], ["center", "create_oval(sx - r, sy - r, sx + r, sy + r)"]];
 const TASKS = {
   c_rect: { id: "c_rect", type: "custom", max: 3 }, c_ov: { id: "c_ov", type: "custom", max: 3 }, c_obr: { id: "c_obr", type: "custom", max: 3 },
   rq: { id: "rq", type: "mc", qs: [
@@ -460,6 +465,21 @@ const TASKS = {
     { id: "2", ...Q("Kedy vznikne z create_oval kruh (nie elipsa)?", ["keď je ohraničujúci obdĺžnik štvorec", "vždy", "keď je fill červený", "keď width = 1"], 0) },
     { id: "3", ...Q("Ako nakreslíš tvar bez obrysu?", ["outline=''", "outline=0", "width=None", "fill=''"], 0) }
   ]},
+  g_sit: { id: "g_sit", type: "custom", max: 7 },
+  rin: { id: "rin", type: "input", qs: [
+    { id: "1", q: "<code>create_rectangle(20, 50, 220, 130)</code>: aká je šírka?", ok: v => Math.abs(parseNum(v) - 200) <= 0, show: "200 (220 − 20)", ph: "?" },
+    { id: "2", q: "Aká je výška tohto obdĺžnika?", ok: v => Math.abs(parseNum(v) - 80) <= 0, show: "80 (130 − 50)", ph: "?" },
+    { id: "3", q: "Aký je obsah tohto obdĺžnika (v pixeloch)?", ok: v => Math.abs(parseNum(v) - 16000) <= 0, show: "16 000 (200 × 80)", ph: "?" },
+    { id: "4", q: "Štvorec so stranou 60 a ľavým horným rohom (40, 30): aké je x2?", ok: v => Math.abs(parseNum(v) - 100) <= 0, show: "100", ph: "?" },
+    { id: "5", q: "Aké je y2 tohto štvorca?", ok: v => Math.abs(parseNum(v) - 90) <= 0, show: "90", ph: "?" }
+  ]},
+  oin: { id: "oin", type: "input", qs: [
+    { id: "1", q: "Kruh so stredom (200, 150) a polomerom 50: aké je x1?", ok: v => Math.abs(parseNum(v) - 150) <= 0, show: "150 (200 − 50)", ph: "?" },
+    { id: "2", q: "Aké je y2 toho kruhu?", ok: v => Math.abs(parseNum(v) - 200) <= 0, show: "200 (150 + 50)", ph: "?" },
+    { id: "3", q: "<code>create_oval(40, 60, 240, 160)</code>: aké je x stredu?", ok: v => Math.abs(parseNum(v) - 140) <= 0, show: "140", ph: "?" },
+    { id: "4", q: "Aké je y stredu tejto elipsy?", ok: v => Math.abs(parseNum(v) - 110) <= 0, show: "110", ph: "?" }
+  ]},
+  psort: {"id": "psort", "type": "sort", "buckets": [{"id": "1", "label": "1️⃣ Kresliť skôr (pozadie)"}, {"id": "2", "label": "2️⃣ Kresliť neskôr (detaily)"}], "items": [{"id": "1", "t": "Obloha cez celú plochu", "b": "1"}, {"id": "2", "t": "Tráva", "b": "1"}, {"id": "3", "t": "Stena domu", "b": "1"}, {"id": "4", "t": "Telo robota", "b": "1"}, {"id": "5", "t": "Okná domu", "b": "2"}, {"id": "6", "t": "Oči robota", "b": "2"}, {"id": "7", "t": "Slnko na oblohe", "b": "2"}, {"id": "8", "t": "Nápis s menom", "b": "2"}], "after": "Tvar nakreslený neskôr prekryje tvar nakreslený skôr. Preto ide pozadie prvé a detaily nakoniec."},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Predvolená výplň obdĺžnika v tkinteri:", ["žiadna (priehľadná)", "čierna", "biela", "červená"], 0) },
     { id: "2", ...Q("Tvar nakreslený neskôr:", ["prekryje skôr nakreslené tvary", "je pod nimi", "sa nezobrazí", "zmení im farbu"], 0) },
@@ -475,17 +495,28 @@ const VIEWS = {
       <table class="cmdt"><thead><tr><th>Parameter</th><th>Význam</th><th>Príklad</th></tr></thead><tbody><tr><td><code>fill</code></td><td>farba výplne (predvolene žiadna)</td><td><code>fill='yellow'</code></td></tr><tr><td><code>outline</code></td><td>farba obrysu (predvolene čierna, '' = bez obrysu)</td><td><code>outline='navy'</code></td></tr><tr><td><code>width</code></td><td>hrúbka obrysu</td><td><code>width=4</code></td></tr></tbody></table>
       <p>Tvary sa kreslia v poradí príkazov: neskorší tvar <b>prekryje</b> skorší.</p></div>
     <h3>Úlohy</h3>${chalHTML("c_rect", "rect")}${ideHTML("rect", PRE + "canvas.create_rectangle(50, 50, 150, 150, fill='yellow')\n")}
-    <h3>Otázky</h3><div class="task">${taskHTML("rq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("rq")}</div>
+    <h3>Úloha 2: počítaj súradnice</h3><div class="task">${taskHTML("rin")}</div>` + nextBar(),
   elipsa: () => head() + `<h2>Elipsa a kruh</h2>${guessBox()}
     <div class="theory"><p><code>canvas.create_oval(x1, y1, x2, y2)</code> nakreslí elipsu <b>vpísanú do obdĺžnika</b> s rohmi (x1, y1) a (x2, y2). Ak je obdĺžnik štvorec, vznikne <b>kruh</b>. Kruh so stredom (sx, sy) a polomerom r:</p>
       <div class="pcode">canvas.create_oval(sx - r, sy - r, sx + r, sy + r, fill='red')</div><p>Parametre <code>fill</code>, <code>outline</code>, <code>width</code> fungujú rovnako ako pri obdĺžniku.</p></div>
     <h3>Úlohy</h3>${chalHTML("c_ov", "ov")}${ideHTML("ov", PRE + "canvas.create_oval(120, 70, 280, 230, fill='red')\n")}
-    <h3>Otázky</h3><div class="task">${taskHTML("oq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("oq")}</div>
+    <h3>Úloha 2: počítaj súradnice</h3><div class="task">${taskHTML("oin")}</div>` + nextBar(),
   obrazky: () => head() + `<h2>Obrázky z tvarov</h2>
     <div class="theory"><p>Pred písaním programu si obrázok <b>načrtni</b> a zapíš súradnice stredov a polomerov. Kresli od pozadia k popredí (najprv veľké plochy, potom detaily).</p></div>
-    <h3>Úlohy</h3>${chalHTML("c_obr", "obr")}${ideHTML("obr", "import tkinter\ncanvas = tkinter.Canvas(width=400, height=300, bg='lightblue')\ncanvas.pack()\n")}` + nextBar(),
+    <h3>Úlohy</h3>${chalHTML("c_obr", "obr")}${ideHTML("obr", "import tkinter\ncanvas = tkinter.Canvas(width=400, height=300, bg='lightblue')\ncanvas.pack()\n")}
+    <h3>Úloha 2: v akom poradí kresliť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: oprav tvar</h2>
+    <div class="theory"><p>Keď tvar v tkinteri nevyzerá správne, chyba býva v jednej z troch vecí: <b>súradnice</b> (rohy, šírka x2 − x1, výška y2 − y1, kruh len vo štvorci), <b>parametre</b> (fill výplň, outline obrys, width hrúbka) alebo <b>poradie</b> príkazov (neskôr nakreslené je navrchu). Kruh zadávaj radšej stredom a polomerom, súradnice nech vypočíta Python.</p><p>Pri každom probléme vyber opravu.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -504,7 +535,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -594,8 +625,10 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
+function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });

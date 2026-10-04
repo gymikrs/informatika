@@ -230,7 +230,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"text": ["canvas.create_text(x, y, text='…', font=('Arial', 24, 'bold'), fill='navy'); nový riadok \\n."], "anchor": ["anchor určuje, ktorý bod textu je v (x, y): n, s, w, e, nw, ne, sw, se, center (predvolený).", "Zoznamy zarovnané vľavo: anchor='w' a rovnaké x."], "projekty": ["Pozadie a tvary najprv, text navrch; kontrast, čitateľná veľkosť, najviac 2–3 písma."]};
+const THEORY = {"precvic": ["Kde: x, y, anchor. Čo: text, \\n, str(). Ako: font, fill. Text kresli nakoniec.", "Stred obdĺžnika = ((x1 + x2) / 2, (y1 + y2) / 2). Zoznamy zarovnávaj anchor='w'."], "text": ["canvas.create_text(x, y, text='…', font=('Arial', 24, 'bold'), fill='navy'); nový riadok \\n."], "anchor": ["anchor určuje, ktorý bod textu je v (x, y): n, s, w, e, nw, ne, sw, se, center (predvolený).", "Zoznamy zarovnané vľavo: anchor='w' a rovnaké x."], "projekty": ["Pozadie a tvary najprv, text navrch; kontrast, čitateľná veľkosť, najviac 2–3 písma."]};
 /* ---------- mini tkinter.Canvas interpreter (subset of Python) ---------- */
 const TKCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
 function tkColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (TKCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
@@ -405,13 +405,14 @@ const STEPS = [
   { id: "text", title: "create_text a písmo", min: 12 },
   { id: "anchor", title: "Ukotvenie textu", min: 10 },
   { id: "projekty", title: "Vizitka a pozvánka", min: 15 },
+  { id: "precvic", title: "Precvičovanie: text na správnom mieste", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { text: ["c_txt", "tq"], anchor: ["c_anc", "aq"], projekty: ["c_proj"], test: ["test"] };
+const STEP_TASKS = { text: ["c_txt", "tq", "psort"], anchor: ["c_anc", "aq", "asort"], projekty: ["c_proj"], precvic: ["g_sit", "pxin"], test: ["test"] };
 const START = {
   kicker: "Informatika, 3. ročník",
-  lead: "Do grafickej plochy vieme písať aj text: nadpisy, popisy, čísla. Naučíš sa príkaz create_text, nastavíš písmo, veľkosť, rez a farbu, pochopíš ukotvenie textu (anchor) a nakoniec navrhneš vlastnú vizitku a pozvánku. 3 zastávky, body a na konci výsledok.",
+  lead: "Do grafickej plochy vieme písať aj text: nadpisy, popisy, čísla. Naučíš sa príkaz create_text, nastavíš písmo, veľkosť, rez a farbu, pochopíš ukotvenie textu (anchor) a nakoniec navrhneš vlastnú vizitku a pozvánku. 4 zastávky, body a na konci výsledok.",
   guessQ: "Kde bude text, keď napíšeš canvas.create_text(200, 150, text='Ahoj')?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Ľavý horný roh textu bude v (200, 150)", "Stred textu bude v bode (200, 150)", "Text bude v rohu plochy", "Nič sa nezobrazí"],
@@ -430,8 +431,10 @@ function chalHTML(task, k) {
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const sh = (env, t) => env.shapes.filter(s => s.t === t);
 const has = (env, t, pts, f) => env.shapes.some(s => s.t === t && s.pts.length === pts.length && s.pts.every((v, i) => Math.abs(v - pts[i]) <= 3) && (!f || f(s)));
-function CUSTOM_CLICK(e) { return tkClick(e); }
-function CUSTOM_INPUT(e) { return tkInput(e); }
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return tkClick(e); }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; return tkInput(e); }
 const CH = {
   c_txt: [
     { n: "A", t: "Napíš do stredu plochy (200, 150) text <b>Ahoj, svet!</b>", ref: PRE + "canvas.create_text(200, 150, text='Ahoj, svet!')", ok: e => T(e, s => s.text === "Ahoj, svet!" && Math.abs(s.pts[0] - 200) <= 3 && Math.abs(s.pts[1] - 150) <= 3) || "Text 'Ahoj, svet!' v bode (200, 150) nevidím. Skontroluj aj čiarku a výkričník." },
@@ -448,6 +451,8 @@ const CH = {
     { n: "B", t: "Navrhni <b>pozvánku</b> na školskú akciu: pozadie (bg), aspoň 1 dekoračný tvar (kruh alebo elipsa), nadpis a aspoň 3 ďalšie texty (dátum, čas, miesto), použi aspoň 2 rôzne písma.", ref: "import tkinter\ncanvas = tkinter.Canvas(width=400, height=300, bg='lavender')\ncanvas.pack()\ncanvas.create_oval(300, -40, 460, 120, fill='gold', outline='')\ncanvas.create_text(200, 60, text='Vianočný koncert', font=('Georgia', 28, 'bold italic'), fill='purple')\ncanvas.create_text(200, 140, text='19. 12. 2026', font=('Arial', 16))\ncanvas.create_text(200, 175, text='o 17:00', font=('Arial', 16))\ncanvas.create_text(200, 210, text='aula gymnázia', font=('Arial', 16))", ok: e => { const t = sh(e, "text"), fam = new Set(t.map(s => s.font ? s.font.fam.toLowerCase() : "tkdefault")); return (e.canv.bgSet && sh(e, "oval").length >= 1 && t.length >= 4 && fam.size >= 2) || `Treba bg, aspoň 1 elipsu, 4 texty a 2 písma (máš ${t.length} textov, ${fam.size} písma).`; } }
   ]
 };
+const PX_I = [["Nadpis je príliš malý.", "size", ""], ["Nadpis má byť tučný.", "bold", ""], ["Text má byť biely na tmavom pozadí.", "fill", ""], ["Riadky zoznamu nie sú pod sebou zarovnané doľava.", "anchor", ""], ["Adresa má byť v jednom texte na dvoch riadkoch.", "nl", ""], ["Text nevidno, lebo je pod obdĺžnikom s výplňou.", "order", "text kresli až nakoniec"], ["Chceš napísať „Body: “ a číslo z premennej body.", "str", ""]];
+const PX_O = [["", "— vyber —"], ["size", "Zväčšiť číslo vo font=(…)"], ["bold", "Pridať 'bold' do font"], ["fill", "fill='white'"], ["anchor", "anchor='w'"], ["nl", "Vložiť \\n do textu"], ["order", "Presunúť create_text nižšie"], ["str", "text='Body: ' + str(body)"]];
 const TASKS = {
   c_txt: { id: "c_txt", type: "custom", max: 3 }, c_anc: { id: "c_anc", type: "custom", max: 3 }, c_proj: { id: "c_proj", type: "custom", max: 2 },
   tq: { id: "tq", type: "mc", qs: [
@@ -459,6 +464,16 @@ const TASKS = {
     { id: "1", ...Q("anchor='nw' znamená, že bod (x, y) je:", ["ľavý horný roh textu", "stred textu", "pravý dolný roh", "ľavý dolný roh"], 0) },
     { id: "2", ...Q("Ktoré ukotvenie zarovná viac riadkov pod sebou doľava?", ["anchor='w'", "anchor='e'", "anchor='center'", "anchor='s'"], 0) },
     { id: "3", ...Q("Svetové strany v anchor:", ["n sever (hore), s juh (dole), w západ (vľavo), e východ (vpravo)", "n = nula", "s = stred", "w = šírka"], 0) }
+  ]},
+  g_sit: { id: "g_sit", type: "custom", max: 7 },
+  psort: {"id": "psort", "type": "sort", "buckets": [{"id": "f", "label": "fill"}, {"id": "o", "label": "font"}, {"id": "a", "label": "anchor"}, {"id": "t", "label": "text"}], "items": [{"id": "1", "t": "'navy'", "b": "f"}, {"id": "2", "t": "Farba písma", "b": "f"}, {"id": "3", "t": "('Arial', 24)", "b": "o"}, {"id": "4", "t": "Veľkosť a typ písma", "b": "o"}, {"id": "5", "t": "'nw'", "b": "a"}, {"id": "6", "t": "Ktorý bod textu leží v (x, y)", "b": "a"}, {"id": "7", "t": "'Ahoj'", "b": "t"}, {"id": "8", "t": "Obsah nápisu", "b": "t"}]},
+  asort: {"id": "asort", "type": "sort", "buckets": [{"id": "w", "label": "anchor='w'"}, {"id": "e", "label": "anchor='e'"}, {"id": "c", "label": "anchor='center'"}], "items": [{"id": "1", "t": "Zoznam mien zarovnaný doľava pod sebou", "b": "w"}, {"id": "2", "t": "Text začína presne v bode (x, y)", "b": "w"}, {"id": "3", "t": "Čísla v stĺpci zarovnané doprava", "b": "e"}, {"id": "4", "t": "Text končí presne v bode (x, y)", "b": "e"}, {"id": "5", "t": "Nadpis v strede plochy", "b": "c"}, {"id": "6", "t": "Číslo v strede kruhu", "b": "c"}]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Plocha má rozmery 400 × 300. Na akom x je jej stred?", ok: v => Math.abs(parseNum(v) - 200) <= 0, show: "200", ph: "?" },
+    { id: "2", q: "Na akom y je stred plochy?", ok: v => Math.abs(parseNum(v) - 150) <= 0, show: "150", ph: "?" },
+    { id: "3", q: "Zoznam: prvý riadok má y = 50, každý ďalší je o 30 nižšie. Aké y má 4. riadok?", ok: v => Math.abs(parseNum(v) - 140) <= 0, show: "140", ph: "?" },
+    { id: "4", q: "Vizitka je obdĺžnik (20, 20, 320, 200). Na akom x je jej stred?", ok: v => Math.abs(parseNum(v) - 170) <= 0, show: "170", ph: "?" },
+    { id: "5", q: "Na akom y je stred vizitky?", ok: v => Math.abs(parseNum(v) - 110) <= 0, show: "110", ph: "?" }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Príkaz na text v grafickej ploche:", ["canvas.create_text(x, y, text='…')", "canvas.print('…')", "print(x, y)", "canvas.write('…')"], 0) },
@@ -473,16 +488,27 @@ const VIEWS = {
     <div class="theory"><div class="pcode">canvas.create_text(x, y, text='Ahoj', font=('Arial', 24, 'bold'), fill='navy')</div>
       <table class="cmdt"><thead><tr><th>Parameter</th><th>Význam</th></tr></thead><tbody><tr><td><code>text</code></td><td>zobrazený text (reťazec alebo číslo), nový riadok <code>\\n</code></td></tr><tr><td><code>font</code></td><td>trojica (písmo, veľkosť, rez): rez 'bold', 'italic', 'underline' alebo kombinácia</td></tr><tr><td><code>fill</code></td><td>farba textu</td></tr><tr><td><code>anchor</code></td><td>ktorým bodom je text ukotvený v (x, y)</td></tr></tbody></table></div>
     <h3>Úlohy</h3>${chalHTML("c_txt", "txt")}${ideHTML("txt", PRE + "canvas.create_text(200, 150, text='Ahoj, svet!')\n")}
-    <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>
+    <h3>Úloha 2: ktorý parameter?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(),
   anchor: () => head() + `<h2>Ukotvenie textu (anchor)</h2>
     <div class="theory"><p>Parameter <code>anchor</code> určuje, ktorý bod textu leží v (x, y). Hodnoty sú svetové strany: <code>'n'</code> (hore v strede), <code>'s'</code> (dole), <code>'w'</code> (vľavo), <code>'e'</code> (vpravo), rohy <code>'nw'</code>, <code>'ne'</code>, <code>'sw'</code>, <code>'se'</code> a predvolený <code>'center'</code>. Na zoznamy a tabuľky sa hodí <code>anchor='w'</code>: všetky riadky začínajú v tom istom x.</p>
       <svg viewBox="0 0 300 120" style="max-width:420px;display:block;margin:8px auto"><rect x="75" y="35" width="150" height="50" fill="#EEF2F8" stroke="#99A"/>${[["nw", 75, 35], ["n", 150, 35], ["ne", 225, 35], ["w", 75, 60], ["center", 150, 60], ["e", 225, 60], ["sw", 75, 85], ["s", 150, 85], ["se", 225, 85]].map(([k, x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="#C0392B"/><text x="${x + (x === 75 ? -8 : x === 225 ? 8 : 0)}" y="${y + (y === 35 ? -8 : y === 85 ? 16 : 4)}" font-size="11" text-anchor="${x === 75 ? "end" : x === 225 ? "start" : "middle"}" fill="#333">${k}</text>`).join("")}<text x="150" y="65" text-anchor="middle" font-size="15" font-weight="700">Text</text></svg></div>
     <h3>Úlohy</h3>${chalHTML("c_anc", "anc")}${ideHTML("anc", PRE + "canvas.create_text(10, 10, text='Vľavo hore', anchor='nw')\n")}
-    <h3>Otázky</h3><div class="task">${taskHTML("aq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("aq")}</div>
+    <h3>Úloha 2: aké ukotvenie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("asort")}</div>` + nextBar(),
   projekty: () => head() + `<h2>Vizitka a pozvánka</h2><div class="theory"><p>Spoj tvary a text. Najprv pozadie a tvary, nakoniec text navrch. Dbaj na čitateľnosť: kontrast farieb, primeraná veľkosť písma, najviac 2 až 3 písma.</p></div>
     <h3>Úlohy</h3>${chalHTML("c_proj", "proj")}${ideHTML("proj", PRE)}` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: text na správnom mieste</h2>
+    <div class="theory"><p>Text v grafickej ploche ovplyvňujú štyri veci: <b>kde</b> je (x, y a ukotvenie anchor), <b>čo</b> obsahuje (text, nový riadok &#92;n, čísla prevedené str()), <b>ako vyzerá</b> (font: písmo, veľkosť, bold, italic a fill: farba) a <b>či ho vidno</b> (text kresli až po tvaroch, inak ho prekryjú). Pri centrovaní do obdĺžnika vypočítaj jeho stred: ((x1 + x2) / 2, (y1 + y2) / 2).</p><p>Pri každom probléme vyber opravu a potom vypočítaj súradnice.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: počítaj súradnice</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -501,7 +527,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -591,8 +617,10 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
+function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });

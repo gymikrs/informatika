@@ -274,7 +274,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"python": ["Python: Guido van Rossum, 1991, zadarmo, interpretovaný, čitateľná syntax, veľa knižníc (AI, dáta, web, veda)."], "instalacia": ["python.org › Downloads; vo Windows zaškrtni Add python.exe to PATH; overenie: python --version; pip install balík."], "idle": ["IDLE: Shell (>>>) na skúšanie, Editor (File › New File) na program .py, spustenie Run › Run Module (F5)."], "shell": ["V Shelli sa výsledok výrazu vypíše hneď; chybové hlásenie ukáže typ chyby a riadok."], "program": ["print vypisuje, input vráti reťazec; číslo: int(input(…)); reťazce spájame +."]};
+const THEORY = {"precvic": ["SyntaxError = zápis (úvodzovka, zátvorka). NameError = neznáme meno (preklep, veľké písmeno). TypeError = zlé typy.", "input() vracia reťazec, na čísla použi int(input(…)). Program ulož ako .py a spusti F5."], "python": ["Python: Guido van Rossum, 1991, zadarmo, interpretovaný, čitateľná syntax, veľa knižníc (AI, dáta, web, veda)."], "instalacia": ["python.org › Downloads; vo Windows zaškrtni Add python.exe to PATH; overenie: python --version; pip install balík."], "idle": ["IDLE: Shell (>>>) na skúšanie, Editor (File › New File) na program .py, spustenie Run › Run Module (F5)."], "shell": ["V Shelli sa výsledok výrazu vypíše hneď; chybové hlásenie ukáže typ chyby a riadok."], "program": ["print vypisuje, input vráti reťazec; číslo: int(input(…)); reťazce spájame +."]};
 /* ===================== mini Python interpreter (subset) ===================== */
 const PY = (() => {
 class PyErr { constructor(type, msg, line) { this.type = type; this.msg = msg; this.line = line; } }
@@ -603,23 +603,26 @@ return { execute, fmtErr, repr, str, NONE };
 
 /* shared Python (py.js) helpers for r211/r212 */
 const pnorm = s => String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().split("\n").map(l => l.replace(/\s+/g, " ").trim()).join("\n").replace(/\n+$/, "").replace(/^\n+/, "");
-function pyRun(src, inputs) { return PY.execute(src, { fs: {}, inputs: inputs ? inputs.slice() : [], quiet: !!inputs, limit: 500000 }); }
+function pyRun(src, inputs, fs) { return PY.execute(src, { fs: fs || {}, inputs: inputs ? inputs.slice() : [], quiet: !!inputs, limit: 500000 }); }
+const fsCopy = f => JSON.parse(JSON.stringify(f || {}));
+function fsHTML(fs, base) { const k = Object.keys(fs).filter(n => !base || base[n] !== fs[n]); return k.length ? k.map(n => `<div style="margin-top:6px"><b>📄 ${esc(n)}</b><div class="pout" style="min-height:0;white-space:pre-wrap">${esc(fs[n])}</div></div>`).join("") : ""; }
 function pyOut(r, src) { const e = r.err ? PY.fmtErr(r.err, src, "program.py") : ""; return esc(r.out) + (e ? `<span class="e">${esc(e)}</span>` : ""); }
 function replHTML() { return `<div class="shell4" id="repl"><span style="color:#666">Python 3 (simulácia IDLE Shell). Napíš príkaz a stlač Enter.</span>\n${(S.repl || []).map(l => `<span class="p">&gt;&gt;&gt; </span>${esc(l.c)}\n${l.o ? `<span class="${l.e ? "e" : "o"}">${esc(l.o)}</span>` : ""}`).join("")}<span class="p">&gt;&gt;&gt; </span><input id="replin" autocomplete="off" spellcheck="false" aria-label="Príkaz pre Shell"></div>`; }
 function replExec(c) { S.repl = S.repl || []; S.replHist = S.replHist || []; const hist = S.replHist.join("\n"), pre = hist ? PY.execute(hist, { fs: {}, inputs: [] }).out : ""; const src = (hist ? hist + "\n" : "") + c, r = PY.execute(src, { fs: {}, inputs: [], echoLine: src.split("\n").length });
   let o = r.out.slice(pre.length); if (r.err) o += PY.fmtErr(r.err, src, "<pyshell>").replace(/File "<pyshell>", line \d+/, 'File "<pyshell>", line 1') + "\n"; else S.replHist.push(c); S.repl.push({ c, o, e: !!r.err }); S.repl = S.repl.slice(-40); return { o, err: r.err }; }
 function exHTML(id, n) { const e = EXE[id], code = S.code[id] !== undefined ? S.code[id] : (e.start || ""), D = S.done[id];
-  return `<div class="task2"><h4>${D ? "✅" : "📝"} Úloha ${n}: ${e.title}</h4><div>${e.text}</div>${e.sample ? `<div class="sample">${esc(e.sample)}</div>` : ""}
+  return `<div class="task2"><h4>${D ? "✅" : "📝"} Úloha ${n}: ${e.title}</h4><div>${e.text}</div>${e.fs ? Object.keys(e.fs).map(n => `<div class="sample"><b>📄 ${esc(n)}</b>\n${esc(e.fs[n])}</div>`).join("") : ""}${e.sample ? `<div class="sample">${esc(e.sample)}</div>` : ""}
     <div class="pide"><textarea data-pe="${id}" spellcheck="false" wrap="off" aria-label="Program">${esc(code)}</textarea><div class="pout" id="po-${id}">${S.lastOut[id] || `<span class="h">Tu sa zobrazí výstup programu.</span>`}</div></div>
     <div class="pbtns"><button class="run" data-prun="${id}">▶ Spustiť (F5)</button><button class="chk" data-pchk="${id}">✔ Skontrolovať</button><button class="ghost" data-preset="${id}">↺ Pôvodný kód</button></div><div class="verdict">${S.verd[id] || ""}</div></div>`; }
 function checkEx(id) { const e = EXE[id], src = S.code[id] !== undefined ? S.code[id] : (e.start || "");
-  for (const t of e.tests) { const r1 = pyRun(src, t), r2 = pyRun(e.ref, t); if (r1.err) return `❌ Program skončil chybou (vstup: ${t.join(", ") || "—"}):<pre style="white-space:pre-wrap;color:#C0392B;font-size:13px">${esc(PY.fmtErr(r1.err, src, "program.py"))}</pre>`;
+  for (const t of e.tests) { const f1 = fsCopy(e.fs), f2 = fsCopy(e.fs), r1 = pyRun(src, t, f1), r2 = pyRun(e.ref, t, f2); if (r1.err) return `❌ Program skončil chybou (vstup: ${t.join(", ") || "—"}):<pre style="white-space:pre-wrap;color:#C0392B;font-size:13px">${esc(PY.fmtErr(r1.err, src, "program.py"))}</pre>`;
     if (e.custom) { const m = e.custom(r1.out, src); if (m !== true) return "❌ " + m; continue; }
+    if (e.fout) { const a = (f1[e.fout] || "").replace(/\s+$/, ""), b = (f2[e.fout] || "").replace(/\s+$/, ""); if (a !== b) return `❌ Obsah súboru <code>${esc(e.fout)}</code> nesedí.<div class="pide"><div><b>Očakávaný:</b><div class="pout" style="min-height:0;white-space:pre-wrap">${esc(b)}</div></div><div><b>Tvoj:</b><div class="pout" style="min-height:0;white-space:pre-wrap">${esc(f1[e.fout] === undefined ? "(súbor neexistuje)" : a)}</div></div></div>`; if (!e.cmpOut) continue; }
     if (pnorm(r1.out) !== pnorm(r2.out)) return `❌ Výstup nesedí (vstup: ${t.join(", ") || "—"}).<div class="pide"><div><b>Očakávaný:</b><div class="pout" style="min-height:0">${esc(r2.out)}</div></div><div><b>Tvoj:</b><div class="pout" style="min-height:0">${esc(r1.out)}</div></div></div>`; }
   return true; }
 function pyClick(e) { const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   const grab = id => { const ta = document.querySelector(`[data-pe="${id}"]`); if (ta) S.code[id] = ta.value; };
-  if (ds.prun) { const id = ds.prun; grab(id); const src = S.code[id] !== undefined ? S.code[id] : (EXE[id].start || ""); const r = PY.execute(src, { fs: {}, limit: 500000 }); S.lastOut[id] = pyOut(r, src) || `<span class="h">(program nič nevypísal)</span>`; save(); render(false); return true; }
+  if (ds.prun) { const id = ds.prun; grab(id); const src = S.code[id] !== undefined ? S.code[id] : (EXE[id].start || ""); const f0 = fsCopy(EXE[id].fs), r = PY.execute(src, { fs: f0, limit: 500000 }); S.lastOut[id] = (pyOut(r, src) || `<span class="h">(program nič nevypísal)</span>`) + fsHTML(f0, EXE[id].fs); save(); render(false); return true; }
   if (ds.pchk) { const id = ds.pchk; grab(id); const m = checkEx(id); if (m === true) { S.done[id] = true; S.verd[id] = `<div class="fb ok">✅ Výborne! Program prešiel všetkými testami.</div>`; const g = EXE[id].group; award(g, Object.keys(EXE).filter(k => EXE[k].group === g && S.done[k]).length); } else S.verd[id] = `<div class="fb bad">${m}</div>`; save(); render(false); return true; }
   if (ds.preset) { delete S.code[ds.preset]; S.lastOut[ds.preset] = ""; S.verd[ds.preset] = ""; save(); render(false); return true; }
   return false; }
@@ -667,13 +670,14 @@ const STEPS = [
   { id: "idle", title: "Prostredie IDLE", min: 6 },
   { id: "shell", title: "Prvé príkazy v Shelli", min: 9 },
   { id: "program", title: "Prvý program", min: 10 },
+  { id: "precvic", title: "Precvičovanie: prvé chyby", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { python: ["pq"], instalacia: ["g_inst"], idle: ["f_idle"], shell: ["g_sh"], program: ["ex1"], test: ["test"] };
+const STEP_TASKS = { python: ["pq"], instalacia: ["g_inst"], idle: ["f_idle", "isort"], shell: ["g_sh", "sin"], program: ["ex1"], precvic: ["g_sit"], test: ["test"] };
 const START = {
   kicker: "Informatika, 3. ročník",
-  lead: "Doteraz sme v Pythone kreslili. Teraz sa pozrieme na Python ako na jazyk: kto ho vytvoril, prečo je taký obľúbený, ako si ho nainštaluješ doma a ako pracovať v prostredí IDLE. V skutočnom (simulovanom) Shelli vyskúšaš prvé príkazy a napíšeš prvý program so vstupom od používateľa. 5 zastávok, body a na konci výsledok.",
+  lead: "Doteraz sme v Pythone kreslili. Teraz sa pozrieme na Python ako na jazyk: kto ho vytvoril, prečo je taký obľúbený, ako si ho nainštaluješ doma a ako pracovať v prostredí IDLE. V skutočnom (simulovanom) Shelli vyskúšaš prvé príkazy a napíšeš prvý program so vstupom od používateľa. 6 zastávok, body a na konci výsledok.",
   guessQ: "Podľa čoho dostal Python meno?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Podľa hada pytóna", "Podľa britskej komediálnej skupiny Monty Python", "Podľa gréckeho boha", "Je to skratka"],
@@ -706,6 +710,8 @@ const EXE = {
   e3: { group: "ex1", title: "Dvojnásobok", text: "Program prečíta celé číslo (<code>int(input('Zadaj číslo: '))</code>) a vypíše <code>Dvojnásobok je …</code>.", sample: "Zadaj číslo: 21\nDvojnásobok je 42", start: "", ref: "n = int(input('Zadaj číslo: '))\nprint('Dvojnásobok je', 2 * n)", tests: [["21"], ["0"], ["-5"]] }
 };
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const PX_I = [["<code>print('Ahoj)</code>", "quote", ""], ["<code>print('Ahoj'</code>", "paren", ""], ["<code>pritn('Ahoj')</code>", "typo", ""], ["<code>vek = input('Vek? ')</code> a potom <code>vek + 1</code> hlási TypeError.", "int", "input vráti reťazec"], ["Príkaz python --version v príkazovom riadku nefunguje.", "path", ""], ["Program je napísaný, ale ešte nie je uložený.", "save", ""], ["<code>Print('Ahoj')</code>", "case", "Python rozlišuje veľké a malé písmená"], ["Program je uložený a chceš ho spustiť.", "f5", ""]];
+const PX_O = [["", "— vyber —"], ["quote", "Doplniť úvodzovku"], ["paren", "Doplniť zátvorku"], ["typo", "Opraviť preklep (NameError)"], ["int", "Previesť vstup: int(input(…))"], ["path", "Preinštalovať so zaškrtnutým Add python.exe to PATH"], ["save", "Uložiť ako súbor .py"], ["case", "Písať print malými písmenami"], ["f5", "Run › Run Module (F5)"]];
 const TASKS = {
   pq: { id: "pq", type: "mc", qs: [
     { id: "1", ...Q("Kto a kedy vytvoril Python?", ["Guido van Rossum, prvá verzia 1991", "Linus Torvalds, 1991", "Bill Gates, 1985", "Google, 2010"], 0) },
@@ -717,6 +723,14 @@ const TASKS = {
   f_idle: { id: "f_idle", type: "custom", max: 4 },
   g_sh: { id: "g_sh", type: "custom", max: 4 },
   ex1: { id: "ex1", type: "custom", max: 3 },
+  g_sit: { id: "g_sit", type: "custom", max: 8 },
+  isort: {"id": "isort", "type": "sort", "buckets": [{"id": "s", "label": "Shell (>>>)"}, {"id": "e", "label": "Editor (súbor .py)"}], "items": [{"id": "1", "t": "Rýchlo vyskúšať 2 ** 100", "b": "s"}, {"id": "2", "t": "Zistiť hodnotu premennej", "b": "s"}, {"id": "3", "t": "Príkaz sa vykoná hneď po Enter", "b": "s"}, {"id": "4", "t": "Výzva >>>", "b": "s"}, {"id": "5", "t": "Celý program na viac riadkov", "b": "e"}, {"id": "6", "t": "Uložiť program ako súbor", "b": "e"}, {"id": "7", "t": "Spustiť cez F5", "b": "e"}, {"id": "8", "t": "Program na neskoršie použitie", "b": "e"}]},
+  sin: { id: "sin", type: "input", qs: [
+    { id: "1", q: "Čo vypíše Shell po <code>2 + 3 * 4</code>?", ok: v => Math.abs(parseNum(v) - 14) <= 0, show: "14", ph: "?" },
+    { id: "2", q: "Čo vypíše Shell po <code>2 ** 10</code>?", ok: v => Math.abs(parseNum(v) - 1024) <= 0, show: "1024", ph: "?" },
+    { id: "3", q: "Čo vypíše Shell po <code>17 // 5</code>?", ok: v => Math.abs(parseNum(v) - 3) <= 0, show: "3", ph: "?" },
+    { id: "4", q: "Po <code>vek = 16</code> napíšeš <code>vek + 1</code>. Čo vypíše Shell?", ok: v => Math.abs(parseNum(v) - 17) <= 0, show: "17", ph: "?" }
+  ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Oficiálna stránka na stiahnutie Pythonu:", ["python.org", "python.sk", "microsoft.com/python", "pypi.org"], 0) },
     { id: "2", ...Q("Ktorú voľbu treba pri inštalácii vo Windows zaškrtnúť?", ["Add python.exe to PATH", "Install Chrome", "Delete old files", "Disable IDLE"], 0) },
@@ -745,26 +759,38 @@ const VIEWS = {
     <div id="instbox">${instHTML()}</div>` + nextBar(),
   idle: () => head() + `<h2>Prostredie IDLE</h2>
     <div class="theory"><p><b>IDLE</b> má dve okná. <b>Shell</b> (výzva <code>&gt;&gt;&gt;</code>) je interaktívny: príkaz sa vykoná hneď, hodí sa na skúšanie. <b>Editor</b> (File › New File) slúži na celý program, ktorý uložíš ako súbor <code>.py</code> a spustíš cez <b>Run › Run Module</b> (<kbd>F5</kbd>).</p></div>
-    <h3>Preskúmaj IDLE</h3>${efExplore("idle")}<h3>Úloha: nájdi v IDLE</h3>${efFind("idle")}` + nextBar(),
+    <h3>Preskúmaj IDLE</h3>${efExplore("idle")}<h3>Úloha: nájdi v IDLE</h3>${efFind("idle")}
+    <h3>Úloha 2: Shell, alebo Editor?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("isort")}</div>` + nextBar(),
   shell: () => { const G = S.sg; return head() + `<h2>Prvé príkazy v Shelli</h2>
     <div class="theory"><p>Vyskúšaj: <code>print('Ahoj!')</code>, <code>2 + 3 * 4</code>, <code>2 ** 100</code>, <code>vek = 16</code> a potom <code>vek + 1</code>. Ak sa pomýliš (napr. <code>pritn('x')</code>), Python vypíše <b>chybové hlásenie</b>. Nevadí, prečítaj si ho: hovorí, čo je zle.</p></div>
     <div class="task"><ul class="goals" style="list-style:none;padding:0">${[["print", "vypíš text pomocou print"], ["calc", "vypočítaj príklad (napr. 2 + 3 * 4)"], ["var", "vytvor premennú (napr. vek = 16)"], ["err", "vyvolaj a prečítaj si chybové hlásenie"]].map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul></div>
-    ${replHTML()}` + nextBar(); },
+    ${replHTML()}
+    <h3>Úloha 2: predpovedz výsledok</h3><div class="task">${taskHTML("sin")}</div>` + nextBar(); },
   program: () => head() + `<h2>Prvý program</h2>
     <div class="theory"><p>Program je postupnosť príkazov v súbore. <code>print(…)</code> vypisuje, <code>input(text)</code> vypíše otázku, počká na odpoveď a vráti ju ako <b>reťazec</b>. Ak ju chceš použiť ako číslo, preveď ju: <code>int(input(…))</code>. Reťazce spájaš znakom <code>+</code>, v <code>print</code> môžeš hodnoty oddeliť čiarkou.</p></div>
     ${Object.keys(EXE).map((id, i) => exHTML(id, i + 1)).join("")}${S.t.ex1 ? `<div class="checkbar"><span class="score ${S.t.ex1.score < 3 ? "part" : ""}">Úlohy: ${S.t.ex1.score} z 3</span></div>` : ""}` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: prvé chyby</h2>
+    <div class="theory"><p>Chyby sú normálnou súčasťou programovania a Python ti o nich povie. <b>SyntaxError</b> znamená, že zápis nie je správny (chýba úvodzovka, zátvorka, dvojbodka). <b>NameError</b> znamená, že Python nepozná meno (preklep, veľké písmeno, nevytvorená premenná). <b>TypeError</b> znamená, že miešaš nesprávne typy, napríklad reťazec z input() s číslom. Prečítaj si typ chyby a číslo riadka, oprav jednu vec a spusti znova.</p><p>Pri každom probléme vyber opravu.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 8 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 8</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { if (efClick(e) || pyClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, I = S.inst;
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; if (efClick(e) || pyClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, I = S.inst;
   if (ds.in) { if (ds.in === "mac" || ds.in === "src") I.msg = "Tento súbor nie je pre Windows. Vyber inštalátor pre Windows."; if (ds.in === "win") { I.st = 1; I.msg = null; } if (ds.in === "now") I.st = 2; if (ds.in === "again") { I.st = 1; } instScore(); save(); render(false); return true; }
   return false; }
-function CUSTOM_INPUT(e) { if (e.target.dataset && e.target.dataset.path !== undefined) { S.inst.path = e.target.checked; save(); return true; } return pyInput(e); }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; if (e.target.dataset && e.target.dataset.path !== undefined) { S.inst.path = e.target.checked; save(); return true; } return pyInput(e); }
 document.addEventListener("keydown", e => { if (e.target.id !== "cmdin" || e.key !== "Enter") return; e.preventDefault(); const c = e.target.value.trim(); let o;
   if (/^(python|py)\s+(--version|-V)$/i.test(c)) { o = S.inst.path || /^py\b/i.test(c) ? "Python 3.14.0" : "'python' is not recognized as an internal or external command,\noperable program or batch file."; if (!o.startsWith("'")) S.inst.ver = true; }
   else if (/^pip\s+--version$/i.test(c)) o = S.inst.path ? "pip 25.2 from C:\\Users\\ziak\\AppData\\Local\\Programs\\Python\\Lib\\site-packages\\pip" : "'pip' is not recognized as an internal or external command.";
   else if (/^python$/i.test(c)) o = S.inst.path ? "Python 3.14.0 … Type \"help\" for more information.\n>>> (interaktívny režim ukončíš príkazom exit())" : "'python' is not recognized as an internal or external command.";
   else o = `'${c.split(" ")[0]}' is not recognized as an internal or external command.`;
   S.cmd.push({ c, o }); instScore(); save(); render(false); const n = document.getElementById("cmdin"); if (n) n.focus({ preventScroll: true }); });
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -783,7 +809,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -873,8 +899,10 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
+function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
