@@ -191,7 +191,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"snimky": ["Video = rýchly sled snímok + zvuková stopa. fps = snímky za sekundu (film 24, TV 25, hry 60)."], "animacia": ["Animácia vzniká z malých posunov medzi snímkami. Viac snímok a menšie posuny = plynulejší pohyb."], "velkost": ["Rozlíšenie: HD 1280×720, Full HD 1920×1080, 4K 3840×2160; pomer strán 16 : 9.", "Nekomprimovaná veľkosť = šírka × výška × 3 B × fps × sekundy (Full HD 25 fps ≈ 156 MB/s)."], "kompresia": ["Kodek ukladá kľúčové snímky celé a medzi nimi iba zmeny. Kodeky: H.264, H.265, VP9, AV1.", "Kontajner (MP4, MKV, MOV, WebM) obsahuje obraz, zvuk, titulky. Bitrate = údaje za sekundu."]};
+const THEORY = {"precvic": ["Počet snímok = čas × fps. Veľkosť ≈ bitrate × čas; 8 bitov = 1 bajt.", "720p = HD, 1080p = Full HD, 2160p = 4K (4-krát viac pixelov ako Full HD)."], "snimky": ["Video = rýchly sled snímok + zvuková stopa. fps = snímky za sekundu (film 24, TV 25, hry 60)."], "animacia": ["Animácia vzniká z malých posunov medzi snímkami. Viac snímok a menšie posuny = plynulejší pohyb."], "velkost": ["Rozlíšenie: HD 1280×720, Full HD 1920×1080, 4K 3840×2160; pomer strán 16 : 9.", "Nekomprimovaná veľkosť = šírka × výška × 3 B × fps × sekundy (Full HD 25 fps ≈ 156 MB/s)."], "kompresia": ["Kodek ukladá kľúčové snímky celé a medzi nimi iba zmeny. Kodeky: H.264, H.265, VP9, AV1.", "Kontajner (MP4, MKV, MOV, WebM) obsahuje obraz, zvuk, titulky. Bitrate = údaje za sekundu."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -230,13 +230,14 @@ const STEPS = [
   { id: "animacia", title: "Vlastná animácia", min: 9 },
   { id: "velkost", title: "Rozlíšenie a veľkosť", min: 9 },
   { id: "kompresia", title: "Kompresia a kodeky", min: 9 },
+  { id: "precvic", title: "Precvičovanie: nastav a vypočítaj", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { snimky: ["g_fps", "sq"], animacia: ["g_anim"], velkost: ["vin"], kompresia: ["kin", "ksort", "kq"], test: ["test"] };
+const STEP_TASKS = { snimky: ["g_fps", "sq"], animacia: ["g_anim"], velkost: ["vin", "rsort"], kompresia: ["kin", "ksort", "kq"], precvic: ["g_sit", "pxin"], test: ["test"] };
 const START = {
   kicker: "Informatika, Tercia",
-  lead: "Video sa hýbe, ale v skutočnosti je to rýchly sled nehybných obrázkov, snímok. Pozrieš sa, ako vzniká dojem pohybu, nakreslíš vlastnú animáciu, vypočítaš, koľko miesta by zabralo video bez kompresie, a zistíš, ako ho kodeky dokážu zmenšiť stokrát. 4 zastávky, body a na konci výsledok.",
+  lead: "Video sa hýbe, ale v skutočnosti je to rýchly sled nehybných obrázkov, snímok. Pozrieš sa, ako vzniká dojem pohybu, nakreslíš vlastnú animáciu, vypočítaš, koľko miesta by zabralo video bez kompresie, a zistíš, ako ho kodeky dokážu zmenšiť stokrát. 5 zastávok, body a na konci výsledok.",
   guessQ: "Koľko snímok za sekundu má bežný film v kine?",
   guessNote: "Tip sa neboduje. Na zastávke Video = snímky zistíš, či si mal pravdu.",
   guesses: ["1", "10", "24", "1000"],
@@ -270,6 +271,8 @@ function grid(ball, mark) { let s = `<svg viewBox="0 0 ${GW * 20} ${GH * 20}">`;
 
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, tol, why) => ({ id, q, ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - ans) <= tol, show: ans.toLocaleString("sk"), ph: "?", why });
+const PX_I = [["Nahrávaš rýchly futbalový zápas a chceš plynulé spomalené zábery.", "fps60", "viac snímok = plynulejšie spomalenie"], ["Chceš, aby video pôsobilo „filmovo“ ako v kine.", "fps24", ""], ["Video má ísť prehrať na čo najviac zariadeniach.", "mp4", "najrozšírenejšia kombinácia"], ["Na disku máš málo miesta a chceš pri rovnakej kvalite menší súbor.", "h265", "úspornejší kodek"], ["Video bude pozerať niekto na starom mobile s pomalým internetom.", "720", "menej pixelov = menší súbor"], ["Záber sa bude premietať na veľké plátno a chceš čo najviac detailov.", "4k", ""]];
+const PX_O = [["", "— vyber —"], ["fps60", "60 fps"], ["fps24", "24 fps"], ["mp4", "MP4 s kodekom H.264"], ["h265", "Kodek H.265 (HEVC)"], ["720", "Rozlíšenie 720p (HD)"], ["4k", "Rozlíšenie 4K"]];
 const TASKS = {
   g_fps: { id: "g_fps", type: "custom", max: 2 },
   sq: { id: "sq", type: "mc", qs: [
@@ -294,6 +297,14 @@ const TASKS = {
     { id: "3", ...Q("Čo je bitrate videa?", ["množstvo údajov za sekundu (napr. 8 Mb/s)", "počet snímok", "rozlíšenie", "dĺžka videa"], 0) },
     { id: "4", ...Q("Prečo sa video s rýchlym pohybom (šport) komprimuje horšie?", ["medzi snímkami sa mení veľa blokov", "má viac farieb", "je dlhšie", "má hlasnejší zvuk"], 0) }
   ]},
+  g_sit: { id: "g_sit", type: "custom", max: 6 },
+  rsort: {"id": "rsort", "type": "sort", "buckets": [{"id": "hd", "label": "HD"}, {"id": "fhd", "label": "Full HD"}, {"id": "k4", "label": "4K (UHD)"}], "items": [{"id": "1", "t": "1280 × 720", "b": "hd"}, {"id": "2", "t": "720p", "b": "hd"}, {"id": "3", "t": "1920 × 1080", "b": "fhd"}, {"id": "4", "t": "1080p", "b": "fhd"}, {"id": "5", "t": "3840 × 2160", "b": "k4"}, {"id": "6", "t": "2160p", "b": "k4"}]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Video trvá 2 minúty a má 30 fps. Koľko snímok obsahuje?", ok: v => Math.abs(parseNum(v) - 3600) <= 0.5, show: "3 600 snímok (120 s × 30)", ph: "?" },
+    { id: "2", q: "Animácia má 12 snímok a prehráva sa rýchlosťou 6 fps. Koľko sekúnd trvá?", ok: v => Math.abs(parseNum(v) - 2) <= 0.01, show: "2 s", ph: "?" },
+    { id: "3", q: "Bitrate videa je 8 Mb/s. Koľko MB zaberie 1 minúta? (8 bitov = 1 bajt)", ok: v => Math.abs(parseNum(v) - 60) <= 0.5, show: "60 MB (8 Mb/s × 60 s = 480 Mb = 60 MB)", ph: "?" },
+    { id: "4", q: "Koľkokrát viac pixelov má snímka 4K (3840 × 2160) ako Full HD (1920 × 1080)?", ok: v => Math.abs(parseNum(v) - 4) <= 0.01, show: "4-krát (dvakrát širšia aj vyššia)", ph: "?" }
+  ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Digitálne video je:", ["postupnosť snímok a zvuková stopa uložené v číslach", "jeden obrázok", "iba zvuk", "text"], 0) },
     { id: "2", ...Q("Full HD má rozlíšenie:", ["1920 × 1080", "1280 × 720", "3840 × 2160", "640 × 480"], 0) },
@@ -316,7 +327,8 @@ const VIEWS = {
   velkost: () => head() + `<h2>Rozlíšenie a veľkosť videa</h2>
     <div class="theory"><p>Každá snímka je rastrový obrázok s <b>rozlíšením</b>: HD 1280 × 720, <b>Full HD 1920 × 1080</b>, 4K 3840 × 2160. Bežný <b>pomer strán</b> je 16 : 9. Každý pixel má 3 bajty farby (R, G, B). Nekomprimované video je preto obrovské: snímka × fps × sekundy.</p></div>
     <h3>Kalkulačka videa</h3><div class="tool" id="calcbox">${calcHTML()}</div>
-    <h3>Úloha: počítaj (Full HD, 25 fps)</h3><div class="task">${taskHTML("vin")}</div>` + nextBar(),
+    <h3>Úloha: počítaj (Full HD, 25 fps)</h3><div class="task">${taskHTML("vin")}</div>
+    <div class="theory"><p>Rozlíšenie sa často označuje iba <b>počtom riadkov</b> (výškou snímky) a písmenom <b>p</b> (progresívne vykresľovanie, celá snímka naraz): 720p, 1080p, 2160p. Pri pomere 16 : 9 z výšky dopočítaš šírku: 1080 ÷ 9 × 16 = 1920.</p></div><h3>Úloha 2: priraď rozlíšenie</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("rsort")}</div>` + nextBar(),
   kompresia: () => head() + `<h2>Kompresia a kodeky</h2>
     <div class="theory"><p><b>Kodek</b> (kóder a dekóder) video zmenší. Využíva dva triky: v rámci snímky zjednoduší plochy s podobnou farbou (ako JPEG) a medzi snímkami ukladá iba <b>zmeny</b>. Raz za čas uloží celú <b>kľúčovú snímku</b>, ďalšie snímky obsahujú len to, čo sa pohlo. Kodeky: <b>H.264</b> (najrozšírenejší), <b>H.265</b> (úspornejší), <b>VP9</b> a <b>AV1</b> (YouTube, web).</p>
       <p><b>Kontajner</b> (MP4, MKV, MOV, WebM) je „obal“ súboru. Obsahuje obrazovú stopu, zvukovú stopu, titulky a údaje. <b>Bitrate</b> udáva, koľko údajov pripadá na sekundu videa (napr. 8 Mb/s pre Full HD).</p></div>
@@ -324,10 +336,15 @@ const VIEWS = {
     <h3>Úloha 1: zmeny</h3><div class="task">${taskHTML("kin")}</div>
     <h3>Úloha 2: kodek, alebo kontajner?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ksort")}</div>
     <h3>Úloha 3: otázky</h3><div class="task">${taskHTML("kq")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: nastav a vypočítaj</h2>
+    <div class="theory"><p>Veľkosť a kvalitu videa ovplyvňujú štyri veci: <b>rozlíšenie</b> (koľko pixelov má snímka), <b>fps</b> (koľko snímok je za sekundu), <b>kodek</b> (ako dobre sa video zmenší) a <b>bitrate</b> (koľko údajov pripadá na sekundu). Veľkosť súboru približne vypočítaš ako <b>bitrate × čas</b>. Pozor na jednotky: bitrate sa udáva v <b>bitoch</b> (Mb/s), veľkosť súboru v <b>bajtoch</b> (MB) a 1 bajt = 8 bitov. Dvojnásobná šírka aj výška znamená štvornásobný počet pixelov.</p><p>Pri každej situácii vyber vhodné nastavenie a potom počítaj.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function animScore() { let n = 0; if (S.fr.filter(Boolean).length >= 8) n++; if (S.played && S.fr.filter(Boolean).length >= 2) n++; if (n) award("g_anim", n); }
 function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true;
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.fnext !== undefined) { if (!S.fr[S.fi]) return true; S.fi++; save(); render(false); return true; }
   if (ds.fprev !== undefined) { S.fi = Math.max(0, S.fi - 1); save(); render(false); return true; }
@@ -337,13 +354,19 @@ function CUSTOM_CLICK(e) {
   if (ds.aplay !== undefined) { const F = S.fr.filter(Boolean); if (F.length < 2) return true; clearInterval(TMR2); PF = 0; S.played = true; animScore(); save(); TMR2 = setInterval(() => { const c = document.getElementById("acv"); if (!c) return clearInterval(TMR2); drawFrame(c.getContext("2d"), F[PF % F.length], 480, 300); PF++; }, 1000 / S.afps); return true; }
   return false;
 }
-function CUSTOM_INPUT(e) { const t = e.target, ds = t.dataset || {};
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; const t = e.target, ds = t.dataset || {};
   if (ds.fps !== undefined) { S.fps = +t.value; document.getElementById("fpsv").textContent = S.fps; if (S.fps <= 5) S.fg.low = true; if (S.fps === 24) S.fg.film = true; const n = Object.keys(S.fg).length; if (n) award("g_fps", n); save(); startBall(); return true; }
   if (ds.afps !== undefined) { S.afps = +t.value; save(); return true; }
   if (["vr", "vf", "vs", "vb"].includes(t.id)) { const V = S.vc; V.res = document.getElementById("vr").value; V.fps = +document.getElementById("vf").value; V.sec = Math.max(1, +document.getElementById("vs").value || 1); V.br = +document.getElementById("vb").value; save(); document.getElementById("calcbox").innerHTML = calcHTML(); const n = document.getElementById(t.id); if (n) n.focus(); return true; }
   return false; }
 document.addEventListener("click", ev => { const c = ev.target.closest && ev.target.closest("#acv"); if (!c) return; clearInterval(TMR2); const r = c.getBoundingClientRect(); S.fr[S.fi] = [Math.round((ev.clientX - r.left) / r.width * 480), Math.round((ev.clientY - r.top) / r.height * 300)]; animScore(); save(); paintAnim(); });
 setInterval(() => { const b = document.getElementById("ball"); if (b && !b.dataset.on) { b.dataset.on = 1; startBall(); } const a = document.getElementById("acv"); if (a && !a.dataset.on) { a.dataset.on = 1; paintAnim(); } }, 250);
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };

@@ -188,7 +188,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"pojmy": ["Konverzia = prevod do iného formátu (kompatibilita, veľkosť, úprava). Premenovanie prípony nie je konverzia.", "Bezstratové: PNG, WAV, FLAC, ZIP. Stratové: JPEG, MP3, AAC, H.264. Stratené údaje sa nevrátia."], "obrazky": ["Nižšia kvalita JPEG = menší súbor, viac artefaktov. Text a snímky obrazovky ukladaj ako PNG.", "Opakované ukladanie JPEG kvalitu ďalej zhoršuje, preto uchovávaj originál."], "zvuk": ["WAV (CD) ≈ 1 411 kb/s ≈ 10 MB/min; MP3 128 kb/s ≈ 1 MB/min.", "Video: kontajner (MP4), kodek (H.264), rozlíšenie, bitrate. Najkompatibilnejšie MP4 + H.264."], "nastroje": ["Obrázky: Fotografie, GIMP. Zvuk: Audacity. Video: HandBrake, VLC. Dokumenty: Word › Uložiť ako PDF.", "Online konvertory: cudzí server, reklamy, falošné tlačidlá; nie pre osobné údaje."]};
+const THEORY = {"precvic": ["Posielanie a web: stratové formáty. Archív a úpravy: bezstratové. Originál si vždy ponechaj.", "Konverzia kvalitu nepridá: MP3 → WAV ani JPEG → PNG chyby neopraví."], "pojmy": ["Konverzia = prevod do iného formátu (kompatibilita, veľkosť, úprava). Premenovanie prípony nie je konverzia.", "Bezstratové: PNG, WAV, FLAC, ZIP. Stratové: JPEG, MP3, AAC, H.264. Stratené údaje sa nevrátia."], "obrazky": ["Nižšia kvalita JPEG = menší súbor, viac artefaktov. Text a snímky obrazovky ukladaj ako PNG.", "Opakované ukladanie JPEG kvalitu ďalej zhoršuje, preto uchovávaj originál."], "zvuk": ["WAV (CD) ≈ 1 411 kb/s ≈ 10 MB/min; MP3 128 kb/s ≈ 1 MB/min.", "Video: kontajner (MP4), kodek (H.264), rozlíšenie, bitrate. Najkompatibilnejšie MP4 + H.264."], "nastroje": ["Obrázky: Fotografie, GIMP. Zvuk: Audacity. Video: HandBrake, VLC. Dokumenty: Word › Uložiť ako PDF.", "Online konvertory: cudzí server, reklamy, falošné tlačidlá; nie pre osobné údaje."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -227,13 +227,14 @@ const STEPS = [
   { id: "obrazky", title: "Konvertor obrázkov", min: 12 },
   { id: "zvuk", title: "Zvuk a video", min: 8 },
   { id: "nastroje", title: "Nástroje a bezpečnosť", min: 7 },
+  { id: "precvic", title: "Precvičovanie: rozhodni o konverzii", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { pojmy: ["lsort", "cq"], obrazky: ["g_img", "iq"], zvuk: ["zin", "zq"], nastroje: ["nq"], test: ["test"] };
+const STEP_TASKS = { pojmy: ["lsort", "cq"], obrazky: ["g_img", "iq"], zvuk: ["zin", "zq"], nastroje: ["nq", "bsort"], precvic: ["g_sit"], test: ["test"] };
 const START = {
   kicker: "Informatika, Tercia",
-  lead: "Nahrávku z Audacity chceš poslať ako MP3, fotku zmenšiť pre web, video pripraviť pre mobil, referát odovzdať ako PDF. Vždy ide o konverziu formátu. Zistíš, čo sa pri nej deje, prečo sa niekedy stráca kvalita, v skutočnom konvertore porovnáš PNG a JPEG a naučíš sa vybrať správny formát a bezpečný nástroj. 4 zastávky, body a na konci výsledok.",
+  lead: "Nahrávku z Audacity chceš poslať ako MP3, fotku zmenšiť pre web, video pripraviť pre mobil, referát odovzdať ako PDF. Vždy ide o konverziu formátu. Zistíš, čo sa pri nej deje, prečo sa niekedy stráca kvalita, v skutočnom konvertore porovnáš PNG a JPEG a naučíš sa vybrať správny formát a bezpečný nástroj. 5 zastávok, body a na konci výsledok.",
   guessQ: "Pesnička v MP3 znie horšie. Pomôže, keď ju skonvertuješ do bezstratového WAV?",
   guessNote: "Tip sa neboduje. Na zastávke Formát a konverzia zistíš, či si mal pravdu.",
   guesses: ["Áno, kvalita sa vráti", "Nie, stratené údaje sa už nevrátia, súbor bude iba väčší", "Áno, ale iba polovica", "Pesnička zmizne"],
@@ -269,6 +270,8 @@ function resave(n, cb) { let d = S.genImg || makeSrc().toDataURL("image/png"); c
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, tol, why) => ({ id, q, ok: v => Math.abs(parseNum(v) - ans) <= tol, show: String(ans).replace(".", ","), ph: "?", why });
 const CF = ["PDF", "MP3", "JPEG", "PNG", "MP4"];
+const PX_I = [["Pesničku vo WAV (50 MB) chceš poslať kamarátovi cez chat.", "mp3", "MP3 je asi 10-krát menšie"], ["Nahrávku chceš archivovať v plnej kvalite, ale menšiu ako WAV.", "flac", "FLAC je bezstratový"], ["Snímka obrazovky s textom uložená v JPEG má rozmazané písmená.", "png", "konverzia JPEG → PNG artefakty neodstráni"], ["Video z mobilu vo formáte MOV nejde prehrať v školskom počítači.", "mp4", ""], ["Referát chceš poslať tak, aby sa jeho vzhľad nikde nezmenil.", "pdf", ""], ["MP3 v nízkej kvalite chceš „vylepšiť“ konverziou do WAV.", "nie", "stratené údaje sa konverziou nevrátia"]];
+const PX_O = [["", "— vyber —"], ["mp3", "Konvertovať do MP3 (128 – 192 kb/s)"], ["flac", "Konvertovať do FLAC"], ["png", "Urobiť snímku znova a uložiť ju do PNG"], ["mp4", "Konvertovať do MP4 (H.264), napr. v HandBrake"], ["pdf", "Uložiť ako PDF"], ["nie", "Nepomôže, treba nájsť lepší zdroj"]];
 const TASKS = {
   lsort: { id: "lsort", type: "sort",
     buckets: [{ id: "b", label: "💎 Bezstratové" }, { id: "s", label: "✂️ Stratové" }],
@@ -301,6 +304,8 @@ const TASKS = {
     { id: "4", ...Q("Aké je riziko online konvertorov?", ["súbor nahrávaš na cudzí server, môžu tam byť reklamy, podvodné tlačidlá Stiahnuť a vírusy", "žiadne", "sú vždy pomalé", "fungujú iba v noci"], 0) },
     { id: "5", ...Q("Aký súbor nikdy nenahráš do neznámeho online konvertora?", ["dokument s osobnými údajmi (vysvedčenie, občiansky preukaz)", "vlastnú kresbu", "pesničku, ktorú si nahral", "prázdny súbor"], 0) }
   ]},
+  g_sit: { id: "g_sit", type: "custom", max: 6 },
+  bsort: {"id": "bsort", "type": "sort", "buckets": [{"id": "y", "label": "✅ Bezpečný postup"}, {"id": "n", "label": "⚠️ Riziko"}], "items": [{"id": "1", "t": "Konvertujem v overenom programe v počítači", "b": "y"}, {"id": "2", "t": "Pred konverziou si ponechám originál", "b": "y"}, {"id": "3", "t": "Po konverzii skontrolujem, či súbor ide prehrať", "b": "y"}, {"id": "4", "t": "Kliknem na veľké zelené „Stiahnuť“ na stránke plnej reklám", "b": "n"}, {"id": "5", "t": "Nahrám sken dokladu totožnosti do neznámeho online konvertora", "b": "n"}, {"id": "6", "t": "Originál po konverzii hneď vymažem", "b": "n"}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Bezstratová kompresia:", ["zmenší súbor bez straty údajov", "vždy zmaže časť údajov", "zväčší súbor", "zmení farby"], 0) },
     { id: "2", ...Q("Ktorý formát je stratový?", ["JPEG", "PNG", "FLAC", "ZIP"], 0) },
@@ -331,18 +336,30 @@ const VIEWS = {
   nastroje: () => head() + `<h2>Nástroje a bezpečnosť</h2>
     <div class="theory"><table><thead><tr><th>Čo konvertujem</th><th>Nástroj</th></tr></thead><tbody><tr><td>obrázky</td><td>Fotografie, Skicár (Uložiť ako), GIMP (Exportovať ako)</td></tr><tr><td>zvuk</td><td>Audacity (Exportovať), VLC</td></tr><tr><td>video</td><td>HandBrake, VLC (Médiá › Konvertovať/Uložiť), Clipchamp</td></tr><tr><td>dokumenty</td><td>Word (Uložiť ako PDF), Tlačiť do PDF</td></tr></tbody></table>
       <p><b>Online konvertory</b> sú pohodlné, ale súbor nahrávaš na <b>cudzí server</b>. Často majú veľa reklám a <b>falošné tlačidlá „Stiahnuť“</b>, ktoré ponúkajú škodlivé programy. Nepoužívaj ich na súbory s <b>osobnými údajmi</b> a radšej siahni po overenom programe.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("nq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("nq")}</div>
+    <div class="theory"><p><b>Zlaté pravidlo konverzie:</b> vždy si ponechaj <b>originál</b>. Pri stratovej konverzii sa časť údajov nenávratne stratí, a keby výsledok nevyhovoval, z originálu ho urobíš znova. Po konverzii súbor <b>otvor a skontroluj</b>.</p></div>
+    <h3>Úloha 2: bezpečný postup, alebo riziko?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("bsort")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: rozhodni o konverzii</h2>
+    <div class="theory"><p>Pred každou konverziou si odpovedz: <b>Načo súbor potrebujem?</b> (poslať, archivovať, upravovať, prehrať) <b>Smiem stratiť kvalitu?</b> Na posielanie a web stačí stratový formát (MP3, JPEG, MP4). Na archív a ďalšie úpravy volíme bezstratový (WAV, FLAC, PNG). Dôležité je vedieť, že <b>konverzia kvalitu nikdy nepridá</b>: zo stratového súboru prevodom do bezstratového formátu získaš iba väčší súbor s rovnakými chybami.</p><p>Pri každej situácii vyber najlepší postup.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function imgScore() { const n = ["png", "low", "gen"].filter(k => S.gl[k]).length; if (n) award("g_img", n); }
 function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true;
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.fmt) { S.fmt = ds.fmt; if (ds.fmt === "png") S.gl.png = true; imgScore(); save(); render(false); return true; }
   if (ds.gen !== undefined) { resave(1, d => { S.genImg = d; S.genN++; if (S.genN >= 5) { S.gl.gen = true; imgScore(); } save(); render(false); }); return true; }
   if (ds.genr !== undefined) { S.genImg = null; S.genN = 0; save(); render(false); return true; }
   return false;
 }
-function CUSTOM_INPUT(e) { if (e.target.dataset && e.target.dataset.q !== undefined) { S.q = +e.target.value; if (S.q <= 20) { S.gl.low = true; imgScore(); } save(); document.getElementById("convbox").innerHTML = convHTML(); const n = document.querySelector("[data-q]"); if (n) n.focus(); return true; } return false; }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; if (e.target.dataset && e.target.dataset.q !== undefined) { S.q = +e.target.value; if (S.q <= 20) { S.gl.low = true; imgScore(); } save(); document.getElementById("convbox").innerHTML = convHTML(); const n = document.querySelector("[data-q]"); if (n) n.focus(); return true; } return false; }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
