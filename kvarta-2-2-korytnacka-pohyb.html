@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>2.2 IDLE a korytnačia grafika</title>
+<title>2.2 IDLE a korytnačia grafika: vytvorenie korytnačky, príkazy na pohyb</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -241,12 +241,12 @@ const STEPS = [
   { id: "pohyb", title: "Dopredu a dozadu", min: 7 },
   { id: "otacanie", title: "Otáčanie", min: 8 },
   { id: "predpoved", title: "Čo nakreslí?", min: 6 },
-  { id: "kreslime", title: "Kreslíme v Shelli", min: 12 },
+  { id: "kreslime", title: "Kreslíme v Shelli", min: 20 },
   { id: "chyby", title: "Časté chyby", min: 5 },
   { id: "test", title: "Záverečný test", min: 6 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { korytnacka: ["kor"], pohyb: ["kroky", "pohq"], otacanie: ["smer"], predpoved: ["pred"], kreslime: ["draw"], chyby: ["chyby"], test: ["test"] };
+const STEP_TASKS = { korytnacka: ["kor"], pohyb: ["kroky", "pohq", "kin2"], otacanie: ["smer", "uhly"], predpoved: ["pred"], kreslime: ["draw"], chyby: ["chyby"], test: ["test"] };
 const START = {
   kicker: "Informatika, Kvarta",
   lead: "Dnes v Pythone vytvoríš korytnačku a naučíš ju chodiť: dopredu, dozadu, otáčať sa vpravo a vľavo. Pracovať budeš v príkazovom režime v okne Shell. Každý príkaz sa hneď vykoná a korytnačka za sebou kreslí čiaru. Na konci nakreslíš štvorec, trojuholník aj domček. 7 zastávok, body a na konci výsledok.",
@@ -351,7 +351,12 @@ const TARGETS = {
   trojuholnik: { n: "Trojuholník", d: "rovnostranný, strana 100", p: R(3, [["fd", 100], ["rt", 120]]) },
   obdlznik: { n: "Obdĺžnik", d: "160 × 80", p: [["fd", 160], ["rt", 90], ["fd", 80], ["rt", 90], ["fd", 160], ["rt", 90], ["fd", 80], ["rt", 90]] },
   domcek: { n: "Domček", d: "štvorec + strecha, strany 100", p: [...R(4, [["fd", 100], ["rt", 90]]).slice(0, 7), ["rt", 30], ["fd", 100], ["rt", 120], ["fd", 100]] },
-  schody: { n: "Schody", d: "3 schody po 40", p: R(3, [["fd", 40], ["lt", 90], ["fd", 40], ["rt", 90]]) }
+  schody: { n: "Schody", d: "3 schody po 40", p: R(3, [["fd", 40], ["lt", 90], ["fd", 40], ["rt", 90]]) },
+  patuholnik: { n: "Päťuholník", d: "pravidelný, strana 80, otáčaj o 72°", p: R(5, [["fd", 80], ["rt", 72]]) },
+  sestuholnik: { n: "Šesťuholník", d: "pravidelný, strana 60, otáčaj o 60°", p: R(6, [["fd", 60], ["rt", 60]]) },
+  hviezda: { n: "Hviezda", d: "5 cípov, strana 120, otáčaj o 144°", p: R(5, [["fd", 120], ["rt", 144]]) },
+  kosostvorec: { n: "Kosoštvorec", d: "strana 100, uhly 60° a 120°", p: [["fd", 100], ["rt", 60], ["fd", 100], ["rt", 120], ["fd", 100], ["rt", 60], ["fd", 100]] },
+  cikcak: { n: "Cik-cak", d: "4 zuby, strana 50, otáčaj o 90°", p: [["lt", 45], ...R(4, [["fd", 50], ["rt", 90], ["fd", 50], ["lt", 90]])] }
 };
 TARGETS.domcek.p = [["fd", 100], ["rt", 90], ["fd", 100], ["rt", 90], ["fd", 100], ["rt", 90], ["fd", 100], ["rt", 30], ["fd", 100], ["rt", 120], ["fd", 100]];
 
@@ -384,13 +389,24 @@ const TASKS = {
     { id: "6", q: "O koľko stupňov sa musí korytnačka otočiť, aby sa pozerala presne opačne?", opts: ["90", "180", "270", "360"], a: 1 }
   ]},
   pred: { id: "pred", type: "custom", max: PRED.length },
-  draw: { id: "draw", type: "custom", max: 5 },
+  draw: { id: "draw", type: "custom", max: 10 },
   chyby: { id: "chyby", type: "mc", qs: [
     { id: "1", q: "<code>&gt;&gt;&gt; fd(100)</code> vypíše <span style=\"color:#D10000\">NameError: name 'fd' is not defined</span>. Čo chýba?", opts: ["Najprv treba zadať from turtle import *", "Chýba medzera pred zátvorkou", "Číslo 100 je príliš veľké", "Treba písať FD(100)"], a: 0 },
     { id: "2", q: "Po <code>&gt;&gt;&gt; reset</code> sa plocha nezmazala a Python vypísal &lt;function reset at …&gt;. Prečo?", opts: ["Chýbajú prázdne zátvorky: reset()", "Príkaz reset neexistuje", "Treba počkať", "Treba ho napísať dvakrát"], a: 0 },
     { id: "3", q: "<code>&gt;&gt;&gt; fd()</code> vypíše TypeError … missing 1 required positional argument. Čo je zle?", opts: ["Chýba počet krokov v zátvorke", "Chýba bodkočiarka", "fd sa píše bez zátvoriek", "Korytnačka je skrytá"], a: 0 },
     { id: "4", q: "<code>&gt;&gt;&gt; Fd(100)</code> vypíše NameError. Prečo?", opts: ["Python rozlišuje veľké a malé písmená", "Chýba import", "100 nie je číslo", "Korytnačka stojí pri okraji"], a: 0 },
     { id: "5", q: "Ktorý zápis je správny?", opts: ["fd(50)", "fd 50", "fd[50]", "fd:50"], a: 0, why: "Zápis fd (50) s medzerou síce tiež funguje, ale zvykni si písať zátvorku hneď za názov príkazu. Predídeš tým chybám ako pen color('red')." }
+  ]},
+  kin2: { id: "kin2", type: "input", qs: [
+    { id: "1", q: "Korytnačka vykoná <code>fd(100)</code>, <code>bk(30)</code>, <code>fd(50)</code>. Ako ďaleko od začiatku je?", ok: v => parseNum(v) === 120, show: "120", ph: "?" },
+    { id: "2", q: "Po <code>fd(80)</code> a <code>bk(80)</code>: ako ďaleko od začiatku je?", ok: v => parseNum(v) === 0, show: "0", ph: "?" },
+    { id: "3", q: "Koľko krokov dokopy prejde korytnačka pri <code>fd(60)</code>, <code>bk(20)</code>, <code>fd(40)</code>?", ok: v => parseNum(v) === 120, show: "120", ph: "?" }
+  ]},
+  uhly: { id: "uhly", type: "input", qs: [
+    { id: "1", q: "O koľko stupňov sa otočí korytnačka pri kreslení <b>štvorca</b> v každom rohu?", ok: v => parseNum(v) === 90, show: "90", ph: "?" },
+    { id: "2", q: "O koľko stupňov pri <b>rovnostrannom trojuholníku</b>?", ok: v => parseNum(v) === 120, show: "120", ph: "?", why: "Korytnačka sa otáča o vonkajší uhol: 360 ÷ 3 = 120." },
+    { id: "3", q: "O koľko stupňov pri <b>pravidelnom šesťuholníku</b>?", ok: v => parseNum(v) === 60, show: "60", ph: "?", why: "360 ÷ 6 = 60." },
+    { id: "4", q: "Koľko stupňov má celé otočenie dookola?", ok: v => parseNum(v) === 360, show: "360", ph: "?" }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", q: "Ktorým príkazom povieme Pythonu, že budeme pracovať s korytnačkou?", opts: ["from turtle import *", "import korytnacka", "start turtle", "turtle()"], a: 0 },
@@ -440,7 +456,8 @@ const VIEWS = {
     <p>Skús napríklad <code>fd(100)</code>, <code>bk(50)</code>, <code>fd(-30)</code> a <code>reset()</code>. Viac príkazov naraz oddelíš bodkočiarkou: <code>fd(50); bk(20)</code>.</p>
     ${simHTML("k2")}
     <h3>Úloha 1: koľko krokov?</h3><p>Najprv rieš v hlave alebo na papieri. Potom si to over v Shelli.</p><div class="task">${taskHTML("kroky")}</div>
-    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("pohq")}</div>` + nextBar();
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("pohq")}</div>
+    <h3>Úloha 3: počítaj kroky</h3><div class="task">${taskHTML("kin2")}</div>` + nextBar();
   },
   otacanie() {
     return head() + `<h2>Otáčanie</h2>
@@ -449,7 +466,8 @@ const VIEWS = {
       <figure class="fig compass" style="margin:0">${COMPASS}</figure></div>
     <h3>Vyskúšaj otáčanie</h3><p>Skús: <code>fd(50); rt(90); fd(50)</code>, potom <code>lt(90); fd(50)</code>. Vyskúšaj aj <code>lt(-90)</code>.</p>
     ${simHTML("k3")}
-    <h3>Úloha: kam sa pozerá korytnačka?</h3><div class="task">${taskHTML("smer")}</div>` + nextBar();
+    <h3>Úloha: kam sa pozerá korytnačka?</h3><div class="task">${taskHTML("smer")}</div>
+    <h3>Úloha 2: o koľko sa otočiť?</h3><div class="task">${taskHTML("uhly")}</div>` + nextBar();
   },
   predpoved() {
     const P = S.pred || (S.pred = { ans: {}, done: false }), done = S.t.pred;
@@ -473,7 +491,7 @@ const VIEWS = {
         ${D.sel === "domcek" ? `<p class="muted" style="font-size:14px;margin-top:8px">Tip: domček je štvorec a na ňom trojuholník. Po štvorci sa otoč o 30° a nakresli strechu.</p>` : ""}
         ${D.sel === "schody" ? `<p class="muted" style="font-size:14px;margin-top:8px">Tip: dopredu, vľavo, dopredu, vpravo… a znova.</p>` : ""}</div></div>
     ${simHTML(k)}
-    ${S.t.draw ? `<div class="checkbar"><span class="score ${S.t.draw.score < 5 ? "part" : ""}">Nakreslené útvary: ${S.t.draw.score} z 5</span></div>` : ""}` + nextBar();
+    ${S.t.draw ? `<div class="checkbar"><span class="score ${S.t.draw.score < 10 ? "part" : ""}">Nakreslené útvary: ${S.t.draw.score} z 10</span></div>` : ""}` + nextBar();
   },
   chyby() {
     return head() + `<h2>Časté chyby</h2>
