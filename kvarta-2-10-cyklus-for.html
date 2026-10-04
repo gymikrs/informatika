@@ -271,7 +271,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"opakovanie": ["for i in range(n): opakuje n-krát odsadené telo cyklu; riadok končí dvojbodkou, telo je odsadené 4 medzerami."], "mnohouholniky": ["Pravidelný n-uholník: for i in range(n): fd(d); lt(360 / n). Hviezda: 5 × fd, rt(144)."], "premenna": ["Riadiaca premenná dostáva hodnoty z range: range(5) = 0..4, range(1, 6) = 1..5, range(0, 20, 5) = 0, 5, 10, 15, range(10, 0, -2) odpočítava."], "ulohy": ["Riadiacu premennú použi v príkaze: fd(i * 8) špirála, dot(i * 10) rastúce bodky."]};
+const THEORY = {"precvic": ["Kontrola cyklu: dvojbodka, odsadenie, počet v range, uhol 360 / n.", "Riadiaca premenná vo fd(…) mení každé opakovanie, napr. špirála fd(10 * i)."], "opakovanie": ["for i in range(n): opakuje n-krát odsadené telo cyklu; riadok končí dvojbodkou, telo je odsadené 4 medzerami."], "mnohouholniky": ["Pravidelný n-uholník: for i in range(n): fd(d); lt(360 / n). Hviezda: 5 × fd, rt(144)."], "premenna": ["Riadiaca premenná dostáva hodnoty z range: range(5) = 0..4, range(1, 6) = 1..5, range(0, 20, 5) = 0, 5, 10, 15, range(10, 0, -2) odpočítava."], "ulohy": ["Riadiacu premennú použi v príkaze: fd(i * 8) špirála, dot(i * 10) rastúce bodky."]};
 /* ---------- interpreter ---------- */
 const COLORS = "black white red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray darkgreen darkblue darkred darkgray darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink lawngreen springgreen chartreuse".split(" ");
 function tokenize(s) { const t = []; let i = 0; while (i < s.length) { const c = s[i]; if (c === " ") { i++; continue; } if (/[A-Za-z_]/.test(c)) { let j = i; while (j < s.length && /\w/.test(s[j])) j++; t.push({ v: s.slice(i, j) }); i = j; continue; } if (/[0-9.]/.test(c)) { let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ n: s.slice(i, j) }); i = j; continue; } if (s.startsWith("**", i) || s.startsWith("//", i)) { t.push({ o: s.slice(i, i + 2) }); i += 2; continue; } if ("+-*/%()".includes(c)) { t.push({ o: c }); i++; continue; } throw "syntax"; } return t; }
@@ -433,13 +433,14 @@ const STEPS = [
   { id: "mnohouholniky", title: "Mnohouholníky a hviezda", min: 12 },
   { id: "premenna", title: "Riadiaca premenná", min: 10 },
   { id: "ulohy", title: "Špirála, slnko, bodky", min: 12 },
+  { id: "precvic", title: "Precvičovanie: cyklus bez chýb", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { opakovanie: ["oq"], mnohouholniky: ["c_poly"], premenna: ["rin"], ulohy: ["c_i"], test: ["test"] };
+const STEP_TASKS = { opakovanie: ["oq"], mnohouholniky: ["c_poly", "uin"], premenna: ["rin", "rin2"], ulohy: ["c_i"], precvic: ["g_sit", "pxin"], test: ["test"] };
 const START = {
   kicker: "Informatika, Kvarta",
-  lead: "Štvorec má 4 rovnaké strany, šesťuholník 6, hviezda 5 cípov. Písať ten istý príkaz stále dookola je zbytočné: na opakovanie má Python cyklus for. Naučíš sa ho zapísať, pochopíš úlohu riadiacej premennej a funkcie range a nakreslíš mnohouholníky, hviezdu, špirálu aj slnko s lúčmi. 4 zastávky, body a na konci výsledok.",
+  lead: "Štvorec má 4 rovnaké strany, šesťuholník 6, hviezda 5 cípov. Písať ten istý príkaz stále dookola je zbytočné: na opakovanie má Python cyklus for. Naučíš sa ho zapísať, pochopíš úlohu riadiacej premennej a funkcie range a nakreslíš mnohouholníky, hviezdu, špirálu aj slnko s lúčmi. 5 zastávok, body a na konci výsledok.",
   guessQ: "Čo vypíše for i in range(4): print(i)?",
   guessNote: "Tip sa neboduje. Na zastávke Riadiaca premenná zistíš, či si mal pravdu.",
   guesses: ["1 2 3 4", "0 1 2 3", "4 4 4 4", "0 1 2 3 4"],
@@ -487,6 +488,8 @@ const CHS = {
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const outOf = c => runProg(c, "x.py").out.filter(o => o.o !== undefined).map(o => o.o).join(" ");
 const RQ = [["for i in range(5):\n    print(i)"], ["for i in range(1, 6):\n    print(i)"], ["for i in range(0, 20, 5):\n    print(i)"], ["for i in range(10, 0, -3):\n    print(i)"], ["for i in range(3):\n    print(i * i)"], ["s = 0\nfor i in range(1, 5):\n    s = s + i\nprint(s)"]];
+const PX_I = [["<code>for i in range(4)</code> hlási SyntaxError.", "colon", ""], ["Korytnačka nakreslí 4 čiary v jednom smere, lebo lt(90) je pod for bez odsadenia.", "indent", ""], ["Chceš šesťuholník, ale máš range(5).", "range", ""], ["Päťuholník sa neuzavrie, otáčaš o 90°.", "angle", "360 / 5 = 72°"], ["Špirála má všetky čiary rovnako dlhé, píšeš fd(10).", "var", "napr. fd(10 * i)"], ["Text „Hotovo“ sa vypíše 4-krát, hoci má byť iba raz na konci.", "outside", ""], ["Trojuholník: <code>for i in range(3):</code> a odsadené <code>fd(100)</code>, <code>lt(120)</code>", "ok", ""], ["Hviezda s 5 cípmi: otáčaš o 72°.", "angle", "pri hviezde 144°"]];
+const PX_O = [["", "— vyber —"], ["colon", "Doplniť dvojbodku za for"], ["indent", "Odsadiť telo cyklu"], ["range", "Zmeniť číslo v range"], ["angle", "Zmeniť uhol otočenia"], ["var", "Použiť riadiacu premennú vo fd(…)"], ["outside", "Vysunúť príkaz z cyklu"], ["ok", "Program je správny"]];
 const TASKS = {
   oq: { id: "oq", type: "mc", qs: [
     { id: "1", ...Q("Ako Python pozná, ktoré príkazy patria do tela cyklu?", ["sú odsadené (4 medzery) pod riadkom for", "sú v zátvorkách", "sú na jednom riadku", "sú napísané veľkými písmenami"], 0) },
@@ -496,6 +499,28 @@ const TASKS = {
   c_poly: { id: "c_poly", type: "custom", max: 4 },
   rin: { id: "rin", type: "input", qs: RQ.map(([c], i) => ({ id: String(i + 1), q: `Čo vypíše program? (čísla oddeľ medzerou)<div class="pcode" style="margin-top:6px">${c.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div>`, ok: v => String(v).trim().split(/[\s,;]+/).join(" ") === outOf(P(c)), show: outOf(P(c)), ph: "?" })) },
   c_i: { id: "c_i", type: "custom", max: 3 },
+  g_sit: { id: "g_sit", type: "custom", max: 8 },
+  uin: { id: "uin", type: "input", qs: [
+    { id: "1", q: "O koľko stupňov sa otáča korytnačka pri pravidelnom šesťuholníku?", ok: v => Math.abs(parseNum(v) - 60) <= 0, show: "60°", ph: "?" },
+    { id: "2", q: "Pri pravidelnom osemuholníku?", ok: v => Math.abs(parseNum(v) - 45) <= 0, show: "45°", ph: "?" },
+    { id: "3", q: "Pri pravidelnom desaťuholníku?", ok: v => Math.abs(parseNum(v) - 36) <= 0, show: "36°", ph: "?" },
+    { id: "4", q: "Pri pravidelnom deväťuholníku?", ok: v => Math.abs(parseNum(v) - 40) <= 0, show: "40°", ph: "?" },
+    { id: "5", q: "Pri hviezde s 5 cípmi (korytnačka sa otočí 2-krát dokola)?", ok: v => Math.abs(parseNum(v) - 144) <= 0, show: "144°", ph: "?" }
+  ]},
+  rin2: { id: "rin2", type: "input", qs: [
+    { id: "1", q: "Koľko hodnôt dá range(3, 10)?", ok: v => Math.abs(parseNum(v) - 7) <= 0, show: "7 (3 až 9)", ph: "?" },
+    { id: "2", q: "Aká je posledná hodnota range(0, 20, 5)?", ok: v => Math.abs(parseNum(v) - 15) <= 0, show: "15", ph: "?" },
+    { id: "3", q: "Aký je súčet hodnôt range(1, 5)?", ok: v => Math.abs(parseNum(v) - 10) <= 0, show: "10 (1 + 2 + 3 + 4)", ph: "?" },
+    { id: "4", q: "Aká je prvá hodnota range(10, 0, -2)?", ok: v => Math.abs(parseNum(v) - 10) <= 0, show: "10", ph: "?" }
+  ]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Koľko čiar nakreslí program?<br><code>for i in range(6):<br>&nbsp;&nbsp;&nbsp;&nbsp;fd(50)<br>&nbsp;&nbsp;&nbsp;&nbsp;lt(60)</code>", ok: v => Math.abs(parseNum(v) - 6) <= 0, show: "6", ph: "?" },
+    { id: "2", q: "Aké číslo vypíše ako posledné?<br><code>for i in range(3):<br>&nbsp;&nbsp;&nbsp;&nbsp;print(i)</code>", ok: v => Math.abs(parseNum(v) - 2) <= 0, show: "2", ph: "?" },
+    { id: "3", q: "Aký je súčet hodnôt range(0, 10, 2)?", ok: v => Math.abs(parseNum(v) - 20) <= 0, show: "20 (0 + 2 + 4 + 6 + 8)", ph: "?" },
+    { id: "4", q: "Aká dlhá je posledná čiara?<br><code>for i in range(1, 6):<br>&nbsp;&nbsp;&nbsp;&nbsp;fd(10 * i)<br>&nbsp;&nbsp;&nbsp;&nbsp;lt(90)</code>", ok: v => Math.abs(parseNum(v) - 50) <= 0, show: "50", ph: "?" },
+    { id: "5", q: "Aká je celková dĺžka všetkých čiar v tejto špirále?", ok: v => Math.abs(parseNum(v) - 150) <= 0, show: "150 (10 + 20 + 30 + 40 + 50)", ph: "?" },
+    { id: "6", q: "O koľko stupňov sa korytnačka otočí spolu pri pravidelnom osemuholníku?", ok: v => Math.abs(parseNum(v) - 360) <= 0, show: "360°", ph: "?" }
+  ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Aké hodnoty dá range(2, 6)?", ["2, 3, 4, 5", "2, 3, 4, 5, 6", "3, 4, 5, 6", "2, 6"], 0) },
     { id: "2", ...Q("O koľko stupňov sa otáča korytnačka pri pravidelnom päťuholníku?", ["72 (360 / 5)", "60", "90", "108"], 0) },
@@ -516,21 +541,34 @@ const VIEWS = {
     <h3>Otázky</h3><div class="task">${taskHTML("oq")}</div>` + nextBar(); },
   mnohouholniky() { return head() + `<h2>Mnohouholníky a hviezda</h2>
     <div class="theory"><p>Pri obchádzaní pravidelného n-uholníka sa korytnačka spolu otočí o <b>360°</b>. Pri každom vrchole sa preto otočí o <b>360 / n</b>: štvorec 90°, šesťuholník 60°, osemuholník 45°. Pri hviezde s 5 cípmi sa otočí 2-krát dokola, teda o 720 / 5 = <b>144°</b>. Počet strán môže byť v premennej: <code>for i in range(n):</code>.</p></div>
-    <h3>Úlohy</h3>${chalHTML("c_poly")}` + nextBar(); },
+    <h3>Úlohy</h3>${chalHTML("c_poly")}
+    <h3>Úloha 2: vypočítaj uhly</h3><div class="task">${taskHTML("uin")}</div>` + nextBar(); },
   premenna() { return head() + `<h2>Riadiaca premenná</h2>${guessBox()}
     <div class="theory"><p>Premenná za slovom <code>for</code> je <b>riadiaca premenná</b>. V každom opakovaní dostane ďalšiu hodnotu z <code>range</code>:</p>
       <table class="cmdt"><thead><tr><th>Zápis</th><th>Hodnoty</th></tr></thead><tbody><tr><td><code>range(5)</code></td><td>0, 1, 2, 3, 4 (začína nulou, končí pred 5)</td></tr><tr><td><code>range(1, 6)</code></td><td>1, 2, 3, 4, 5</td></tr><tr><td><code>range(0, 20, 5)</code></td><td>0, 5, 10, 15 (krok 5)</td></tr><tr><td><code>range(10, 0, -2)</code></td><td>10, 8, 6, 4, 2 (odpočítavanie)</td></tr></tbody></table>
       <p>Riadiacu premennú môžeme použiť v tele cyklu, napríklad <code>fd(i * 10)</code> alebo <code>print(i)</code>. Vyskúšaj si to v editore, výpis uvidíš v Shelli.</p></div>
     ${wsHTML("sand2", "05vypis.py", P("for i in range(1, 6):\n    print(i)\n"))}
-    <h3>Úloha: čo vypíše program?</h3><div class="task">${taskHTML("rin")}</div>` + nextBar(); },
+    <h3>Úloha: čo vypíše program?</h3><div class="task">${taskHTML("rin")}</div>
+    <h3>Úloha 2: hodnoty range</h3><div class="task">${taskHTML("rin2")}</div>` + nextBar(); },
   ulohy() { return head() + `<h2>Špirála, slnko, bodky</h2>
     <div class="theory"><p>Keď riadiacu premennú použijeme v príkaze, každé opakovanie nakreslí niečo trochu iné. Tak vzniknú špirály, rastúce bodky či vejáre.</p></div>
     <h3>Úlohy</h3>${chalHTML("c_i")}` + nextBar(); },
+  precvic: () => head() + `<h2>Precvičovanie: cyklus bez chýb</h2>
+    <div class="theory"><p>Pri cykle for sa najčastejšie chybuje v štyroch veciach: chýbajúca <b>dvojbodka</b> za riadkom for, zlé <b>odsadenie</b> (čo je odsadené, opakuje sa, čo nie je, vykoná sa raz po cykle), zlý <b>počet opakovaní</b> v range a zlý <b>uhol</b> (pri n-uholníku 360 / n, pri hviezde 720 / 5). Ak sa má každé opakovanie líšiť, použi <b>riadiacu premennú</b> v príkaze, napríklad fd(10 * i).</p><p>Pri každom programe vyber opravu a potom predpovedz, čo urobí.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 8 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 8</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: predpovedz výsledok</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
-function CUSTOM_CLICK(e) { return helperClick(e); }
-function CUSTOM_INPUT(e) { return helperInput(e); }
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return helperClick(e); }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; return helperInput(e); }
 document.addEventListener("keydown", e => { const t = e.target; if (!(t.dataset && t.dataset.ed) || e.key !== "Tab") return; e.preventDefault(); const s = t.selectionStart; t.value = t.value.slice(0, s) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 4; S.ws[t.dataset.ed].text = t.value; save(); });
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -549,7 +587,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -639,8 +677,10 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
+function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });

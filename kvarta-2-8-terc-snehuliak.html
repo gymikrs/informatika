@@ -271,7 +271,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"terc": ["Priemer kruhu v premennej: <code>pensize(a)</code>, <code>fd(0)</code>, potom <code>a = a - 20</code>.", "Kruhy kreslíme od najväčšieho. Veľkosť terča zmeníš počiatočnou hodnotou a krokom."], "snehuliak": ["<code>a = a / 2</code> zmenší priemer na polovicu (výsledok je desatinné číslo).", "Dotýkajúce sa kruhy: posun o polovicu spodného a polovicu horného priemeru."], "inicialy": ["Všetky dĺžky zapíš pomocou jednej premennej (fd(v), fd(v / 2)…).", "Správnosť overíš zmenou premennej: obrázok sa musí rovnomerne zväčšiť alebo zmenšiť."], "trasovanie": ["Pri delení / je výsledok desatinné číslo, napr. 150 / 2 = 75.0."]};
+const THEORY = {"precvic": ["Kresliť od najväčšieho, presun s pu(), dotyk gúľ = polovica + polovica, zmena premennej po každom kruhu.", "Test: zmeň premennú na dvojnásobok. Celý obrázok sa má rovnomerne zväčšiť."], "terc": ["Priemer kruhu v premennej: <code>pensize(a)</code>, <code>fd(0)</code>, potom <code>a = a - 20</code>.", "Kruhy kreslíme od najväčšieho. Veľkosť terča zmeníš počiatočnou hodnotou a krokom."], "snehuliak": ["<code>a = a / 2</code> zmenší priemer na polovicu (výsledok je desatinné číslo).", "Dotýkajúce sa kruhy: posun o polovicu spodného a polovicu horného priemeru."], "inicialy": ["Všetky dĺžky zapíš pomocou jednej premennej (fd(v), fd(v / 2)…).", "Správnosť overíš zmenou premennej: obrázok sa musí rovnomerne zväčšiť alebo zmenšiť."], "trasovanie": ["Pri delení / je výsledok desatinné číslo, napr. 150 / 2 = 75.0."]};
 /* ---------- interpreter ---------- */
 const COLORS = "black white red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray darkgreen darkblue darkred darkgray darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink lawngreen springgreen chartreuse".split(" ");
 function tokenize(s) { const t = []; let i = 0; while (i < s.length) { const c = s[i]; if (c === " ") { i++; continue; } if (/[A-Za-z_]/.test(c)) { let j = i; while (j < s.length && /\w/.test(s[j])) j++; t.push({ v: s.slice(i, j) }); i = j; continue; } if (/[0-9.]/.test(c)) { let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ n: s.slice(i, j) }); i = j; continue; } if (s.startsWith("**", i) || s.startsWith("//", i)) { t.push({ o: s.slice(i, i + 2) }); i += 2; continue; } if ("+-*/%()".includes(c)) { t.push({ o: c }); i++; continue; } throw "syntax"; } return t; }
@@ -433,13 +433,14 @@ const STEPS = [
   { id: "snehuliak", title: "Snehuliak", min: 11 },
   { id: "inicialy", title: "Iniciály", min: 10 },
   { id: "trasovanie", title: "Trasovanie", min: 5 },
+  { id: "precvic", title: "Precvičovanie: oprav kresbu", min: 9 },
   { id: "test", title: "Záverečný test", min: 6 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { terc: ["c_terc"], snehuliak: ["c_sneh"], inicialy: ["c_ini"], trasovanie: ["trin"], test: ["test"] };
+const STEP_TASKS = { terc: ["c_terc", "tin"], snehuliak: ["c_sneh", "zsort"], inicialy: ["c_ini", "iin"], trasovanie: ["trin"], precvic: ["g_sit", "pxin", "pxq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Kvarta",
-  lead: "Dokončíme pracovný list 3. Terč aj snehuliaka nakreslíš s premennou, ktorá sa postupne zmenšuje, a tak jediným číslom zmeníš veľkosť celého obrázka. Nakoniec nakreslíš svoje iniciály tak, aby sa dali zväčšovať a zmenšovať. 4 zastávky, body a na konci výsledok.",
+  lead: "Dokončíme pracovný list 3. Terč aj snehuliaka nakreslíš s premennou, ktorá sa postupne zmenšuje, a tak jediným číslom zmeníš veľkosť celého obrázka. Nakoniec nakreslíš svoje iniciály tak, aby sa dali zväčšovať a zmenšovať. 5 zastávok, body a na konci výsledok.",
   guessQ: "V premennej a je 150. Čo bude v a po príkaze a = a / 2?",
   guessNote: "Tip sa neboduje. Na zastávke Snehuliak zistíš, či si mal pravdu.",
   guesses: ["75", "75.0", "150", "2"],
@@ -478,9 +479,31 @@ const CHS = {
 const TRPROG = { t: ["a = 80", "a = a - 20", "a = a - 20", "p = 150", "p = p / 2", "p = p / 2", "b = a + p"] };
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, why) => ({ id, q, ok: v => parseNum(v) === ans, show: String(ans), ph: "?", why });
+const PX_I = [["Terč: vidno iba najväčší kruh, menšie sú pod ním schované.", "poradie", "kreslíme od najväčšieho"], ["Medzi písmenami iniciál je spojovacia čiara.", "pu", ""], ["Gule snehuliaka sa prekrývajú.", "pol", ""], ["Všetky kruhy terča majú rovnakú veľkosť.", "zmensi", ""], ["Po zmene v sa jedno písmeno nezväčšilo.", "cislo", "niekde zostalo pevné číslo"], ["Gule snehuliaka sa zmenšujú iba o 2 kroky.", "deleno", ""], ["Všetky kruhy terča sú rovnakej farby.", "farba", ""], ["Pri malom v sú iniciály nečitateľné, lebo medzera zostala 50.", "cislo", ""]];
+const PX_O = [["", "— vyber —"], ["poradie", "Kresliť od najväčšieho kruhu"], ["pu", "Zdvihnúť pero pri presune (pu / pd)"], ["pol", "Posun = polovica spodnej + polovica hornej gule"], ["zmensi", "Po každom kruhu pridať a = a - 20"], ["cislo", "Nahradiť pevné číslo výrazom s premennou"], ["deleno", "Použiť a / 2 namiesto a - 2"], ["farba", "Zmeniť farbu pred kruhom"]];
 const TASKS = {
   c_terc: { id: "c_terc", type: "custom", max: 2 }, c_sneh: { id: "c_sneh", type: "custom", max: 2 }, c_ini: { id: "c_ini", type: "custom", max: 2 },
   trin: { id: "trin", type: "input", qs: [inq("1", "Aká je na konci hodnota <b>a</b>?", 40), inq("2", "Aká je na konci hodnota <b>p</b>?", 37.5, "150 / 2 = 75.0, 75.0 / 2 = 37.5"), inq("3", "Aká je na konci hodnota <b>b</b>?", 77.5)] },
+  g_sit: { id: "g_sit", type: "custom", max: 8 },
+  tin: { id: "tin", type: "input", qs: [
+    { id: "1", q: "Terč: a = 150, po každom kruhu a = a - 30. Aký priemer má 3. kruh?", ok: v => Math.abs(parseNum(v) - 90) <= 0, show: "90", ph: "?" },
+    { id: "2", q: "Koľko kruhov nakreslíš, kým priemer klesne na 30 (vrátane kruhu s priemerom 30)?", ok: v => Math.abs(parseNum(v) - 5) <= 0, show: "5 (150, 120, 90, 60, 30)", ph: "?" },
+    { id: "3", q: "Snehuliak: a = 120, každá ďalšia guľa a = a / 2. Aký priemer má 3. guľa?", ok: v => Math.abs(parseNum(v) - 30) <= 0, show: "30", ph: "?" },
+    { id: "4", q: "Spodná guľa má priemer 120, stredná 60. O koľko sa posunie korytnačka medzi stredmi, aby sa gule dotýkali?", ok: v => Math.abs(parseNum(v) - 90) <= 0, show: "90 (60 + 30)", ph: "?" }
+  ]},
+  zsort: {"id": "zsort", "type": "sort", "buckets": [{"id": "h", "label": "a = a / 2"}, {"id": "m", "label": "a = a - 20"}, {"id": "d", "label": "a = a * 2"}, {"id": "p", "label": "a = a + 20"}], "items": [{"id": "1", "t": "Snehuliak: každá guľa polovičná", "b": "h"}, {"id": "2", "t": "Každý ďalší kúsok o polovicu menší", "b": "h"}, {"id": "3", "t": "Terč: každý kruh o 20 menší", "b": "m"}, {"id": "4", "t": "Rad čiar, každá o 20 kratšia", "b": "m"}, {"id": "5", "t": "Každý ďalší štvorec dvakrát väčší", "b": "d"}, {"id": "6", "t": "Každá ďalšia bodka dvakrát väčšia", "b": "d"}, {"id": "7", "t": "Schody: každý schod o 20 vyšší", "b": "p"}, {"id": "8", "t": "Špirála: každá čiara o 20 dlhšia", "b": "p"}]},
+  iin: { id: "iin", type: "input", qs: [
+    { id: "1", q: "Výška písmena v = 80. Ako ďaleko pôjde fd(v / 2)?", ok: v => Math.abs(parseNum(v) - 40) <= 0, show: "40", ph: "?" },
+    { id: "2", q: "v = 80. Ako ďaleko pôjde fd(v / 4)?", ok: v => Math.abs(parseNum(v) - 20) <= 0, show: "20", ph: "?" },
+    { id: "3", q: "v = 80, medzera medzi písmenami je v / 2 + 10. Koľko krokov to je?", ok: v => Math.abs(parseNum(v) - 50) <= 0, show: "50", ph: "?" }
+  ]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Hodnota a?<br><code>a = 150<br>a = a - 20<br>a = a - 20</code>", ok: v => Math.abs(parseNum(v) - 110) <= 0, show: "110", ph: "?" },
+    { id: "2", q: "Hodnota a?<br><code>a = 160<br>a = a / 2<br>a = a / 2</code>", ok: v => Math.abs(parseNum(v) - 40) <= 0, show: "40.0", ph: "?" },
+    { id: "3", q: "Hodnota w?<br><code>v = 60<br>w = v / 2 + v</code>", ok: v => Math.abs(parseNum(v) - 90) <= 0, show: "90.0", ph: "?" },
+    { id: "4", q: "Hodnota d?<br><code>d = 100<br>d = d - 30<br>d = d / 2</code>", ok: v => Math.abs(parseNum(v) - 35) <= 0, show: "35.0", ph: "?" }
+  ]},
+  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Čo nakreslí pensize(a) a potom fd(0)?", "opts": ["plný kruh s priemerom a", "čiaru dĺžky a", "štvorec so stranou a", "nič"], "a": 0}, {"id": "2", "q": "Čo robí príkaz pu()?", "opts": ["zdvihne pero, korytnačka sa presúva bez kreslenia", "nakreslí bod", "otočí korytnačku", "vymaže obrázok"], "a": 0}, {"id": "3", "q": "Prečo je výhodné mať veľkosť obrázka v jednej premennej?", "opts": ["zmenou jedného čísla zmeníš celý obrázok", "program je dlhší", "Python to vyžaduje", "obrázok bude farebnejší"], "a": 0}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Ako zmenšíš premennú a o 20?", ["a = a - 20", "a - 20", "a = 20", "a = a / 20"], 0) },
     { id: "2", ...Q("Prečo kreslíme terč od najväčšieho kruhu?", ["neskôr nakreslený kruh prekryje predchádzajúci", "menšie kruhy sa nedajú kresliť skôr", "je to kratšie", "kvôli farbám"], 0) },
@@ -495,24 +518,39 @@ const VIEWS = {
   terc() { return head() + `<h2>Terč</h2>
     <div class="theory"><p>Na 2. hodine si kreslil terč tak, že si pri každom kruhu napísal iné číslo do <code>pensize</code>. Teraz na priemer použijeme <b>premennú</b>. Po každom kruhu ju zmenšíme: <code>a = a - 20</code>. Príkazy <code>pensize(a)</code> a <code>fd(0)</code> sú preto stále rovnaké, mení sa iba farba.</p>
       <p>Výhoda: keď chceš iný terč, stačí zmeniť počiatočnú hodnotu a hodnotu, o ktorú sa priemer zmenšuje. Kruhy kreslíme <b>od najväčšieho</b>, lebo neskôr nakreslený kruh prekryje predchádzajúci.</p></div>
-    <h3>Úlohy</h3>${chalHTML("c_terc")}` + nextBar(); },
+    <h3>Úlohy</h3>${chalHTML("c_terc")}
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("tin")}</div>` + nextBar(); },
   snehuliak() { return head() + `<h2>Snehuliak</h2>
     ${guessBox()}
     <div class="theory"><p>Pri snehuliakovi má každá guľa <b>polovičný priemer</b> oproti predchádzajúcej: <code>a = a / 2</code>. Delenie <code>/</code> dáva v Pythone desatinné číslo (150 / 2 = 75.0). Korytnačke to nevadí.</p>
       <p>Premennú použijeme aj pri <b>presune</b> medzi guľami. Aby sa gule dotýkali, stredy musia byť vzdialené o <b>polovicu spodného</b> plus <b>polovicu horného</b> priemeru. Preto: <code>fd(a / 2)</code>, potom <code>a = a / 2</code> a znova <code>fd(a / 2)</code>. Pred presunom zdvihni pero.</p></div>
-    <h3>Úlohy</h3>${chalHTML("c_sneh")}` + nextBar(); },
+    <h3>Úlohy</h3>${chalHTML("c_sneh")}
+    <h3>Úloha 2: aký príkaz zmení premennú?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("zsort")}</div>` + nextBar(); },
   inicialy() { return head() + `<h2>Iniciály</h2>
     <div class="theory"><p>Na 2. hodine si kreslil písmená pevnými číslami. Teraz ich uprav tak, aby <b>všetky dĺžky</b> záviseli od jednej premennej, napríklad od výšky písmena <code>v</code>. Dlhé čiary budú <code>fd(v)</code>, kratšie <code>fd(v / 2)</code> alebo <code>fd(v / 4)</code>. Aj presun medzi písmenami (so zdvihnutým perom) zapíš pomocou v.</p>
       <p>Ak je to správne, zmenou jediného čísla na začiatku programu sa iniciály rovnomerne zväčšia alebo zmenšia. Presne tak to kontroluje aj úloha.</p></div>
-    <h3>Úlohy</h3>${chalHTML("c_ini")}` + nextBar(); },
+    <h3>Úlohy</h3>${chalHTML("c_ini")}
+    <h3>Úloha 2: počítaj s výškou písmena</h3><div class="task">${taskHTML("iin")}</div>` + nextBar(); },
   trasovanie() { return head() + `<h2>Trasovanie</h2>
     <div class="theory"><p>Precvič si sledovanie hodnôt. Pozor na delenie: výsledok je desatinné číslo.</p><div class="pcode">${TRPROG.t.join("\n")}</div></div>
     <h3>Úloha: hodnoty na konci</h3><div class="task">${taskHTML("trin")}</div>
     ${S.t.trin ? `<h3>Over si krokovaním</h3><div class="task">${traceHTML("t", TRPROG.t)}</div>` : ""}` + nextBar(); },
+  precvic: () => head() + `<h2>Precvičovanie: oprav kresbu</h2>
+    <div class="theory"><p>Keď kresba nevyzerá podľa plánu, porovnaj ju s náčrtom a hľadaj, <b>ktorá časť programu</b> to spôsobuje: poradie kreslenia (väčšie prekryje menšie), zmena premennej (chýba alebo je zlá operácia), presun (zabudnuté pu() alebo zlá vzdialenosť) či <b>pevné číslo</b> namiesto výrazu s premennou. Dobrý test: zmeň hodnotu premennej na dvojnásobok. Ak sa celý obrázok rovnomerne zväčší, program je napísaný správne.</p><p>Pri každej chybe vyber opravu, potom predpovedz hodnoty a odpovedz.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 8 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 8</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: trasovanie</h3><div class="task">${taskHTML("pxin")}</div>
+    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
-function CUSTOM_CLICK(e) { return helperClick(e); }
-function CUSTOM_INPUT(e) { return helperInput(e); }
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return helperClick(e); }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; return helperInput(e); }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -531,7 +569,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -621,8 +659,10 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
+function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
