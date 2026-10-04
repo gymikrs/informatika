@@ -233,7 +233,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"prechody": ["Prechod = efekt pri výmene snímok (karta Prechody); jeden nenápadný pre všetky snímky."], "animacie": ["Animácia = efekt objektu: vstupná, zvýraznenie, ukončovacia, dráha pohybu.", "Spúšťanie: pri kliknutí, s predchádzajúcou, po predchádzajúcej; poradie v Table animácií."], "odkazy": ["Prepojenie (Ctrl + K): na web, inú snímku, súbor, e-mail. Akčné tlačidlá na návrat."]};
+const THEORY = {"precvic": ["Pri kliknutí = tvoje tempo, s predchádzajúcou = naraz, po predchádzajúcej = automaticky za sebou.", "Poradie v Table animácií. Odkaz Ctrl + K na web, snímku, súbor alebo e-mail. Návrat akčným tlačidlom."], "prechody": ["Prechod = efekt pri výmene snímok (karta Prechody); jeden nenápadný pre všetky snímky."], "animacie": ["Animácia = efekt objektu: vstupná, zvýraznenie, ukončovacia, dráha pohybu.", "Spúšťanie: pri kliknutí, s predchádzajúcou, po predchádzajúcej; poradie v Table animácií."], "odkazy": ["Prepojenie (Ctrl + K): na web, inú snímku, súbor, e-mail. Akčné tlačidlá na návrat."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -271,13 +271,14 @@ const STEPS = [
   { id: "prechody", title: "Prechody snímok", min: 7 },
   { id: "animacie", title: "Animácie objektov", min: 13 },
   { id: "odkazy", title: "Hypertextové odkazy: kvíz", min: 14 },
+  { id: "precvic", title: "Precvičovanie: nastav efekt a odkaz", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { prechody: ["g_tr", "tq"], animacie: ["g_an", "aq"], odkazy: ["g_hl"], test: ["test"] };
+const STEP_TASKS = { prechody: ["g_tr", "tq"], animacie: ["g_an", "aq", "asort"], odkazy: ["g_hl", "osort"], precvic: ["g_sit"], test: ["test"] };
 const START = {
   kicker: "Informatika, 2. ročník",
-  lead: "Dobre použitá animácia vedie pozornosť poslucháčov, zle použitá ich unaví. Naučíš sa rozlíšiť prechody a animácie, nastaviť poradie a spúšťanie animácií (pri kliknutí, s predchádzajúcou, po predchádzajúcej) a pomocou hypertextových odkazov vytvoríš interaktívny kvíz, v ktorom sa klikaním skáče medzi snímkami. 3 zastávky, body a na konci výsledok.",
+  lead: "Dobre použitá animácia vedie pozornosť poslucháčov, zle použitá ich unaví. Naučíš sa rozlíšiť prechody a animácie, nastaviť poradie a spúšťanie animácií (pri kliknutí, s predchádzajúcou, po predchádzajúcej) a pomocou hypertextových odkazov vytvoríš interaktívny kvíz, v ktorom sa klikaním skáče medzi snímkami. 4 zastávky, body a na konci výsledok.",
   guessQ: "Aký je rozdiel medzi prechodom a animáciou?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Nie je rozdiel", "Prechod je efekt medzi snímkami, animácia je efekt objektu na snímke", "Animácia je iba v PowerPointe", "Prechod je zvuk"],
@@ -310,6 +311,8 @@ function hlPlay() { const H = S.hl, s = S.qs; const link = (k, t) => `<button cl
   return `<div class="sld" style="background:#FFEBEE"><h4>❌ Skús znova</h4><p>Pozri sa lepšie na mapu.</p>${link("back3", "↩ Späť")}</div>`; }
 const gl = (list, G) => `<ul class="goals" style="list-style:none;padding:0;margin:6px 0 0">${list.map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`;
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const PX_I = [["Nadpis a obrázok sa majú objaviť naraz.", "spolu", ""], ["Body sa majú objavovať postupne, keď klikneš.", "klik", ""], ["Hneď po nadpise sa má bez kliknutia objaviť obrázok.", "po", ""], ["Animácie bežia v zlom poradí.", "tabla", ""], ["Chceš rovnaký jemný prechod na všetkých 12 snímkach.", "vsetky", ""], ["Objekt sa má plynulo presunúť a zväčšiť medzi dvoma snímkami.", "morph", ""], ["V kvíze má odpoveď viesť na snímku „Správne!“.", "ctrlk", ""], ["Zo snímky „Správne!“ sa chceš vrátiť do menu.", "akcne", ""]];
+const PX_O = [["", "— vyber —"], ["klik", "Pri kliknutí"], ["spolu", "S predchádzajúcou"], ["po", "Po predchádzajúcej"], ["tabla", "Tabla animácií (zmeniť poradie)"], ["vsetky", "Použiť pre všetky"], ["morph", "Transformácia (Morph)"], ["ctrlk", "Vložiť odkaz (Ctrl + K) na snímku"], ["akcne", "Akčné tlačidlo Domov"]];
 const TASKS = {
   g_tr: { id: "g_tr", type: "custom", max: 1 },
   tq: { id: "tq", type: "mc", qs: [
@@ -324,6 +327,9 @@ const TASKS = {
     { id: "3", ...Q("Kedy je animácia užitočná?", ["keď postupne odkrýva body, ktoré práve vysvetľujem", "keď je na každom slove iná", "keď má hlasný zvuk", "vždy, čím viac, tým lepšie"], 0) }
   ]},
   g_hl: { id: "g_hl", type: "custom", max: 4 },
+  g_sit: { id: "g_sit", type: "custom", max: 8 },
+  asort: {"id": "asort", "type": "sort", "buckets": [{"id": "v", "label": "Vstupná"}, {"id": "z", "label": "Zvýraznenie"}, {"id": "u", "label": "Ukončovacia"}, {"id": "d", "label": "Dráha pohybu"}], "items": [{"id": "1", "t": "Nadpis sa postupne objaví", "b": "v"}, {"id": "2", "t": "Text vletí zľava", "b": "v"}, {"id": "3", "t": "Slovo pulzuje", "b": "z"}, {"id": "4", "t": "Obrázok sa na chvíľu zväčší", "b": "z"}, {"id": "5", "t": "Obrázok zmizne", "b": "u"}, {"id": "6", "t": "Text odletí doprava", "b": "u"}, {"id": "7", "t": "Auto prejde po ceste cez snímku", "b": "d"}, {"id": "8", "t": "Lopta skáče po oblúku", "b": "d"}]},
+  osort: {"id": "osort", "type": "sort", "buckets": [{"id": "w", "label": "🌐 Webová stránka"}, {"id": "s", "label": "🖼️ Iná snímka"}, {"id": "f", "label": "📄 Súbor"}, {"id": "e", "label": "✉️ E-mail"}], "items": [{"id": "1", "t": "https://www.gymrs.sk", "b": "w"}, {"id": "2", "t": "Článok na Wikipédii o sopkách", "b": "w"}, {"id": "3", "t": "Snímka „Správne!“ v kvíze", "b": "s"}, {"id": "4", "t": "Tlačidlo Domov na menu", "b": "s"}, {"id": "5", "t": "pracovny-list.docx", "b": "f"}, {"id": "6", "t": "merania.xlsx", "b": "f"}, {"id": "7", "t": "mailto:ucitel@gymrs.sk", "b": "e"}, {"id": "8", "t": "Odkaz „Napíš nám“", "b": "e"}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("„S predchádzajúcou“ znamená:", ["animácia začne naraz s predchádzajúcou", "po kliknutí", "po skončení predchádzajúcej", "nikdy"], 0) },
     { id: "2", ...Q("„Po predchádzajúcej“ znamená:", ["animácia začne, keď skončí predchádzajúca", "naraz s ňou", "na kliknutie", "na konci prezentácie"], 0) },
@@ -342,15 +348,21 @@ const VIEWS = {
     <div class="theory"><p><b>Animácia</b> je efekt jedného objektu na snímke (karta <b>Animácie</b>): <b>vstupná</b> (objekt sa objaví), <b>zvýraznenie</b>, <b>ukončovacia</b> (objekt zmizne) a <b>dráha pohybu</b>. Pri každej nastavíš <b>spúšťanie</b>: <b>pri kliknutí</b>, <b>s predchádzajúcou</b> (naraz), <b>po predchádzajúcej</b> (hneď po nej). Poradie meníš v <b>Table animácií</b>.</p></div>
     <h3>Úloha: nastav animácie snímky</h3><div class="task" id="angoals">${gl([["t", "1. nadpis: <b>zoslabnúť</b>, <b>pri kliknutí</b>"], ["i", "2. obrázok: ľubovoľný efekt, <b>s predchádzajúcou</b> (spolu s nadpisom)"], ["l", "3. zoznam: <b>vletieť</b>, <b>po predchádzajúcej</b>"], ["play", "prehraj snímku a klikni"]], anGoals())}</div>
     <div class="tool" id="anbox">${anHTML()}</div>
-    <h3>Otázky</h3><div class="task">${taskHTML("aq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("aq")}</div>
+    <h3>Úloha 2: do ktorej skupiny animácia patrí?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("asort")}</div>` + nextBar(),
   odkazy: () => head() + `<h2>Hypertextové odkazy: interaktívny kvíz</h2>
     <div class="theory"><p><b>Hypertextový odkaz</b> (Vložiť › Prepojenie, <kbd>Ctrl</kbd> + <kbd>K</kbd>) môže viesť na <b>webovú stránku</b>, <b>inú snímku</b> tej istej prezentácie, <b>súbor</b> alebo <b>e-mailovú adresu</b>. Odkaz môže mať text, obrázok aj tvar. Takto vzniknú interaktívne prezentácie: kvízy, menu, rozcestníky. Na návrat sa hodia <b>akčné tlačidlá</b> (Späť, Domov).</p></div>
     <h3>Úloha: prepoj kvíz</h3><div class="task" id="hlgoals">${gl([["ok", "správna odpoveď (Etna) vedie na snímku Správne"], ["bad", "nesprávne odpovede vedú na snímku Skús znova"], ["back", "tlačidlá Späť vedú na otázku"], ["test", "vyskúšaj kvíz v režime prezentácie a odpovedz správne"]], hlGoals())}</div>
-    <div class="tool" id="hlbox">${hlHTML()}</div>` + nextBar(),
+    <div class="tool" id="hlbox">${hlHTML()}</div>
+    <h3>Úloha 2: kam odkaz vedie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("osort")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: nastav efekt a odkaz</h2>
+    <div class="theory"><p>Efekty a odkazy majú <b>slúžiť obsahu</b>: prechod spája snímky (jeden nenápadný pre celú prezentáciu), animácia postupne odhaľuje myšlienky alebo ukazuje pohyb a odkaz robí z prezentácie interaktívny kvíz či menu. Kľúčom je <b>spúšťanie</b>: pri kliknutí (ty určuješ tempo), s predchádzajúcou (naraz), po predchádzajúcej (automaticky za sebou). Poradie riadiš v <b>Table animácií</b>.</p><p>Pri každej úlohe vyber správne nastavenie.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 8 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 8</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function hlScore() { const n = Object.values(hlGoals()).filter(Boolean).length; if (n && (!S.t.g_hl || S.t.g_hl.score < n)) award("g_hl", n); }
-function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.tr) { S.tr = ds.tr; S.trp = 0; save(); document.getElementById("trbox").innerHTML = trHTML(); return true; }
   if (ds.trp !== undefined) { S.trp = 0; document.getElementById("trw").innerHTML = trHTML().match(/<div class="trw" id="trw">([\s\S]*?)<\/div><div class="row">/)[1]; setTimeout(() => { S.trp = 1; S.trv[S.tr] = true; if (Object.keys(S.trv).filter(k => k !== "žiadny").length >= 3) award("g_tr", 1); save(); document.getElementById("trbox").innerHTML = trHTML(); }, 60); return true; }
   if (ds.au !== undefined || ds.ad !== undefined) { const i = +(ds.au ?? ds.ad), j = ds.au !== undefined ? i - 1 : i + 1; [S.an[i], S.an[j]] = [S.an[j], S.an[i]]; save(); render(false); return true; }
@@ -358,11 +370,17 @@ function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) retur
   if (ds.aclick !== undefined) { if (AW) AW(); if (S.anPlayed) setTimeout(() => { const g = document.getElementById("angoals"); if (g) g.innerHTML = gl([["t", "1. nadpis: <b>zoslabnúť</b>, <b>pri kliknutí</b>"], ["i", "2. obrázok: ľubovoľný efekt, <b>s predchádzajúcou</b> (spolu s nadpisom)"], ["l", "3. zoznam: <b>vletieť</b>, <b>po predchádzajúcej</b>"], ["play", "prehraj snímku a klikni"]], anGoals()); }, 50); return true; }
   if (ds.go2 !== undefined) { const t = ds.go2; if (t === "web") { alert("Otvorila by sa stránka sk.wikipedia.org."); return true; } if (!t) { alert("Tento objekt nemá odkaz."); return true; } if (S.qs === 1 && t === "2" && el.textContent.includes("Etna")) S.hlTested = true; S.qs = +t; hlScore(); save(); document.getElementById("hlplay").innerHTML = hlPlay(); document.getElementById("hlgoals").innerHTML = gl([["ok", "správna odpoveď (Etna) vedie na snímku Správne"], ["bad", "nesprávne odpovede vedú na snímku Skús znova"], ["back", "tlačidlá Späť vedú na otázku"], ["test", "vyskúšaj kvíz v režime prezentácie a odpovedz správne"]], hlGoals()); return true; }
   return false; }
-function CUSTOM_INPUT(e) { const t = e.target, ds = t.dataset || {};
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; const t = e.target, ds = t.dataset || {};
   if (ds.ae !== undefined) { S.an[+ds.ae].ef = t.value; S.anPlayed = false; save(); render(false); return true; }
   if (ds.ag !== undefined) { S.an[+ds.ag].tg = t.value; S.anPlayed = false; save(); render(false); return true; }
   if (ds.hl) { S.hl[ds.hl] = t.value; hlScore(); save(); render(false); return true; }
   return false; }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -381,7 +399,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -471,8 +489,10 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
+function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });

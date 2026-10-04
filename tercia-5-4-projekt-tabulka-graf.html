@@ -211,7 +211,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"zadanie": ["Postup: téma a otázka → zber údajov → tabuľka so záhlavím a jednotkami → vzorce a funkcie → graf → záver."], "tabulka": ["Aspoň 5 riadkov údajov, vypočítaný stĺpec vzorcom (vyplniť nadol), súhrnný riadok funkciou, tučné záhlavie a orámovanie."], "graf": ["Typ podľa údajov: vývoj = čiarový, porovnanie = stĺpcový, podiel = koláčový. Názov a osi s jednotkami."], "zaver": ["Záver: čo z údajov vyplýva (max, min, priemer, trend) a čo by si zlepšil. Odovzdaj tabuľku aj graf."]};
+const THEORY = {"precvic": ["Otázka → údaje (aspoň 5) → tabuľka (jednotky, vzorce) → graf (typ, názov, osi) → záver z čísel.", "Údaje si nevymýšľaj. Pri pridaní riadku skontroluj oblasť vo vzorci."], "zadanie": ["Postup: téma a otázka → zber údajov → tabuľka so záhlavím a jednotkami → vzorce a funkcie → graf → záver."], "tabulka": ["Aspoň 5 riadkov údajov, vypočítaný stĺpec vzorcom (vyplniť nadol), súhrnný riadok funkciou, tučné záhlavie a orámovanie."], "graf": ["Typ podľa údajov: vývoj = čiarový, porovnanie = stĺpcový, podiel = koláčový. Názov a osi s jednotkami."], "zaver": ["Záver: čo z údajov vyplýva (max, min, priemer, trend) a čo by si zlepšil. Odovzdaj tabuľku aj graf."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -240,7 +240,7 @@ const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="$
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
 
 /* ===== shared spreadsheet engine + charts ===== */
-const XFN = { SUM: "sum", "SÚČET": "sum", AVERAGE: "avg", PRIEMER: "avg", MIN: "min", MAX: "max", COUNT: "cnt", "POČET": "cnt", ROUND: "round", "ZAOKRÚHLIŤ": "round" };
+const XFN = { SUM: "sum", "SÚČET": "sum", AVERAGE: "avg", PRIEMER: "avg", MIN: "min", MAX: "max", COUNT: "cnt", "POČET": "cnt", ROUND: "round", "ZAOKRÚHLIŤ": "round", MEDIAN: "med", "MEDIÁN": "med", MODE: "mode", "MODE.SNGL": "mode", MODUS: "mode", STDEV: "sds", "STDEV.S": "sds", "STDEV.P": "sdp", VAR: "vars", "VAR.S": "vars", "VAR.P": "varp", COUNTIF: "cif", "COUNTIF": "cif" };
 const XC = n => Array.from({ length: n }, (_, i) => String.fromCharCode(65 + i));
 function xNum(s) { s = String(s).trim().replace(/\s/g, ""); if (/^-?\d+([.,]\d+)?$/.test(s)) return parseFloat(s.replace(",", ".")); return null; }
 function xCell(sh, ref, seen, NR) { seen = seen || {}; const raw = sh[ref]; if (raw === undefined || raw === "") return 0; if (String(raw)[0] !== "=") { const n = xNum(raw); return n === null ? String(raw) : n; }
@@ -248,9 +248,14 @@ function xCell(sh, ref, seen, NR) { seen = seen || {}; const raw = sh[ref]; if (
 function xRange(sh, a, b, seen, NR) { const c1 = a.charCodeAt(0) - 65, c2 = b.charCodeAt(0) - 65, r1 = +a.slice(1), r2 = +b.slice(1), out = []; for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++) { const v = xCell(sh, String.fromCharCode(65 + c) + r, seen, NR); if (typeof v === "number" && sh[String.fromCharCode(65 + c) + r] !== undefined && sh[String.fromCharCode(65 + c) + r] !== "") out.push(v); } return out; }
 function xExpr(sh, src, seen, NR) { NR = NR || 20; const s = src.toUpperCase().replace(/\$/g, ""); let p = 0; const ws = () => { while (s[p] === " ") p++; };
   function atom() { ws(); let m;
-    if ((m = s.slice(p).match(/^([A-ZÁ-Ž]+)\(/)) && !/^[A-J]\d/.test(s.slice(p))) { const f = XFN[m[1]]; p += m[0].length; if (!f) throw "#NÁZOV?"; const vals = []; ws();
+    if ((m = s.slice(p).match(/^([A-ZÁ-Ž][A-ZÁ-Ž.]*)\(/)) && !/^[A-J]\d/.test(s.slice(p))) { const f = XFN[m[1]]; p += m[0].length; if (!f) throw "#NÁZOV?"; const vals = []; ws();
+      if (f === "cif") { const r = s.slice(p).match(/^([A-J][1-9]\d?):([A-J][1-9]\d?)/); if (!r) throw "#HODNOTA!"; p += r[0].length; ws(); if (s[p] !== ";" && s[p] !== ",") throw "#HODNOTA!"; p++; ws(); let crit; const q = src.replace(/\$/g, "").slice(p).match(/^"([^"]*)"/); if (q) { crit = q[1]; p += q[0].length; } else { crit = String(add()); } ws(); if (s[p] !== ")") throw "#HODNOTA!"; p++; const cm = crit.replace(/\s/g, "").match(/^(<=|>=|<>|=|<|>)?(-?\d+(?:[.,]\d+)?)$/); if (!cm) throw "#HODNOTA!"; const op = cm[1] || "=", x = parseFloat(cm[2].replace(",", ".")); return xRange(sh, r[1], r[2], seen, NR).filter(v => ({ "=": v === x, "<>": v !== x, "<": v < x, ">": v > x, "<=": v <= x, ">=": v >= x })[op]).length; }
       while (s[p] !== ")") { ws(); let r; if ((r = s.slice(p).match(/^([A-J][1-9]\d?):([A-J][1-9]\d?)/))) { p += r[0].length; vals.push(...xRange(sh, r[1], r[2], seen, NR)); } else { const v = add(); if (typeof v !== "number") throw "#HODNOTA!"; vals.push(v); } ws(); if (s[p] === ";" || s[p] === ",") p++; else if (s[p] !== ")") throw "#HODNOTA!"; if (p >= s.length) throw "#HODNOTA!"; }
-      p++; if (f === "round") { const d = vals[1] || 0; return Math.round(vals[0] * Math.pow(10, d)) / Math.pow(10, d); } if (f === "sum") return vals.reduce((a, b) => a + b, 0); if (f === "cnt") return vals.length; if (!vals.length) throw f === "avg" ? "#DELENIENULOU!" : "#HODNOTA!"; if (f === "avg") return vals.reduce((a, b) => a + b, 0) / vals.length; if (f === "min") return Math.min(...vals); return Math.max(...vals); }
+      p++; if (f === "round") { const d = vals[1] || 0; return Math.round(vals[0] * Math.pow(10, d)) / Math.pow(10, d); } if (f === "sum") return vals.reduce((a, b) => a + b, 0); if (f === "cnt") return vals.length; if (!vals.length) throw f === "avg" ? "#DELENIENULOU!" : "#HODNOTA!"; if (f === "avg") return vals.reduce((a, b) => a + b, 0) / vals.length; if (f === "min") return Math.min(...vals); if (f === "max") return Math.max(...vals);
+      const n = vals.length, mean = vals.reduce((a, b) => a + b, 0) / n, ss = vals.reduce((a, b) => a + (b - mean) ** 2, 0);
+      if (f === "med") { const o = [...vals].sort((a, b) => a - b); return n % 2 ? o[(n - 1) / 2] : (o[n / 2 - 1] + o[n / 2]) / 2; }
+      if (f === "mode") { const c = new Map(); vals.forEach(v => c.set(v, (c.get(v) || 0) + 1)); let best = null, bc = 1; for (const v of vals) if (c.get(v) > bc) { bc = c.get(v); best = v; } if (best === null) throw "#NEDOSTUPNÝ"; return best; }
+      if (f === "sdp") return Math.sqrt(ss / n); if (f === "varp") return ss / n; if (n < 2) throw "#DELENIENULOU!"; if (f === "sds") return Math.sqrt(ss / (n - 1)); return ss / (n - 1); }
     if ((m = s.slice(p).match(/^[A-J][1-9]\d?/))) { p += m[0].length; if (+m[0].slice(1) > NR) throw "#ODKAZ!"; const v = xCell(sh, m[0], seen, NR); if (typeof v !== "number") { if (sh[m[0]] === undefined || sh[m[0]] === "") return 0; throw "#HODNOTA!"; } return v; }
     if ((m = s.slice(p).match(/^\d+([.,]\d+)?/))) { p += m[0].length; return parseFloat(m[0].replace(",", ".")); }
     if (s[p] === "(") { p++; const v = add(); ws(); if (s[p] !== ")") throw "#HODNOTA!"; p++; return v; }
@@ -319,12 +324,13 @@ const STEPS = [
   { id: "tabulka", title: "Tabuľka a vzorce", min: 18 },
   { id: "graf", title: "Graf z mojich údajov", min: 10 },
   { id: "zaver", title: "Záver a odovzdanie", min: 8 },
+  { id: "precvic", title: "Precvičovanie: skontroluj projekt", min: 8 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { zadanie: ["g_tema"], tabulka: ["g_tab"], graf: ["g_gr"], zaver: ["g_zav"] };
+const STEP_TASKS = { zadanie: ["g_tema", "tsort"], tabulka: ["g_tab", "tin"], graf: ["g_gr", "grsort"], zaver: ["g_zav", "zq"], precvic: ["g_sit", "pxq"] };
 const START = {
   kicker: "Informatika, Tercia",
-  lead: "Teraz si výskumníkom ty. Vyberieš si tému, zozbieraš vlastné údaje, spracuješ ich v tabuľke so vzorcami a funkciami, vytvoríš k nim vhodný graf a napíšeš, čo z nich vyplýva. Hotovú tabuľku a graf si stiahneš a odovzdáš. Kontrolný zoznam ti priebežne ukáže, čo už spĺňaš. 4 zastávky, body a na konci výsledok.",
+  lead: "Teraz si výskumníkom ty. Vyberieš si tému, zozbieraš vlastné údaje, spracuješ ich v tabuľke so vzorcami a funkciami, vytvoríš k nim vhodný graf a napíšeš, čo z nich vyplýva. Hotovú tabuľku a graf si stiahneš a odovzdáš. Kontrolný zoznam ti priebežne ukáže, čo už spĺňaš. 5 zastávok, body a na konci výsledok.",
   guessQ: "Čo je najdôležitejšie na konci každého projektu s údajmi?",
   guessNote: "Tip sa neboduje. Na poslednej zastávke zistíš, či si mal pravdu.",
   guesses: ["Pekné farby grafu", "Záver: čo z údajov vyplýva", "Čo najviac riadkov", "3D efekt"],
@@ -356,37 +362,67 @@ function grHTML() { const g = S.G, d = chartData(), X = PJ(), cols = ["A", "B", 
     <label>Názov grafu</label><input type="text" data-g="title" value="${esc(g.title)}">${g.type !== "pie" ? `<label>Názov osi x</label><input type="text" data-g="xt" value="${esc(g.xt)}"><label>Názov osi y (s jednotkou)</label><input type="text" data-g="yt" value="${esc(g.yt)}">` : ""}</div>
     <div><div class="chartw" id="gprev">${chartSVG({ type: g.type, title: g.title, xt: g.xt, yt: g.yt, labels: d.L, values: d.V, dl: true })}</div><p class="muted" style="font-size:13.5px">Graf berie riadky ${dataRows().join(", ") || "—"} z tvojej tabuľky.</p></div></div>`; }
 function csvOf() { const X = PJ(), sh = X.sh, cols = ["A", "B", "C", "D", "E", "F"]; let last = 0; for (let r = 1; r <= X.rows; r++) if (cols.some(c => sh[c + r] !== undefined && sh[c + r] !== "")) last = r; const lines = []; for (let r = 1; r <= last; r++) lines.push(cols.map(c => { const v = xVal(sh, c + r, X.rows); const s = sh[c + r] === undefined ? "" : typeof v === "number" ? String(Math.round(v * 1e4) / 1e4).replace(".", ",") : String(v && v.err ? v.err : v); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }).join(";")); return "\uFEFF" + lines.join("\r\n"); }
-const TASKS = { g_tema: { id: "g_tema", type: "custom", max: 1 }, g_tab: { id: "g_tab", type: "custom", max: 5 }, g_gr: { id: "g_gr", type: "custom", max: 3 }, g_zav: { id: "g_zav", type: "custom", max: 3 } };
+const PX_I = [["Tvoja téma je „Šport“ a nevieš, čo merať.", "otazka", ""], ["Máš iba 2 merania.", "viac", ""], ["V stĺpci sú čísla 12, 15, 9 a nevieš, či sú to minúty alebo hodiny.", "jedn", ""], ["Súčet si vypočítal na kalkulačke a napísal ho do bunky.", "vzorec", "pri zmene údajov by nesedel"], ["Vývoj teploty počas týždňa máš ako koláčový graf.", "typ", ""], ["Graf nemá nadpis ani popis osí.", "osi", ""], ["Odovzdávaš iba tabuľku a graf bez slov.", "zaver", ""]];
+const PX_O = [["", "— vyber —"], ["otazka", "Sformulovať konkrétnu otázku"], ["viac", "Zozbierať viac údajov (aspoň 5)"], ["jedn", "Doplniť jednotky do záhlavia"], ["vzorec", "Vypočítať vzorcom, nie ručne"], ["typ", "Zmeniť typ grafu"], ["osi", "Doplniť názov a osi grafu"], ["zaver", "Napísať záver z čísel"]];
+const TASKS = { g_tema: { id: "g_tema", type: "custom", max: 1 }, g_tab: { id: "g_tab", type: "custom", max: 5 }, g_gr: { id: "g_gr", type: "custom", max: 3 }, g_zav: { id: "g_zav", type: "custom", max: 3 },
+  g_sit: { id: "g_sit", type: "custom", max: 7 },
+  tsort: {"id": "tsort", "type": "sort", "buckets": [{"id": "y", "label": "✅ Dobrá téma s otázkou"}, {"id": "n", "label": "❌ Nevhodná téma"}], "items": [{"id": "1", "t": "Koľko minút denne trávim na mobile počas týždňa?", "b": "y"}, {"id": "2", "t": "Ako sa mení teplota vonku o 7:00 počas 7 dní?", "b": "y"}, {"id": "3", "t": "Koľko stoja rovnaké potraviny v troch obchodoch?", "b": "y"}, {"id": "4", "t": "Aké športy robia spolužiaci?", "b": "y"}, {"id": "5", "t": "Všetko o počasí", "b": "n"}, {"id": "6", "t": "Moje meno", "b": "n"}, {"id": "7", "t": "Vesmír", "b": "n"}, {"id": "8", "t": "Či mám rád pizzu (jedna odpoveď)", "b": "n"}], "after": "Dobrá téma má konkrétnu otázku a dá sa k nej zozbierať aspoň 5 čísel."},
+  tin: { id: "tin", type: "input", qs: [
+    { id: "1", q: "Údaje: 45, 60, 30, 75, 90 minút. Aký je súčet?", ok: v => Math.abs(parseNum(v) - 300) <= 0, show: "300", ph: "?" },
+    { id: "2", q: "Aký je priemer?", ok: v => Math.abs(parseNum(v) - 60) <= 0, show: "60", ph: "?" },
+    { id: "3", q: "Aké je maximum?", ok: v => Math.abs(parseNum(v) - 90) <= 0, show: "90", ph: "?" },
+    { id: "4", q: "O koľko je maximum väčšie ako minimum?", ok: v => Math.abs(parseNum(v) - 60) <= 0, show: "60", ph: "?" }
+  ]},
+  grsort: {"id": "grsort", "type": "sort", "buckets": [{"id": "c", "label": "📈 Čiarový"}, {"id": "s", "label": "📊 Stĺpcový"}, {"id": "k", "label": "🥧 Koláčový"}], "items": [{"id": "1", "t": "Teplota každý deň v týždni", "b": "c"}, {"id": "2", "t": "Výška rastliny každý deň", "b": "c"}, {"id": "3", "t": "Cena rožka v troch obchodoch", "b": "s"}, {"id": "4", "t": "Obľúbené športy spolužiakov", "b": "s"}, {"id": "5", "t": "Rozdelenie môjho dňa (spánok, škola, voľno)", "b": "k"}, {"id": "6", "t": "Na čo míňam vreckové (spolu 100 %)", "b": "k"}]},
+  zq: {"id": "zq", "type": "mc", "qs": [{"id": "1", "q": "Čo patrí do záveru?", "opts": ["čo z údajov vyplýva: maximum, minimum, priemer, trend", "zoznam všetkých čísel", "iba názov témy", "nič, stačí graf"], "a": 0}, {"id": "2", "q": "Prečo uložiť tabuľku ako CSV?", "opts": ["otvorí ju každý tabuľkový program", "zväčší sa", "zmiznú vzorce aj čísla", "inak sa nedá vytlačiť"], "a": 0}, {"id": "3", "q": "Ako napíšeš záver?", "opts": ["vlastnými slovami na základe čísel z tabuľky", "skopírujem text z internetu", "vymyslím si ho bez údajov", "jedným slovom"], "a": 0}, {"id": "4", "q": "Údaje nepotvrdili tvoj predpoklad. Čo napíšeš?", "opts": ["úprimne to uvediem, aj to je výsledok", "zmením čísla, aby sedeli", "nič", "zmením tému"], "a": 0}]},
+  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Prečo zbierať údaje viac dní?", "opts": ["aby výsledok nebol náhodný a dal sa vidieť trend", "aby bola tabuľka dlhšia", "lebo to káže Excel", "netreba"], "a": 0}, {"id": "2", "q": "Pridáš do tabuľky nový riadok. Čo skontroluješ pri súčte?", "opts": ["či oblasť vo vzorci obsahuje aj nový riadok", "farbu bunky", "názov hárka", "nič"], "a": 0}, {"id": "3", "q": "Môžeš si údaje vymyslieť?", "opts": ["nie, iba dočasný odhad, ktorý nahradím skutočnými", "áno, nikto to nezistí", "áno, ak sú pekné", "áno, ak ich je veľa"], "a": 0}, {"id": "4", "q": "Ako skontroluješ vzorec v bunke?", "opts": ["kliknem na bunku a pozriem riadok vzorcov", "zmažem ho", "vytlačím tabuľku", "nedá sa"], "a": 0}]}
+};
 const VIEWS = {
   zadanie: () => head() + `<h2>Téma a plán projektu</h2>
     <div class="theory"><p><b>Postup projektu</b>: 1. vyber tému a otázku, na ktorú chceš odpovedať, 2. <b>zozbieraj údaje</b> (merania, prieskum, ceny), 3. zapíš ich do <b>tabuľky</b> so záhlavím a jednotkami, 4. dopočítaj hodnoty <b>vzorcami a funkciami</b>, 5. vytvor vhodný <b>graf</b>, 6. napíš <b>záver</b>. Údaje môžeš zbierať doma počas týždňa, ak ich ešte nemáš, použi odhad a neskôr ho nahraď.</p>
       <table class="ctab rub"><tr><th>Hodnotí sa</th><th>Body</th></tr><tr><td>Téma zvolená</td><td>1</td></tr><tr><td>Tabuľka: záhlavie, údaje, vzorce, funkcia, formát</td><td>5</td></tr><tr><td>Graf: údaje, názov, osi</td><td>3</td></tr><tr><td>Záver a odovzdanie tabuľky a grafu</td><td>3</td></tr></table></div>
     <h3>Úloha: vyber tému</h3><div class="proj">${THEMES.map(t => `<button class="${S.th === t.id ? "on" : ""}" data-th="${t.id}"><b>${t.n}</b>${t.d}</button>`).join("")}</div>
-    <p class="muted" style="font-size:13.5px">Výber tém predvyplní záhlavie tabuľky. Údaje doplníš ty.</p>` + nextBar(),
+    <p class="muted" style="font-size:13.5px">Výber tém predvyplní záhlavie tabuľky. Údaje doplníš ty.</p>
+    <h3>Úloha: je téma vhodná?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("tsort")}</div>` + nextBar(),
   tabulka: () => { PJ(); return head() + `<h2>Tabuľka a vzorce</h2>
     <div class="theory"><p>Doplň do tabuľky svoje údaje (aspoň 5 riadkov). Pridaj stĺpec, ktorý sa <b>vypočíta vzorcom</b> (napr. <code>=B2+C2</code> alebo <code>=C2-B2</code> alebo <code>=B2*C2</code>) a vyplň ho nadol. Pod tabuľku pridaj riadok so <b>súhrnom</b> (<code>=SUM(D2:D8)</code>, <code>=PRIEMER(B2:B8)</code>, <code>=MAX(…)</code>). Nakoniec tabuľku naformátuj.</p></div>
     <div class="task" id="tgoals">${gl(TL, tabGoals())}</div>${S.t.g_tab ? `<div class="checkbar"><span class="score ${S.t.g_tab.score < 5 ? "part" : ""}">Splnené: ${S.t.g_tab.score} z 5</span></div>` : ""}
-    ${xSheetHTML("pj", { tools: true, tab: "Projekt" })}` + nextBar(); },
+    ${xSheetHTML("pj", { tools: true, tab: "Projekt" })}
+    <h3>Úloha 2: vyskúšaj si výpočty na ukážke</h3><div class="task">${taskHTML("tin")}</div>` + nextBar(); },
   graf: () => head() + `<h2>Graf z mojich údajov</h2>
     <div class="theory"><p>Vyber stĺpec s popiskami (napr. dni) a stĺpec s hodnotami, zvoľ <b>vhodný typ</b> grafu (vývoj v čase = čiarový, porovnanie = stĺpcový, podiel z celku = koláčový) a doplň <b>názov</b> a <b>názvy osí s jednotkami</b>.</p></div>
     <div class="task" id="ggoals">${gl([["data", "graf zobrazuje aspoň 5 hodnôt z tvojej tabuľky"], ["title", "výstižný názov grafu"], ["axes", "názvy osí (pri koláčovom grafe netreba)"]], grGoals())}</div>
-    <div class="tool" id="grbox">${grHTML()}</div>` + nextBar(),
+    <div class="tool" id="grbox">${grHTML()}</div>
+    <h3>Úloha 2: aký graf zvolíš?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("grsort")}</div>` + nextBar(),
   zaver: () => head() + `<h2>Záver a odovzdanie</h2>${guessBox()}
     <div class="theory"><p>Napíš <b>záver</b> aspoň v dvoch vetách: čo z údajov vyplýva (najväčšia a najmenšia hodnota, priemer, trend, prekvapenie) a čo by si urobil inak. Potom si stiahni <b>tabuľku ako CSV</b> (otvoríš ju v Exceli) a <b>graf ako SVG</b> a odovzdaj ich podľa pokynov učiteľa.</p></div>
     <div class="task" id="zgoals">${gl([["zav", "záver aspoň v dvoch vetách"], ["csv", "stiahnutá tabuľka (CSV)"], ["svg", "stiahnutý graf (SVG)"]], zavGoals())}</div>
     <textarea class="zav" id="zav" placeholder="Z údajov vyplýva, že…">${esc(S.zav)}</textarea>
-    <div class="row"><button class="primary" data-csv>⬇ Stiahnuť tabuľku (CSV)</button><button class="primary" data-svg>⬇ Stiahnuť graf (SVG)</button></div>` + nextBar()
+    <div class="row"><button class="primary" data-csv>⬇ Stiahnuť tabuľku (CSV)</button><button class="primary" data-svg>⬇ Stiahnuť graf (SVG)</button></div>
+    <h3>Otázky k záveru</h3><div class="task">${taskHTML("zq")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { if (xClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; if (xClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.th) { S.th = ds.th; const T = THEMES.find(t => t.id === ds.th), X = PJ(); if (!Object.keys(X.sh).some(k => !/1$/.test(k) || false) || confirm("Predvyplniť záhlavie podľa témy? (tvoje údaje v riadku 1 sa prepíšu)")) { Object.assign(X.sh, T.h); Object.entries(T.ex).forEach(([k, v]) => { if (!X.sh[k]) X.sh[k] = v; }); } award("g_tema", 1); save(); render(false); return true; }
   if (ds.gt) { S.G.type = ds.gt; sc("g_gr", grGoals()); save(); render(false); return true; }
   if (ds.csv !== undefined) { dlText("projekt_tabulka.csv", csvOf(), "text/csv;charset=utf-8"); S.exp.csv = true; sc("g_zav", zavGoals()); save(); render(false); return true; }
   if (ds.svg !== undefined) { const g = S.G, d = chartData(); dlText("projekt_graf.svg", chartSVG({ type: g.type, title: g.title, xt: g.xt, yt: g.yt, labels: d.L, values: d.V, dl: true }), "image/svg+xml"); S.exp.svg = true; sc("g_zav", zavGoals()); save(); render(false); return true; }
   return false; }
-function CUSTOM_INPUT(e) { const t = e.target, ds = t.dataset || {};
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; const t = e.target, ds = t.dataset || {};
   if (ds.g) { S.G[ds.g] = t.value; sc("g_gr", grGoals()); save(); const d = chartData(), g = S.G; document.getElementById("gprev").innerHTML = chartSVG({ type: g.type, title: g.title, xt: g.xt, yt: g.yt, labels: d.L, values: d.V, dl: true }); document.getElementById("ggoals").innerHTML = gl([["data", "graf zobrazuje aspoň 5 hodnôt z tvojej tabuľky"], ["title", "výstižný názov grafu"], ["axes", "názvy osí (pri koláčovom grafe netreba)"]], grGoals()); return true; }
   if (t.id === "zav") { S.zav = t.value; sc("g_zav", zavGoals()); save(); document.getElementById("zgoals").innerHTML = gl([["zav", "záver aspoň v dvoch vetách"], ["csv", "stiahnutá tabuľka (CSV)"], ["svg", "stiahnutý graf (SVG)"]], zavGoals()); return true; }
   return false; }
+
+VIEWS.precvic = () => head() + `<h2>Precvičovanie: skontroluj projekt</h2>
+    <div class="theory"><p>Pred odovzdaním projektu skontroluj celý reťazec: <b>otázka</b> (konkrétna, dá sa zmerať) → <b>údaje</b> (aspoň 5, skutočné) → <b>tabuľka</b> (záhlavie s jednotkami, výpočty vzorcami) → <b>graf</b> (správny typ, názov, osi) → <b>záver</b> (čo z čísel vyplýva, vlastnými slovami). Ak jedna časť chýba alebo je chybná, celý projekt stratí hodnotu.</p><p>Pri každej situácii vyber opravu a odpovedz na otázky.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar();
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -405,7 +441,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -495,8 +531,10 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
+function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
