@@ -230,7 +230,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"body": ["(0, 0) je vľavo hore, x rastie doprava, y nadol. Vyššie položený bod má menšie y.", "Bod vyznačíme malým krúžkom: create_oval(x − 3, y − 3, x + 3, y + 3)."], "usecka": ["<code>create_line(x1, y1, x2, y2)</code>. Rovnaké y = vodorovná, rovnaké x = zvislá úsečka.", "Parametre: fill (farba), width (hrúbka), dash=(10, 5) (prerušovaná), arrow='first' / 'last' / 'both'."], "lomena": ["Lomená čiara: create_line s viacerými bodmi, počet súradníc je vždy párny.", "Uzavretý útvar: posledný bod = prvý bod."], "obrazky": ["Postup: náčrt, pomenovanie bodov, súradnice, poradie spájania.", "Útvar jedným ťahom = jedna lomená čiara, každá hrana práve raz."], "chyby": ["Nepárny počet súradníc = TclError, chýbajúca čiarka = SyntaxError.", "Obrázok hore nohami: pomýlená os y."]};
+const THEORY = {"precvic": ["Ladenie: chybové hlásenie a riadok → súradnice v pároch s čiarkami → porovnanie s náčrtom.", "Uzavretý útvar končí prvým bodom. Menšie y = vyššie na ploche."], "body": ["(0, 0) je vľavo hore, x rastie doprava, y nadol. Vyššie položený bod má menšie y.", "Bod vyznačíme malým krúžkom: create_oval(x − 3, y − 3, x + 3, y + 3)."], "usecka": ["<code>create_line(x1, y1, x2, y2)</code>. Rovnaké y = vodorovná, rovnaké x = zvislá úsečka.", "Parametre: fill (farba), width (hrúbka), dash=(10, 5) (prerušovaná), arrow='first' / 'last' / 'both'."], "lomena": ["Lomená čiara: create_line s viacerými bodmi, počet súradníc je vždy párny.", "Uzavretý útvar: posledný bod = prvý bod."], "obrazky": ["Postup: náčrt, pomenovanie bodov, súradnice, poradie spájania.", "Útvar jedným ťahom = jedna lomená čiara, každá hrana práve raz."], "chyby": ["Nepárny počet súradníc = TclError, chýbajúca čiarka = SyntaxError.", "Obrázok hore nohami: pomýlená os y."]};
 /* ---------- mini tkinter.Canvas interpreter (subset of Python) ---------- */
 const TKCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
 function tkColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (TKCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
@@ -239,10 +239,10 @@ function tkTokens(s) {
   while (i < s.length) { const c = s[i];
     if (c === " " || c === "\t") { i++; continue; }
     if (c === "'" || c === '"') { let j = i + 1; while (j < s.length && s[j] !== c) j++; if (j >= s.length) throw { syn: "unterminated string literal" }; t.push({ s: s.slice(i + 1, j) }); i = j + 1; continue; }
-    if (/[0-9.]/.test(c)) { let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ n: parseFloat(s.slice(i, j)) }); i = j; continue; }
+    if (/[0-9]/.test(c) || (c === "." && /[0-9]/.test(s[i + 1] || ""))) { let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ n: parseFloat(s.slice(i, j)) }); i = j; continue; }
     if (/[A-Za-z_]/.test(c)) { let j = i; while (j < s.length && /[A-Za-z_0-9]/.test(s[j])) j++; t.push({ id: s.slice(i, j) }); i = j; continue; }
     if (s.startsWith("//", i) || s.startsWith("**", i)) { t.push({ o: s.slice(i, i + 2) }); i += 2; continue; }
-    if ("+-*/%(),=.".includes(c)) { t.push({ o: c }); i++; continue; }
+    if ("+-*/%(),=.[]".includes(c)) { t.push({ o: c }); i++; continue; }
     throw { syn: "invalid syntax" }; }
   return t;
 }
@@ -253,6 +253,7 @@ function tkEval(src, env) {
     if (x.id) { p++; if (x.id === "True") return true; if (x.id === "False") return false; if (env.fn && env.fn[x.id] && t[p] && t[p].o === "(") { p++; const args = []; if (!eat(")")) { do { args.push(add()); } while (eat(",")); if (!eat(")")) throw { syn: "invalid syntax" }; } return env.fn[x.id](...args); }
       if (x.id === "random" && eat(".")) { const m = pk(); p++; if (!eat("(")) throw { syn: "invalid syntax" }; const args = []; if (!eat(")")) { do { args.push(add()); } while (eat(",")); if (!eat(")")) throw { syn: "invalid syntax" }; } if (!env.imp.random) throw { name: "random" }; if (m.id === "randint") return Math.floor(Math.random() * (args[1] - args[0] + 1)) + args[0]; if (m.id === "randrange") return args.length === 1 ? Math.floor(Math.random() * args[0]) : args[0] + Math.floor(Math.random() * (args[1] - args[0])); if (m.id === "choice") return args[0][Math.floor(Math.random() * args[0].length)]; throw { attr: ["module 'random'", m.id] }; }
       if (x.id in env.vars) return env.vars[x.id]; throw { name: x.id }; }
+    if (eat("[")) { const arr = []; if (!eat("]")) { do { arr.push(add()); } while (eat(",") && !(t[p] && t[p].o === "]")); if (!eat("]")) throw { syn: "invalid syntax" }; } return arr; }
     if (eat("(")) { const v = add(); if (eat(",")) { const arr = [v]; if (!(t[p] && t[p].o === ")")) { do { arr.push(add()); } while (eat(",") && !(t[p] && t[p].o === ")")); } if (!eat(")")) throw { syn: "invalid syntax" }; return arr; } if (!eat(")")) throw { syn: "'(' was never closed" }; return v; }
     if (eat("-")) return -unary(); if (eat("+")) return unary(); throw { syn: "invalid syntax" }; }
   function unary() { const b = atom(); if (eat("**")) return Math.pow(b, unary()); return b; }
@@ -406,13 +407,14 @@ const STEPS = [
   { id: "lomena", title: "Lomená čiara", min: 10 },
   { id: "obrazky", title: "Obrázky z čiar", min: 10 },
   { id: "chyby", title: "Časté chyby", min: 4 },
+  { id: "precvic", title: "Precvičovanie: nájdi a oprav", min: 6 },
   { id: "test", title: "Záverečný test", min: 6 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { body: ["bodin"], usecka: ["c_us", "usq"], lomena: ["c_lom"], obrazky: ["c_obr"], chyby: ["chq"], test: ["test"] };
+const STEP_TASKS = { body: ["bodin", "psort"], usecka: ["c_us", "usq", "usort"], lomena: ["c_lom"], obrazky: ["c_obr"], chyby: ["chq"], precvic: ["g_sit"], test: ["test"] };
 const START = {
   kicker: "Informatika, 3. ročník",
-  lead: "Každý útvar na grafickej ploche je určený súradnicami bodov. Dnes budeš čítať súradnice z obrázka, kresliť úsečky rôznej farby, hrúbky, prerušované aj so šípkou, lomené čiary cez viac bodov a nakoniec celé obrázky z čiar: trojuholník, hviezdu aj domček jedným ťahom. 5 zastávok, body a na konci výsledok.",
+  lead: "Každý útvar na grafickej ploche je určený súradnicami bodov. Dnes budeš čítať súradnice z obrázka, kresliť úsečky rôznej farby, hrúbky, prerušované aj so šípkou, lomené čiary cez viac bodov a nakoniec celé obrázky z čiar: trojuholník, hviezdu aj domček jedným ťahom. 6 zastávok, body a na konci výsledok.",
   guessQ: "Koľko čísel treba zapísať do create_line, aby vznikla lomená čiara cez 3 body?",
   guessNote: "Tip sa neboduje. Na zastávke Lomená čiara zistíš, či si mal pravdu.",
   guesses: ["3", "4", "6", "9"],
@@ -470,6 +472,8 @@ function chalHTML(task, k) {
 
 /* ---------- tasks ---------- */
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const PX_I = [["create_line(10, 20, 30, 40, 50) vypíše chybu.", "tcl", "súradnice musia byť v pároch"], ["create_line(10, 20 30, 40) vypíše chybu.", "syn", ""], ["Trojuholník create_line(50, 200, 150, 50, 250, 200) nemá dolnú stranu.", "close", ""], ["Čiara je príliš tenká, na projektore ju nevidno.", "width", ""]];
+const PX_O = [["", "— vyber —"], ["tcl", "Nepárny počet súradníc, doplniť chýbajúce číslo"], ["syn", "Chýba čiarka medzi číslami"], ["close", "Na koniec pridať prvý bod (50, 200)"], ["width", "Pridať parameter width"], ["dash", "Pridať parameter dash"], ["y", "Opraviť smer osi y"]];
 const TASKS = {
   bodin: { id: "bodin", type: "custom", max: BP.length },
   c_us: { id: "c_us", type: "custom", max: 4 },
@@ -487,6 +491,9 @@ const TASKS = {
     { id: "3", ...Q("<code>canvas.create_line(10, 20 30, 40)</code>. Čo vypíše Python?", ["SyntaxError: chýba čiarka", "nakreslí čiaru", "TclError", "nič"], 0) },
     { id: "4", ...Q("Trojuholník z create_line nie je uzavretý. Čo chýba?", ["na konci znova prvý bod", "parameter close=True", "width", "fill"], 0) }
   ]},
+  g_sit: { id: "g_sit", type: "custom", max: 4 },
+  psort: {"id": "psort", "type": "sort", "buckets": [{"id": "h", "label": "⬆️ Horná polovica plochy"}, {"id": "d", "label": "⬇️ Dolná polovica plochy"}], "items": [{"id": "1", "t": "(50, 20)", "b": "h"}, {"id": "2", "t": "(300, 100)", "b": "h"}, {"id": "3", "t": "(200, 140)", "b": "h"}, {"id": "4", "t": "(10, 0)", "b": "h"}, {"id": "5", "t": "(50, 280)", "b": "d"}, {"id": "6", "t": "(300, 200)", "b": "d"}, {"id": "7", "t": "(200, 160)", "b": "d"}, {"id": "8", "t": "(399, 299)", "b": "d"}], "after": "Plocha 400 × 300 má stred v y = 150. O tom, či je bod hore alebo dole, rozhoduje iba y: menšie y znamená vyššie."},
+  usort: {"id": "usort", "type": "sort", "buckets": [{"id": "v", "label": "➖ Vodorovná"}, {"id": "z", "label": "| Zvislá"}, {"id": "s", "label": "⟋ Šikmá"}], "items": [{"id": "1", "t": "create_line(50, 100, 300, 100)", "b": "v"}, {"id": "2", "t": "create_line(20, 250, 380, 250)", "b": "v"}, {"id": "3", "t": "create_line(100, 20, 100, 200)", "b": "z"}, {"id": "4", "t": "create_line(300, 50, 300, 250)", "b": "z"}, {"id": "5", "t": "create_line(0, 0, 400, 300)", "b": "s"}, {"id": "6", "t": "create_line(50, 250, 350, 50)", "b": "s"}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Bod (0, 0) je na ploche:", ["vľavo hore", "vľavo dole", "v strede", "vpravo hore"], 0) },
     { id: "2", ...Q("Ktorý bod je bližšie k hornému okraju?", ["(100, 20)", "(20, 100)", "(100, 200)", "(300, 150)"], 0) },
@@ -507,7 +514,8 @@ const VIEWS = {
       <p>Samotný bod (jeden pixel) je na obrazovke skoro neviditeľný. Keď chceme bod vyznačiť, nakreslíme okolo neho malý krúžok, napríklad <code>canvas.create_oval(x - 3, y - 3, x + 3, y + 3, fill='red')</code>.</p>
       <p>Pred kreslením si obrázok načrtni na štvorčekový papier a <b>zapíš súradnice všetkých dôležitých bodov</b>. Program je potom iba prepisom týchto čísel.</p></div>
     <h3>Úloha: odčítaj súradnice bodu</h3>
-    <div class="ide"><div>${readSVG(Math.min(C.i, BP.length - 1))}</div><div class="task" style="margin:0">${done ? `<b>Hotovo</b><div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} bodov</span></div>` : `<p><b>Aké súradnice má bod ${"ABCDE"[C.i]}?</b> (bod ${C.i + 1} z ${BP.length})</p><div class="fp"><label>x = <input class="in" id="bx" inputmode="numeric" style="max-width:100px"></label><label>y = <input class="in" id="by" inputmode="numeric" style="max-width:100px"></label></div><div class="row"><button class="primary" data-bok>Potvrdiť</button></div>${C.last ? `<div class="fb ${C.last.ok ? "ok" : "bad"}">${C.last.msg}</div>` : ""}`}</div></div>` + nextBar(); },
+    <div class="ide"><div>${readSVG(Math.min(C.i, BP.length - 1))}</div><div class="task" style="margin:0">${done ? `<b>Hotovo</b><div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} bodov</span></div>` : `<p><b>Aké súradnice má bod ${"ABCDE"[C.i]}?</b> (bod ${C.i + 1} z ${BP.length})</p><div class="fp"><label>x = <input class="in" id="bx" inputmode="numeric" style="max-width:100px"></label><label>y = <input class="in" id="by" inputmode="numeric" style="max-width:100px"></label></div><div class="row"><button class="primary" data-bok>Potvrdiť</button></div>${C.last ? `<div class="fb ${C.last.ok ? "ok" : "bad"}">${C.last.msg}</div>` : ""}`}</div></div>
+    <h3>Úloha 2: horná, alebo dolná polovica plochy 400 × 300?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(); },
   usecka() { return head() + `<h2>Úsečka a jej vlastnosti</h2>
     <div class="theory"><p>Úsečku nakreslíme príkazom <code>canvas.create_line(x1, y1, x2, y2)</code>, kde (x1, y1) je začiatok a (x2, y2) koniec. Ak majú oba body rovnaké <b>y</b>, úsečka je <b>vodorovná</b>. Ak majú rovnaké <b>x</b>, je <b>zvislá</b>.</p>
       <table class="cmdt"><thead><tr><th>Parameter</th><th>Význam</th><th>Príklad</th></tr></thead><tbody>
@@ -516,7 +524,8 @@ const VIEWS = {
       <div class="pcode">${hl("canvas.create_line(50, 50, 350, 50, fill='red', width=5)\ncanvas.create_line(50, 100, 350, 100, dash=(10, 5))\ncanvas.create_line(50, 150, 350, 150, arrow='last', width=3)")}</div></div>
     <h3>Úloha 1: kresli úsečky</h3><p>Pri každej úlohe si uprav program v editore, spusti ho a daj Skontrolovať. Obrázok vľavo ukazuje, ako má výsledok vyzerať.</p>
     ${chalHTML("c_us", "usecka")}${ideHTML("usecka", D1)}
-    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("usq")}</div>` + nextBar(); },
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("usq")}</div>
+    <h3>Úloha 3: aká je úsečka?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("usort")}</div>` + nextBar(); },
   lomena() { const D = S.draw; return head() + `<h2>Lomená čiara</h2>
     ${guessBox()}
     <div class="theory"><p>Do <code>create_line</code> môžeme zapísať aj <b>viac bodov</b>. tkinter body spojí postupne za sebou a vznikne <b>lomená čiara</b>:</p>
@@ -533,12 +542,16 @@ const VIEWS = {
   chyby() { return head() + `<h2>Časté chyby</h2>
     <div class="theory"><p><b>Nepárny počet súradníc</b>: Python vypíše <code>TclError: wrong # coordinates</code>. <b>Chýbajúca čiarka</b> medzi číslami: <code>SyntaxError</code>. <b>Prehodené x a y</b> alebo zabudnutý <b>smer osi y</b>: obrázok je zrkadlovo otočený. <b>Neuzavretý útvar</b>: na konci lomenej čiary chýba prvý bod.</p></div>
     <h3>Nájdi chybu</h3><div class="task">${taskHTML("chq")}</div>` + nextBar(); },
+  precvic: () => head() + `<h2>Precvičovanie: nájdi a oprav</h2>
+    <div class="theory"><p>Keď program nekreslí, čo má, postupuj ako detektív: <b>1.</b> prečítaj chybové hlásenie a číslo riadka, <b>2.</b> skontroluj, či sú súradnice v <b>pároch</b> a oddelené čiarkami, <b>3.</b> ak chyba nie je hlásená, porovnaj obrázok s náčrtom: je útvar <b>uzavretý</b>? Nie je <b>prevrátený</b> (os y)? Má správnu <b>hrúbku a farbu</b>? Opravuj vždy iba jednu vec a hneď program spusti znova.</p><p>Pri každom probléme vyber opravu.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 4 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 4</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
 
 /* ---------- events ---------- */
 function drawRefresh() { const s = document.getElementById("drawsvg"); if (s) s.outerHTML = drawSVG(); const g = document.getElementById("gencode"); if (g) g.textContent = drawCode(); const c = document.querySelector("[data-dclose]"); if (c) c.disabled = S.draw.pts.length <= 2; }
 function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true;
   const el = e.target.closest("button"); if (el) { const ds = el.dataset, D = S.draw;
     if (ds.bok !== undefined) { const C = S.bx, x = parseNum(document.getElementById("bx").value), y = parseNum(document.getElementById("by").value), p = BP[C.i];
       if (C.last) { C.last = null; C.i++; if (C.i >= BP.length) award("bodin", C.res.filter(Boolean).length); save(); render(false); return true; }
@@ -550,9 +563,15 @@ function CUSTOM_CLICK(e) {
   }
   return tkClick(e);
 }
-function CUSTOM_INPUT(e) { const t = e.target; if (t.id === "dfill") { S.draw.fill = t.value; save(); drawRefresh(); return true; } if (t.id === "dwidth") { S.draw.width = +t.value; save(); drawRefresh(); return true; } return tkInput(e); }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; const t = e.target; if (t.id === "dfill") { S.draw.fill = t.value; save(); drawRefresh(); return true; } if (t.id === "dwidth") { S.draw.width = +t.value; save(); drawRefresh(); return true; } return tkInput(e); }
 document.addEventListener("click", ev => { const s = ev.target.closest && ev.target.closest("#drawsvg"); if (!s) return; const p = s.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const q = p.matrixTransform(s.getScreenCTM().inverse()); const x = Math.max(0, Math.min(400, Math.round(q.x / 5) * 5)), y = Math.max(0, Math.min(300, Math.round(q.y / 5) * 5)); S.draw.pts.push([x, y]); save(); drawRefresh(); });
 document.addEventListener("keydown", e => { if ((e.target.id === "bx" || e.target.id === "by") && e.key === "Enter") { e.preventDefault(); const b = document.querySelector("[data-bok]"); if (b) b.click(); } });
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
