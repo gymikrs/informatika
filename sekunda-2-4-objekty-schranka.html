@@ -229,7 +229,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"schranka": ["Označ → Ctrl + C (kopírovať) alebo Ctrl + X (vystrihnúť) → Ctrl + V (prilepiť). Obsah je v schránke.", "Presun = vystrihnúť a prilepiť, aj ťahaním myšou. Ctrl + A označí všetko, Ctrl + Z vráti."], "objekty": ["Vložiť: obrázky, tvary, ikony, SmartArt, graf, tabuľka, textové pole, WordArt, symbol, rovnica.", "Obtekanie: v riadku, štvorcové, tesné, za textom, pred textom. Veľkosť meň rohovým úchytom."], "rady": ["Obrázky s licenciou a zdrojom, popisy Obr. 1, Prilepiť › Ponechať iba text."]};
+const THEORY = {"precvic": ["Najprv označ, potom príkaz. Z späť, X vystrihnúť, C kopírovať, V prilepiť, A všetko.", "Obrázok zmenšuj rohovým úchytom, obtekanie nastav cez Obtekať text."], "schranka": ["Označ → Ctrl + C (kopírovať) alebo Ctrl + X (vystrihnúť) → Ctrl + V (prilepiť). Obsah je v schránke.", "Presun = vystrihnúť a prilepiť, aj ťahaním myšou. Ctrl + A označí všetko, Ctrl + Z vráti."], "objekty": ["Vložiť: obrázky, tvary, ikony, SmartArt, graf, tabuľka, textové pole, WordArt, symbol, rovnica.", "Obtekanie: v riadku, štvorcové, tesné, za textom, pred textom. Veľkosť meň rohovým úchytom."], "rady": ["Obrázky s licenciou a zdrojom, popisy Obr. 1, Prilepiť › Ponechať iba text."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -267,13 +267,14 @@ const STEPS = [
   { id: "schranka", title: "Kopírovanie a presúvanie", min: 12 },
   { id: "objekty", title: "Vkladanie objektov", min: 14 },
   { id: "rady", title: "Užitočné rady", min: 5 },
+  { id: "precvic", title: "Precvičovanie: správny príkaz", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { schranka: ["g_cl", "cq"], objekty: ["g_ob", "oq"], rady: ["rq"], test: ["test"] };
+const STEP_TASKS = { schranka: ["g_cl", "cq", "ksort"], objekty: ["g_ob", "oq", "vsort"], rady: ["rq"], precvic: ["g_sit"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Text netreba písať dvakrát ani prepisovať, keď je v zlom poradí. Stačí ho skopírovať alebo presunúť cez schránku. Do dokumentu vložíš aj obrázok, tabuľku, tvar či symbol a nastavíš, ako ich má text obtekať. Všetko si vyskúšaš v simulácii dokumentu. 3 zastávky, body a na konci výsledok.",
+  lead: "Text netreba písať dvakrát ani prepisovať, keď je v zlom poradí. Stačí ho skopírovať alebo presunúť cez schránku. Do dokumentu vložíš aj obrázok, tabuľku, tvar či symbol a nastavíš, ako ich má text obtekať. Všetko si vyskúšaš v simulácii dokumentu. 4 zastávky, body a na konci výsledok.",
   guessQ: "Aký je rozdiel medzi Ctrl + C a Ctrl + X?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Nie je rozdiel", "Ctrl + C kopíruje (originál zostane), Ctrl + X vystrihne (originál zmizne)", "Ctrl + X vloží text", "Ctrl + C zatvorí okno"],
@@ -295,6 +296,8 @@ function tpHTML() { const [r, c] = S.th; let s = `<div class="tp">`; for (let i 
 function obGoals() { return { wrap: S.wrap === "štvorcové" && S.pos === "vpravo", tbl: !!S.tbl && S.tbl[0] === 4 && S.tbl[1] === 3, sym: S.sym.includes("€") && S.sym.includes("©") }; }
 const gl = (list, G) => `<ul class="goals" style="list-style:none;padding:0;margin:6px 0 0">${list.map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`;
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const PX_I = [["Chceš zmeniť písmo v celom dokumente naraz a najprv potrebuješ všetko označiť.", "a", ""], ["Omylom si vymazal nadpis.", "z", ""], ["Z webu si skopíroval text a vo Worde má cudzie písmo a modrú farbu.", "text", "prilepí sa bez pôvodného formátovania"], ["Obrázok je príliš veľký a chceš ho zmenšiť bez skreslenia.", "roh", "rohový úchyt zachová pomer strán"], ["Chceš, aby text tiekol okolo obrázka.", "wrap", ""], ["Krok 3 receptu je pred krokom 1.", "xv", "presun = vystrihnúť a prilepiť"], ["Rovnaký podpis chceš pod dva listy v tom istom dokumente.", "cc", "kópia = originál zostane"]];
+const PX_O = [["", "— vyber —"], ["cc", "Ctrl + C a Ctrl + V"], ["xv", "Ctrl + X a Ctrl + V"], ["a", "Ctrl + A"], ["z", "Ctrl + Z"], ["text", "Prilepiť › Ponechať iba text"], ["roh", "Ťahať za rohový úchyt"], ["wrap", "Obtekať text › Štvorcové"]];
 const TASKS = {
   g_cl: { id: "g_cl", type: "custom", max: 3 },
   cq: { id: "cq", type: "mc", qs: [
@@ -316,6 +319,9 @@ const TASKS = {
     { id: "2", ...Q("Omylom si vymazal odsek. Čo urobíš?", ["Ctrl + Z (Späť)", "Ctrl + S", "zatvorím Word", "Ctrl + P"], 0) },
     { id: "3", ...Q("Ako pridáš k obrázku popis „Obr. 1: Palacinky“?", ["Referencie › Vložiť popis (alebo pravý klik › Vložiť popis)", "Domov › Tučné", "Vložiť › Hlavička", "Rozloženie › Okraje"], 0) }
   ]},
+  g_sit: { id: "g_sit", type: "custom", max: 7 },
+  ksort: {"id": "ksort", "type": "sort", "buckets": [{"id": "c", "label": "⧉ Kopírovať (Ctrl + C)"}, {"id": "x", "label": "✂ Presunúť (Ctrl + X)"}], "items": [{"id": "1", "t": "Ten istý pozdrav chceš mať na začiatku aj na konci listu", "b": "c"}, {"id": "2", "t": "Adresu z jedného dokumentu chceš aj v druhom, pôvodný sa nemá zmeniť", "b": "c"}, {"id": "3", "t": "Rovnakú tabuľku chceš mať v dokumente dvakrát", "b": "c"}, {"id": "4", "t": "Citát z webu chceš dať do referátu", "b": "c"}, {"id": "5", "t": "Odsek je na zlom mieste, patrí o stranu ďalej", "b": "x"}, {"id": "6", "t": "Kroky receptu sú v zlom poradí", "b": "x"}, {"id": "7", "t": "Obrázok chceš dať z úvodu do záveru", "b": "x"}, {"id": "8", "t": "Vetu chceš preniesť z jedného odseku do druhého", "b": "x"}]},
+  vsort: {"id": "vsort", "type": "sort", "buckets": [{"id": "t", "label": "▦ Tabuľka"}, {"id": "g", "label": "📊 Graf"}, {"id": "a", "label": "🔷 SmartArt"}, {"id": "s", "label": "Ω Symbol"}], "items": [{"id": "1", "t": "Rozvrh hodín", "b": "t"}, {"id": "2", "t": "Cenník s tromi stĺpcami", "b": "t"}, {"id": "3", "t": "Vývoj teploty počas týždňa", "b": "g"}, {"id": "4", "t": "Počet žiakov v jednotlivých triedach", "b": "g"}, {"id": "5", "t": "Postup v krokoch so šípkami", "b": "a"}, {"id": "6", "t": "Organizačná štruktúra školy", "b": "a"}, {"id": "7", "t": "Znak stupňa °", "b": "s"}, {"id": "8", "t": "Znak autorských práv ©", "b": "s"}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Ctrl + V:", ["prilepí obsah schránky", "vystrihne", "kopíruje", "uloží"], 0) },
     { id: "2", ...Q("Presun textu = ", ["vystrihnúť a prilepiť", "kopírovať a prilepiť", "odstrániť", "uložiť"], 0) },
@@ -330,7 +336,8 @@ const VIEWS = {
     <h3>Úloha: oprav recept</h3><p>Klikni na odsek (označí sa), použi tlačidlá alebo klávesové skratky.</p>
     <div class="task">${gl([["order", "Zoraď kroky 1 až 4 pod nadpis v správnom poradí (vystrihni a prilep)."], ["end", "Presuň „Dobrú chuť!“ na úplný koniec."], ["copy", "Skopíruj nadpis „Palacinky“ a prilep ho ešte raz pred „Dobrú chuť!“ (vyber „Dobrú chuť!“ a Prilepiť pred vybraný)."]], G)}${S.t.g_cl ? `<div class="checkbar"><span class="score ${S.t.g_cl.score < 3 ? "part" : ""}">Splnené: ${S.t.g_cl.score} z 3</span></div>` : ""}</div>
     <div id="clbox">${clHTML()}</div>
-    <h3>Otázky</h3><div class="task">${taskHTML("cq")}</div>` + nextBar(); },
+    <h3>Otázky</h3><div class="task">${taskHTML("cq")}</div>
+    <h3>Úloha 3: kopírovať, alebo presunúť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ksort")}</div>` + nextBar(); },
   objekty: () => { const G = obGoals(); return head() + `<h2>Vkladanie objektov</h2>
     <div class="theory"><p>Na karte <b>Vložiť</b> pridáš do dokumentu <b>obrázky</b> (zo súboru, online), <b>tvary</b>, <b>ikony</b>, <b>SmartArt</b> (diagramy), <b>graf</b>, <b>tabuľku</b>, <b>textové pole</b>, <b>WordArt</b>, <b>symbol</b> a <b>rovnicu</b>. Obrázok vyberieš kliknutím. Okolo neho sa zobrazia <b>úchyty</b>: rohovými meníš veľkosť bez skreslenia, krúžkovou šípkou otáčaš.</p>
       <p><b>Obtekanie textu</b> (Formát obrázka › Obtekať text) určuje vzťah obrázka a textu: <b>v riadku s textom</b> (ako veľké písmeno), <b>štvorcové</b> a <b>tesné</b> (text obteká okolo), <b>za textom</b> (pozadie), <b>pred textom</b> (prekryje text).</p></div>
@@ -338,10 +345,14 @@ const VIEWS = {
     <h3>Obrázok a obtekanie</h3><div id="wrbox">${wrHTML()}</div>
     <h3>Vložiť › Tabuľka</h3><div class="tool">${tpHTML()}</div>
     <h3>Vložiť › Symbol</h3><div class="tool"><div class="sym">${["€", "©", "®", "™", "°", "±", "×", "÷", "§", "→", "½", "∞"].map(c => `<button data-sym="${c}">${c}</button>`).join("")}</div><p>Text: <span style="font-family:Calibri,Arial;font-size:18px">Cena palaciniek: 3,50 ${esc(S.sym)}</span> <button class="ghost" data-symclr style="padding:2px 8px">↺</button></p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("oq")}</div>` + nextBar(); },
+    <h3>Otázky</h3><div class="task">${taskHTML("oq")}</div>
+    <div class="theory"><p><b>Ktorý objekt vybrať?</b> <b>Tabuľka</b> usporiada údaje do riadkov a stĺpcov (rozvrh, cenník). <b>Graf</b> ukáže čísla obrázkom, takže hneď vidno, čo je väčšie alebo ako sa niečo mení. <b>SmartArt</b> nakreslí diagram: postup v krokoch, cyklus alebo hierarchiu (kto komu šéfuje). <b>Symbol</b> vloží znak, ktorý nie je na klávesnici (°, ©, €, ±).</p></div><h3>Úloha 3: aký objekt vložíš?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("vsort")}</div>` + nextBar(); },
   rady: () => head() + `<h2>Užitočné rady</h2>
     <div class="theory"><ul><li>Obrázky z internetu používaj iba s <b>licenciou</b>, ktorá to dovoľuje, a uveď <b>zdroj</b>. Word ponúka aj Vložiť › Obrázky › Stock obrázky bez poplatkov.</li><li>Obrázky a tabuľky číslujeme <b>popisom</b> (Referencie › Vložiť popis): Obr. 1, Tab. 1.</li><li>Pri kopírovaní z webu použi <b>Prilepiť › Ponechať iba text</b>, aby si si nepriniesol cudzie písmo a farby.</li><li>Keď sa niečo pokazí, <b>Ctrl + Z</b> vráti poslednú akciu, aj viackrát za sebou.</li></ul></div>
     <h3>Otázky</h3><div class="task">${taskHTML("rq")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: správny príkaz</h2>
+    <div class="theory"><p>Pri práci s textom a objektmi platí jednoduché pravidlo: <b>najprv označ, potom urob príkaz</b>. Najrýchlejšie je to klávesovými skratkami. Zapamätaj si ich podľa polohy na klávesnici: Z, X, C, V sú vedľa seba v dolnom rade (<b>Z</b> späť, <b>X</b> nožnice, <b>C</b> kópia, <b>V</b> vloženie) a <b>A</b> znamená všetko (anglicky <i>all</i>). Pri obrázkoch rozhoduje správny <b>úchyt</b> a <b>obtekanie textu</b>.</p><p>Pri každej situácii vyber, čo použiješ.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 let HIST = [];
@@ -355,6 +366,7 @@ function cAct(a) { const P = S.para, i = S.psel; if (["cut", "copy", "del"].incl
   if (a === "undo") { HIST.pop(); const h = HIST.pop(); if (h) S.para = JSON.parse(h); }
   scoreAll(); save(); document.getElementById("clbox").innerHTML = clHTML(); render(false); }
 function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true;
   const pp = e.target.closest && e.target.closest("[data-pi]"); if (pp) { S.psel = S.psel === +pp.dataset.pi ? null : +pp.dataset.pi; save(); document.getElementById("clbox").innerHTML = clHTML(); return true; }
   const tp = e.target.closest && e.target.closest("[data-tp]"); if (tp) { const [r, c] = tp.dataset.tp.split("|").map(Number); S.tbl = [r, c]; scoreAll(); save(); render(false); return true; }
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
@@ -367,6 +379,13 @@ function CUSTOM_CLICK(e) {
 }
 document.addEventListener("mouseover", e => { const tp = e.target.closest && e.target.closest("[data-tp]"); if (!tp) return; const [r, c] = tp.dataset.tp.split("|").map(Number); if (S.th[0] === r && S.th[1] === c) return; S.th = [r, c]; document.querySelectorAll("[data-tp]").forEach(x => { const [a, b] = x.dataset.tp.split("|").map(Number); x.classList.toggle("h", a <= r && b <= c); }); const p = tp.parentElement.nextElementSibling; if (p) p.textContent = `Tabuľka ${c} × ${r} (stĺpce × riadky)`; });
 document.addEventListener("keydown", e => { if (!document.getElementById("clbox") || !e.ctrlKey || /INPUT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase(), m = { c: "copy", x: "cut", v: "paste", z: "undo" }[k]; if (m) { e.preventDefault(); cAct(m); } });
+
+function CUSTOM_INPUT(e) { return selInput(e); }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };

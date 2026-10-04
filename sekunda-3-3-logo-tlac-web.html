@@ -224,7 +224,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"tlac": ["Obrazovka = RGB (svetlo), tlač = CMYK (atrament).", "Tlač potrebuje 300 DPI; cm = px ÷ DPI × 2,54. Vektor (SVG, PDF) sa tlačí v akejkoľvek veľkosti."], "formaty": ["PNG = priehľadnosť, web; JPEG = fotky; SVG = vektor; PDF = tlač; ICO = favicon."], "export": ["Pri zmene veľkosti zachovaj pomer strán. Rastrové logo radšej zmenšuj.", "Na web a farebné pozadie PNG s priehľadnosťou (JPEG ju nepodporuje)."], "publikovanie": ["Logomanuál: farby, písmo, minimálna veľkosť, ochranná zóna, zakázané úpravy (natiahnutie, iné farby).", "Profilovka = štvorec, favicon = malá ikona; cudzie logá bez povolenia nie."]};
+const THEORY = {"precvic": ["Pred exportom: kde (RGB/CMYK), aké veľké (300 DPI, pomer strán), aké pozadie (PNG priehľadné).", "Pomer strán: obe strany násob alebo deľ rovnakým číslom. px = cm ÷ 2,54 × DPI."], "tlac": ["Obrazovka = RGB (svetlo), tlač = CMYK (atrament).", "Tlač potrebuje 300 DPI; cm = px ÷ DPI × 2,54. Vektor (SVG, PDF) sa tlačí v akejkoľvek veľkosti."], "formaty": ["PNG = priehľadnosť, web; JPEG = fotky; SVG = vektor; PDF = tlač; ICO = favicon."], "export": ["Pri zmene veľkosti zachovaj pomer strán. Rastrové logo radšej zmenšuj.", "Na web a farebné pozadie PNG s priehľadnosťou (JPEG ju nepodporuje)."], "publikovanie": ["Logomanuál: farby, písmo, minimálna veľkosť, ochranná zóna, zakázané úpravy (natiahnutie, iné farby).", "Profilovka = štvorec, favicon = malá ikona; cudzie logá bez povolenia nie."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -263,13 +263,14 @@ const STEPS = [
   { id: "formaty", title: "Formáty súborov", min: 6 },
   { id: "export", title: "Exportér loga", min: 13 },
   { id: "publikovanie", title: "Pravidlá publikovania", min: 5 },
+  { id: "precvic", title: "Precvičovanie: správny export", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { tlac: ["tin", "tq"], formaty: ["fq"], export: ["g_ex"], publikovanie: ["pq"], test: ["test"] };
+const STEP_TASKS = { tlac: ["tin", "tq", "rsort"], formaty: ["fq", "vsort"], export: ["g_ex"], publikovanie: ["pq"], precvic: ["g_sit", "pxin"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Logo je hotové. Teraz ho treba pripraviť tak, aby bolo ostré na plagáte aj tričku, malo priehľadné pozadie na webe a správny tvar na profilovke či ikonke stránky. Zistíš rozdiel medzi obrazovkou a tlačou (RGB, CMYK, DPI), vyberieš správny formát a v exportéri pripravíš a stiahneš logo v potrebných veľkostiach. 4 zastávky, body a na konci výsledok.",
+  lead: "Logo je hotové. Teraz ho treba pripraviť tak, aby bolo ostré na plagáte aj tričku, malo priehľadné pozadie na webe a správny tvar na profilovke či ikonke stránky. Zistíš rozdiel medzi obrazovkou a tlačou (RGB, CMYK, DPI), vyberieš správny formát a v exportéri pripravíš a stiahneš logo v potrebných veľkostiach. 5 zastávok, body a na konci výsledok.",
   guessQ: "Koľko bodov na palec (DPI) sa odporúča pre kvalitnú tlač?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["10", "72", "300", "3000"],
@@ -293,6 +294,8 @@ function paintLogo() { const c = document.getElementById("lgc"); if (c) drawLogo
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, tol, why) => ({ id, q, ok: v => Math.abs(parseNum(v) - ans) <= tol, show: String(ans).replace(".", ","), ph: "?", why });
 const FF = ["PNG", "JPEG", "SVG", "PDF", "ICO"];
+const PX_I = [["Logo na tmavomodrú hlavičku webu.", "png", "priehľadné pozadie splynie s farbou"], ["Tlačiareň vyrobí z loga 3-metrovú plachtu.", "svg", "vektor sa zväčší bez straty"], ["Profilový obrázok školského Instagramu.", "sq", ""], ["Fotka zo športového dňa do článku na webe.", "jpg", "JPEG je na fotky"], ["Leták na akciu pripravený na vytlačenie.", "pdf", ""], ["Ikonka webu v karte prehliadača.", "ico", ""]];
+const PX_O = [["", "— vyber —"], ["svg", "SVG (vektor)"], ["png", "PNG s priehľadným pozadím"], ["jpg", "JPEG"], ["pdf", "PDF"], ["ico", "ICO (favicon)"], ["sq", "Štvorcový PNG"]];
 const TASKS = {
   tin: { id: "tin", type: "input", qs: [
     inq("1", "Logo má 1200 px na šírku. Koľko cm bude merať pri tlači 300 DPI? (1 palec = 2,54 cm, na 1 desatinné miesto)", 10.2, 0.1, "1200 ÷ 300 = 4 palce, 4 × 2,54 = 10,16 cm."),
@@ -316,6 +319,13 @@ const TASKS = {
     { id: "3", ...Q("Ktorá úprava loga je zakázaná?", ["natiahnutie (zmena pomeru strán) alebo zmena farieb podľa seba", "zmenšenie so zachovaním pomeru", "použitie čiernobielej verzie", "umiestnenie na biele pozadie"], 0) },
     { id: "4", ...Q("Aký tvar má profilový obrázok na sociálnych sieťach?", ["štvorec (často orezaný do kruhu)", "úzky pruh", "trojuholník", "na výšku 1 : 3"], 0) }
   ]},
+  g_sit: { id: "g_sit", type: "custom", max: 6 },
+  rsort: {"id": "rsort", "type": "sort", "buckets": [{"id": "r", "label": "💡 RGB (svetlo)"}, {"id": "c", "label": "🖨️ CMYK (atrament)"}], "items": [{"id": "1", "t": "Monitor počítača", "b": "r"}, {"id": "2", "t": "Displej mobilu", "b": "r"}, {"id": "3", "t": "Projektor v triede", "b": "r"}, {"id": "4", "t": "Webová stránka", "b": "r"}, {"id": "5", "t": "Atramentová tlačiareň", "b": "c"}, {"id": "6", "t": "Plagát z tlačiarne", "b": "c"}, {"id": "7", "t": "Vizitka z tlačiarne", "b": "c"}, {"id": "8", "t": "Leták vo farbe", "b": "c"}]},
+  vsort: {"id": "vsort", "type": "sort", "buckets": [{"id": "r", "label": "🟦 Rastrový (z bodov)"}, {"id": "v", "label": "📐 Vektorový (z tvarov)"}], "items": [{"id": "1", "t": "PNG", "b": "r"}, {"id": "2", "t": "JPEG", "b": "r"}, {"id": "3", "t": "BMP", "b": "r"}, {"id": "4", "t": "SVG", "b": "v"}, {"id": "5", "t": "EPS", "b": "v"}, {"id": "6", "t": "AI (Adobe Illustrator)", "b": "v"}], "after": "Rastrový obrázok sa pri zväčšení rozmaže. Vektorový sa prepočíta a zostane ostrý v akejkoľvek veľkosti."},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Logo má 800 × 600 px. Zmenšíš šírku na 400 px a zachováš pomer strán. Aká bude výška v px?", ok: v => Math.abs(parseNum(v) - 300) <= 0.5, show: "300 px", ph: "?" },
+    { id: "2", q: "Vizitka má šírku 9 cm. Koľko px potrebuje logo cez celú šírku pri 300 DPI? (zaokrúhli na celé)", ok: v => Math.abs(parseNum(v) - 1063) <= 2, show: "1 063 px (9 ÷ 2,54 × 300)", ph: "?" }
+  ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("DPI znamená:", ["počet bodov na palec", "farebný model", "formát súboru", "veľkosť súboru"], 0) },
     { id: "2", ...Q("Ktorý formát podporuje priehľadné pozadie?", ["PNG", "JPEG", "BMP", "TXT"], 0) },
@@ -331,10 +341,12 @@ const VIEWS = {
       <div class="rgb"><div style="background:linear-gradient(90deg,#FF0000,#00FF00,#0000FF);color:#fff;font-weight:800">RGB – svetlo, obrazovka</div><div style="background:linear-gradient(90deg,#00AEEF,#EC008C,#FFF200,#231F20);color:#fff;font-weight:800">CMYK – atrament, tlač</div></div>
       <p><b>Rozlíšenie</b>: na obrazovke sa rátajú pixely (px). Pri tlači záleží na <b>hustote</b> v <b>DPI</b> (bodov na palec). Na kvalitnú tlač potrebujeme <b>300 DPI</b>. Veľkosť výtlačku v cm = <b>px ÷ DPI × 2,54</b>. Vektorové logo (SVG, PDF) sa dá vytlačiť v akejkoľvek veľkosti.</p></div>
     <h3>Úloha 1: počítaj</h3><div class="task">${taskHTML("tin")}</div>
-    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("tq")}</div>` + nextBar(),
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("tq")}</div>
+    <h3>Úloha 3: RGB, alebo CMYK?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("rsort")}</div>` + nextBar(),
   formaty: () => head() + `<h2>Formáty súborov</h2>
     <div class="theory"><table><thead><tr><th>Formát</th><th>Vlastnosti</th><th>Použitie loga</th></tr></thead><tbody><tr><td><b>PNG</b></td><td>rastrový, bezstratový, <b>priehľadnosť</b></td><td>web, prezentácie, dokumenty</td></tr><tr><td><b>JPEG</b></td><td>rastrový, stratový, bez priehľadnosti</td><td>fotky, nie logá</td></tr><tr><td><b>SVG</b></td><td><b>vektorový</b>, ostrý v každej veľkosti</td><td>web, tlačiareň, reklamné predmety</td></tr><tr><td><b>PDF</b></td><td>vektor aj raster, zachová vzhľad</td><td>tlač, letáky</td></tr><tr><td><b>ICO</b></td><td>malé ikony vo viacerých veľkostiach</td><td>favicon (ikona webu)</td></tr></tbody></table></div>
-    <h3>Úloha: ktorý formát?</h3><div class="task">${taskHTML("fq")}</div>` + nextBar(),
+    <h3>Úloha: ktorý formát?</h3><div class="task">${taskHTML("fq")}</div>
+    <div class="theory"><p><b>Rastrové formáty</b> (PNG, JPEG, BMP, GIF) ukladajú obrázok ako mriežku farebných bodov. <b>Vektorové formáty</b> (SVG, EPS, AI z programu Adobe Illustrator) ukladajú tvary ako matematický popis čiar a kriviek. Grafici preto logo kreslia a archivujú vo vektore a rastrové verzie (PNG) z neho iba exportujú v potrebnej veľkosti.</p></div><h3>Úloha 2: rastrový, alebo vektorový?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("vsort")}</div>` + nextBar(),
   export: () => { const G = S.eg; return head() + `<h2>Exportér loga</h2>
     <div class="theory"><p>Pri zmene veľkosti <b>zachovaj pomer strán</b>, inak sa logo natiahne. Rastrové logo radšej <b>zmenšuj</b> ako zväčšuj (pri zväčšení sa rozmaže). Na farebné pozadia a web exportuj <b>PNG s priehľadným pozadím</b>. Šachovnica v náhľade znamená priehľadnú plochu.</p></div>
     <div class="task"><ul class="goals">${[["prof", "Exportuj logo na profilovku: <b>PNG 512 × 512</b> s priehľadným pozadím."], ["fav", "Exportuj favicon: <b>PNG 32 × 32</b>."], ["jpg", "Vyskúšaj JPEG s priehľadným pozadím a pozri sa, čo sa stane."]].map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t.g_ex ? `<div class="checkbar"><span class="score ${S.t.g_ex.score < 3 ? "part" : ""}">Splnené: ${S.t.g_ex.score} z 3</span></div>` : ""}</div>
@@ -342,15 +354,26 @@ const VIEWS = {
   publikovanie: () => head() + `<h2>Pravidlá publikovania</h2>
     <div class="theory"><p>Firmy a školy majú <b>logomanuál</b>: pravidlá, ako sa logo smie používať. Určuje povolené <b>farby</b> a <b>písmo</b>, <b>minimálnu veľkosť</b>, <b>ochrannú zónu</b> (voľné miesto okolo loga) a zakázané úpravy: <b>natiahnutie</b>, zmenu farieb, pridanie tieňa či otočenie. Logo sa používa na <b>webe</b> (hlavička, favicon), na <b>sociálnych sieťach</b> (štvorcová profilovka), v <b>dokumentoch</b> (hlavička listu) a v <b>tlači</b> (plagáty, tričká). Cudzie logá bez povolenia nepoužívame.</p></div>
     <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: správny export</h2>
+    <div class="theory"><p>Pred každým exportom si polož tri otázky: <b>Kde sa logo použije?</b> (obrazovka = RGB, tlač = CMYK) <b>Aké veľké bude?</b> (pri tlači potrebuješ 300 DPI, pri zmene veľkosti zachovaj pomer strán) <b>Aké má pozadie?</b> (na farebné pozadie PNG s priehľadnosťou). Pomer strán zachováš tak, že obe strany vynásobíš alebo vydelíš <b>rovnakým číslom</b>: keď šírku zmenšíš na polovicu, aj výšku zmenšíš na polovicu.</p><p>Pri každom použití vyber formát a potom si prepočítaj rozmery.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) return false; if (el.dataset.exp !== undefined) { const E = S.E, c = document.createElement("canvas"); c.width = E.w; c.height = E.h; drawLogo(c.getContext("2d"), E.w, E.h, E.tr, E.fmt); const a = document.createElement("a"); a.download = `logo_${E.w}x${E.h}.${E.fmt === "png" ? "png" : "jpg"}`; a.href = c.toDataURL("image/" + E.fmt, 0.92); document.body.appendChild(a); a.click(); a.remove();
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; const el = e.target.closest("button"); if (!el) return false; if (el.dataset.exp !== undefined) { const E = S.E, c = document.createElement("canvas"); c.width = E.w; c.height = E.h; drawLogo(c.getContext("2d"), E.w, E.h, E.tr, E.fmt); const a = document.createElement("a"); a.download = `logo_${E.w}x${E.h}.${E.fmt === "png" ? "png" : "jpg"}`; a.href = c.toDataURL("image/" + E.fmt, 0.92); document.body.appendChild(a); a.click(); a.remove();
     const G = S.eg; if (E.fmt === "png" && E.w === 512 && E.h === 512 && E.tr) G.prof = true; if (E.fmt === "png" && E.w === 32 && E.h === 32) G.fav = true; if (E.fmt === "jpeg" && E.tr) G.jpg = true; const n = Object.keys(G).length; if (n) award("g_ex", n); save(); render(false); return true; } return false; }
-function CUSTOM_INPUT(e) { const t = e.target; if (!t.dataset || !t.dataset.e) return false; const E = S.E, k = t.dataset.e;
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; const t = e.target; if (!t.dataset || !t.dataset.e) return false; const E = S.E, k = t.dataset.e;
   if (k === "w" || k === "h") { const v = Math.max(16, Math.min(2000, Math.round(+t.value || 16))); const r = E.w / E.h; E[k] = v; if (E.lock) { if (k === "w") E.h = Math.round(v / r); else E.w = Math.round(v * r); } }
   else if (k === "lock" || k === "tr") E[k] = t.checked; else E[k] = t.value;
   save(); if (t.type === "number") { clearTimeout(window._et); window._et = setTimeout(() => { render(false); const n = document.querySelector(`[data-e="${k}"]`); if (n) { n.focus(); } }, 500); } else render(false); return true; }
 setInterval(() => { const c = document.getElementById("lgc"); if (c && c.dataset.w !== c.width + "x" + c.height + S.E.tr + S.E.fmt) { c.dataset.w = c.width + "x" + c.height + S.E.tr + S.E.fmt; paintLogo(); } }, 200);
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
