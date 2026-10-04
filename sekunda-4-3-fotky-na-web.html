@@ -223,7 +223,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"velkost": ["Na web 1200–2000 px, profilovka ~400 px; pomery 16:9, 1:1, 4:5; zachovaj pomer strán, iný pomer orezaním."], "export": ["JPEG/WebP kvalita 70–85 %: malý súbor a dobrý vzhľad; vodoznak označí autora."], "pravidla": ["Súhlas osôb na fotke (GDPR), licencia a autor cudzích fotiek, odstrániť GPS, pozor na pozadie."]};
+const THEORY = {"precvic": ["Kontrola: kam (pomer, šírka) → formát (JPEG/PNG) → smiem (súhlas, licencia) → čo prezrádza (GPS, pozadie).", "Nová výška = nová šírka × pôvodná výška ÷ pôvodná šírka. Mpx = šírka × výška ÷ 1 000 000."], "velkost": ["Na web 1200–2000 px, profilovka ~400 px; pomery 16:9, 1:1, 4:5; zachovaj pomer strán, iný pomer orezaním."], "export": ["JPEG/WebP kvalita 70–85 %: malý súbor a dobrý vzhľad; vodoznak označí autora."], "pravidla": ["Súhlas osôb na fotke (GDPR), licencia a autor cudzích fotiek, odstrániť GPS, pozor na pozadie."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -276,13 +276,14 @@ const STEPS = [
   { id: "velkost", title: "Rozmery a pomer strán", min: 7 },
   { id: "export", title: "Export pre web", min: 20 },
   { id: "pravidla", title: "Súkromie a autorské práva", min: 7 },
+  { id: "precvic", title: "Precvičovanie: pripravené na web", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { velkost: ["vin"], export: ["g_ex"], pravidla: ["rq"], test: ["test"] };
+const STEP_TASKS = { velkost: ["vin", "rsort"], export: ["g_ex"], pravidla: ["rq", "zsort"], precvic: ["g_sit", "pxin"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Fotka z mobilu má 12 megapixelov a 5 MB. Na web je zbytočne veľká, stránka sa načítava pomaly a na Instagrame ju aj tak zmenšia. Naučíš sa fotku orezať na správny pomer strán, zmenšiť, skomprimovať a označiť vodoznakom. V exportéri pripravíš fotky pre sociálnu sieť, článok na školský web a profilový obrázok. Nakoniec si ujasníš, čo smieš zverejniť. 3 zastávky, body a na konci výsledok.",
+  lead: "Fotka z mobilu má 12 megapixelov a 5 MB. Na web je zbytočne veľká, stránka sa načítava pomaly a na Instagrame ju aj tak zmenšia. Naučíš sa fotku orezať na správny pomer strán, zmenšiť, skomprimovať a označiť vodoznakom. V exportéri pripravíš fotky pre sociálnu sieť, článok na školský web a profilový obrázok. Nakoniec si ujasníš, čo smieš zverejniť. 4 zastávky, body a na konci výsledok.",
   guessQ: "Aký pomer strán má štvorcová fotka na sociálnej sieti?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["16:9", "1:1", "4:3", "3:2"],
@@ -312,6 +313,8 @@ function exHTML2() { const o = S.o, L = S.last;
 function prev() { const c = document.getElementById("exc"); if (!c) return; const r = render2(S.o), k = Math.min(480 / r.width, 320 / r.height); c.width = Math.round(r.width * k); c.height = Math.round(r.height * k); c.getContext("2d").drawImage(r, 0, 0, c.width, c.height); }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, why) => ({ id, q, ok: v => Math.round(parseNum(v)) === ans, show: String(ans), ph: "?", why });
+const PX_I = [["Fotku dávaš do galérie na školský web.", "web", ""], ["Príspevok na Instagram do mriežky.", "ig", ""], ["Profilový obrázok v školskom systéme.", "prof", ""], ["Snímku obrazovky s textom dávaš na web.", "png", "JPEG by text rozmazal"], ["Zverejňuješ fotku odfotenú doma na záhrade.", "gps", ""], ["Zverejňuješ vlastnú fotografiu a chceš, aby bolo jasné, že je tvoja.", "wm", ""]];
+const PX_O = [["", "— vyber —"], ["web", "Šírka 1200 – 2000 px, JPEG 70 – 85"], ["ig", "Štvorec 1 : 1, asi 1080 px"], ["prof", "Malý štvorec asi 400 px"], ["png", "PNG"], ["gps", "Odstrániť GPS polohu"], ["wm", "Pridať vodoznak"]];
 const TASKS = {
   vin: { id: "vin", type: "input", qs: [inq("1", "Fotka 4000 × 3000 px sa zmenší na šírku 1200 px so zachovaním pomeru. Aká bude výška?", 900), inq("2", "Koľko px bude mať výška pri šírke 1200 px a pomere 16:9?", 675), inq("3", "Koľko megapixelov má fotka 4000 × 3000 px?", 12), inq("4", "Fotka 1080 × 1350 px má pomer 4:5. Aká je výška pri šírke 800 px?", 1000)] },
   g_ex: { id: "g_ex", type: "custom", max: 4 },
@@ -320,6 +323,17 @@ const TASKS = {
     { id: "2", ...Q("Fotku z internetu chceš použiť na školský web. Čo overíš?", ["licenciu (napr. Creative Commons, voľné fotobanky) a uvedieš autora", "nič, internet je zadarmo", "iba veľkosť", "či sa mi páči"], 0) },
     { id: "3", ...Q("Čo pred zverejnením odstrániš z metaúdajov fotky?", ["GPS polohu", "farby", "pixely", "názov súboru"], 0) },
     { id: "4", ...Q("Na čo slúži vodoznak?", ["označí autora a sťaží kopírovanie bez uvedenia zdroja", "zmenší súbor", "zlepší farby", "odstráni GPS"], 0) }
+  ]},
+  g_sit: { id: "g_sit", type: "custom", max: 6 },
+  rsort: {"id": "rsort", "type": "sort", "buckets": [{"id": "a", "label": "16 : 9"}, {"id": "b", "label": "4 : 3"}, {"id": "c", "label": "1 : 1"}, {"id": "d", "label": "4 : 5"}], "items": [{"id": "1", "t": "1920 × 1080", "b": "a"}, {"id": "2", "t": "1280 × 720", "b": "a"}, {"id": "3", "t": "4000 × 3000", "b": "b"}, {"id": "4", "t": "1600 × 1200", "b": "b"}, {"id": "5", "t": "1080 × 1080", "b": "c"}, {"id": "6", "t": "400 × 400", "b": "c"}, {"id": "7", "t": "1080 × 1350", "b": "d"}, {"id": "8", "t": "800 × 1000", "b": "d"}]},
+  zsort: {"id": "zsort", "type": "sort", "buckets": [{"id": "y", "label": "✅ Smiem zverejniť"}, {"id": "n", "label": "⛔ Bez súhlasu alebo licencie nie"}], "items": [{"id": "1", "t": "Moja fotka západu slnka", "b": "y"}, {"id": "2", "t": "Fotka z Unsplash s uvedením autora", "b": "y"}, {"id": "3", "t": "Fotka spolužiaka, ktorý aj s rodičmi súhlasil", "b": "y"}, {"id": "4", "t": "Moja fotka kvetu bez GPS polohy", "b": "y"}, {"id": "5", "t": "Fotka spolužiaka bez opýtania", "b": "n"}, {"id": "6", "t": "Fotka z Google Obrázkov bez licencie", "b": "n"}, {"id": "7", "t": "Fotka s viditeľnou adresou a ŠPZ suseda", "b": "n"}, {"id": "8", "t": "Fotka profesionálneho fotografa z novín", "b": "n"}]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Fotku 4000 × 3000 px zmenšíš na šírku 1200 px so zachovaním pomeru. Aká bude výška?", ok: v => Math.abs(parseNum(v) - 900) <= 0, show: "900 px", ph: "?" },
+    { id: "2", q: "Fotku 1920 × 1080 zmenšíš na šírku 1280. Aká bude výška?", ok: v => Math.abs(parseNum(v) - 720) <= 0, show: "720 px", ph: "?" },
+    { id: "3", q: "Koľko megapixelov má fotka 4000 × 3000 px?", ok: v => Math.abs(parseNum(v) - 12) <= 0, show: "12 Mpx", ph: "?" },
+    { id: "4", q: "Fotka má 3,6 MB, po exporte 360 kB. Koľkokrát je menšia? (1 MB = 1000 kB)", ok: v => Math.abs(parseNum(v) - 10) <= 0, show: "10-krát", ph: "?" },
+    { id: "5", q: "Fotku 4000 × 3000 orežeš na štvorec 1 : 1 s plnou výškou. Aká bude šírka?", ok: v => Math.abs(parseNum(v) - 3000) <= 0, show: "3 000 px", ph: "?" },
+    { id: "6", q: "Do galérie dávaš 12 fotiek po 450 kB. Koľko kB spolu?", ok: v => Math.abs(parseNum(v) - 5400) <= 0, show: "5 400 kB", ph: "?" }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Prečo zmenšovať fotky pred zverejnením na webe?", ["rýchlejšie načítanie stránky a menej dát", "kvôli farbám", "je to zakázané", "aby boli ostrejšie"], 0) },
@@ -332,25 +346,38 @@ const TASKS = {
 const VIEWS = {
   velkost: () => head() + `<h2>Rozmery a pomer strán</h2>${guessBox()}
     <div class="theory"><p>Fotka z mobilu má napr. 4000 × 3000 px (12 Mpx). Na web stačí oveľa menej: <b>1200 až 2000 px</b> na šírku, profilový obrázok aj 400 px. <b>Pomer strán</b> je pomer šírky a výšky: 4:3, 3:2 (fotoaparáty), <b>16:9</b> (širokouhlé, web, video), <b>1:1</b> (štvorec), <b>4:5</b> (vysoký príspevok). Pri zmene veľkosti <b>zachovaj pomer strán</b> (výška = šírka ÷ pomer), inak sa fotka zdeformuje. Iný pomer dosiahneš <b>orezaním</b>.</p></div>
-    <h3>Úloha: počítaj</h3><div class="task">${taskHTML("vin")}</div>` + nextBar(),
+    <h3>Úloha: počítaj</h3><div class="task">${taskHTML("vin")}</div>
+    <h3>Úloha 2: aký je pomer strán?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("rsort")}</div>` + nextBar(),
   export: () => head() + `<h2>Export pre web</h2>
     <div class="theory"><p>Nastav orezanie, šírku, formát a kvalitu a klikni na <b>Exportovať</b>. Ukáže sa skutočná veľkosť súboru a obrázok sa stiahne. Hľadaj rovnováhu: čo najmenší súbor, ktorý stále vyzerá dobre (JPEG kvalita okolo 70 až 85).</p></div>
     <div class="task"><ul class="goals" style="list-style:none;padding:0">${TG.map(x => `<li>${S.done[x.id] ? "✅" : "⬜"} <b>${x.n}:</b> ${x.t}</li>`).join("")}</ul></div>
     <div class="tool" id="exbox">${exHTML2()}</div>` + nextBar(),
   pravidla: () => head() + `<h2>Súkromie a autorské práva</h2>
     <div class="theory"><ul><li>Fotku inej osoby zverejni iba s jej <b>súhlasom</b> (pri deťoch so súhlasom rodičov). Chráni to zákon o ochrane osobných údajov (GDPR) a Občiansky zákonník.</li><li>Autorom fotky je ten, kto ju odfotil. Cudzie fotky použi len s <b>licenciou</b> (napr. Creative Commons, voľné fotobanky Unsplash či Pixabay) a uveď <b>autora a zdroj</b>.</li><li>Pred zverejnením odstráň <b>GPS polohu</b> z metaúdajov a skontroluj, čo je v pozadí (adresa, ŠPZ, doklady).</li><li><b>Vodoznak</b> označí autora vlastných fotiek.</li></ul></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("rq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("rq")}</div>
+    <h3>Úloha 2: smiem to zverejniť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("zsort")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: pripravené na web</h2>
+    <div class="theory"><p>Pred zverejnením fotky prejdi kontrolný zoznam: <b>Kam pôjde?</b> (web, sociálna sieť, profil) → podľa toho <b>pomer strán a šírka</b>. <b>Aký formát?</b> Fotky JPEG, text a grafika PNG. <b>Smiem ju zverejniť?</b> Súhlas ľudí na fotke, vlastná fotka alebo licencia. <b>Čo prezrádza?</b> GPS v metaúdajoch, adresa, ŠPZ, doklady v pozadí. Pri zmenšovaní zachovaj pomer strán: výška = šírka × (pôvodná výška ÷ pôvodná šírka).</p><p>Pri každom použití vyber nastavenie a potom počítaj.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.rat) { S.o.ratio = ds.rat; save(); render(false); return true; }
   if (ds.fmt) { S.o.fmt = ds.fmt; save(); render(false); return true; }
   if (ds.exp !== undefined) { const o = S.o, c = render2(o); c.toBlob(b => { const r = { w: c.width, h: c.height, fmt: o.fmt, kb: Math.round(b.size / 1024), wm: o.wm, wmt: o.wmt }; S.last = r; const hit = TG.filter(x => x.ok(r) && !S.done[x.id]); hit.forEach(x => S.done[x.id] = true); const n = Object.keys(S.done).length; if (n) award("g_ex", n);
       S.exm = hit.length ? { k: "ok", t: "✅ Splnené: " + hit.map(x => x.n).join(", ") } : { k: "info", t: "Export hotový. Porovnaj rozmery a veľkosť so zadaním." }; save(); render(false);
       const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `fotka-${c.width}x${c.height}.${o.fmt === "jpeg" ? "jpg" : o.fmt}`; document.body.appendChild(a); a.click(); a.remove(); }, "image/" + o.fmt, o.q / 100); return true; }
   return false; }
-function CUSTOM_INPUT(e) { const t = e.target, k = t.dataset && t.dataset.ex; if (!k) return false; S.o[k] = t.type === "checkbox" ? t.checked : k === "wmt" ? t.value : +t.value; save(); if (k === "q") { document.getElementById("qv").textContent = t.value; } if (k === "wm") { render(false); return true; } prev(); return true; }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; const t = e.target, k = t.dataset && t.dataset.ex; if (!k) return false; S.o[k] = t.type === "checkbox" ? t.checked : k === "wmt" ? t.value : +t.value; save(); if (k === "q") { document.getElementById("qv").textContent = t.value; } if (k === "wm") { render(false); return true; } prev(); return true; }
 setInterval(() => { const c = document.getElementById("exc"); if (c && !c.dataset.on) { c.dataset.on = 1; prev(); } }, 200);
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };

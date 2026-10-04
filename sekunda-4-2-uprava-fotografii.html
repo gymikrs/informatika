@@ -223,7 +223,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"pojmy": ["Jas = svetlosť, kontrast = rozdiel svetla a tieňa, sýtosť = intenzita farieb, teplota = modrá/žltá."], "histogram": ["Histogram: vľavo tiene, vpravo svetlá; vľavo nahromadený = tmavá, úzky v strede = nízky kontrast."], "editor": ["Tmavá → jas, hmlistá → kontrast, farebný nádych → teplota, čiernobiela → sýtosť 0, retro → sépia."]};
+const THEORY = {"precvic": ["Poradie: kópia → orezanie a narovnanie → jas a kontrast → farby → ostrenie a filtre.", "Nedeštruktívna úprava nechá originál nezmenený. S úpravami nepreháňaj."], "pojmy": ["Jas = svetlosť, kontrast = rozdiel svetla a tieňa, sýtosť = intenzita farieb, teplota = modrá/žltá."], "histogram": ["Histogram: vľavo tiene, vpravo svetlá; vľavo nahromadený = tmavá, úzky v strede = nízky kontrast."], "editor": ["Tmavá → jas, hmlistá → kontrast, farebný nádych → teplota, čiernobiela → sýtosť 0, retro → sépia."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -276,13 +276,14 @@ const STEPS = [
   { id: "pojmy", title: "Jas, kontrast, sýtosť", min: 7 },
   { id: "histogram", title: "Histogram", min: 6 },
   { id: "editor", title: "Oprav fotky", min: 20 },
+  { id: "precvic", title: "Precvičovanie: postup grafika", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { pojmy: ["pq"], histogram: ["hq"], editor: ["g_fix"], test: ["test"] };
+const STEP_TASKS = { pojmy: ["pq", "usort"], histogram: ["hq", "hsort"], editor: ["g_fix"], precvic: ["g_sit", "pxq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Fotka je príliš tmavá, hmlistá alebo modrastá? Stačí pár posuvníkov. Spoznáš jas, kontrast, sýtosť a teplotu farieb, naučíš sa čítať histogram a v skutočnom editore opravíš päť pokazených fotiek. Na záver môžeš upraviť aj vlastnú fotku a stiahnuť ju. 3 zastávky, body a na konci výsledok.",
+  lead: "Fotka je príliš tmavá, hmlistá alebo modrastá? Stačí pár posuvníkov. Spoznáš jas, kontrast, sýtosť a teplotu farieb, naučíš sa čítať histogram a v skutočnom editore opravíš päť pokazených fotiek. Na záver môžeš upraviť aj vlastnú fotku a stiahnuť ju. 4 zastávky, body a na konci výsledok.",
   guessQ: "Fotka pôsobí sivo a hmlisto, ako cez špinavé okno. Čo pomôže najviac?",
   guessNote: "Tip sa neboduje. Na zastávke Oprav fotky zistíš, či si mal pravdu.",
   guesses: ["Znížiť jas", "Zvýšiť kontrast", "Otočiť fotku", "Zmenšiť ju"],
@@ -326,6 +327,8 @@ function edHTML() { const p = P(), ph = cur(), sl = (k, l, mn, mx) => `<label>${
     <div class="tg"><button class="${p.gray ? "primary" : "ghost"}" data-tg="gray">Čiernobiela</button><button class="${p.sepia ? "primary" : "ghost"}" data-tg="sepia">Sépia</button><button class="${p.neg ? "primary" : "ghost"}" data-tg="neg">Negatív</button></div>
     <button class="ghost" data-rs>↺ Obnoviť</button><div class="pmeter" id="meter"></div><p style="margin:8px 0 4px;font-size:13px"><b>Histogram</b></p><div id="hist"></div></div></div>`; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const PX_I = [["Na fotke krajiny je šikmý horizont.", "straight", ""], ["Na okraji fotky prekáža cudzia ruka.", "crop", ""], ["Fotka je trochu neostrá.", "sharpen", "iba jemne, veľké rozmazanie neopraví"], ["Chceš, aby fotka vyzerala ako stará.", "sepia", ""], ["Pred začatím úprav chceš mať istotu, že sa vieš vrátiť.", "copy", ""], ["Fotka je hmlistá a bez hĺbky.", "kontrast", ""]];
+const PX_O = [["", "— vyber —"], ["crop", "Orezať"], ["straight", "Narovnať"], ["kontrast", "Zvýšiť kontrast"], ["sharpen", "Doostriť"], ["copy", "Uložiť kópiu originálu"], ["sepia", "Filter sépia"]];
 const TASKS = {
   pq: { id: "pq", type: "mc", qs: [
     { id: "1", ...Q("Jas mení:", ["svetlosť celej fotky", "rozdiel medzi svetlými a tmavými časťami", "intenzitu farieb", "rozlíšenie"], 0) },
@@ -339,6 +342,10 @@ const TASKS = {
     { id: "3", ...Q("Čo sa stane, keď jas zvýšiš príliš?", ["svetlé miesta „vyhoria“ na bielu a stratia detaily", "fotka zaostrí", "pribudnú pixely", "nič"], 0) }
   ]},
   g_fix: { id: "g_fix", type: "custom", max: 5 },
+  g_sit: { id: "g_sit", type: "custom", max: 6 },
+  usort: {"id": "usort", "type": "sort", "buckets": [{"id": "j", "label": "☀️ Jas"}, {"id": "k", "label": "◐ Kontrast"}, {"id": "s", "label": "🎨 Sýtosť"}, {"id": "t", "label": "🌡️ Teplota"}], "items": [{"id": "1", "t": "Fotka je celá tmavá", "b": "j"}, {"id": "2", "t": "Fotka je presvetlená", "b": "j"}, {"id": "3", "t": "Fotka je hmlistá a plochá", "b": "k"}, {"id": "4", "t": "Chýbajú hlboké tiene a jasné svetlá", "b": "k"}, {"id": "5", "t": "Farby sú vyblednuté", "b": "s"}, {"id": "6", "t": "Chceš čiernobielu fotku", "b": "s"}, {"id": "7", "t": "Fotka na snehu je modrastá", "b": "t"}, {"id": "8", "t": "Západ slnka má byť teplejší", "b": "t"}]},
+  hsort: {"id": "hsort", "type": "sort", "buckets": [{"id": "d", "label": "🌑 Tmavá"}, {"id": "b", "label": "☀️ Presvetlená"}, {"id": "h", "label": "🌫️ Hmlistá"}, {"id": "ok", "label": "✅ Dobre exponovaná"}], "items": [{"id": "1", "t": "Kopec nahromadený vľavo", "b": "d"}, {"id": "2", "t": "Nočné mesto bez svetiel", "b": "d"}, {"id": "3", "t": "Kopec nahromadený vpravo", "b": "b"}, {"id": "4", "t": "Sneh na prudkom slnku, všetko biele", "b": "b"}, {"id": "5", "t": "Úzky kopec v strede", "b": "h"}, {"id": "6", "t": "Krajina v hmle", "b": "h"}, {"id": "7", "t": "Histogram cez celú šírku", "b": "ok"}, {"id": "8", "t": "Fotka so svetlami aj tieňmi", "b": "ok"}]},
+  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "V akom poradí upravovať fotku?", "opts": ["orezať a narovnať, potom jas a kontrast, nakoniec farby a ostrenie", "najprv filter, potom orezanie", "najprv ostrenie, potom jas", "na poradí nezáleží"], "a": 0}, {"id": "2", "q": "Prečo s úpravami nepreháňať?", "opts": ["fotka vyzerá neprirodzene a stráca detaily vo svetlách a tieňoch", "súbor bude menší", "fotka sa vymaže", "program to zakazuje"], "a": 0}, {"id": "3", "q": "Čo je nedeštruktívna úprava?", "opts": ["originál zostane nezmenený a úpravy sa dajú kedykoľvek vrátiť", "úprava, ktorá zmaže fotku", "úprava iba v čiernobielej", "úprava, ktorú nevidno"], "a": 0}, {"id": "4", "q": "Čo spôsobí príliš silné ostrenie?", "opts": ["svetlé obrysy okolo predmetov a viditeľný šum", "fotka bude rozmazaná", "farby budú čiernobiele", "fotka sa zmenší"], "a": 0}, {"id": "5", "q": "Sýtosť na 0 a vyšší kontrast dajú:", "opts": ["výraznú čiernobielu fotku", "veľmi farebnú fotku", "tmavomodrú fotku", "sépiu"], "a": 0}, {"id": "6", "q": "Ktorý formát zachová kvalitu aj pri opakovanom ukladaní?", "opts": ["PNG alebo formát editora (napr. XCF)", "JPEG s kvalitou 30", "GIF", "každý formát rovnako"], "a": 0}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Hmlistú fotku opravíš najmä:", ["zvýšením kontrastu", "znížením sýtosti", "negatívom", "zmenšením"], 0) },
     { id: "2", ...Q("Sépia dá fotke:", ["hnedastý starodávny vzhľad", "modrý nádych", "vyšší kontrast", "ostrosť"], 0) },
@@ -350,24 +357,37 @@ const TASKS = {
 const VIEWS = {
   pojmy: () => head() + `<h2>Jas, kontrast, sýtosť</h2>
     <div class="theory"><table class="cmdt"><thead><tr><th>Vlastnosť</th><th>Čo robí</th><th>Kedy</th></tr></thead><tbody><tr><td><b>Jas</b></td><td>zosvetlí alebo stmaví celú fotku</td><td>tmavá alebo presvetlená fotka</td></tr><tr><td><b>Kontrast</b></td><td>zväčší alebo zmenší rozdiel medzi svetlom a tieňom</td><td>hmlistá, plochá fotka</td></tr><tr><td><b>Sýtosť</b></td><td>intenzita farieb (0 = čiernobiela)</td><td>vyblednuté alebo prehnané farby</td></tr><tr><td><b>Teplota</b> (vyváženie bielej)</td><td>posun k modrej (chladná) alebo žltej (teplá)</td><td>farebný nádych od svetla</td></tr></tbody></table><p>Ďalšie úpravy: orezanie, narovnanie, ostrenie, filtre. Programy ich majú v ponuke <b>Farby</b> (GIMP), <b>Upraviť</b> (Fotografie) alebo <b>Úpravy</b> (Photopea).</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>
+    <h3>Úloha 2: čo upravíš?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("usort")}</div>` + nextBar(),
   histogram: () => head() + `<h2>Histogram</h2>
     <div class="theory"><p><b>Histogram</b> je graf, ktorý ukazuje, koľko pixelov má ktorú úroveň jasu: vľavo tiene (čierna), vpravo svetlá (biela). <b>Tmavá</b> fotka má histogram nahromadený vľavo, <b>presvetlená</b> vpravo, <b>hmlistá</b> (málo kontrastu) má úzky kopec v strede. Dobrá fotka zvyčajne využíva celú šírku. Histogram uvidíš aj v editore na ďalšej zastávke.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("hq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("hq")}</div>
+    <h3>Úloha 2: aká je fotka podľa histogramu?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("hsort")}</div>` + nextBar(),
   editor: () => head() + `<h2>Oprav fotky</h2>${guessBox()}${S.t.g_fix ? `<div class="checkbar"><span class="score ${S.t.g_fix.score < 5 ? "part" : ""}">Opravené: ${S.t.g_fix.score} z 5</span></div>` : ""}<div class="tool" id="edbox">${edHTML()}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: postup grafika</h2>
+    <div class="theory"><p>Grafik upravuje fotku v stálom poradí: <b>1. kópia originálu</b>, <b>2. orezanie a narovnanie</b> (kompozícia), <b>3. jas a kontrast</b> (svetlo, pomôže histogram), <b>4. farby</b> (sýtosť, teplota), <b>5. ostrenie a filtre</b>. Profesionálne programy pracujú <b>nedeštruktívne</b>: originál zostane nezmenený a každú úpravu sa dá kedykoľvek vrátiť alebo zmeniť. Najlepšia úprava je tá, ktorú divák nepostrehne.</p><p>Pri každej fotke vyber úpravu a potom odpovedz na otázky.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.ph !== undefined) { S.ph = +ds.ph; save(); render(false); return true; }
   if (ds.tg) { P()[ds.tg] = !P()[ds.tg]; save(); render(false); return true; }
   if (ds.rs !== undefined) { S.P[cur().id] = P0(); save(); render(false); return true; }
   if (ds.dl !== undefined) { const a = document.createElement("a"); a.href = document.getElementById("edc").toDataURL("image/png"); a.download = "upravena-fotka.png"; document.body.appendChild(a); a.click(); a.remove(); return true; }
   return false; }
-function CUSTOM_INPUT(e) { const t = e.target, d = t.dataset || {}; if (d.pk) { P()[d.pk] = +t.value; document.getElementById("v-" + d.pk).textContent = t.value; save(); draw(); return true; }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; const t = e.target, d = t.dataset || {}; if (d.pk) { P()[d.pk] = +t.value; document.getElementById("v-" + d.pk).textContent = t.value; save(); draw(); return true; }
   if (d.up !== undefined && t.files && t.files[0]) { const img = new Image(); img.onload = () => { OWN = img; delete SRC.own; draw(); }; img.src = URL.createObjectURL(t.files[0]); return true; } return false; }
 document.addEventListener("pointerdown", e => { if (e.target.closest && e.target.closest("[data-orig]")) { const cv = document.getElementById("edc"); if (cv) cv.getContext("2d").drawImage(source(cur().id), 0, 0); } });
 document.addEventListener("pointerup", e => { if (document.getElementById("edc")) draw(); });
 setInterval(() => { const c = document.getElementById("edc"); if (c && !c.dataset.on) { c.dataset.on = 1; draw(); } }, 200);
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
