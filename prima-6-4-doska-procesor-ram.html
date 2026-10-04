@@ -239,7 +239,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"parametre": ["Procesor: model, jadrá, vlákna, GHz, cache, pätica; RAM: GB, DDR4/DDR5, MT/s, sloty; doska: model, čipová sada, pätica."], "nastroje": ["Nastavenia › Systém › Informácie; Správca úloh (Ctrl + Shift + Esc) › Výkon; msinfo32; CPU-Z."], "citanie": ["Údaje vyčítaš z viacerých okien, každé ukazuje iné podrobnosti."]};
+const THEORY = {"precvic": ["Rýchly prehľad: Nastavenia. Vyťaženie, jadrá, sloty: Správca úloh. Doska a BIOS: msinfo32. Detaily: CPU-Z.", "Logické procesory = jadrá × vlákna. 1 GHz = 1000 MHz."], "parametre": ["Procesor: model, jadrá, vlákna, GHz, cache, pätica; RAM: GB, DDR4/DDR5, MT/s, sloty; doska: model, čipová sada, pätica."], "nastroje": ["Nastavenia › Systém › Informácie; Správca úloh (Ctrl + Shift + Esc) › Výkon; msinfo32; CPU-Z."], "citanie": ["Údaje vyčítaš z viacerých okien, každé ukazuje iné podrobnosti."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -277,13 +277,14 @@ const STEPS = [
   { id: "parametre", title: "Parametre a čo znamenajú", min: 8 },
   { id: "nastroje", title: "Kde ich nájdem", min: 8 },
   { id: "citanie", title: "Prečítaj údaje", min: 14 },
+  { id: "precvic", title: "Precvičovanie: zisti a vypočítaj", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { parametre: ["pq"], nastroje: ["nq"], citanie: ["cin"], test: ["test"] };
+const STEP_TASKS = { parametre: ["pq", "psort"], nastroje: ["nq"], citanie: ["cin"], precvic: ["g_sit", "pxin", "pxq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Prima",
-  lead: "Aký procesor má tvoj počítač? Koľko jadier a koľko pamäte? Na akej základnej doske je postavený? Naučíš sa, čo tieto parametre znamenajú a kde ich vo Windows nájdeš: v Nastaveniach, v Správcovi úloh, v Informáciách o systéme aj v programe CPU-Z. Potom ich vyčítaš zo simulovaných okien. 3 zastávky, body a na konci výsledok.",
+  lead: "Aký procesor má tvoj počítač? Koľko jadier a koľko pamäte? Na akej základnej doske je postavený? Naučíš sa, čo tieto parametre znamenajú a kde ich vo Windows nájdeš: v Nastaveniach, v Správcovi úloh, v Informáciách o systéme aj v programe CPU-Z. Potom ich vyčítaš zo simulovaných okien. 4 zastávky, body a na konci výsledok.",
   guessQ: "Ktorou skratkou otvoríš Správcu úloh, kde uvidíš procesor aj pamäť?",
   guessNote: "Tip sa neboduje. Na zastávke Kde ich nájdem zistíš, či si mal pravdu.",
   guesses: ["Ctrl + C", "Ctrl + Shift + Esc", "Alt + F4", "Win + D"],
@@ -300,6 +301,8 @@ function winHTML() { const W = S.win; const tabs = [["nast", "⚙️ Nastavenia 
   return `<div class="row">${tabs.map(([k, l]) => `<button class="${W === k ? "primary" : "ghost"}" data-win="${k}">${l}</button>`).join("")}</div>${b}`; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ok, show) => ({ id, q, ok, show, ph: "?" });
+const PX_I = [["Kamarát sa pýta, aký máš procesor a koľko RAM.", "info", "najrýchlejší prehľad"], ["Chceš vedieť, koľko voľných slotov na RAM máš.", "tm", ""], ["Potrebuješ výrobcu a model základnej dosky.", "msinfo", ""], ["Chceš zistiť presné časovanie a napätie pamäte.", "cpuz", "najpodrobnejšie údaje"], ["Chceš vidieť, ako veľmi je procesor práve vyťažený.", "tm", ""], ["Chceš vedieť počet jadier a logických procesorov.", "tm", ""], ["Na školskom PC nemôžeš nič inštalovať a potrebuješ model dosky.", "msinfo", "je súčasťou Windows"], ["Chceš zistiť verziu BIOS / UEFI.", "msinfo", ""]];
+const PX_O = [["", "— vyber —"], ["info", "Nastavenia › Systém › Informácie"], ["tm", "Správca úloh › Výkon"], ["msinfo", "Informácie o systéme (msinfo32)"], ["cpuz", "CPU-Z"]];
 const TASKS = {
   pq: { id: "pq", type: "mc", qs: [
     { id: "1", ...Q("Čo znamená, že procesor má 6 jadier?", ["obsahuje 6 výpočtových jednotiek, ktoré môžu pracovať naraz", "má 6 GHz", "váži 6 gramov", "má 6 ventilátorov"], 0) },
@@ -323,6 +326,15 @@ const TASKS = {
     inq("7", "Aký je model základnej dosky?", v => /b760m/i.test(String(v)), PC.model),
     inq("8", "Akú päticu má procesor? (napr. LGA1700)", v => /1700/.test(String(v)), PC.patica)
   ]},
+  g_sit: { id: "g_sit", type: "custom", max: 8 },
+  psort: {"id": "psort", "type": "sort", "buckets": [{"id": "c", "label": "🧠 Procesor"}, {"id": "r", "label": "📏 Operačná pamäť"}, {"id": "d", "label": "🟩 Základná doska"}], "items": [{"id": "1", "t": "Počet jadier", "b": "c"}, {"id": "2", "t": "Frekvencia v GHz", "b": "c"}, {"id": "3", "t": "Vyrovnávacia pamäť (cache)", "b": "c"}, {"id": "4", "t": "Veľkosť v GB", "b": "r"}, {"id": "5", "t": "Typ DDR4 / DDR5", "b": "r"}, {"id": "6", "t": "Rýchlosť v MT/s", "b": "r"}, {"id": "7", "t": "Čipová sada (chipset)", "b": "d"}, {"id": "8", "t": "Verzia BIOS / UEFI", "b": "d"}]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Procesor má 6 jadier a každé jadro 2 vlákna. Koľko logických procesorov ukáže Správca úloh?", ok: v => Math.abs(parseNum(v) - 12) <= 0, show: "12", ph: "?" },
+    { id: "2", q: "Počítač má 2 moduly RAM po 8 GB. Koľko GB RAM má spolu?", ok: v => Math.abs(parseNum(v) - 16) <= 0, show: "16 GB", ph: "?" },
+    { id: "3", q: "Doska má 4 sloty, obsadené sú 2 moduly po 8 GB. Chceš spolu 32 GB. Koľko GB musí mať každý z dvoch nových modulov?", ok: v => Math.abs(parseNum(v) - 8) <= 0, show: "8 GB ((32 − 16) ÷ 2)", ph: "?" },
+    { id: "4", q: "Procesor má frekvenciu 3,6 GHz. Koľko MHz to je?", ok: v => Math.abs(parseNum(v) - 3600) <= 0, show: "3 600 MHz", ph: "?" }
+  ]},
+  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Prečo nemôžeš do hocijakej dosky dať hocijaký procesor?", "opts": ["procesor musí pasovať do pätice a čipovej sady dosky", "všetky procesory majú rovnaký tvar", "procesor sa dáva do slotu na RAM", "doska procesor nepotrebuje"], "a": 0}, {"id": "2", "q": "Dva procesory majú 3 GHz. Ktorý bude pravdepodobne rýchlejší?", "opts": ["ten s viac jadrami a novšou generáciou, frekvencia nie je všetko", "vždy ten lacnejší", "oba budú vždy rovnako rýchle", "ten s väčším chladičom"], "a": 0}, {"id": "3", "q": "Na nálepke je 16 GB RAM, Windows ukazuje 15,8 GB použiteľných. Prečo?", "opts": ["časť pamäte si vyhradí systém alebo integrovaná grafika", "pamäť je pokazená", "Windows zle počíta", "zvyšok je na disku"], "a": 0}, {"id": "4", "q": "Kedy pomôže pridať RAM?", "opts": ["keď je pri bežnej práci pamäť takmer plná a počítač sa spomaľuje", "keď je plný disk", "keď nefunguje monitor", "keď sa počítač prehrieva"], "a": 0}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Správcu úloh otvoríš:", ["Ctrl + Shift + Esc", "Ctrl + Z", "Win + L", "F1"], 0) },
     { id: "2", ...Q("Kde vo Správcovi úloh vidíš počet jadier?", ["Výkon › Procesor", "Procesy", "Aplikácie po spustení", "Používatelia"], 0) },
@@ -333,13 +345,27 @@ const TASKS = {
 };
 const VIEWS = {
   parametre: () => head() + `<h2>Parametre a čo znamenajú</h2><div class="theory"><table class="cmdt"><thead><tr><th>Modul</th><th>Parametre</th></tr></thead><tbody><tr><td><b>Procesor</b></td><td>výrobca a model (Intel Core i5, AMD Ryzen 5), <b>počet jadier</b> a <b>vlákien</b>, <b>frekvencia</b> v GHz, vyrovnávacia pamäť (cache), pätica</td></tr><tr><td><b>Operačná pamäť</b></td><td><b>veľkosť</b> v GB, <b>typ</b> (DDR4, DDR5), rýchlosť (MHz alebo MT/s), počet modulov a voľných slotov</td></tr><tr><td><b>Základná doska</b></td><td>výrobca a <b>model</b>, <b>čipová sada</b> (chipset), <b>pätica</b>, podporovaný typ RAM, BIOS/UEFI</td></tr></tbody></table></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>
+    <h3>Úloha 2: ku ktorému modulu parameter patrí?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(),
   nastroje: () => head() + `<h2>Kde ich nájdem</h2>${guessBox()}<div class="theory"><ul><li><b>Nastavenia › Systém › Informácie</b> (alebo <kbd>Win</kbd> + <kbd>Pause</kbd>): procesor a veľkosť RAM.</li><li><b>Správca úloh</b> (<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Esc</kbd>) › Výkon: jadrá, vlákna, rýchlosť, typ a sloty pamäte.</li><li><b>Informácie o systéme</b> (<kbd>Win</kbd> + <kbd>R</kbd>, <code>msinfo32</code>): aj výrobca a model základnej dosky.</li><li><b>CPU-Z</b>: bezplatný program s najpodrobnejšími údajmi o procesore, doske a pamäti.</li></ul><p>Vyskúšaj okná nižšie, potom to skús aj na svojom školskom počítači.</p></div>
     <div class="tool">${winHTML()}</div><h3>Otázky</h3><div class="task">${taskHTML("nq")}</div>` + nextBar(),
   citanie: () => head() + `<h2>Prečítaj údaje</h2><div class="theory"><p>Prepínaj medzi oknami a kartami a vyčítaj údaje o počítači v učebni.</p></div><div class="tool">${winHTML()}</div><h3>Úloha: zapíš údaje</h3><div class="task">${taskHTML("cin")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: zisti a vypočítaj</h2>
+    <div class="theory"><p>Každý nástroj ukazuje inú hĺbku údajov: <b>Nastavenia › Informácie</b> dajú rýchly prehľad (procesor, RAM), <b>Správca úloh</b> ukazuje aj aktuálne vyťaženie, jadrá a sloty, <b>msinfo32</b> pridá dosku a BIOS a <b>CPU-Z</b> ukáže najjemnejšie technické detaily. Pri čítaní údajov si všímaj jednotky: 1 GHz = 1000 MHz. Počet logických procesorov = jadrá × vlákna na jadro.</p><p>Vyber nástroj pre každú otázku, potom počítaj a odpovedz.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 8 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 8</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("pxin")}</div>
+    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) return false; if (el.dataset.win) { S.win = el.dataset.win; S.tab = "cpu"; save(); render(false); return true; } if (el.dataset.tab) { S.tab = el.dataset.tab; save(); render(false); return true; } return false; }
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; const el = e.target.closest("button"); if (!el) return false; if (el.dataset.win) { S.win = el.dataset.win; S.tab = "cpu"; save(); render(false); return true; } if (el.dataset.tab) { S.tab = el.dataset.tab; save(); render(false); return true; } return false; }
+
+function CUSTOM_INPUT(e) { return selInput(e); }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };

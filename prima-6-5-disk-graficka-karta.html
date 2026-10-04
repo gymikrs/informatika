@@ -239,7 +239,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"parametre": ["Disk: SSD/HDD, kapacita, voľné miesto, rozhranie, rýchlosť; grafika: model, vyhradená pamäť, ovládač.", "1 TB = 10¹² B, Windows ukáže ≈ 931 GB (delenie 1024³)."], "nastroje": ["Tento počítač, Správca úloh › Výkon, Správa diskov (diskmgmt.msc), dxdiag, Správca zariadení."], "citanie": ["Percento voľného miesta = voľné ÷ celkom × 100."]};
+const THEORY = {"precvic": ["Miesto: Prieskumník. Typ disku a vyťaženie GPU: Správca úloh. Oddiely: Správa diskov. Ovládač: dxdiag. Chyby: Správca zariadení.", "Windows GB = bajty ÷ 1024³ (1 TB ≈ 931 GB). Čas = veľkosť ÷ rýchlosť."], "parametre": ["Disk: SSD/HDD, kapacita, voľné miesto, rozhranie, rýchlosť; grafika: model, vyhradená pamäť, ovládač.", "1 TB = 10¹² B, Windows ukáže ≈ 931 GB (delenie 1024³)."], "nastroje": ["Tento počítač, Správca úloh › Výkon, Správa diskov (diskmgmt.msc), dxdiag, Správca zariadení."], "citanie": ["Percento voľného miesta = voľné ÷ celkom × 100."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -277,13 +277,14 @@ const STEPS = [
   { id: "parametre", title: "Parametre diskov a grafiky", min: 8 },
   { id: "nastroje", title: "Kde ich nájdem", min: 8 },
   { id: "citanie", title: "Prečítaj údaje", min: 14 },
+  { id: "precvic", title: "Precvičovanie: zisti a vypočítaj", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { parametre: ["pq"], nastroje: ["nq"], citanie: ["cin"], test: ["test"] };
+const STEP_TASKS = { parametre: ["pq", "psort"], nastroje: ["nq"], citanie: ["cin"], precvic: ["g_sit", "pxin", "pxq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Prima",
-  lead: "Koľko miesta ešte máš na disku? Je to rýchly SSD alebo pomalší HDD? A akú grafickú kartu má počítač a koľko má vlastnej pamäte? Spoznáš parametre diskov a grafických kariet, nástroje, v ktorých ich vo Windows nájdeš, a vyčítaš ich zo simulovaných okien. Zistíš aj, prečo 1 TB disk ukazuje iba 931 GB. 3 zastávky, body a na konci výsledok.",
+  lead: "Koľko miesta ešte máš na disku? Je to rýchly SSD alebo pomalší HDD? A akú grafickú kartu má počítač a koľko má vlastnej pamäte? Spoznáš parametre diskov a grafických kariet, nástroje, v ktorých ich vo Windows nájdeš, a vyčítaš ich zo simulovaných okien. Zistíš aj, prečo 1 TB disk ukazuje iba 931 GB. 4 zastávky, body a na konci výsledok.",
   guessQ: "Kúpil si disk 1 TB, ale Windows ukazuje 931 GB. Prečo?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Disk je pokazený", "Výrobca počíta 1 TB = 10¹² B, Windows delí po 1024", "Zvyšok zaberá vírus", "Obchod ťa oklamal"],
@@ -299,6 +300,8 @@ function winHTML() { const W = S.win, tabs = [["tp", "📁 Tento počítač"], [
   return `<div class="row">${tabs.map(([k, l]) => `<button class="${W === k ? "primary" : "ghost"}" data-win="${k}">${l}</button>`).join("")}</div>${b}`; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ok, show, why) => ({ id, q, ok, show, ph: "?", why });
+const PX_I = [["Chceš rýchlo vidieť, koľko voľného miesta je na C:.", "pries", ""], ["Chceš zistiť, či máš SSD alebo HDD.", "tm", ""], ["Chceš vidieť, na koľko oddielov je disk rozdelený.", "diskm", ""], ["Potrebuješ verziu a dátum ovládača grafickej karty.", "dx", ""], ["Chceš skontrolovať, či niektoré zariadenie nemá výkričník (chybu).", "dev", ""], ["Chceš vidieť, koľko % grafického procesora hra práve využíva.", "tm", ""], ["USB disk sa neukazuje v Prieskumníkovi a chceš zistiť, či ho systém vôbec vidí.", "diskm", ""]];
+const PX_O = [["", "— vyber —"], ["pries", "Prieskumník › Tento počítač"], ["tm", "Správca úloh › Výkon"], ["diskm", "Správa diskov (diskmgmt.msc)"], ["dx", "dxdiag"], ["dev", "Správca zariadení"]];
 const TASKS = {
   pq: { id: "pq", type: "mc", qs: [
     { id: "1", ...Q("Kapacita disku udáva:", ["koľko údajov sa naň zmestí (GB, TB)", "rýchlosť procesora", "počet USB portov", "veľkosť monitora"], 0) },
@@ -321,6 +324,16 @@ const TASKS = {
     inq("6", "Koľko GB vyhradenej pamäte má grafická karta?", v => parseNum(v) === 12, "12"),
     inq("7", "Koľko GB ukáže Windows pri disku 1 TB? (10¹² ÷ 1024³, zaokrúhli na celé)", v => Math.round(parseNum(v)) === 931, "931")
   ]},
+  g_sit: { id: "g_sit", type: "custom", max: 7 },
+  psort: {"id": "psort", "type": "sort", "buckets": [{"id": "d", "label": "💽 Disk"}, {"id": "g", "label": "🎮 Grafická karta"}], "items": [{"id": "1", "t": "Kapacita", "b": "d"}, {"id": "2", "t": "Voľné miesto", "b": "d"}, {"id": "3", "t": "Rozhranie NVMe / SATA", "b": "d"}, {"id": "4", "t": "Rýchlosť čítania v MB/s", "b": "d"}, {"id": "5", "t": "Vyhradená pamäť VRAM", "b": "g"}, {"id": "6", "t": "Verzia ovládača", "b": "g"}, {"id": "7", "t": "Integrovaná alebo samostatná", "b": "g"}, {"id": "8", "t": "Model GeForce / Radeon", "b": "g"}]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Disk má 1 TB = 1 000 000 000 000 B. Windows delí 1024 × 1024 × 1024. Koľko GB ukáže? (zaokrúhli na celé)", ok: v => Math.abs(parseNum(v) - 931) <= 0.5, show: "931 GB", ph: "?" },
+    { id: "2", q: "Koľko GB ukáže Windows pri SSD 512 GB? (na celé)", ok: v => Math.abs(parseNum(v) - 476.5) <= 0.6, show: "asi 476 GB", ph: "?" },
+    { id: "3", q: "Disk má 476 GB a voľných je 95 GB. Koľko GB je obsadených?", ok: v => Math.abs(parseNum(v) - 381) <= 0, show: "381 GB", ph: "?" },
+    { id: "4", q: "SSD číta 3500 MB/s, HDD 150 MB/s. Koľkokrát je SSD rýchlejší? (zaokrúhli na celé)", ok: v => Math.abs(parseNum(v) - 23) <= 0.5, show: "asi 23-krát", ph: "?" },
+    { id: "5", q: "Film má 4000 MB. Za koľko sekúnd ho načíta HDD rýchlosťou 160 MB/s?", ok: v => Math.abs(parseNum(v) - 25) <= 0, show: "25 s", ph: "?" }
+  ]},
+  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Ktorý disk je najvhodnejší na systém v novom počítači?", "opts": ["NVMe SSD", "HDD 5400 ot./min", "USB kľúč", "pamäťová karta"], "a": 0}, {"id": "2", "q": "Žiak používa Word, internet a filmy. Potrebuje drahú samostatnú grafiku?", "opts": ["nie, integrovaná grafika stačí", "áno, bez nej nespustí Word", "áno, inak nepôjde internet", "áno, filmy potrebujú 16 GB VRAM"], "a": 0}, {"id": "3", "q": "Prečo je dobré aktualizovať ovládač grafickej karty?", "opts": ["opraví chyby a zlepší výkon a podporu nových hier", "zväčší sa VRAM", "zväčší sa monitor", "nemá to význam"], "a": 0}, {"id": "4", "q": "Na disku C: zostávajú 3 % miesta. Čo hrozí?", "opts": ["systém sa spomalí a nepôjdu aktualizácie ani ukladanie", "disk vybuchne", "zväčší sa RAM", "nič"], "a": 0}, {"id": "5", "q": "Kupuješ externý disk na zálohu všetkých rodinných fotiek. Čo je najdôležitejšie?", "opts": ["dostatočná kapacita s rezervou", "farba disku", "počet LED", "čo najmenšia kapacita"], "a": 0}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Najrýchlejší typ disku z týchto:", ["SSD NVMe", "HDD", "DVD", "disketa"], 0) },
     { id: "2", ...Q("Pamäť grafickej karty nájdeš v:", ["Správcovi úloh › Výkon › GPU alebo v dxdiag", "Koši", "Wordpade", "ponuke Štart › Hry"], 0) },
@@ -331,13 +344,27 @@ const TASKS = {
 };
 const VIEWS = {
   parametre: () => head() + `<h2>Parametre diskov a grafiky</h2>${guessBox()}<div class="theory"><table class="cmdt"><thead><tr><th>Modul</th><th>Parametre</th></tr></thead><tbody><tr><td><b>Disk</b></td><td><b>typ</b> (SSD alebo HDD), <b>kapacita</b> (GB, TB), voľné miesto, rozhranie (NVMe, SATA), <b>rýchlosť</b> čítania a zápisu (MB/s)</td></tr><tr><td><b>Grafická karta</b></td><td>výrobca a <b>model</b>, <b>vyhradená pamäť</b> (VRAM, GB), verzia a dátum <b>ovládača</b>, integrovaná alebo samostatná</td></tr></tbody></table><p>Výrobcovia diskov počítajú 1 GB = 1 000 000 000 B, Windows delí po 1024 · 1024 · 1024 B. Preto 1 TB disk ukazuje približne 931 GB a 512 GB SSD asi 476 GB.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>
+    <h3>Úloha 2: disk, alebo grafická karta?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(),
   nastroje: () => head() + `<h2>Kde ich nájdem</h2><div class="theory"><ul><li><b>Prieskumník › Tento počítač</b>: kapacita a voľné miesto.</li><li><b>Správca úloh › Výkon</b>: typ disku (SSD/HDD), grafické karty a ich pamäť.</li><li><b>Správa diskov</b> (<kbd>Win</kbd> + <kbd>R</kbd>, <code>diskmgmt.msc</code>): disky a oddiely.</li><li><b>dxdiag</b> (<kbd>Win</kbd> + <kbd>R</kbd>, <code>dxdiag</code>): grafická karta, pamäť, ovládač.</li><li><b>Správca zariadení</b>: zoznam všetkého hardvéru.</li></ul></div>
     <div class="tool">${winHTML()}</div><h3>Otázky</h3><div class="task">${taskHTML("nq")}</div>` + nextBar(),
   citanie: () => head() + `<h2>Prečítaj údaje</h2><div class="theory"><p>Prepínaj medzi oknami a kartami a zapíš údaje o diskoch a grafike počítača.</p></div><div class="tool">${winHTML()}</div><h3>Úloha: zapíš údaje</h3><div class="task">${taskHTML("cin")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: zisti a vypočítaj</h2>
+    <div class="theory"><p>Pri diskoch rozhoduje <b>typ</b> (NVMe SSD je najrýchlejší, HDD najpomalší), <b>kapacita</b> a <b>voľné miesto</b>. Systém potrebuje aspoň 10 – 15 % voľného miesta. Pozor na jednotky: výrobca počíta 1 GB = 1 000 000 000 B, Windows delí po 1024³, preto ukazuje menej. Pri grafike rozhoduje, či je <b>integrovaná</b> (stačí na bežnú prácu) alebo <b>samostatná</b> s vlastnou pamäťou VRAM (na hry a strih videa), a aj aktuálny <b>ovládač</b>.</p><p>Vyber nástroj, potom počítaj a odpovedz.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("pxin")}</div>
+    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) return false; if (el.dataset.win) { S.win = el.dataset.win; S.tab = "d0"; save(); render(false); return true; } if (el.dataset.tab) { S.tab = el.dataset.tab; save(); render(false); return true; } return false; }
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; const el = e.target.closest("button"); if (!el) return false; if (el.dataset.win) { S.win = el.dataset.win; S.tab = "d0"; save(); render(false); return true; } if (el.dataset.tab) { S.tab = el.dataset.tab; save(); render(false); return true; } return false; }
+
+function CUSTOM_INPUT(e) { return selInput(e); }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };

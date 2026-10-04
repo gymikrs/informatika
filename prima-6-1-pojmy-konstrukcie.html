@@ -239,7 +239,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"hwsw": ["Hardvér = fyzické časti, softvér = programy (operačný systém, aplikácie)."], "ipo": ["Vstup → spracovanie (procesor) → výstup; pamäť uchováva údaje."], "schema": ["Procesor, operačná pamäť RAM (po vypnutí sa vymaže), disk (natrvalo), vstup/výstup, zbernica (von Neumann)."], "jednotky": ["1 B = 8 bitov; kB, MB, GB, TB po 1000; frekvencia v GHz (1 GHz = 1000 MHz)."], "druhy": ["Osobné (stolový, notebook, tablet, mobil), servery a superpočítače, vstavané počítače."]};
+const THEORY = {"precvic": ["Vstup → zbernica → procesor ↔ RAM → výstup. Disk uchováva natrvalo.", "RAM drží práve spustené programy a po vypnutí sa vymaže."], "hwsw": ["Hardvér = fyzické časti, softvér = programy (operačný systém, aplikácie)."], "ipo": ["Vstup → spracovanie (procesor) → výstup; pamäť uchováva údaje."], "schema": ["Procesor, operačná pamäť RAM (po vypnutí sa vymaže), disk (natrvalo), vstup/výstup, zbernica (von Neumann)."], "jednotky": ["1 B = 8 bitov; kB, MB, GB, TB po 1000; frekvencia v GHz (1 GHz = 1000 MHz)."], "druhy": ["Osobné (stolový, notebook, tablet, mobil), servery a superpočítače, vstavané počítače."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -279,13 +279,14 @@ const STEPS = [
   { id: "schema", title: "Schéma počítača", min: 7 },
   { id: "jednotky", title: "Jednotky", min: 8 },
   { id: "druhy", title: "Druhy počítačov", min: 5 },
+  { id: "precvic", title: "Precvičovanie: kto čo robí", min: 6 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { hwsw: ["hsort"], ipo: ["isort"], schema: ["sq"], jednotky: ["jin"], druhy: ["dsort"], test: ["test"] };
+const STEP_TASKS = { hwsw: ["hsort"], ipo: ["isort"], schema: ["sq"], jednotky: ["jin"], druhy: ["dsort"], precvic: ["g_sit"], test: ["test"] };
 const START = {
   kicker: "Informatika, Prima",
-  lead: "Čo všetko je vo vnútri počítača a ako spolu tie časti spolupracujú? Rozlíšiš hardvér a softvér, roztriedíš zariadenia na vstupné, výstupné a pamäťové, spoznáš schému počítača s procesorom, pamäťou a zbernicou, naučíš sa jednotky ako bajt, gigabajt a gigahertz a spoznáš rôzne druhy počítačov. 5 zastávok, body a na konci výsledok.",
+  lead: "Čo všetko je vo vnútri počítača a ako spolu tie časti spolupracujú? Rozlíšiš hardvér a softvér, roztriedíš zariadenia na vstupné, výstupné a pamäťové, spoznáš schému počítača s procesorom, pamäťou a zbernicou, naučíš sa jednotky ako bajt, gigabajt a gigahertz a spoznáš rôzne druhy počítačov. 6 zastávok, body a na konci výsledok.",
   guessQ: "Ktorá časť počítača „premýšľa“, teda vykonáva výpočty a príkazy programov?",
   guessNote: "Tip sa neboduje. Na zastávke Schéma počítača zistíš, či si mal pravdu.",
   guesses: ["Monitor", "Procesor", "Klávesnica", "Reproduktor"],
@@ -294,6 +295,8 @@ const START = {
 function EXTRA_STATE() { return {}; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, why) => ({ id, q, ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - ans) < 1e-9, show: String(ans), ph: "?", why });
+const PX_I = [["Napíšeš na klávesnici písmeno A.", "vstup", "údaje vstupujú do počítača"], ["Kalkulačka vypočíta 123 × 45.", "cpu", ""], ["Otvorený Word, v ktorom práve píšeš, je načítaný v…", "ram", ""], ["Referát uložíš, aby si ho mohol otvoriť aj zajtra.", "disk", "po vypnutí zostane"], ["Vytlačíš si referát na papier.", "vystup", ""], ["Údaje putujú z pamäte do procesora po…", "bus", ""]];
+const PX_O = [["", "— vyber —"], ["vstup", "Vstupné zariadenie"], ["cpu", "Procesor (CPU)"], ["ram", "Operačná pamäť (RAM)"], ["disk", "Disk (SSD / HDD)"], ["vystup", "Výstupné zariadenie"], ["bus", "Zbernica"]];
 const TASKS = {
   hsort: { id: "hsort", type: "sort", buckets: [{ id: "h", label: "🔧 Hardvér (dá sa chytiť)" }, { id: "s", label: "💾 Softvér (programy)" }],
     items: [{ id: "1", t: "procesor", b: "h" }, { id: "2", t: "myš", b: "h" }, { id: "3", t: "operačná pamäť RAM", b: "h" }, { id: "4", t: "tlačiareň", b: "h" }, { id: "5", t: "Windows", b: "s" }, { id: "6", t: "Word", b: "s" }, { id: "7", t: "hra Minecraft", b: "s" }, { id: "8", t: "antivírus", b: "s" }] },
@@ -311,6 +314,7 @@ const TASKS = {
   ]},
   dsort: { id: "dsort", type: "sort", buckets: [{ id: "o", label: "🧑‍💻 Osobné" }, { id: "s", label: "🏢 Servery a superpočítače" }, { id: "v", label: "🔌 Vstavané (v zariadeniach)" }],
     items: [{ id: "1", t: "stolový počítač", b: "o" }, { id: "2", t: "notebook", b: "o" }, { id: "3", t: "tablet a smartfón", b: "o" }, { id: "4", t: "server školy", b: "s" }, { id: "5", t: "superpočítač na predpoveď počasia", b: "s" }, { id: "6", t: "počítač v práčke", b: "v" }, { id: "7", t: "počítač v aute", b: "v" }, { id: "8", t: "Raspberry Pi v robotovi", b: "v" }] },
+  g_sit: { id: "g_sit", type: "custom", max: 6 },
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Hardvér je:", ["fyzické časti počítača", "programy", "internet", "súbory"], 0) },
     { id: "2", ...Q("Ktoré zariadenie je vstupné?", ["myš", "monitor", "reproduktor", "tlačiareň"], 0) },
@@ -333,8 +337,20 @@ const VIEWS = {
     <h3>Úloha: počítaj</h3><div class="task">${taskHTML("jin")}</div>` + nextBar(),
   druhy: () => head() + `<h2>Druhy počítačov</h2><div class="theory"><p><b>Osobné počítače</b>: stolový, notebook, tablet, smartfón. <b>Servery</b> poskytujú služby iným počítačom (web, e-mail, súbory), <b>superpočítače</b> riešia obrovské výpočty. <b>Vstavané počítače</b> sú skryté v práčke, aute, hodinkách či robotoch.</p></div>
     <h3>Úloha: roztrieď</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("dsort")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: kto čo robí</h2>
+    <div class="theory"><p>Sleduj, čo sa deje, keď napíšeš písmeno: <b>klávesnica</b> (vstup) pošle kód klávesu po <b>zbernici</b> do počítača, <b>procesor</b> ho spracuje, otvorený dokument je v <b>RAM</b>, a <b>monitor</b> (výstup) písmeno ukáže. Keď stlačíš Uložiť, dokument sa zapíše na <b>disk</b>, kde zostane aj po vypnutí. Každá časť má svoju úlohu a bez ostatných by nefungovala.</p><p>Pri každej situácii vyber časť počítača, ktorá to robí.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
+
+function CUSTOM_CLICK(e) { return selClick(e, { px: [PX_I, "g_sit"] }); }
+
+function CUSTOM_INPUT(e) { return selInput(e); }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
