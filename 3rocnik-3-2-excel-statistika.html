@@ -213,7 +213,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"funkcie": ["AVERAGE (PRIEMER), MEDIAN, MODE.SNGL, MIN, MAX, STDEV.S/P, VAR.S/P, COUNT, COUNTIF; v SK Exceli bodkočiarka."], "vypocty": ["Rozpätie = MAX − MIN; smerodajná odchýlka výberu STDEV.S."], "countif": ["COUNTIF(rozsah;\">=30\"); interval rozdielom dvoch COUNTIF; percento = počet / celkový počet × 100."]};
+const THEORY = {"precvic": ["Poloha: AVERAGE, MEDIAN, MODE.SNGL. Variabilita: MAX − MIN, VAR, STDEV (.S výber, .P celý súbor). Počítanie: COUNT, COUNTIF.", "COUNTIF(rozsah;\">=30\"); interval = rozdiel dvoch COUNTIF."], "funkcie": ["AVERAGE (PRIEMER), MEDIAN, MODE.SNGL, MIN, MAX, STDEV.S/P, VAR.S/P, COUNT, COUNTIF; v SK Exceli bodkočiarka."], "vypocty": ["Rozpätie = MAX − MIN; smerodajná odchýlka výberu STDEV.S."], "countif": ["COUNTIF(rozsah;\">=30\"); interval rozdielom dvoch COUNTIF; percento = počet / celkový počet × 100."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -325,13 +325,14 @@ const STEPS = [
   { id: "funkcie", title: "Štatistické funkcie", min: 8 },
   { id: "vypocty", title: "Výsledky testu", min: 16 },
   { id: "countif", title: "Počítanie s podmienkou", min: 10 },
+  { id: "precvic", title: "Precvičovanie: správna funkcia", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { funkcie: ["fq"], vypocty: ["g_st"], countif: ["g_ci"], test: ["test"] };
+const STEP_TASKS = { funkcie: ["fq", "fsort"], vypocty: ["g_st"], countif: ["g_ci", "cq"], precvic: ["g_sit", "pxin"], test: ["test"] };
 const START = {
   kicker: "Informatika, 3. ročník",
-  lead: "Excel vypočíta priemer, medián aj smerodajnú odchýlku stovky hodnôt za zlomok sekundy, stačí poznať správnu funkciu. Na výsledkoch testu triedy vypočítaš všetky základné štatistické charakteristiky a funkciou COUNTIF zistíš, koľko žiakov splnilo limit a aké je rozdelenie známok. Tabuľka naozaj počíta. 3 zastávky, body a na konci výsledok.",
+  lead: "Excel vypočíta priemer, medián aj smerodajnú odchýlku stovky hodnôt za zlomok sekundy, stačí poznať správnu funkciu. Na výsledkoch testu triedy vypočítaš všetky základné štatistické charakteristiky a funkciou COUNTIF zistíš, koľko žiakov splnilo limit a aké je rozdelenie známok. Tabuľka naozaj počíta. 4 zastávky, body a na konci výsledok.",
   guessQ: "Ktorou funkciou zistíš, koľko žiakov má aspoň 30 bodov?",
   guessNote: "Tip sa neboduje. Na zastávke Počítanie s podmienkou zistíš, či si mal pravdu.",
   guesses: ["SUM", "COUNTIF", "AVERAGE", "MAX"],
@@ -357,6 +358,8 @@ const STL = [["avg", "E2: priemer (AVERAGE)"], ["med", "E3: medián (MEDIAN)"], 
 const CIL = [["a", "E2: počet žiakov s aspoň 30 bodmi"], ["b", "E3: počet žiakov s menej ako 25 bodmi"], ["c", "E4: počet žiakov s presne 41 bodmi"], ["p", "E5: percento žiakov s aspoň 30 bodmi (vzorcom z E2)"], ["z", "F8:F12: počet žiakov s danou známkou (napr. =COUNTIF(B2:B16;\">=45\") pre 1, pre 2 rozdiel dvoch COUNTIF…)"]];
 function XCHANGE(k) { const G = k === "st" ? stGoals() : ciGoals(), id = k === "st" ? "g_st" : "g_ci", n = Object.values(G).filter(Boolean).length; if (n && (!S.t[id] || S.t[id].score < n)) award(id, n); const el = document.getElementById("gl-" + k); if (el) el.innerHTML = gl(k === "st" ? STL : CIL, G); }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const PX_I = [["Typická hodnota platov, keď sú v dátach extrémy.", "med", ""], ["Ako veľmi kolíšu body triedy okolo priemeru (trieda je výber).", "sd", ""], ["Koľko žiakov prospelo (aspoň 25 bodov)?", "ci", ""], ["Najčastejšia známka v triede.", "mode", ""]];
+const PX_O = [["", "— vyber —"], ["avg", "=AVERAGE(…)"], ["med", "=MEDIAN(…)"], ["mode", "=MODE.SNGL(…)"], ["sd", "=STDEV.S(…)"], ["ci", "=COUNTIF(…)"], ["rng", "=MAX(…)-MIN(…)"]];
 const TASKS = {
   fq: { id: "fq", type: "mc", qs: [
     { id: "1", ...Q("Ktorá funkcia vypočíta medián hodnôt v B2:B16?", ["=MEDIAN(B2:B16)", "=AVERAGE(B2:B16)", "=MODE(B2:B16)", "=MID(B2:B16)"], 0) },
@@ -366,6 +369,17 @@ const TASKS = {
   ]},
   g_st: { id: "g_st", type: "custom", max: 8 },
   g_ci: { id: "g_ci", type: "custom", max: 5 },
+  g_sit: { id: "g_sit", type: "custom", max: 4 },
+  fsort: {"id": "fsort", "type": "sort", "buckets": [{"id": "p", "label": "📍 Poloha (typická hodnota)"}, {"id": "v", "label": "↔️ Variabilita (rozptýlenie)"}, {"id": "c", "label": "🔢 Počítanie"}], "items": [{"id": "1", "t": "AVERAGE", "b": "p"}, {"id": "2", "t": "MEDIAN", "b": "p"}, {"id": "3", "t": "MODE.SNGL", "b": "p"}, {"id": "4", "t": "STDEV.S", "b": "v"}, {"id": "5", "t": "VAR.S", "b": "v"}, {"id": "6", "t": "MAX − MIN (rozpätie)", "b": "v"}, {"id": "7", "t": "COUNT", "b": "c"}, {"id": "8", "t": "COUNTIF", "b": "c"}]},
+  cq: {"id": "cq", "type": "mc", "qs": [{"id": "1", "q": "Čo spočíta <code>=COUNTIF(B2:B16;\"&gt;=30\")</code>?", "opts": ["bunky s hodnotou aspoň 30", "bunky s hodnotou presne 30", "súčet hodnôt nad 30", "bunky menšie ako 30"], "a": 0}, {"id": "2", "q": "Ako spočítaš žiakov, ktorí majú presne 41 bodov?", "opts": ["=COUNTIF(B2:B16;41)", "=COUNTIF(B2:B16;\"&gt;41\")", "=COUNT(41)", "=SUM(B2:B16;41)"], "a": 0}, {"id": "3", "q": "Ako spočítaš bunky s hodnotou rôznou od 0?", "opts": ["=COUNTIF(B2:B16;\"&lt;&gt;0\")", "=COUNTIF(B2:B16;\"!=0\")", "=COUNT(B2:B16)-0", "=COUNTIF(B2:B16;\"=0\")"], "a": 0}, {"id": "4", "q": "Ako vypočítaš percento žiakov s aspoň 25 bodmi z 15 žiakov?", "opts": ["=COUNTIF(B2:B16;\"&gt;=25\")/15*100", "=COUNTIF(B2:B16;\"&gt;=25\")*15", "=AVERAGE(B2:B16)/15", "=25/15*100"], "a": 0}]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Dáta: 12, 15, 15, 18, 20, 22, 30. Aký je priemer? (na 2 desatinné miesta)", ok: v => Math.abs(parseNum(v) - 18.86) <= 0.01, show: "18,86 (132 ÷ 7)", ph: "?" },
+    { id: "2", q: "Aký je medián?", ok: v => Math.abs(parseNum(v) - 18) <= 0, show: "18", ph: "?" },
+    { id: "3", q: "Aký je modus?", ok: v => Math.abs(parseNum(v) - 15) <= 0, show: "15", ph: "?" },
+    { id: "4", q: "Aké je rozpätie?", ok: v => Math.abs(parseNum(v) - 18) <= 0, show: "18 (30 − 12)", ph: "?" },
+    { id: "5", q: "Koľko hodnôt spĺňa podmienku \"&gt;=18\"?", ok: v => Math.abs(parseNum(v) - 4) <= 0, show: "4 (18, 20, 22, 30)", ph: "?" },
+    { id: "6", q: "Koľko hodnôt je v intervale od 15 do 20 vrátane?", ok: v => Math.abs(parseNum(v) - 4) <= 0, show: "4 (15, 15, 18, 20)", ph: "?" }
+  ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Najčastejšia hodnota v Exceli:", ["=MODE.SNGL(rozsah)", "=MAX(rozsah)", "=MEDIAN(rozsah)", "=COUNT(rozsah)"], 0) },
     { id: "2", ...Q("=COUNTIF(B2:B16;\"<25\") spočíta:", ["bunky s hodnotou menšou ako 25", "súčet hodnôt pod 25", "všetky bunky", "bunky s textom <25"], 0) },
@@ -380,16 +394,30 @@ const VIEWS = {
     <div class="theory"><table class="cmdt"><thead><tr><th>Charakteristika</th><th>Funkcia (anglický názov)</th></tr></thead><tbody>
       <tr><td>aritmetický priemer</td><td><code>=AVERAGE(B2:B16)</code> (v slovenskej verzii PRIEMER)</td></tr><tr><td>medián</td><td><code>=MEDIAN(B2:B16)</code></td></tr><tr><td>modus</td><td><code>=MODE.SNGL(B2:B16)</code></td></tr><tr><td>minimum, maximum</td><td><code>=MIN(…)</code>, <code>=MAX(…)</code></td></tr><tr><td>smerodajná odchýlka</td><td><code>=STDEV.S(…)</code> výber, <code>=STDEV.P(…)</code> celý súbor</td></tr><tr><td>rozptyl</td><td><code>=VAR.S(…)</code>, <code>=VAR.P(…)</code></td></tr><tr><td>počet čísel</td><td><code>=COUNT(…)</code></td></tr><tr><td>počet s podmienkou</td><td><code>=COUNTIF(rozsah;"&gt;=30")</code></td></tr></tbody></table>
       <p>Názvy funkcií závisia od jazyka Excelu. Anglické názvy fungujú v anglickej verzii, v slovenskej sú niektoré preložené (napr. PRIEMER). Ak si nie si istý, začni písať <code>=</code> a Excel ti funkcie ponúkne. Simulátor v tejto hodine prijme anglické názvy aj PRIEMER, SÚČET a POČET. V slovenskom Exceli sa argumenty oddeľujú <b>bodkočiarkou</b>.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("fq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("fq")}</div>
+    <h3>Úloha 2: čo funkcia počíta?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>` + nextBar(),
   vypocty: () => { XLS("st", { cols: 6, rows: 17, sh: sh0, sel: "E2" }); return head() + `<h2>Výsledky testu</h2>
     <div class="theory"><p>V stĺpci B sú body 15 žiakov z testu (max. 50). Do stĺpca E doplň vzorce. Klikni na bunku, napíš vzorec do riadku vzorcov a stlač Enter.</p></div>
     <div class="task" id="gl-st">${gl(STL, stGoals())}</div>${xSheetHTML("st", { tools: true, tab: "Test" })}` + nextBar(); },
   countif: () => { XLS("ci", { cols: 6, rows: 17, sh: sh1, sel: "E2" }); return head() + `<h2>Počítanie s podmienkou</h2>${guessBox()}
     <div class="theory"><p><code>=COUNTIF(rozsah;kritérium)</code> spočíta bunky, ktoré spĺňajú kritérium: <code>"&gt;=30"</code>, <code>"&lt;25"</code>, <code>41</code> (presne), <code>"&lt;&gt;0"</code> (rôzne od 0). Počet v intervale zistíš rozdielom: <code>=COUNTIF(B2:B16;"&gt;=38")-COUNTIF(B2:B16;"&gt;=45")</code> spočíta body od 38 do 44. Percento: počet ÷ celkový počet × 100.</p></div>
-    <div class="task" id="gl-ci">${gl(CIL, ciGoals())}</div>${xSheetHTML("ci", { tools: true, tab: "Podmienky" })}` + nextBar(); },
+    <div class="task" id="gl-ci">${gl(CIL, ciGoals())}</div>${xSheetHTML("ci", { tools: true, tab: "Podmienky" })}
+    <h3>Úloha 2: otázky ku COUNTIF</h3><div class="task">${taskHTML("cq")}</div>` + nextBar(); },
+  precvic: () => head() + `<h2>Precvičovanie: správna funkcia</h2>
+    <div class="theory"><p>Štatistické funkcie sa delia do troch skupín: <b>poloha</b> (kde je typická hodnota: AVERAGE, MEDIAN, MODE.SNGL), <b>variabilita</b> (ako veľmi sa hodnoty líšia: rozpätie, VAR, STDEV) a <b>počítanie</b> (COUNT, COUNTIF). Pri výbere z väčšieho súboru (trieda ako vzorka školy) používame verzie s <b>.S</b>, pri celom súbore <b>.P</b>. Kritériá v COUNTIF píšeme v úvodzovkách: <code>"&gt;=30"</code>, <code>"&lt;&gt;0"</code>.</p><p>Vyber funkciu pre každú otázku a potom počítaj ručne, aby si vedel overiť, či Excel počíta správne.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 4 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 4</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: počítaj ručne</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { return xClick(e); }
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return xClick(e); }
+
+function CUSTOM_INPUT(e) { return selInput(e); }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };

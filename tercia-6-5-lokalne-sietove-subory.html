@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>4.1 Registrácia SW, upgrade, update, elektronická dokumentácia</title>
+<title>6.5 Lokálne a sieťové súbory</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -172,11 +172,6 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .pc .ic{font-size:30px}.pc h4{margin:6px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
 .tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
-.upd{display:grid;gap:6px}.upd label{display:grid;grid-template-columns:24px 1fr 130px 90px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:14.5px}
-.tag{font-size:12px;border-radius:6px;padding:2px 6px;text-align:center}.tag.sec{background:#FDE2E0;color:#B71C1C}.tag.fea{background:#E3F2FD;color:#0D47A1}.tag.drv{background:#FFF3CD;color:#8A6100}.tag.opt{background:#EEE;color:#555}
-.act{background:#fff;color:#1B1F2A;border:1px solid #BCC6D3;border-radius:12px;max-width:560px;padding:14px;font-family:"Segoe UI",var(--font)}
-.act input{font-family:var(--mono);font-size:16px;letter-spacing:1px;width:100%;border:1px solid #999;border-radius:6px;padding:6px 8px}
-.cert{background:#FFFDF3;border:2px dashed #C9A227;border-radius:12px;padding:10px 14px;font-family:var(--mono);font-size:14px;max-width:560px}
 
 </style>
 </head>
@@ -184,151 +179,62 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Bezpečnostné aktualizácie hneď, veľké zmeny naplánovať so zálohou, preview verzie nie.", "Licenciu čítaj pred iným než bežným použitím, kľúč uchovaj, pri chybe dokumentácia a presná hláška."], "licencie": ["Licencia = právo používať softvér podľa EULA; freeware, open source, shareware, trial, komerčná, OEM, predplatné, multilicencia."], "aktivacia": ["Registrácia = prihlásenie k produktu; aktivácia = overenie licencie (kľúč, konto, digitálna licencia)."], "verzie": ["Update/patch/hotfix = opravy; upgrade = vyššia verzia; HLAVNÁ.VEDĽAJŠIA.OPRAVA; koniec podpory = bez bezpečnostných aktualizácií."], "aktualizacie": ["Bezpečnostné hneď; veľké aktualizácie a upgrady odlož a zálohuj; preview a nepotrebné ovládače nie."], "dokumentacia": ["Pomocník F1, online príručka, FAQ, release notes/changelog, systémové požiadavky, README, fóra."]};
-/* ===== generic explore + find on clickable SVG screens ===== */
-function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
-function efSVG(k, ctx) {
-  const x = XS(k), Z = SCRS[k].zones;
-  const st = id => { if (ctx === "explore") return (x.exp === id ? "on " : "") + (x.seen.includes(id) ? "seen" : ""); const L = x.last; if (!L) return ""; if (id === L.correct) return "ok"; if (id === L.clicked && !L.ok) return "bad"; return ""; };
-  const z = (id, hit, inner) => `<g class="zone ${st(id)}" data-sz="${k}|${id}|${ctx}" tabindex="0" role="button" aria-label="${ctx === "explore" ? Z[id][0] : "Časť obrazovky"}">${inner}${hit.map(r => `<rect class="hit" x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="5"/>`).join("")}</g>`;
-  return SCRS[k].svg(z);
-}
-function efExplore(k, hint) { const x = XS(k), Z = SCRS[k].zones, keys = Object.keys(Z), e = x.exp ? Z[x.exp] : null;
-  return `<div class="scr"><div class="fig" style="margin:0">${efSVG(k, "explore")}</div><div class="side">${e ? `<span class="tag">Preskúmané ${x.seen.length} z ${keys.length}</span><h4>${e[0]}</h4><p style="font-size:15.5px;margin:0">${e[1]}</p>` : `<h4>Klikni na časť obrázka</h4><p class="muted" style="font-size:15px;margin:0">${hint || "Zisti, na čo slúžia jednotlivé časti."}</p>`}<div class="meter"><i style="width:${Math.round(x.seen.length / keys.length * 100)}%"></i></div></div></div>`; }
-function efFind(k) { const x = XS(k), Z = SCRS[k].zones, F = SCRS[k].find, done = S.t["f_" + k]; let fs;
-  if (done) fs = `<div class="side"><h4>Hotovo</h4><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} bodov</span></div>`;
-  else { const L = x.last; fs = `<div class="side"><span class="tag">Otázka ${x.fi + 1} z ${F.length}</span><div class="prompt">${F[x.fi][1]}</div>${L ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne!" : "❌ To je: " + Z[L.clicked][0] + ". Správne miesto svieti nazeleno."}</div><div class="row"><button class="primary" data-sn="${k}">${x.fi + 1 < F.length ? "Ďalšia otázka" : "Dokončiť"}</button></div>` : `<p class="muted" style="font-size:14.5px">Klikni na správne miesto. Máš jeden pokus.</p>`}</div>`; }
-  return `<div class="scr"><div class="fig" style="margin:0">${efSVG(k, "find")}</div>${fs}</div>`; }
-function efClick(e) {
-  const z = e.target.closest && e.target.closest("[data-sz]");
-  if (z) { const [k, id, ctx] = z.dataset.sz.split("|"), x = XS(k);
-    if (ctx === "explore") { x.exp = id; if (!x.seen.includes(id)) x.seen.push(id); }
-    else { if (S.t["f_" + k] || x.last) return true; const F = SCRS[k].find, ok = id === F[x.fi][0]; x.res[x.fi] = ok; x.last = { clicked: id, correct: F[x.fi][0], ok }; }
-    save(); render(false); return true; }
-  const el = e.target.closest("button"); if (el && el.dataset.sn) { const k = el.dataset.sn, x = XS(k), F = SCRS[k].find; x.last = null; x.fi++; if (x.fi >= F.length) { x.fi = F.length - 1; award("f_" + k, x.res.filter(Boolean).length); } save(); render(false); return true; }
-  return false;
-}
-document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-sz]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
-const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
-const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
-
-const KEY = "licencie-r41-v1";
-const LESSON = "4.1 Registrácia SW, upgrade, update, elektronická dokumentácia";
-const BRAND = "4.1 Licencie a aktualizácie";
-const CLASS_DEFAULT = "III.";
-const WIDE = { aktivacia: 1, aktualizacie: 1, dokumentacia: 1 };
+const THEORY = {"precvic": ["Často používané zdieľanie namapuj ako disk. Bez oprávnenia požiadaj správcu.", "Pracuj lokálne, hotovú prácu ulož späť na sieť alebo do cloudu."], "cesty": ["Lokálna cesta: C:&#92;… Sieťová (UNC): &#92;&#92;server&#92;zdieľanie&#92;… Namapovaná jednotka: Z:&#92;… Cloud: https://…"], "zdielane": ["Oprávnenia: čítanie, alebo čítanie a zápis. Bez oprávnenia: Prístup odmietnutý.", "Na sieťovom disku je otvorený súbor zamknutý pre ostatných."], "kopia": ["Lokálny: rýchly, bez siete, iba jedno zariadenie. Sieťový/cloud: z viacerých miest, spolupráca, záloha správcom."]};
+const KEY = "t65-v1";
+const LESSON = "6.5 Lokálne a sieťové súbory";
+const BRAND = "6.5 Lokálne a sieťové súbory";
+const CLASS_DEFAULT = "Tercia";
+const WIDE = {};
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
-  { id: "licencie", title: "Softvérové licencie", min: 8 },
-  { id: "aktivacia", title: "Registrácia a aktivácia", min: 7 },
-  { id: "verzie", title: "Update, upgrade, verzie", min: 8 },
-  { id: "aktualizacie", title: "Aktualizácie v praxi", min: 8 },
-  { id: "dokumentacia", title: "Elektronická dokumentácia", min: 7 },
-  { id: "precvic", title: "Precvičovanie: čo urobíš so softvérom", min: 7 },
+  { id: "cesty", title: "Lokálne a sieťové cesty", min: 11 },
+  { id: "zdielane", title: "Zdieľané priečinky", min: 8 },
+  { id: "kopia", title: "Lokálny, alebo sieťový?", min: 8 },
+  { id: "precvic", title: "Precvičovanie: pracuj so súbormi v sieti", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { licencie: ["lsort", "lq"], aktivacia: ["g_act"], verzie: ["vsort", "vin"], aktualizacie: ["g_upd"], dokumentacia: ["f_doc", "dq"], precvic: ["g_sit", "pxq"], test: ["test"] };
-const START = {
-  kicker: "Informatika, 3. ročník",
-  lead: "Softvér nekupujeme, ale získavame licenciu na jeho používanie. Spoznáš druhy licencií, naučíš sa program zaregistrovať a aktivovať, rozlíšiš update, upgrade a patch, prečítaš číslo verzie, v simulácii rozhodneš o aktualizáciách a zorientuješ sa v elektronickej dokumentácii: v nápovede, poznámkach k vydaniu aj v súbore README. 6 zastávok, body a na konci výsledok.",
-  guessQ: "Čo získaš, keď si „kúpiš“ program?",
-  guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
-  guesses: ["Vlastníctvo programu a smiem ho ďalej predávať a upravovať", "Licenciu: právo program používať za podmienok v licenčnej zmluve (EULA)", "Zdrojový kód", "Nič"],
-  ok: 1, yes: "Presne tak! Autorské práva ostávajú autorovi, ty dostaneš licenciu podľa podmienok EULA.", no: "Licenciu: právo program používať za podmienok licenčnej zmluvy (EULA). Autorské práva ostávajú autorovi."
-};
-const KEYTXT = "7KQ2M-VX9TR-4HBDP-J6WYC-38GFN";
-function EXTRA_STATE() { return { ak: "", act: false, am: null, upd: {}, ud: null }; }
-const UPD = [["up1", "Kumulatívna aktualizácia zabezpečenia pre Windows 11", "sec", "Zabezpečenie"], ["up2", "Microsoft Defender – aktualizácia definícií", "sec", "Zabezpečenie"], ["up3", "Aktualizácia funkcií na novú verziu Windows 11", "fea", "Funkcie"], ["up4", "Ovládač tlačiarne HP (voliteľné)", "drv", "Ovládač"], ["up5", "Náhľad kumulatívnej aktualizácie (preview)", "opt", "Voliteľné"], ["up6", "Aktualizácia zabezpečenia pre prehliadač Edge", "sec", "Zabezpečenie"]];
-function updHTML() { return `<div class="upd">${UPD.map(([id, n, t, l]) => `<label><input type="checkbox" data-up="${id}" ${S.upd[id] ? "checked" : ""}><span>${n}</span><span class="tag ${t}">${l}</span><small>${{ sec: "odporúčané", fea: "veľká zmena", drv: "iba ak treba", opt: "testovacie" }[t]}</small></label>`).join("")}</div><div class="row"><button class="primary" data-updok>⬇ Nainštalovať vybrané</button></div>${S.ud ? `<div class="fb ${S.ud.k}">${S.ud.t}</div>` : ""}`; }
-const SCRS = { doc: { zones: {
-      nazov: ["Názov a verzia", "Ktorého programu a ktorej verzie sa dokumentácia týka."], hladat: ["Vyhľadávanie v nápovede", "Najrýchlejšia cesta k odpovedi: kľúčové slová."],
-      obsah: ["Obsah (kapitoly)", "Štruktúra príručky: začíname, inštalácia, funkcie, riešenie problémov."], navod: ["Návod krok za krokom", "Postup s očíslovanými krokmi a obrázkami."],
-      faq: ["Časté otázky (FAQ)", "Odpovede na najčastejšie problémy."], zmeny: ["Poznámky k vydaniu (changelog)", "Čo je nové, čo sa opravilo a známe problémy v každej verzii."],
-      poziadavky: ["Systémové požiadavky", "Minimálny operačný systém, procesor, RAM, miesto na disku."], podpora: ["Kontakt na podporu", "Formulár, e-mail, komunita, stav služieb."]
-    }, find: [["zmeny", "Chceš vedieť, čo opravila posledná aktualizácia."], ["poziadavky", "Zistíš, či program pôjde na starom notebooku."], ["faq", "Program hlási známu chybu pri prihlásení, hľadáš rýchle riešenie."], ["podpora", "Nič nepomohlo, chceš napísať výrobcovi."]],
-    svg(z) { let s = `<svg viewBox="0 0 720 400" role="group" aria-label="Online dokumentácia"><rect width="720" height="400" rx="10" fill="#fff" stroke="#BCC6D3"/><rect width="720" height="46" rx="10" fill="#1F3A60"/>`;
-      s += z("nazov", [[10, 8, 260, 30]], T_(20, 30, "📘 FotoStudio 5.2 – Pomocník", 14, "#fff", 700)); s += z("hladat", [[400, 10, 300, 26]], `<rect x="400" y="11" width="300" height="24" rx="12" fill="#fff"/>${T_(414, 28, "🔍 Hľadať v dokumentácii", 11, "#666")}`);
-      s += z("obsah", [[10, 56, 190, 250]], `<rect x="10" y="56" width="190" height="250" rx="8" fill="#F4F6FA"/>${["Začíname", "Inštalácia", "Úprava fotiek", "Export", "Riešenie problémov"].map((t, i) => T_(22, 84 + i * 28, "▸ " + t, 12, "#1B1F2A")).join("")}`);
-      s += z("navod", [[214, 56, 300, 250]], `${T_(224, 80, "Ako orezať fotku", 16, "#1B1F2A", 700)}${["1. Otvorte fotku.", "2. Kliknite na Orezať (C).", "3. Potiahnite rohy výrezu.", "4. Potvrďte Enter."].map((t, i) => T_(224, 110 + i * 26, t, 12.5, "#333")).join("")}`);
-      s += z("zmeny", [[530, 56, 180, 80]], `<rect x="530" y="56" width="180" height="80" rx="8" fill="#E8F5E9"/>${T_(540, 78, "📝 Čo je nové vo verzii 5.2", 11, "#1B5E20", 700)}${T_(540, 98, "opravy chýb exportu", 10.5, "#333")}`);
-      s += z("poziadavky", [[530, 146, 180, 70]], `<rect x="530" y="146" width="180" height="70" rx="8" fill="#FFF8E1"/>${T_(540, 168, "💻 Systémové požiadavky", 11, "#8A6100", 700)}${T_(540, 188, "Windows 10/11, 8 GB RAM", 10.5, "#333")}`);
-      s += z("faq", [[530, 226, 180, 36]], `<rect x="530" y="226" width="180" height="36" rx="8" fill="#E3F2FD"/>${T_(540, 249, "❓ Časté otázky (FAQ)", 11, "#0D47A1", 700)}`);
-      s += z("podpora", [[10, 320, 700, 70]], `<rect x="10" y="320" width="700" height="70" rx="8" fill="#F4F6FA"/>${T_(24, 360, "✉️ Nenašli ste odpoveď? Kontaktujte podporu · Komunitné fórum · Stav služieb", 12, "#1B1F2A")}`);
-      return s + `</svg>`; } } };
+const STEP_TASKS = { cesty: ["csort", "pin"], zdielane: ["osort", "zq"], kopia: ["kin", "vsort"], precvic: ["g_sit", "pxq"], test: ["test"] };
+const START = {"kicker": "Informatika, Tercia", "lead": "Súbor môže byť na disku tvojho počítača, na školskom serveri alebo v cloude. Naučíš sa čítať a písať lokálne aj sieťové cesty, spoznáš namapované jednotky a oprávnenia k zdieľaným priečinkom a porovnáš, kedy je lepší lokálny a kedy sieťový súbor. 4 zastávky, body a na konci výsledok.", "guessQ": "Ako začína cesta k priečinku na školskom serveri?", "guessNote": "Tip sa neboduje. Na zastávke Lokálne a sieťové cesty zistíš, či si mal pravdu.", "guesses": ["C:\\", "Dvoma spätnými lomkami a menom servera", "https://", "@skola"], "ok": 1, "yes": "Presne tak! Sieťová (UNC) cesta začína dvoma spätnými lomkami a menom servera.", "no": "Dvoma spätnými lomkami a menom servera, napríklad \\\\skola\\ziaci."};
+function EXTRA_STATE() { return {}; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
-const PX_I = [["Prehliadač hlási bezpečnostnú opravu.", "upd", ""], ["Windows ponúka veľkú aktualizáciu funkcií deň pred tvojou prezentáciou.", "odloz", ""], ["Systém ponúka testovaciu (preview) verziu ovládača grafiky, hoci všetko funguje.", "ign", ""], ["K programu si dostal produktový kľúč.", "kluc", ""], ["Program vypíše chybovú hlášku, ktorej nerozumieš.", "f1", ""], ["Chceš vedieť, či smieš freeware používať aj na zárobkovú činnosť.", "lic", ""]];
-const PX_O = [["", "— vyber —"], ["upd", "Nainštalovať aktualizáciu hneď"], ["odloz", "Odložiť a vopred zálohovať"], ["ign", "Neinštalovať, nie je potrebná"], ["kluc", "Uschovať kľúč na bezpečnom mieste"], ["f1", "Pozrieť pomocníka (F1) alebo hlášku vyhľadať"], ["lic", "Prečítať licenčné podmienky (EULA)"]];
+const PX_I = [["Každý deň otváraš &#92;&#92;skola&#92;ziaci&#92;3A a cestu stále prepisuješ.", "map", ""], ["Doma nemáš prístup ku školskej sieti, ale chceš na úlohe pracovať.", "copy", ""], ["Server hlási: Prístup odmietnutý k priečinku projektu.", "rights", ""], ["Spolužiak nemôže súbor upraviť, lebo ho máš otvorený.", "close", ""], ["Dôležité súbory máš iba na disku C: v notebooku.", "backup", ""], ["Odovzdávaš hotovú úlohu učiteľovi do priečinka na serveri.", "save", ""]];
+const PX_O = [["", "— vyber —"], ["map", "Namapovať sieťovú jednotku"], ["copy", "Vziať si lokálnu kópiu (alebo uložiť do cloudu)"], ["rights", "Požiadať správcu o oprávnenie"], ["close", "Zavrieť súbor"], ["backup", "Zálohovať na sieť alebo do cloudu"], ["save", "Uložiť do priečinka na odovzdanie na serveri"]];
 const TASKS = {
-  lsort: { id: "lsort", type: "sort", buckets: [{ id: "free", label: "🆓 Zadarmo" }, { id: "pay", label: "💳 Platené" }, { id: "try", label: "⏳ Na vyskúšanie" }],
-    items: [{ id: "1", t: "Freeware (napr. 7-Zip, VLC)", b: "free" }, { id: "2", t: "Open source (LibreOffice, Linux)", b: "free" }, { id: "3", t: "Komerčná krabicová/elektronická licencia", b: "pay" }, { id: "4", t: "Predplatné (Microsoft 365, Adobe)", b: "pay" }, { id: "5", t: "OEM licencia predinštalovaná v novom PC", b: "pay" }, { id: "6", t: "Trial na 30 dní", b: "try" }, { id: "7", t: "Shareware", b: "try" }, { id: "8", t: "Demo verzia s obmedzenými funkciami", b: "try" }] },
-  lq: { id: "lq", type: "mc", qs: [
-    { id: "1", ...Q("Čo je EULA?", ["licenčná zmluva s koncovým používateľom", "druh vírusu", "verzia Windows", "formát súboru"], 0) },
-    { id: "2", ...Q("Čím sa líši open source od freeware?", ["open source má verejný zdrojový kód, ktorý môžeš skúmať a upravovať; freeware je iba zadarmo", "nie je rozdiel", "freeware je vždy open source", "open source je platený"], 0) },
-    { id: "3", ...Q("Školy na Slovensku môžu používať Microsoft 365 v rámci:", ["hromadnej (multilicenčnej) školskej licencie", "pirátskej kópie", "trial verzie navždy", "freeware"], 0) },
-    { id: "4", ...Q("Používanie nelegálnej (pirátskej) kópie softvéru:", ["porušuje autorské práva a je rizikové (malvér, žiadne aktualizácie)", "je povolené pre študentov", "je legálne, ak ju nepredávam", "zrýchli počítač"], 0) }
+  csort: {"id": "csort", "type": "sort", "buckets": [{"id": "l", "label": "💻 Lokálna cesta"}, {"id": "u", "label": "🏢 Sieťová cesta (UNC)"}, {"id": "m", "label": "🔗 Namapovaná jednotka"}, {"id": "w", "label": "☁️ Webová adresa (cloud)"}], "items": [{"id": "1", "t": "C:&#92;Users&#92;Ema&#92;Dokumenty&#92;referat.docx", "b": "l"}, {"id": "2", "t": "D:&#92;Fotky&#92;2026", "b": "l"}, {"id": "3", "t": "&#92;&#92;server&#92;ziaci&#92;3A&#92;projekt.pptx", "b": "u"}, {"id": "4", "t": "&#92;&#92;NAS&#92;rodina&#92;fotky", "b": "u"}, {"id": "5", "t": "Z:&#92;Projekty (zdieľanie na serveri)", "b": "m"}, {"id": "6", "t": "H:&#92; domovský priečinok na serveri", "b": "m"}, {"id": "7", "t": "https://onedrive.live.com/…", "b": "w"}, {"id": "8", "t": "https://drive.google.com/…", "b": "w"}]},
+  pin: { id: "pin", type: "input", qs: [
+    { id: "1", q: "Server <b>skola</b>, zdieľanie <b>ziaci</b>, v ňom priečinok <b>ulohy</b>. Napíš sieťovú (UNC) cestu k priečinku.", ok: v => NP(v) === "//skola/ziaci/ulohy", show: "&#92;&#92;skola&#92;ziaci&#92;ulohy", ph: "&#92;&#92;…" },
+    { id: "2", q: "Zdieľanie <b>&#92;&#92;skola&#92;ziaci</b> je namapované ako disk <b>Z:</b>. Ako sa zapíše cesta k priečinku ulohy?", ok: v => NP(v) === "z:/ulohy", show: "Z:&#92;ulohy", ph: "Z:…" },
+    { id: "3", q: "Aká je prípona súboru v ceste <code>&#92;&#92;skola&#92;ziaci&#92;ulohy&#92;test.xlsx</code>? (bez bodky)", ok: v => String(v).trim().toLowerCase().replace(/^\./, "") === "xlsx", show: "xlsx", ph: "?" }
   ]},
-  g_act: { id: "g_act", type: "custom", max: 1 },
-  vsort: { id: "vsort", type: "sort", buckets: [{ id: "u", label: "🔧 Update / patch" }, { id: "g", label: "⬆️ Upgrade" }],
-    items: [{ id: "1", t: "Oprava bezpečnostnej chyby v prehliadači", b: "u" }, { id: "2", t: "Verzia 5.2.1 → 5.2.2", b: "u" }, { id: "3", t: "Nové definície antivírusu", b: "u" }, { id: "4", t: "Windows 10 → Windows 11", b: "g" }, { id: "5", t: "Office 2016 → Microsoft 365", b: "g" }, { id: "6", t: "Verzia 5.x → 6.0 s novým dizajnom", b: "g" }] },
-  vin: { id: "vin", type: "input", qs: [
-    { id: "1", q: "Program má verziu <code>3.8.4</code>. Vyšla oprava drobnej chyby bez nových funkcií. Aká bude nová verzia?", ok: v => String(v).trim() === "3.8.5", show: "3.8.5", ph: "?" },
-    { id: "2", q: "Verzia <code>3.8.4</code>: pribudli nové funkcie, staré fungujú ďalej. Nová verzia?", ok: v => String(v).trim() === "3.9.0", show: "3.9.0", ph: "?" },
-    { id: "3", q: "Verzia <code>3.8.4</code>: veľké zmeny, ktoré nie sú spätne kompatibilné. Nová verzia?", ok: v => String(v).trim() === "4.0.0", show: "4.0.0", ph: "?" }
+  osort: {"id": "osort", "type": "sort", "buckets": [{"id": "r", "label": "👁️ Iba čítanie"}, {"id": "w", "label": "✏️ Čítanie aj zápis"}], "items": [{"id": "1", "t": "Žiak: priečinok so zadaniami od učiteľa", "b": "r"}, {"id": "2", "t": "Rodič: rozvrh triedy", "b": "r"}, {"id": "3", "t": "Všetci: zverejnený jedálny lístok", "b": "r"}, {"id": "4", "t": "Žiak: priečinok na odovzdanie úloh", "b": "w"}, {"id": "5", "t": "Učiteľ: vlastný priečinok so zadaniami", "b": "w"}, {"id": "6", "t": "Tím: spoločný priečinok projektu", "b": "w"}]},
+  zq: {"id": "zq", "type": "mc", "qs": [{"id": "1", "q": "Dvaja naraz upravujú ten istý súbor na sieťovom disku (nie v cloude). Čo hrozí?", "opts": ["súbor je zamknutý alebo jeden prepíše zmeny druhého", "súbor sa zdvojnásobí", "nič, uloží sa oboje", "server sa vypne"], "a": 0}, {"id": "2", "q": "Čo znamená, že súbor je len na čítanie?", "opts": ["môžeš ho otvoriť, ale zmeny neuložíš", "nedá sa otvoriť", "je zmazaný", "je zašifrovaný heslom"], "a": 0}, {"id": "3", "q": "Prečo na školskom serveri nevidíš priečinok inej triedy?", "opts": ["nemáš k nemu oprávnenie", "server je pokazený", "priečinok neexistuje", "máš zlý monitor"], "a": 0}]},
+  kin: { id: "kin", type: "input", qs: [
+    { id: "1", q: "Súbor 500 MB (= 4 000 Mb) kopíruješ cez sieť rýchlosťou 100 Mb/s. Koľko sekúnd to trvá?", ok: v => Math.abs(parseNum(v) - 40) <= 0, show: "40 s", ph: "?" },
+    { id: "2", q: "Ten istý súbor číta lokálny SSD rýchlosťou 500 MB/s. Koľko sekúnd?", ok: v => Math.abs(parseNum(v) - 1) <= 0, show: "1 s", ph: "?" },
+    { id: "3", q: "Koľkokrát je lokálny SSD rýchlejší?", ok: v => Math.abs(parseNum(v) - 40) <= 0, show: "40-krát", ph: "?" }
   ]},
-  g_upd: { id: "g_upd", type: "custom", max: 2 },
-  f_doc: { id: "f_doc", type: "custom", max: 4 },
-  dq: { id: "dq", type: "mc", qs: [
-    { id: "1", ...Q("Čo obsahuje súbor README pri programe?", ["základný popis, inštaláciu a použitie", "vírus", "licenciu vždy iba", "zálohu"], 0) },
-    { id: "2", ...Q("Kde zistíš, čo sa zmenilo v novej verzii?", ["v poznámkach k vydaniu (release notes, changelog)", "v Koši", "v EULA", "v systémových požiadavkách"], 0) },
-    { id: "3", ...Q("Ktorá klávesa často otvorí nápovedu programu?", ["F1", "F5", "Esc", "Delete"], 0) }
-  ]},
+  vsort: {"id": "vsort", "type": "sort", "buckets": [{"id": "l", "label": "💻 Výhoda lokálneho súboru"}, {"id": "s", "label": "🏢 Výhoda sieťového (cloudového) súboru"}], "items": [{"id": "1", "t": "Funguje aj bez siete", "b": "l"}, {"id": "2", "t": "Veľké súbory sa otvárajú rýchlo", "b": "l"}, {"id": "3", "t": "Nikto iný k nemu nemá prístup", "b": "l"}, {"id": "4", "t": "Dostaneš sa k nemu z viacerých počítačov", "b": "s"}, {"id": "5", "t": "Správca ho centrálne zálohuje", "b": "s"}, {"id": "6", "t": "Na súbore môže pracovať viac ľudí", "b": "s"}]},
+  test: {"id": "test", "type": "mc", "qs": [{"id": "1", "q": "Cesta <code>&#92;&#92;server&#92;ziaci&#92;ulohy</code> je:", "opts": ["sieťová (UNC) cesta", "lokálna cesta", "webová adresa", "e-mail"], "a": 0}, {"id": "2", "q": "Namapovaná jednotka (napr. Z:) je:", "opts": ["sieťový priečinok zobrazený ako písmeno disku", "nový pevný disk v PC", "USB kľúč", "cloud"], "a": 0}, {"id": "3", "q": "Súbor, ku ktorému máš iba oprávnenie čítať:", "opts": ["otvoríš, ale zmeny neuložíš", "neotvoríš", "môžeš zmazať", "môžeš premenovať"], "a": 0}, {"id": "4", "q": "Výhoda lokálneho súboru:", "opts": ["funguje aj bez siete", "dostaneš sa k nemu z každého PC", "zálohuje ho správca", "upravuje ho viac ľudí naraz"], "a": 0}, {"id": "5", "q": "Lokálna cesta začína:", "opts": ["písmenom disku, napr. C:&#92;", "dvoma spätnými lomkami", "https://", "@"], "a": 0}, {"id": "6", "q": "Odkiaľ sa najrýchlejšie otvorí veľký súbor?", "opts": ["z lokálneho SSD disku", "zo sieťového disku cez Wi-Fi", "z cloudu cez mobilné dáta", "z e-mailu"], "a": 0}]},
   g_sit: { id: "g_sit", type: "custom", max: 6 },
-  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Aká bude ďalšia verzia po 2.9.3, ak vyjde iba oprava chyby?", "opts": ["2.9.4", "2.10.0", "3.0.0", "2.9.3.1"], "a": 0}, {"id": "2", "q": "Prečo nie sú bezpečné programy, ktorým skončila podpora?", "opts": ["nedostávajú bezpečnostné aktualizácie", "nedajú sa spustiť", "sú vždy platené", "majú vírus od výroby"], "a": 0}]},
-  test: { id: "test", type: "mc", qs: [
-    { id: "1", ...Q("Aktivácia softvéru slúži na:", ["overenie, že licencia je platná a použitá v súlade s podmienkami", "zrýchlenie", "zmenu jazyka", "odinštalovanie"], 0) },
-    { id: "2", ...Q("Update je:", ["aktualizácia v rámci tej istej verzie (opravy, bezpečnosť)", "prechod na novú hlavnú verziu", "odinštalovanie", "licencia"], 0) },
-    { id: "3", ...Q("Upgrade je:", ["prechod na vyššiu (hlavnú) verziu alebo edíciu", "oprava chyby", "záloha", "trial"], 0) },
-    { id: "4", ...Q("Čo znamená koniec podpory (end of support) systému?", ["už nedostáva bezpečnostné aktualizácie", "prestane sa zapínať", "je zadarmo", "zmizne z disku"], 0) },
-    { id: "5", ...Q("V čísle verzie 2.7.13 je číslo 13:", ["oprava (patch)", "hlavná verzia", "rok vydania", "počet používateľov"], 0) },
-    { id: "6", ...Q("Kde má byť produktový kľúč?", ["v licenčnom certifikáte, e-maile od predajcu alebo v konte", "na internetovom fóre", "v README každého používateľa", "v Koši"], 0) }
-  ]}
+  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Čo je namapovaná jednotka?", "opts": ["sieťový priečinok zobrazený ako písmeno disku (napr. Z:)", "nový disk v počítači", "cloudová aplikácia", "USB kľúč"], "a": 0}, {"id": "2", "q": "Čím začína sieťová (UNC) cesta?", "opts": ["dvoma spätnými lomkami a menom servera", "písmenom disku", "https://", "@"], "a": 0}, {"id": "3", "q": "Prečo pri veľkých súboroch pracovať na lokálnej kópii?", "opts": ["lokálny disk je oveľa rýchlejší ako sieť", "sieť súbory poškodzuje", "na sieť sa nedá ukladať", "nemá to význam"], "a": 0}, {"id": "4", "q": "Kedy uložíš prácu späť na sieťový disk?", "opts": ["keď je hotová, aby bola zálohovaná a dostupná ostatným", "nikdy", "iba pred prázdninami", "iba v noci"], "a": 0}]}
 };
 const VIEWS = {
-  licencie: () => head() + `<h2>Softvérové licencie</h2>${guessBox()}
-    <div class="theory"><p>Softvér je chránený <b>autorským zákonom</b>. Pri „kúpe“ získavame <b>licenciu</b>: právo program používať podľa <b>licenčnej zmluvy (EULA)</b>. Druhy: <b>freeware</b> (zadarmo, bez zdrojového kódu), <b>open source</b> (zdrojový kód verejný, napr. licencia GPL), <b>shareware</b> a <b>trial</b> (na vyskúšanie, potom zaplatiť), <b>komerčná</b> licencia, <b>OEM</b> (viazaná na nový počítač), <b>predplatné</b> (mesačne, ročne) a <b>multilicencie</b> pre firmy a školy.</p></div>
-    <h3>Úloha 1: roztrieď licencie</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("lsort")}</div>
-    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("lq")}</div>` + nextBar(),
-  aktivacia: () => head() + `<h2>Registrácia a aktivácia</h2>
-    <div class="theory"><p><b>Registrácia</b> znamená prihlásiť sa k produktu (často kontom u výrobcu): dostávaš informácie, podporu, prístup k licenciám. <b>Aktivácia</b> overí platnosť licencie: zadaním <b>produktového kľúča</b>, prihlásením do konta (Microsoft 365) alebo <b>digitálnou licenciou</b> viazanou na hardvér. Neaktivovaný program môže mať obmedzené funkcie. Kľúč si bezpečne uchovaj a nezverejňuj ho.</p></div>
-    <h3>Úloha: aktivuj program</h3><div class="cert"><b>Licenčný certifikát – FotoStudio 5</b><br>Používateľ: Gymnázium Ivana Kraska<br>Typ: školská licencia, 1 zariadenie<br>Produktový kľúč: <b>${KEYTXT}</b></div>
-    <div class="act" style="margin-top:10px">${S.act ? `<p style="font-size:18px">✅ <b>FotoStudio 5 je aktivovaný.</b> Licencia: školská, 1 zariadenie.</p>` : `<p><b>Aktivácia produktu</b><br>Zadajte 25-znakový produktový kľúč (5 skupín po 5 znakov):</p><input id="akey" value="${esc(S.ak)}" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" aria-label="Produktový kľúč"><div class="row"><button class="primary" data-akt>Aktivovať</button></div>${S.am ? `<div class="fb bad">${S.am}</div>` : ""}`}</div>` + nextBar(),
-  verzie: () => head() + `<h2>Update, upgrade, verzie</h2>
-    <div class="theory"><ul><li><b>Update (aktualizácia)</b>: opravy chýb a bezpečnostných dier v rámci tej istej verzie, zvyčajne zadarmo; malá oprava sa volá <b>patch</b>, rýchla oprava <b>hotfix</b>.</li><li><b>Upgrade</b>: prechod na vyššiu verziu alebo edíciu s novými funkciami (často za poplatok).</li><li>Číslovanie verzií často podľa vzoru <b>HLAVNÁ.VEDĽAJŠIA.OPRAVA</b> (sémantické verzovanie): 3.8.4 → oprava 3.8.5, nové funkcie 3.9.0, nekompatibilné zmeny 4.0.0.</li><li>Každá verzia systému má <b>životný cyklus</b>. Po skončení podpory prestane dostávať bezpečnostné aktualizácie (napríklad Windows 10 ju ukončil 14. 10. 2025).</li></ul></div>
-    <h3>Úloha 1: update, alebo upgrade?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("vsort")}</div>
-    <h3>Úloha 2: nové číslo verzie</h3><div class="task">${taskHTML("vin")}</div>` + nextBar(),
-  aktualizacie: () => head() + `<h2>Aktualizácie v praxi</h2>
-    <div class="theory"><p><b>Bezpečnostné aktualizácie</b> inštaluj čo najskôr. <b>Veľké aktualizácie funkcií</b> a <b>upgrady</b> je rozumné odložiť na čas, keď počítač nepotrebuješ (nie pred písomkou či prezentáciou), a vopred zálohovať. <b>Voliteľné ovládače</b> inštaluj, iba ak riešia tvoj problém, <b>testovacie (preview)</b> verzie nie sú pre bežné používanie.</p></div>
-    <h3>Úloha: zajtra ráno máš prezentáciu. Čo nainštaluješ dnes večer?</h3><div class="task"><ul class="goals" style="list-style:none;padding:0"><li>${S.t.g_upd && S.t.g_upd.score >= 1 ? "✅" : "⬜"} všetky bezpečnostné aktualizácie</li><li>${S.t.g_upd && S.t.g_upd.score >= 2 ? "✅" : "⬜"} a nič, čo môže zmeniť systém pred prezentáciou (funkcie, preview, nepotrebný ovládač)</li></ul></div>
-    <div class="tool" id="updbox">${updHTML()}</div>` + nextBar(),
-  dokumentacia: () => head() + `<h2>Elektronická dokumentácia</h2>
-    <div class="theory"><p>K softvéru patrí <b>elektronická dokumentácia</b>: vstavaný <b>pomocník</b> (často <kbd>F1</kbd>), <b>online príručka</b> a znalostná báza, <b>FAQ</b>, <b>poznámky k vydaniu</b> (release notes, changelog), <b>systémové požiadavky</b>, súbor <b>README</b>, licenčné podmienky, videonávody a komunitné fóra. Najrýchlejšie je vyhľadávanie podľa kľúčových slov alebo presného textu chybovej hlášky.</p></div>
-    <h3>Preskúmaj dokumentáciu</h3>${efExplore("doc")}<h3>Úloha 1: kde to nájdeš?</h3>${efFind("doc")}
-    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("dq")}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: čo urobíš so softvérom</h2>
-    <div class="theory"><p>Správa softvéru je séria rozhodnutí. <b>Bezpečnostné aktualizácie</b> inštaluj hneď, veľké aktualizácie a upgrady naplánuj na vhodný čas a vopred zálohuj, testovacie verzie nechaj odborníkom. <b>Licenciu</b> si prečítaj skôr, ako program použiješ inak než bežne (komerčne, na viacerých počítačoch). <b>Produktový kľúč</b> uchovaj a nezverejňuj. Keď niečomu nerozumieš, najprv siahni po <b>dokumentácii</b>: pomocník, poznámky k vydaniu, presný text chybovej hlášky vo vyhľadávaní.</p><p>Pri každej situácii vyber postup a potom odpovedz.</p></div>
+  cesty: () => head() + `<h2>Lokálne a sieťové cesty</h2>${guessBox()}<div class="theory"><p>Každý súbor má <b>cestu</b>. <b>Lokálna cesta</b> začína písmenom disku: <code>C:&#92;Users&#92;Ema&#92;Dokumenty&#92;referat.docx</code>. <b>Sieťová (UNC) cesta</b> začína dvoma spätnými lomkami a menom servera, za ním nasleduje zdieľaný priečinok: <code>&#92;&#92;skola&#92;ziaci&#92;ulohy</code>. Sieťový priečinok sa dá <b>namapovať</b> ako písmeno disku (napr. <code>Z:</code>), potom ho vidíš v Prieskumníkovi ako ďalší disk. Súbory v cloude majú <b>webovú adresu</b> (https://…).</p></div><h3>Úloha 1: aká je to cesta?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("csort")}</div><h3>Úloha 2: napíš cestu</h3><div class="task">${taskHTML("pin")}</div>` + nextBar(),
+  zdielane: () => head() + `<h2>Zdieľané priečinky a oprávnenia</h2><div class="theory"><p>Na sieťovom disku určuje správca <b>oprávnenia</b>: <b>čítanie</b> (súbor otvoríš, ale zmeny neuložíš) alebo <b>čítanie a zápis</b> (môžeš meniť, pridávať, mazať). Priečinky, ku ktorým nemáš oprávnenie, nevidíš alebo dostaneš hlásenie <b>Prístup odmietnutý</b>. Na rozdiel od cloudu bežný sieťový disk nezvládne úpravu jedného súboru viacerými ľuďmi naraz: súbor je <b>zamknutý</b>, kým ho má niekto otvorený.</p></div><h3>Úloha 1: aké oprávnenie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("osort")}</div><h3>Úloha 2: otázky</h3><div class="task">${taskHTML("zq")}</div>` + nextBar(),
+  kopia: () => head() + `<h2>Lokálny, alebo sieťový?</h2><div class="theory"><p>Lokálny súbor je <b>rýchly a dostupný aj bez siete</b>, ale je iba na jednom zariadení a ak sa disk pokazí, môže sa stratiť. Sieťový alebo cloudový súbor je <b>dostupný z viacerých miest</b>, môže ho upravovať viac ľudí a zálohuje ho správca, no závisí od siete a jej rýchlosti. Preto pri veľkých súboroch pracujeme na lokálnej kópii a hotovú prácu ukladáme späť na sieť alebo do cloudu.</p></div><h3>Úloha 1: počítaj</h3><div class="task">${taskHTML("kin")}</div><h3>Úloha 2: výhoda lokálneho, alebo sieťového súboru?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("vsort")}</div>` + nextBar(),
+
+  precvic: () => head() + `<h2>Precvičovanie: pracuj so súbormi v sieti</h2>
+    <div class="theory"><p>Pri práci so súbormi v sieti si pamätaj tri pravidlá. <b>Cesta</b>: lokálne <code>C:&#92;…</code>, v sieti <code>&#92;&#92;server&#92;zdieľanie&#92;…</code> a často používané zdieľanie si <b>namapuj</b> ako disk. <b>Oprávnenia</b>: ak nemáš prístup, požiadaj správcu a ostatných neblokuj zbytočne otvoreným súborom. <b>Kópie</b>: pracuj lokálne, keď potrebuješ rýchlosť alebo nemáš sieť, ale hotovú prácu ulož späť na sieť alebo do cloudu, kde je zálohovaná.</p><p>Pri každej situácii vyber postup a potom odpovedz.</p></div>
     <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
     <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; if (efClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
-  if (ds.akt !== undefined) { const v = (document.getElementById("akey").value || "").toUpperCase().replace(/\s/g, ""); S.ak = v; if (!/^[A-Z0-9]{5}(-[A-Z0-9]{5}){4}$/.test(v)) S.am = "Kľúč má 25 znakov v 5 skupinách po 5, oddelených pomlčkou."; else if (v !== KEYTXT) S.am = "Tento produktový kľúč nie je platný. Skontroluj ho v certifikáte (pozor na zámenu 0 a O, 8 a B)."; else { S.act = true; S.am = null; award("g_act", 1); } save(); render(false); return true; }
-  if (ds.updok !== undefined) { const sel = UPD.filter(u => S.upd[u[0]]), secAll = UPD.filter(u => u[2] === "sec").every(u => S.upd[u[0]]), other = sel.some(u => u[2] !== "sec"); let n = 0; if (secAll) n = 1; if (secAll && !other) n = 2; if (n && (!S.t.g_upd || S.t.g_upd.score < n)) award("g_upd", n);
-    S.ud = !secAll ? { k: "bad", t: "Chýba niektorá bezpečnostná aktualizácia. Tie sú najdôležitejšie." } : other ? { k: "info", t: "Bezpečnosť je v poriadku, ale aktualizácia funkcií, preview alebo nepotrebný ovládač môže pred prezentáciou spôsobiť problémy. Odlož ich." } : { k: "ok", t: "✅ Výborne: počítač je zabezpečený a pred prezentáciou nič zásadné nemení. Po reštarte je pripravený." }; save(); render(false); return true; }
-  return false; }
-function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; const t = e.target; if (t.dataset && t.dataset.up) { S.upd[t.dataset.up] = t.checked; S.ud = null; save(); return true; } if (t.id === "akey") { S.ak = t.value; save(); return true; } return false; }
+function NP(v) { return String(v).trim().toLowerCase().replace(/\\/g, "/").replace(/\/+$/, ""); }
+
+function CUSTOM_CLICK(e) { return selClick(e, { px: [PX_I, "g_sit"] }); }
+
+function CUSTOM_INPUT(e) { return selInput(e); }
 
 function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};

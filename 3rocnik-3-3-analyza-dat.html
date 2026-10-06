@@ -220,7 +220,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"zapnutie": ["Súbor › Možnosti › Doplnky › Spravovať: Doplnky programu Excel › Prejsť › Analytické nástroje › OK; potom Údaje › Analýza dát."], "popisna": ["Popisná štatistika: vstupný rozsah, Menovky v prvom riadku, Súhrnná štatistika; výstup je statický (neprepočítava sa)."], "histogram": ["Histogram: vstup + rozsah tried (horné hranice), riadok Ďalšie; výstup s grafom."], "korelacia": ["Korelácia r od −1 do 1: 1 priama, −1 nepriama, 0 žiadna lineárna; =CORREL; korelácia nedokazuje príčinu."]};
+const THEORY = {"precvic": ["Popisná štatistika = 13 charakteristík naraz, Histogram = početnosti v triedach, Korelácia = súvislosť dvoch veličín.", "Výstup Analýzy dát je statický, pri zmene údajov ho spusti znova alebo použi funkcie."], "zapnutie": ["Súbor › Možnosti › Doplnky › Spravovať: Doplnky programu Excel › Prejsť › Analytické nástroje › OK; potom Údaje › Analýza dát."], "popisna": ["Popisná štatistika: vstupný rozsah, Menovky v prvom riadku, Súhrnná štatistika; výstup je statický (neprepočítava sa)."], "histogram": ["Histogram: vstup + rozsah tried (horné hranice), riadok Ďalšie; výstup s grafom."], "korelacia": ["Korelácia r od −1 do 1: 1 priama, −1 nepriama, 0 žiadna lineárna; =CORREL; korelácia nedokazuje príčinu."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -333,13 +333,14 @@ const STEPS = [
   { id: "popisna", title: "Popisná štatistika", min: 12 },
   { id: "histogram", title: "Histogram", min: 10 },
   { id: "korelacia", title: "Korelácia", min: 9 },
+  { id: "precvic", title: "Precvičovanie: ktorý nástroj Analýzy dát", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { zapnutie: ["g_on"], popisna: ["g_desc", "dq"], histogram: ["g_hist", "hq"], korelacia: ["g_corr", "kq"], test: ["test"] };
+const STEP_TASKS = { zapnutie: ["g_on", "zq"], popisna: ["g_desc", "dq", "psort"], histogram: ["g_hist", "hq", "hin"], korelacia: ["g_corr", "kq", "ksort"], precvic: ["g_sit", "pxin"], test: ["test"] };
 const START = {
   kicker: "Informatika, 3. ročník",
-  lead: "Excel má ukrytý doplnok Analýza dát (Analysis ToolPak), ktorý jedným kliknutím vytvorí celú tabuľku štatistík, histogram aj koreláciu. Naučíš sa ho zapnúť, na výsledkoch 20 žiakov spustíš Popisnú štatistiku, Histogram a Koreláciu a výsledky vysvetlíš: súvisí počet hodín prípravy s bodmi z testu? 4 zastávky, body a na konci výsledok.",
+  lead: "Excel má ukrytý doplnok Analýza dát (Analysis ToolPak), ktorý jedným kliknutím vytvorí celú tabuľku štatistík, histogram aj koreláciu. Naučíš sa ho zapnúť, na výsledkoch 20 žiakov spustíš Popisnú štatistiku, Histogram a Koreláciu a výsledky vysvetlíš: súvisí počet hodín prípravy s bodmi z testu? 5 zastávok, body a na konci výsledok.",
   guessQ: "Korelačný koeficient r = 0,85 medzi hodinami prípravy a bodmi znamená:",
   guessNote: "Tip sa neboduje. Na zastávke Korelácia zistíš, či si mal pravdu.",
   guesses: ["Žiadna súvislosť", "Silná priama súvislosť: viac prípravy, viac bodov", "Nepriama súvislosť", "Príprava spôsobuje presne 85 % bodov"],
@@ -373,12 +374,29 @@ function dlgHTML(k) { const o = S.o, T = { desc: "Popisná štatistika", hist: "
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const D = desc(BO), H = hist(BO, BINS), R = corr(HR, BO);
 const inq = (id, q, ans, tol) => ({ id, q, ok: v => Math.abs(parseNum(v) - ans) <= tol, show: String(Math.round(ans * 100) / 100).replace(".", ","), ph: "?" });
+const PX_I = [["Chceš naraz 13 charakteristík bodov z testu.", "popis", ""], ["Chceš vidieť, koľko žiakov má body v pásmach po 10.", "hist", ""], ["Zaujíma ťa, či súvisia hodiny učenia s bodmi.", "korel", ""], ["Výsledky sa majú samy prepočítať pri zmene údajov.", "fn", "výstup Analýzy dát je statický"], ["V Exceli pre web nenájdeš Analýzu dát.", "desk", ""]];
+const PX_O = [["", "— vyber —"], ["popis", "Popisná štatistika"], ["hist", "Histogram"], ["korel", "Korelácia"], ["fn", "Funkcie (AVERAGE, CORREL…)"], ["desk", "Excel pre počítač (desktop)"]];
 const TASKS = {
   g_on: { id: "g_on", type: "custom", max: 1 },
   g_desc: { id: "g_desc", type: "custom", max: 1 }, g_hist: { id: "g_hist", type: "custom", max: 1 }, g_corr: { id: "g_corr", type: "custom", max: 1 },
   dq: { id: "dq", type: "input", qs: [inq("1", "Stredná hodnota (priemer) bodov? (na 2 desatinné)", D[0][1], 0.01), inq("2", "Medián bodov?", D[2][1], 0.01), inq("3", "Smerodajná odchýlka? (na 2 desatinné)", D[4][1], 0.01), inq("4", "Rozsah (rozpätie)?", D[8][1], 0.01)] },
   hq: { id: "hq", type: "input", qs: [inq("1", "Koľko žiakov má body v triede (30; 40]?", H[3][1], 0), inq("2", "Koľko žiakov má 20 bodov alebo menej?", H[0][1] + H[1][1], 0), { id: "3", q: "Horná hranica triedy s najväčšou početnosťou?", ok: v => { const mx = Math.max(...H.map(r => r[1])); return H.some(r => r[1] === mx && String(r[0]) === String(v).trim()); }, show: String(H.reduce((a, r) => r[1] > a[1] ? r : a)[0]), ph: "?" }] },
   kq: { id: "kq", type: "input", qs: [inq("1", "Korelačný koeficient medzi hodinami a bodmi? (na 2 desatinné)", R, 0.01)] },
+  g_sit: { id: "g_sit", type: "custom", max: 5 },
+  zq: {"id": "zq", "type": "mc", "qs": [{"id": "1", "q": "Kde zapneš doplnok Analýza dát?", "opts": ["Súbor › Možnosti › Doplnky › Spravovať: Doplnky programu Excel › Prejsť › Analytické nástroje", "Domov › Vložiť › Analýza", "Zobraziť › Analýza dát", "Pravý klik na hárok › Analýza"], "a": 0}, {"id": "2", "q": "Prečo v Exceli pre web Analýzu dát nenájdeš?", "opts": ["doplnok je iba v desktopovej verzii", "treba zaplatiť", "je skrytá v Kôši", "funguje iba v angličtine"], "a": 0}, {"id": "3", "q": "Ako často treba doplnok zapínať?", "opts": ["raz, potom zostane zapnutý", "pri každom otvorení súboru", "každý deň", "pri každom výpočte"], "a": 0}]},
+  psort: {"id": "psort", "type": "sort", "buckets": [{"id": "p", "label": "📍 Poloha"}, {"id": "v", "label": "↔️ Variabilita"}], "items": [{"id": "1", "t": "Stredná hodnota", "b": "p"}, {"id": "2", "t": "Medián", "b": "p"}, {"id": "3", "t": "Modus", "b": "p"}, {"id": "4", "t": "Smerodajná odchýlka", "b": "v"}, {"id": "5", "t": "Rozptyl výberu", "b": "v"}, {"id": "6", "t": "Rozsah", "b": "v"}], "after": "V tabuľke Popisnej štatistiky je Stredná hodnota aritmetický priemer a Rozsah je rozpätie (max − min)."},
+  hin: { id: "hin", type: "input", qs: [
+    { id: "1", q: "Dáta: 12, 18, 25, 27, 33, 41, 45, 50. Hranice tried: 10, 20, 30, 40, 50. Koľko hodnôt padne do triedy 20?", ok: v => Math.abs(parseNum(v) - 2) <= 0, show: "2 (12, 18)", ph: "?" },
+    { id: "2", q: "Koľko hodnôt padne do triedy 50?", ok: v => Math.abs(parseNum(v) - 3) <= 0, show: "3 (41, 45, 50)", ph: "?" },
+    { id: "3", q: "Koľko hodnôt padne do riadku Ďalšie?", ok: v => Math.abs(parseNum(v) - 0) <= 0, show: "0 (žiadna hodnota nie je nad 50)", ph: "?" }
+  ]},
+  ksort: {"id": "ksort", "type": "sort", "buckets": [{"id": "p", "label": "📈 Silná priama závislosť"}, {"id": "n", "label": "📉 Silná nepriama závislosť"}, {"id": "z", "label": "➖ Žiadna (slabá) závislosť"}], "items": [{"id": "1", "t": "r = 0,92", "b": "p"}, {"id": "2", "t": "Čím viac hodín prípravy, tým viac bodov", "b": "p"}, {"id": "3", "t": "r = −0,88", "b": "n"}, {"id": "4", "t": "Čím rýchlejšie auto, tým kratší čas cesty", "b": "n"}, {"id": "5", "t": "r = 0,05", "b": "z"}, {"id": "6", "t": "Veľkosť topánok a známka z dejepisu", "b": "z"}]},
+  pxin: { id: "pxin", type: "input", qs: [
+    { id: "1", q: "Dáta: 12, 18, 25, 27, 33, 41, 45, 50. Aký je Rozsah?", ok: v => Math.abs(parseNum(v) - 38) <= 0, show: "38 (50 − 12)", ph: "?" },
+    { id: "2", q: "Aký je Súčet?", ok: v => Math.abs(parseNum(v) - 251) <= 0, show: "251", ph: "?" },
+    { id: "3", q: "Aký je Počet?", ok: v => Math.abs(parseNum(v) - 8) <= 0, show: "8", ph: "?" },
+    { id: "4", q: "Aká je Stredná hodnota? (na 3 desatinné miesta)", ok: v => Math.abs(parseNum(v) - 31.375) <= 0.001, show: "31,375 (251 ÷ 8)", ph: "?" }
+  ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Kde nájdeš Analýzu dát po zapnutí doplnku?", ["na karte Údaje", "na karte Domov", "v ponuke Súbor", "na karte Vložiť"], 0) },
     { id: "2", ...Q("Čo vytvorí nástroj Histogram?", ["tabuľku početností v zadaných triedach (a graf)", "priemer", "koreláciu", "kontingenčnú tabuľku"], 0) },
@@ -391,23 +409,32 @@ const TASKS = {
 const VIEWS = {
   zapnutie: () => head() + `<h2>Zapnutie doplnku Analýza dát</h2>
     <div class="theory"><p><b>Analýza dát</b> (Analysis ToolPak) je doplnok Excelu vo Windows. Na začiatku býva vypnutý. Zapneš ho raz a potom ho nájdeš na karte <b>Údaje</b> vpravo. Na Macu je postup podobný (Nástroje › Doplnky programu Excel). V Exceli pre web doplnok nie je; tam treba funkcie alebo desktopovú verziu.</p></div>
-    <h3>Úloha: klikaj kroky v správnom poradí</h3><div class="task"><div class="seq">${SEQM.map(i => `<button class="${S.seq.includes(i) ? "done" : ""}" data-sq="${i}">${S.seq.includes(i) ? (S.seq.indexOf(i) + 1) + ". " : ""}${SEQ[i]}</button>`).join("")}</div>${S.sqmsg ? `<div class="fb ${S.sqmsg.k}">${S.sqmsg.t}</div>` : ""}</div>` + nextBar(),
+    <h3>Úloha: klikaj kroky v správnom poradí</h3><div class="task"><div class="seq">${SEQM.map(i => `<button class="${S.seq.includes(i) ? "done" : ""}" data-sq="${i}">${S.seq.includes(i) ? (S.seq.indexOf(i) + 1) + ". " : ""}${SEQ[i]}</button>`).join("")}</div>${S.sqmsg ? `<div class="fb ${S.sqmsg.k}">${S.sqmsg.t}</div>` : ""}</div>
+    <h3>Úloha 2: otázky k doplnku</h3><div class="task">${taskHTML("zq")}</div>` + nextBar(),
   popisna: () => { XLS("an", { cols: 6, rows: 21, sh: shD, sel: "B2" }); return head() + `<h2>Popisná štatistika</h2>
     <div class="theory"><p>V hárku sú hodiny prípravy a body z testu 20 žiakov. Otvor <b>Údaje › Analýza dát</b>, zvoľ <b>Popisná štatistika</b>, vstupný rozsah stĺpca <b>Body</b> s menovkou v prvom riadku a zaškrtni <b>Súhrnná štatistika</b>. Výsledok je statická tabuľka so 13 charakteristikami.</p></div>
     ${xSheetHTML("an", { tab: "Výsledky" })}<div class="tool">${S.tool === "desc" || !S.tool || !S.dlg ? dlgHTML("desc") : dlgHTML("desc")}${outHTML("desc")}</div>
-    <h3>Úloha: prečítaj z výstupu</h3><div class="task">${taskHTML("dq")}</div>` + nextBar(); },
+    <h3>Úloha: prečítaj z výstupu</h3><div class="task">${taskHTML("dq")}</div>
+    <h3>Úloha 2: poloha, alebo variabilita?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(); },
   histogram: () => { XLS("an", { cols: 6, rows: 21, sh: shD, sel: "B2" }); return head() + `<h2>Histogram</h2>
     <div class="theory"><p><b>Histogram</b> ukazuje, koľko hodnôt padne do jednotlivých <b>tried</b> (intervalov). Hranice tried sú v stĺpci D: 10, 20, 30, 40, 50. Trieda 30 obsahuje hodnoty väčšie ako 20 a najviac 30. Riadok <b>Ďalšie</b> sú hodnoty nad poslednou hranicou. Zvoľ vstup Body, rozsah tried Triedy a výstup s grafom.</p></div>
     ${xSheetHTML("an", { tab: "Výsledky" })}<div class="tool">${dlgHTML("hist")}${outHTML("hist")}</div>
-    <h3>Úloha: prečítaj z histogramu</h3><div class="task">${taskHTML("hq")}</div>` + nextBar(); },
+    <h3>Úloha: prečítaj z histogramu</h3><div class="task">${taskHTML("hq")}</div>
+    <h3>Úloha 2: počítaj triedy</h3><div class="task">${taskHTML("hin")}</div>` + nextBar(); },
   korelacia: () => head() + `<h2>Korelácia</h2>${guessBox()}
     <div class="theory"><p><b>Korelačný koeficient</b> r (od −1 do 1) meria, ako silno spolu súvisia dve číselné veličiny: blízko <b>1</b> silná priama závislosť, blízko <b>−1</b> silná nepriama, okolo <b>0</b> žiadna lineárna závislosť. Zvoľ nástroj Korelácia a oba stĺpce (Hodiny a Body). Rovnaký výsledok dá funkcia <code>=CORREL(A2:A21;B2:B21)</code>. Pozor: korelácia <b>nedokazuje príčinu</b>.</p></div>
     <div class="chartw" style="max-width:560px">${chartSVG({ type: "xy", title: "Hodiny prípravy a body", xt: "hodiny", yt: "body", labels: HR, values: BO, trend: true })}</div>
     <div class="tool">${dlgHTML("corr")}${outHTML("corr")}</div>
-    <h3>Úloha</h3><div class="task">${taskHTML("kq")}</div>` + nextBar(),
+    <h3>Úloha</h3><div class="task">${taskHTML("kq")}</div>
+    <h3>Úloha 2: aká je závislosť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ksort")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: ktorý nástroj Analýzy dát</h2>
+    <div class="theory"><p>Doplnok Analýza dát šetrí čas: <b>Popisná štatistika</b> vypočíta naraz priemer, medián, modus, rozptyl, smerodajnú odchýlku, rozsah, súčet a počet, <b>Histogram</b> roztriedi hodnoty do tried a nakreslí graf, <b>Korelácia</b> zistí, či spolu súvisia dve veličiny. Výsledok je však <b>statická tabuľka</b>. Ak sa údaje zmenia, treba nástroj spustiť znova alebo použiť funkcie, ktoré sa prepočítajú samy. Výsledky Excelu si vždy over aspoň rýchlym výpočtom: súčet ÷ počet = stredná hodnota.</p><p>Vyber nástroj pre každú situáciu a potom over výpočty.</p></div>
+    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 5 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 5</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
+    <h3>Úloha 2: over výstup ručne</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { if (xClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+function CUSTOM_CLICK(e) {
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; if (xClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.sq !== undefined) { const i = +ds.sq; if (S.seq.includes(i)) return true; if (i === S.seq.length) { S.seq.push(i); S.sqmsg = S.seq.length === 6 ? { k: "ok", t: "✅ Doplnok je zapnutý, nájdeš ho na karte Údaje." } : null; if (S.seq.length === 6) award("g_on", 1); } else S.sqmsg = { k: "bad", t: "Tento krok ešte nie je na rade." }; save(); render(false); return true; }
   if (ds.dlg) { S.dlg = true; S.tool = null; S.omsg = ""; save(); render(false); return true; }
   if (ds.dlgx !== undefined) { S.dlg = false; S.tool = null; save(); render(false); return true; }
@@ -419,7 +446,13 @@ function CUSTOM_CLICK(e) { if (xClick(e)) return true; const el = e.target.close
     if (T === "corr") { if (o.inp === o.inp2 || o.inp === "D" || o.inp2 === "D") { S.omsg = "Zvoľ dva rôzne stĺpce: Hodiny a Body."; save(); render(false); return true; } S.out.corr = { r: corr(HR, BO) }; award("g_corr", 1); }
     S.dlg = false; S.tool = null; S.omsg = ""; save(); render(false); return true; }
   return false; }
-function CUSTOM_INPUT(e) { const t = e.target, k = t.dataset && t.dataset.o; if (!k) return false; S.o[k] = t.type === "checkbox" ? t.checked : t.value; S.omsg = ""; save(); return true; }
+function CUSTOM_INPUT(e) {
+  if (selInput(e)) return true; const t = e.target, k = t.dataset && t.dataset.o; if (!k) return false; S.o[k] = t.type === "checkbox" ? t.checked : t.value; S.omsg = ""; save(); return true; }
+
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
