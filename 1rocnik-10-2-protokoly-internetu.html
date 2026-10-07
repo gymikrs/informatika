@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>10.2 Protokoly internetu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:14px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-family:var(--head);font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+:root{--bg:#F6EEF1;--acc:#B4235A;--accSoft:#FADCE6;--track:#E5CFD8;--border:#E8D6DE;--surface2:#FBF5F7;--ink:#24121A;--muted:#6B4F5B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#170D12;--surface:#22141B;--surface2:#2A1922;--acc:#F07AA6;--accSoft:#3E1A29;--track:#3B2530;--border:#3A2530;--ink:#F5E8ED;--muted:#C3A2AF}}
+:root[data-theme="dark"]{--bg:#170D12;--surface:#22141B;--surface2:#2A1922;--acc:#F07AA6;--accSoft:#3E1A29;--track:#3B2530;--border:#3A2530;--ink:#F5E8ED;--muted:#C3A2AF}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+sub{font-size:.7em}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc h4{margin:6px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.pc .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--acc)}
+.pv{overflow-x:auto}
+.pv table{border-collapse:separate;border-spacing:6px 4px;margin:6px 0}
+.pv td{text-align:center;font-family:var(--mono);min-width:54px}
+.pv .d{font-size:26px;font-weight:700;background:var(--surface);border:2px solid var(--acc);border-radius:10px;padding:6px 0}
+.pv .w{font-size:13px;color:var(--muted)}
+.pv .pr{font-size:14px;color:var(--acc);font-weight:700}
+.bits{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.bit{width:78px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;padding:10px 4px;text-align:center;font-family:var(--mono)}
+.bit .v{font-size:20px;font-weight:800}.bit .b{font-size:26px;font-weight:800;color:var(--muted)}
+.bit.on{background:var(--acc);border-color:var(--acc);color:#fff}.bit.on .b{color:#fff}
+.bit .dots{height:22px;display:flex;flex-wrap:wrap;justify-content:center;gap:1px;margin:4px 0}
+.bit .dots i{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6}
+.big2{font-family:var(--mono);font-size:30px;font-weight:800}
+.dv{font-family:var(--mono);font-size:17px;border-collapse:collapse;margin:8px 0}
+.dv td{padding:5px 12px;border-bottom:1px dashed var(--border)}
+.dv td.r{color:var(--acc);font-weight:800;text-align:center;background:var(--accSoft)}
+.grp{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.grp .g{border:2px solid var(--acc);border-radius:10px;padding:6px 10px;text-align:center;font-family:var(--mono)}
+.grp .g b{display:block;font-size:20px}.grp .g span{font-size:20px;color:var(--acc);font-weight:800}
+.grp .g small{display:block;color:var(--muted);font-size:12px}
+.nib{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin:10px 0;font-family:var(--mono);font-size:14.5px}
+.nib div{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between}
+.nib b{color:var(--acc)}
+.sw{width:120px;height:120px;border-radius:16px;border:2px solid var(--border)}
+.colrow{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.ctl .in{max-width:180px;font-family:var(--mono)}
+.ctl select{border:1.5px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface2);color:var(--ink);font:inherit}
+.err{color:#C0392B;font-weight:600}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}.theory ul{margin:6px 0;padding-left:22px}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:760px){.dg{grid-template-columns:1fr}}
+.dg canvas{width:100%;image-rendering:pixelated;border:1px solid var(--border);border-radius:8px;background:#fff}
+.sl{display:grid;grid-template-columns:130px 1fr 90px;gap:8px;align-items:center;margin:6px 0}.sl input{accent-color:var(--acc)}.sl b{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--acc)}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.two{grid-template-columns:1fr}}
+.ctab{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}.ctab th,.ctab td{border:1px solid var(--border);padding:5px 8px;text-align:center}.ctab th{background:var(--surface2)}
+.selr{display:grid;grid-template-columns:1fr 260px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0}
+.selr select,.fld select,.fld input[type=text]{border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;background:var(--surface2);color:var(--ink);font:inherit;width:100%;box-sizing:border-box}
+@media (max-width:700px){.selr{grid-template-columns:1fr}}
+.fld{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;align-items:center;margin:5px 0;font-size:14px}.fld label{font-weight:600}
+.fld input[type=color]{width:48px;height:30px;border:1px solid var(--border);border-radius:6px;padding:0;background:none}
+.sw{display:inline-block;padding:3px 10px;border-radius:6px;border:1px solid var(--border);font-weight:700}
+@media (max-width:600px){.sl{grid-template-columns:1fr !important;gap:2px}.fld{grid-template-columns:1fr}.tb button{padding:6px 8px;font-size:14px}}
+.theory code,.why code{overflow-wrap:anywhere}
+.qpan{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px}.qpan select,.qpan input[type=text]{border:1.5px solid var(--border);border-radius:7px;padding:4px 6px;background:var(--surface);color:var(--ink);font:inherit}.qpan input[type=text]{width:90px}.qpan b{margin-right:4px}
+.iqq span,.q legend span{overflow-wrap:anywhere}@media (max-width:600px){.ctab{display:block;overflow-x:auto}}
+.pkw{display:grid;grid-template-columns:1fr 200px 1fr;gap:10px;align-items:center;margin-top:8px}@media (max-width:760px){.pkw{grid-template-columns:1fr}}.pkcol{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px;min-height:80px}.pkl{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.pk{display:inline-flex;flex-direction:column;align-items:center;background:#E3F2FD;color:#0D47A1;border:1px solid #90CAF9;border-radius:6px;padding:2px 6px;font-size:11px;font-weight:700}.pk i{font-style:normal;font-family:var(--mono);font-size:15px;white-space:pre;color:#222}.pk.in{background:#E8F5E9;border-color:#A5D6A7;color:#1B5E20}.pknet{text-align:center;font-size:14px}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const THEORY = {"protokoly": ["Protokol = pravidlá komunikácie. TCP/IP vrstvy: aplikačná (HTTP, DNS, SMTP), transportná (TCP, UDP), sieťová (IP), linková (Ethernet, Wi-Fi).", "Porty: HTTP 80, HTTPS 443, DNS 53, SMTP 25/587, IMAP 993."], "ip": ["IPv4 = 32 bitov, 4 čísla 0 až 255. IPv6 = 128 bitov. Súkromné: 10.x, 172.16–31.x, 192.168.x.", "IP adresu prideľuje DHCP, mená na adresy prekladá DNS."], "tcpudp": ["Dáta idú v paketoch. TCP: spojenie, potvrdenia, opakovanie, poradie. UDP: rýchly, bez kontroly (hry, hovory)."], "web": ["DNS → TCP spojenie → TLS šifrovanie → HTTP GET → 200 OK a HTML → zobrazenie stránky."], "precvic": ["HTTPS = šifrovaný web, DNS = mená, SMTP = odoslanie pošty, IMAP = synchronizácia pošty, DHCP = pridelenie IP."]};
+/* spoločné pomocné funkcie pre 1. ročník (n34+) */
+const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const inq = (id, q, ans, tol, why, unit) => ({ id, q, ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - ans) <= tol, show: String(ans).replace(".", ","), ph: "?", why, unit });
+const txq = (id, q, re, show, why) => ({ id, q, ok: v => re.test(String(v).trim()), show, ph: "?", why });
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div class="selr"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""}><option value="">— vyber —</option>${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (!S.t[gid] || S.t[gid].score < n) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function goalsHTML(list, gid) { const n = list.filter(g => g[0]).length, T = TASKS[gid]; return `<ul class="goals">${list.map(([ok, t]) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t[gid] ? `<div class="checkbar"><span class="score ${S.t[gid].score < T.max ? "part" : ""}">Splnené: ${S.t[gid].score} z ${T.max}</span></div>` : ""}`; }
+function goalAward(gid, list) { const n = list.filter(g => g[0]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) { award(gid, n); save(); return true; } return false; }
+
+const KEY = "protokoly-n102-v1";
+const LESSON = "10.2 Protokoly internetu";
+const BRAND = "10.2 Protokoly internetu";
+const CLASS_DEFAULT = "I.";
+const WIDE = { tcpudp: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 2 },
+  { id: "protokoly", title: "Protokoly a vrstvy", min: 7 },
+  { id: "ip", title: "IP adresa", min: 8 },
+  { id: "tcpudp", title: "TCP a UDP", min: 10 },
+  { id: "web", title: "Ako sa načíta stránka", min: 7 },
+  { id: "precvic", title: "Precvičovanie: aký protokol?", min: 5 },
+  { id: "test", title: "Záverečný test", min: 5 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { protokoly: ["psort"], ip: ["ipsel", "ipin"], tcpudp: ["g_pk", "pq"], web: ["order"], precvic: ["px"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 1. ročník",
+  lead: "Aby si dva počítače na rôznych koncoch sveta rozumeli, musia dodržiavať rovnaké pravidlá komunikácie: protokoly. Spoznáš rodinu protokolov TCP/IP, naučíš sa čítať IP adresy, v simulátore pošleš správu po paketoch cez TCP aj UDP a zoradíš, čo všetko sa stane, kým sa načíta webová stránka. 5 zastávok, body a na konci výsledok.",
+  guessQ: "Pošleš správu cez internet. Ako putuje?",
+  guessNote: "Tip sa neboduje. Na zastávke TCP a UDP zistíš, či si mal pravdu.",
+  guesses: ["Celá naraz jedným káblom", "Rozdelená na malé pakety, ktoré môžu ísť rôznymi cestami", "Cez satelit vždy", "Iba ako obrázok"],
+  ok: 1, yes: "Presne tak! Dáta sa delia na pakety. Každý má adresu a poradové číslo a príjemca ich poskladá.", no: "Dáta sa delia na malé pakety. Každý nesie adresu príjemcu a poradové číslo, môžu ísť rôznymi cestami a príjemca ich poskladá."
+};
+function EXTRA_STATE() { return { pk: { loss: 15 }, pg: {}, plog: null }; }
+const MSG = "AHOJ SPOLUŽIAK!";
+const CH = MSG.match(/.{1,2}/g);
+let PT = null;
+function pkRun(proto) { clearInterval(PT); const loss = S.pk.loss / 100, arr = CH.map((c, i) => ({ n: i + 1, c })).sort(() => Math.random() - .5), got = [], lost = []; let resend = 0;
+  arr.forEach(p => { if (Math.random() < loss) lost.push(p); else got.push(p); }); if (loss > 0 && !lost.length) lost.push(got.pop());
+  const ev = []; got.forEach(p => ev.push({ t: "in", p })); if (proto === "tcp") { let miss = lost.slice(); while (miss.length) { const again = []; miss.forEach(p => { ev.push({ t: "ask", p }); resend++; if (Math.random() < loss && resend < 12) again.push(p); else ev.push({ t: "in", p, re: true }); }); miss = again; } }
+  const L = { proto, loss: S.pk.loss, ev, k: 0, rec: [], resend, done: false }; S.plog = null; let i = 0;
+  pkDraw(L); PT = setInterval(() => { if (i >= ev.length) { clearInterval(PT); L.done = true; finish(L); return; } const e = ev[i++]; if (e.t === "in") L.rec.push(e.p); L.last = e; pkDraw(L); }, 280); }
+function finish(L) { const text = L.proto === "tcp" ? L.rec.slice().sort((a, b) => a.n - b.n).map(p => p.c).join("") : L.rec.map(p => p.c).join(""), ok = text === MSG;
+  S.plog = { proto: L.proto, loss: L.loss, text, ok, resend: L.proto === "tcp" ? L.ev.filter(e => e.t === "ask").length : 0 };
+  if (L.proto === "udp" && L.loss >= 15) S.pg.u = 1; if (L.proto === "tcp" && L.loss >= 15 && ok) S.pg.t = 1; if (L.proto === "tcp" && L.loss >= 30 && ok) S.pg.t30 = 1; save(); pkDraw(L); const up = goalAward("g_pk", pkGoals()), g = document.getElementById("pkgoals"); if (g) g.innerHTML = goalsHTML(pkGoals(), "g_pk"); if (up) renderTop(); }
+function pkDraw(L) { const el = document.getElementById("pkout"); if (!el) return; const e = L.last;
+  el.innerHTML = `<div class="pkw"><div class="pkcol"><b>Odosielateľ</b><div class="pkl">${CH.map((c, i) => `<span class="pk">${i + 1}<i>${esc(c)}</i></span>`).join("")}</div></div><div class="pknet">${e ? (e.t === "ask" ? `↩️ príjemca žiada znova paket ${e.p.n}` : `📦 prišiel paket ${e.p.n}${e.re ? " (poslaný znova)" : ""}`) : "🌐 pakety idú sieťou rôznymi cestami…"}</div>
+  <div class="pkcol"><b>Príjemca (${L.proto.toUpperCase()})</b><div class="pkl">${L.rec.map(p => `<span class="pk in">${p.n}<i>${esc(p.c)}</i></span>`).join("")}</div></div></div>
+  ${S.plog && L.done ? `<p class="why ${S.plog.ok ? "good" : "miss"}">Poskladaná správa: <code>${esc(S.plog.text) || "∅"}</code> ${S.plog.ok ? "✅ celá a v správnom poradí" : "❌ chýbajú pakety alebo sú v zlom poradí"}${S.plog.proto === "tcp" ? ` · TCP si vyžiadal znova ${S.plog.resend} ${S.plog.resend === 1 ? "paket" : "pakety"} a zoradil ich podľa čísel` : " · UDP nič nekontroluje ani neopakuje"}</p>` : ""}`; }
+function pkGoals() { return [[!!S.pg.u, "pošli správu cez UDP pri strate paketov aspoň 15 %"], [!!S.pg.t, "pošli ju cez TCP pri strate aspoň 15 % a doruč celú"], [!!S.pg.t30, "TCP doručí celú správu aj pri strate 30 %"]]; }
+
+const IPS = [["192.168.1.25", "s", "Rozsah 192.168.x.x je súkromný (domáca sieť)."], ["10.0.0.7", "s", "Rozsah 10.x.x.x je súkromný."], ["8.8.8.8", "v", "Verejný DNS server Googlu."], ["256.10.1.1", "n", "Číslo v IPv4 môže byť najviac 255."], ["147.213.10.5", "v", ""], ["192.168.1", "n", "IPv4 adresa má 4 čísla."]];
+const IPO = [["v", "platná verejná"], ["s", "platná súkromná"], ["n", "neplatná"]];
+const PX = [["Prihlasuješ sa do internet bankingu", "https", ""], ["Prehliadač zisťuje IP adresu servera google.com", "dns", ""], ["Odosielaš e-mail", "smtp", ""], ["E-maily sa synchronizujú v mobile aj v počítači (prečítané, priečinky)", "imap", ""], ["Notebook po pripojení k Wi-Fi automaticky dostane IP adresu", "dhcp", ""], ["Online hra posiela polohu hráča 60-krát za sekundu, stratený paket nevadí", "udp", ""]];
+const PXO = [["https", "HTTPS"], ["dns", "DNS"], ["smtp", "SMTP"], ["imap", "IMAP"], ["dhcp", "DHCP"], ["udp", "UDP"]];
+const TASKS = {
+  psort: { id: "psort", type: "sort",
+    buckets: [{ id: "a", label: "🧩 Aplikačná vrstva", sub: "služby pre programy" }, { id: "t", label: "📦 Transportná", sub: "doručenie medzi programami" }, { id: "s", label: "🧭 Sieťová (internetová)", sub: "adresy a smerovanie" }, { id: "l", label: "🔌 Linková", sub: "prenos v miestnej sieti" }],
+    items: [{ id: "1", t: "HTTP / HTTPS", b: "a" }, { id: "2", t: "DNS", b: "a" }, { id: "3", t: "SMTP", b: "a" }, { id: "4", t: "TCP", b: "t" }, { id: "5", t: "UDP", b: "t" }, { id: "6", t: "IP", b: "s" }, { id: "7", t: "Ethernet", b: "l" }, { id: "8", t: "Wi-Fi", b: "l" }] },
+  ipsel: { id: "ipsel", type: "custom", max: 6 },
+  ipin: { id: "ipin", type: "input", qs: [
+    inq("1", "Koľko bitov má adresa IPv4?", 32, 0, "4 čísla po 8 bitoch."),
+    inq("2", "Aké najväčšie číslo môže byť v jednej časti (oktete) IPv4 adresy?", 255, 0, "8 bitov: 2⁸ − 1 = 255."),
+    inq("3", "Koľko rôznych adries IPv4 existuje (2³²)?", 4294967296, 0, "Asi 4,3 miliardy, preto ich je málo."),
+    inq("4", "Koľko bitov má adresa IPv6?", 128, 0)
+  ]},
+  g_pk: { id: "g_pk", type: "custom", max: 3 },
+  pq: { id: "pq", type: "mc", qs: [
+    { id: "1", ...Q("Čo je protokol?", ["súbor pravidiel, podľa ktorých si zariadenia vymieňajú údaje", "druh kábla", "program na kreslenie", "IP adresa"], 0) },
+    { id: "2", ...Q("Čím sa TCP líši od UDP?", ["TCP potvrdzuje doručenie, opakuje stratené pakety a dodrží poradie", "TCP je vždy rýchlejší", "UDP šifruje dáta", "nie je rozdiel"], 0) },
+    { id: "3", ...Q("Kde sa hodí UDP?", ["videohovory, online hry, živé vysielanie: rýchlosť je dôležitejšia ako každý paket", "posielanie zmluvy v PDF", "sťahovanie programu", "internet banking"], 0) },
+    { id: "4", ...Q("Čo znamená zámok a https v prehliadači?", ["spojenie so serverom je šifrované (TLS)", "stránka je bez vírusov", "stránka je štátna", "stránka je zadarmo"], 0) },
+    { id: "5", ...Q("Ktorý protokol automaticky pridelí zariadeniu IP adresu v sieti?", ["DHCP", "DNS", "SMTP", "FTP"], 0) },
+    { id: "6", ...Q("Ktorý protokol slúži na odosielanie e-mailov?", ["SMTP", "IMAP", "POP3", "HTTP"], 0) }
+  ]},
+  order: { id: "order", type: "order", items: [{ id: "a", t: "Napíšeš adresu www.skola-priklad.sk a stlačíš Enter" }, { id: "b", t: "DNS preloží doménové meno na IP adresu servera" }, { id: "c", t: "TCP nadviaže spojenie so serverom (SYN, SYN-ACK, ACK)" }, { id: "d", t: "TLS dohodne šifrovanie (HTTPS)" }, { id: "e", t: "Prehliadač pošle požiadavku HTTP GET" }, { id: "f", t: "Server odpovie 200 OK a pošle HTML, prehliadač stránku zobrazí" }] },
+  px: { id: "px", type: "custom", max: 6 },
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", ...Q("Ktorá IP adresa je platná IPv4?", ["172.16.5.200", "300.1.1.1", "192.168.1", "abc.def.1.2"], 0) },
+    { id: "2", ...Q("DNS:", ["prekladá doménové mená na IP adresy", "šifruje stránky", "posiela e-maily", "prideľuje porty"], 0) },
+    { id: "3", ...Q("Port 443 používa:", ["HTTPS", "SMTP", "DNS", "FTP"], 0) },
+    { id: "4", ...Q("Na prijímanie e-mailov sa používa:", ["IMAP alebo POP3", "SMTP", "HTTP", "DHCP"], 0) },
+    { id: "5", ...Q("Paket je:", ["malá časť dát s adresou odosielateľa a príjemcu", "celý súbor", "kábel", "druh vírusu"], 0) },
+    { id: "6", ...Q("Prečo vznikol protokol IPv6?", ["adries IPv4 je málo (asi 4,3 miliardy)", "IPv4 je pomalý", "IPv4 nefunguje cez Wi-Fi", "kvôli farbám"], 0) }
+  ]}
+};
+
+const VIEWS = {
+  protokoly: () => head() + `<h2>Protokoly a vrstvy</h2>
+    <div class="theory"><p><b>Protokol</b> je súbor pravidiel komunikácie: v akom tvare sa posielajú dáta, ako sa začína a končí spojenie, čo robiť pri chybe. Internet používa rodinu protokolov <b>TCP/IP</b>, rozdelenú do vrstiev. Každá rieši jednu úlohu a spolupracuje so susednými:</p><table class="ctab"><tr><th>Vrstva</th><th>Úloha</th><th>Protokoly</th></tr><tr><td>aplikačná</td><td>služby pre programy (web, e-mail, mená)</td><td>HTTP, HTTPS, DNS, SMTP, IMAP, POP3, FTP, DHCP</td></tr><tr><td>transportná</td><td>doručenie medzi programami, porty</td><td>TCP, UDP</td></tr><tr><td>sieťová (internetová)</td><td>IP adresy a smerovanie paketov cez siete</td><td>IP (IPv4, IPv6)</td></tr><tr><td>linková (sieťového rozhrania)</td><td>prenos v miestnej sieti</td><td>Ethernet, Wi-Fi</td></tr></table><p>Programy sa rozlišujú podľa <b>portov</b>: HTTP 80, HTTPS 443, SMTP 25 (587), IMAP 993, DNS 53.</p></div>
+    <h3>Úloha: na ktorej vrstve pracuje?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(),
+  ip: () => head() + `<h2>IP adresa</h2>
+    <div class="theory"><p>Každé zariadenie v sieti má <b>IP adresu</b>. Adresa <b>IPv4</b> má 32 bitov, zapisuje sa ako 4 čísla od 0 do 255 oddelené bodkami: <code>192.168.1.25</code>. Adries IPv4 je iba asi 4,3 miliardy, preto vznikla <b>IPv6</b> so 128 bitmi (zápis šestnástkovo, napr. <code>2001:db8::1</code>).</p><p><b>Súkromné</b> adresy (10.x.x.x, 172.16 až 172.31.x.x, 192.168.x.x) sa používajú v domácich a školských sieťach, do internetu vystupuje router s jednou <b>verejnou</b> adresou. Adresu zariadeniu zvyčajne pridelí automaticky protokol <b>DHCP</b>. Na meno počítača sa pýtame cez <b>DNS</b>.</p></div>
+    <h3>Úloha 1: aká je to adresa?</h3><div class="task">${selBlock("ips", IPS, IPO)}${S.t.ipsel ? `<div class="checkbar"><span class="score ${S.t.ipsel.score < 6 ? "part" : ""}">Správne: ${S.t.ipsel.score} zo 6</span></div>` : ""}</div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("ipin")}</div>` + nextBar(),
+  tcpudp: () => head() + `<h2>TCP a UDP</h2>${guessBox()}
+    <div class="theory"><p>Dáta sa delia na <b>pakety</b>. Pakety idú sieťou cez <b>smerovače (routery)</b>, každý môže ísť inou cestou, prísť v inom poradí alebo sa stratiť. Transportná vrstva má dve možnosti:</p><ul><li><b>TCP</b>: spoľahlivý. Najprv nadviaže spojenie, pakety čísluje, príjemca potvrdzuje doručenie, stratené sa pošlú znova a poskladajú sa v správnom poradí. Web, e-mail, sťahovanie súborov.</li><li><b>UDP</b>: rýchly a jednoduchý, nič nepotvrdzuje ani neopakuje. Videohovory, online hry, živé vysielanie, DNS: radšej rýchlo, aj keď niečo chýba.</li></ul></div>
+    <div class="task" id="pkgoals">${goalsHTML(pkGoals(), "g_pk")}</div>
+    <div class="tool"><div class="qpan"><b>Správa:</b> <code>${esc(MSG)}</code><label>strata paketov <select data-pkl>${[0, 15, 30].map(v => `<option value="${v}" ${S.pk.loss === v ? "selected" : ""}>${v} %</option>`).join("")}</select></label><button class="primary" data-pk="udp">Poslať cez UDP</button><button class="primary" data-pk="tcp">Poslať cez TCP</button></div><div id="pkout"><p class="muted">Vyber stratu paketov a pošli správu.</p></div></div>
+    <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
+  web: () => head() + `<h2>Ako sa načíta stránka</h2>
+    <div class="theory"><p>Za zlomok sekundy po stlačení Enter spolupracuje viac protokolov. Prehliadač zistí cez <b>DNS</b> IP adresu servera, cez <b>TCP</b> nadviaže spojenie trojitým podaním ruky (SYN, SYN-ACK, ACK), pri <b>HTTPS</b> dohodne šifrovanie <b>TLS</b>, pošle požiadavku <b>HTTP GET</b> a server odpovie stavovým kódom (200 OK, 404 Nenájdené) a obsahom stránky.</p></div>
+    <h3>Úloha: zoraď kroky</h3><div class="task">${taskHTML("order")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: aký protokol?</h2>
+    <div class="theory"><p>Pri každej situácii vyber protokol, ktorý sa použije.</p></div>
+    <div class="task">${selBlock("pxs", PX, PXO)}${S.t.px ? `<div class="checkbar"><span class="score ${S.t.px.score < 6 ? "part" : ""}">Správne: ${S.t.px.score} zo 6</span></div>` : ""}</div>` + nextBar(),
+  test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
+};
+function CUSTOM_CLICK(e) { if (selClick(e, { pxs: [PX, "px"], ips: [IPS, "ipsel"] })) return true;
+  const el = e.target.closest && e.target.closest("[data-pk]"); if (el) { pkRun(el.dataset.pk); return true; } return false; }
+function CUSTOM_INPUT(e) { const t = e.target; if (selInput(e)) return true; if (t.dataset && t.dataset.pkl !== undefined) { S.pk.loss = +t.value; save(); return true; } return false; }
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { return memoHTML() + nextBar0(); }
+function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>9.2 Ochrana IKT pred škodlivým SW</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:14px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-family:var(--head);font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+:root{--bg:#F6EEF1;--acc:#B4235A;--accSoft:#FADCE6;--track:#E5CFD8;--border:#E8D6DE;--surface2:#FBF5F7;--ink:#24121A;--muted:#6B4F5B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#170D12;--surface:#22141B;--surface2:#2A1922;--acc:#F07AA6;--accSoft:#3E1A29;--track:#3B2530;--border:#3A2530;--ink:#F5E8ED;--muted:#C3A2AF}}
+:root[data-theme="dark"]{--bg:#170D12;--surface:#22141B;--surface2:#2A1922;--acc:#F07AA6;--accSoft:#3E1A29;--track:#3B2530;--border:#3A2530;--ink:#F5E8ED;--muted:#C3A2AF}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+sub{font-size:.7em}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc h4{margin:6px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.pc .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--acc)}
+.pv{overflow-x:auto}
+.pv table{border-collapse:separate;border-spacing:6px 4px;margin:6px 0}
+.pv td{text-align:center;font-family:var(--mono);min-width:54px}
+.pv .d{font-size:26px;font-weight:700;background:var(--surface);border:2px solid var(--acc);border-radius:10px;padding:6px 0}
+.pv .w{font-size:13px;color:var(--muted)}
+.pv .pr{font-size:14px;color:var(--acc);font-weight:700}
+.bits{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.bit{width:78px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;padding:10px 4px;text-align:center;font-family:var(--mono)}
+.bit .v{font-size:20px;font-weight:800}.bit .b{font-size:26px;font-weight:800;color:var(--muted)}
+.bit.on{background:var(--acc);border-color:var(--acc);color:#fff}.bit.on .b{color:#fff}
+.bit .dots{height:22px;display:flex;flex-wrap:wrap;justify-content:center;gap:1px;margin:4px 0}
+.bit .dots i{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6}
+.big2{font-family:var(--mono);font-size:30px;font-weight:800}
+.dv{font-family:var(--mono);font-size:17px;border-collapse:collapse;margin:8px 0}
+.dv td{padding:5px 12px;border-bottom:1px dashed var(--border)}
+.dv td.r{color:var(--acc);font-weight:800;text-align:center;background:var(--accSoft)}
+.grp{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.grp .g{border:2px solid var(--acc);border-radius:10px;padding:6px 10px;text-align:center;font-family:var(--mono)}
+.grp .g b{display:block;font-size:20px}.grp .g span{font-size:20px;color:var(--acc);font-weight:800}
+.grp .g small{display:block;color:var(--muted);font-size:12px}
+.nib{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin:10px 0;font-family:var(--mono);font-size:14.5px}
+.nib div{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between}
+.nib b{color:var(--acc)}
+.sw{width:120px;height:120px;border-radius:16px;border:2px solid var(--border)}
+.colrow{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.ctl .in{max-width:180px;font-family:var(--mono)}
+.ctl select{border:1.5px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface2);color:var(--ink);font:inherit}
+.err{color:#C0392B;font-weight:600}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}.theory ul{margin:6px 0;padding-left:22px}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:760px){.dg{grid-template-columns:1fr}}
+.dg canvas{width:100%;image-rendering:pixelated;border:1px solid var(--border);border-radius:8px;background:#fff}
+.sl{display:grid;grid-template-columns:130px 1fr 90px;gap:8px;align-items:center;margin:6px 0}.sl input{accent-color:var(--acc)}.sl b{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--acc)}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.two{grid-template-columns:1fr}}
+.ctab{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}.ctab th,.ctab td{border:1px solid var(--border);padding:5px 8px;text-align:center}.ctab th{background:var(--surface2)}
+.selr{display:grid;grid-template-columns:1fr 260px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0}
+.selr select,.fld select,.fld input[type=text]{border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;background:var(--surface2);color:var(--ink);font:inherit;width:100%;box-sizing:border-box}
+@media (max-width:700px){.selr{grid-template-columns:1fr}}
+.fld{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;align-items:center;margin:5px 0;font-size:14px}.fld label{font-weight:600}
+.fld input[type=color]{width:48px;height:30px;border:1px solid var(--border);border-radius:6px;padding:0;background:none}
+.sw{display:inline-block;padding:3px 10px;border-radius:6px;border:1px solid var(--border);font-weight:700}
+@media (max-width:600px){.sl{grid-template-columns:1fr !important;gap:2px}.fld{grid-template-columns:1fr}.tb button{padding:6px 8px;font-size:14px}}
+.theory code,.why code{overflow-wrap:anywhere}
+.qpan{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px}.qpan select,.qpan input[type=text]{border:1.5px solid var(--border);border-radius:7px;padding:4px 6px;background:var(--surface);color:var(--ink);font:inherit}.qpan input[type=text]{width:90px}.qpan b{margin-right:4px}
+.iqq span,.q legend span{overflow-wrap:anywhere}@media (max-width:600px){.ctab{display:block;overflow-x:auto}}
+.aud{background:#fff;color:#222;border:1px solid #CCC;border-radius:10px;overflow:hidden;max-width:760px}.audh{background:#ECEFF1;padding:8px 12px;font-weight:700;display:flex;align-items:center;gap:10px}.audm{flex:1;height:10px;background:#DDD;border-radius:5px;overflow:hidden;max-width:220px}.audm span{display:block;height:100%}
+.audr{display:grid;grid-template-columns:30px 1fr auto;gap:8px;align-items:center;padding:7px 12px;border-top:1px solid #EEE;font-size:14px}.audr small{color:#666}.audr.bad{background:#FFF8F6}.audr.trap{display:flex;gap:8px;flex-wrap:wrap;background:#FAFAFA}.audr button{padding:5px 10px;font-size:13px}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const THEORY = {"ochrana": ["Antivírus (signatúry, heuristika, karanténa), firewall (sieťová komunikácia), aktualizácie (opravy chýb), zálohy 3-2-1.", "Štandardný účet, programy z oficiálnych zdrojov, žiadne cracky."], "audit": ["Ochrana v reálnom čase a firewall zapnuté, systém aktuálny, záloha odpojená, štandardný účet, 2FA, makrá zakázané."], "hesla": ["Silné heslo: aspoň 12 znakov, rôzne druhy znakov, bez mien a bežných slov. Na každú službu iné, pomôže správca hesiel.", "Dvojstupňové overenie zastaví útočníka aj s ukradnutým heslom."], "phishing": ["Phishing: čudná adresa, nátlak, nečakaná výhra, odkaz na prihlásenie alebo platbu. Neklikaj, nahlás."], "precvic": ["Známy malvér = antivírus, neznáme pripojenie = firewall, oprava chyby = aktualizácia, stratené súbory = záloha."]};
+/* spoločné pomocné funkcie pre 1. ročník (n34+) */
+const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const inq = (id, q, ans, tol, why, unit) => ({ id, q, ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - ans) <= tol, show: String(ans).replace(".", ","), ph: "?", why, unit });
+const txq = (id, q, re, show, why) => ({ id, q, ok: v => re.test(String(v).trim()), show, ph: "?", why });
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div class="selr"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""}><option value="">— vyber —</option>${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (!S.t[gid] || S.t[gid].score < n) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function goalsHTML(list, gid) { const n = list.filter(g => g[0]).length, T = TASKS[gid]; return `<ul class="goals">${list.map(([ok, t]) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t[gid] ? `<div class="checkbar"><span class="score ${S.t[gid].score < T.max ? "part" : ""}">Splnené: ${S.t[gid].score} z ${T.max}</span></div>` : ""}`; }
+function goalAward(gid, list) { const n = list.filter(g => g[0]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) { award(gid, n); save(); return true; } return false; }
+
+const KEY = "ochrana-n92-v1";
+const LESSON = "9.2 Ochrana IKT pred škodlivým SW";
+const BRAND = "9.2 Ochrana pred malvérom";
+const CLASS_DEFAULT = "I.";
+const WIDE = { audit: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 2 },
+  { id: "ochrana", title: "Ako sa brániť", min: 8 },
+  { id: "audit", title: "Zabezpeč počítač", min: 10 },
+  { id: "hesla", title: "Heslá a dvojstupňové overenie", min: 9 },
+  { id: "phishing", title: "Rozpoznaj podvodný e-mail", min: 6 },
+  { id: "precvic", title: "Precvičovanie: čo pomôže?", min: 4 },
+  { id: "test", title: "Záverečný test", min: 5 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { ochrana: ["zsort", "ochq"], audit: ["g_aud"], hesla: ["g_pw", "pin"], phishing: ["phish"], precvic: ["px"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 1. ročník",
+  lead: "Antivírus je dôležitý, ale sám nestačí. Najviac útokov zastavia obyčajné návyky: aktualizácie, zálohy, silné heslá a zdravá nedôvera k podozrivým správam. V simulácii zabezpečíš nechránený počítač, vymyslíš heslo, ktoré odolá útoku, a odhalíš podvodné e-maily. 5 zastávok, body a na konci výsledok.",
+  guessQ: "Útočník pozná tvoje heslo k e-mailu. Čo ho ešte môže zastaviť?",
+  guessNote: "Tip sa neboduje. Na zastávke Heslá a dvojstupňové overenie zistíš, či si mal pravdu.",
+  guesses: ["Nič, s heslom sa prihlási vždy", "Dvojstupňové overenie (kód v mobile)", "Antivírus na mojom počítači", "Tapeta s upozornením"],
+  ok: 1, yes: "Presne tak! Pri dvojstupňovom overení potrebuje aj kód z tvojho mobilu, ktorý nemá.", no: "Zastaví ho dvojstupňové overenie: okrem hesla treba aj kód alebo potvrdenie v tvojom mobile."
+};
+const AUD = [["av", "Antivírus: ochrana v reálnom čase", "vypnutá", "zapnutá", "Zapnúť"], ["fw", "Firewall", "vypnutý", "zapnutý", "Zapnúť"], ["upd", "Aktualizácie systému", "čaká 5 aktualizácií (2 bezpečnostné)", "systém je aktuálny", "Nainštalovať a reštartovať"], ["bak", "Záloha", "posledná pred 214 dňami", "zálohované dnes na externý disk, disk odpojený", "Zálohovať teraz"], ["acc", "Používateľský účet", "denná práca pod účtom správcu", "denná práca pod štandardným účtom", "Prepnúť na štandardný účet"], ["mfa", "Dvojstupňové overenie e-mailu", "vypnuté", "zapnuté (aplikácia v mobile)", "Zapnúť"], ["mac", "Makrá v Office", "povoliť všetky makrá", "zakázať makrá s oznámením", "Zakázať makrá"]];
+const TRAP = [["Vypnúť antivírus, lebo spomaľuje hry", "Antivírus vypínať nie. Hry majú herný režim, ktorý ochranu nevypne."], ["Odložiť aktualizácie o 1 rok", "Odkladanie necháva bezpečnostné chyby otvorené."]];
+function EXTRA_STATE() { return { au: {}, aumsg: "", ph: {} }; }
+function audGoals() { return AUD.map(a => [!!S.au[a[0]], `${a[1]}: ${a[3]}`]); }
+function audHTML() { const n = AUD.filter(a => S.au[a[0]]).length, pct = Math.round(n / AUD.length * 100);
+  return `<div class="aud"><div class="audh">🛡️ Zabezpečenie a údržba počítača <span class="audm"><span style="width:${pct}%;background:${pct < 50 ? "#E53935" : pct < 100 ? "#FB8C00" : "#43A047"}"></span></span> <b>${pct} %</b></div>${AUD.map(a => `<div class="audr ${S.au[a[0]] ? "ok" : "bad"}"><span>${S.au[a[0]] ? "✅" : "⚠️"}</span><div><b>${a[1]}</b><br><small>${S.au[a[0]] ? a[3] : a[2]}</small></div>${S.au[a[0]] ? "" : `<button class="ghost" data-au="${a[0]}">${a[4]}</button>`}</div>`).join("")}<div class="audr trap">${TRAP.map((t, i) => `<button class="ghost" data-trap="${i}">${t[0]}</button>`).join("")}</div>${S.aumsg ? `<p class="why ${S.aumsg[0]}" style="margin:8px">${S.aumsg[1]}</p>` : ""}</div>`; }
+/* ---------- heslá ---------- */
+const COMMON = ["heslo", "password", "1234", "qwerty", "abc", "111", "iloveyou", "admin", "jana", "peter", "gymrs", "skola", "škola"];
+function pwInfo(p) { const g = [/[a-záäčďéíĺľňóôŕšťúýž]/.test(p), /[A-ZÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ]/.test(p), /\d/.test(p), /[^A-Za-z0-9áäčďéíĺľňóôŕšťúýžÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ]/.test(p)], cs = (g[0] ? 26 : 0) + (g[1] ? 26 : 0) + (g[2] ? 10 : 0) + (g[3] ? 33 : 0), bad = COMMON.some(w => p.toLowerCase().includes(w)), sec = p ? Math.pow(Math.max(cs, 10), p.length) / 1e10 / 2 : 0;
+  return { len: p.length >= 12, grp: g.filter(Boolean).length >= 3, bad, sec: bad ? 0.001 : sec, g }; }
+function fmtT(s) { if (s < 1) return "menej ako sekunda"; const u = [[31536000e6, "miliónov rokov"], [31536000e3, "tisíc rokov"], [31536000, "rokov"], [86400, "dní"], [3600, "hodín"], [60, "minút"], [1, "sekúnd"]]; for (const [k, n] of u) if (s >= k) return (s / k >= 1e6 ? "viac ako milión" : Math.round(s / k).toLocaleString("sk-SK")) + " " + n; return ""; }
+let PW = ""; /* heslo sa neukladá */
+function pwGoals() { const i = pwInfo(PW); return [[i.len, "heslo má aspoň 12 znakov"], [i.grp, "obsahuje aspoň 3 druhy znakov z: malé písmená, veľké písmená, číslice, symboly"], [PW.length >= 8 && !i.bad, "neobsahuje bežné slová a postupnosti (heslo, 1234, qwerty, meno…)"]]; }
+function pwOut() { const i = pwInfo(PW); return PW ? `<p style="margin:6px 0">Odhad času prelomenia hrubou silou (10 miliárd pokusov za sekundu): <b>${fmtT(i.sec)}</b>${i.bad ? " – obsahuje bežné slovo, útočník ho skúsi medzi prvými" : ""}</p>` : `<p class="muted">Napíš vymyslené heslo (nie svoje skutočné!).</p>`; }
+/* ---------- phishing ---------- */
+const PH = [[`<b>Od:</b> Vaša Banka &lt;ucet@sk-banka-overenie.xyz&gt;<br>Váš účet bude do 24 hodín ZABLOKOVANÝ! Prihláste sa tu a overte údaje.`, "p", "Cudzia doména, nátlak a výzva zadať údaje."], [`<b>Od:</b> EduPage &lt;noreply@edupage.org&gt;<br>Nová známka z matematiky. Pozrite si ju v aplikácii EduPage.`, "o", "Bežné upozornenie, nič nežiada."], [`<b>Od:</b> Súťaž &lt;win@super-darcek.top&gt;<br>Gratulujeme, vyhrali ste iPhone! Stačí zaplatiť poštovné 2 € kartou.`, "p", "Výhra v súťaži, do ktorej si sa neprihlásil, a platba kartou."], [`<b>Od:</b> Kuriér &lt;info@kurier-balik.click&gt;<br>Váš balík čaká. Doplaťte 1,50 € cez odkaz bit.ly/balik-sk.`, "p", "Skrátený odkaz, malá suma ako návnada na údaje z karty."], [`<b>Od:</b> Mgr. Kováčová (Teams)<br>Zadanie projektu z biológie je v triede v Teams, termín odovzdania je piatok.`, "o", "Správa v školskom systéme, nič nežiada."], [`<b>Od:</b> Netflix &lt;support@netf1ix-help.com&gt;<br>Platba zlyhala. Aktualizujte údaje o karte, inak zrušíme predplatné.`, "p", "netf1ix s číslicou 1 namiesto písmena l."]];
+const PHO = [["p", "🎣 podvod (phishing)"], ["o", "✅ v poriadku"]];
+
+const PX = [["Chceš mať rôzne silné heslá na 30 stránkach a nemusieť si ich pamätať", "pm", ""], ["Útočník pozná tvoje heslo, ale aj tak sa neprihlási", "mfa", ""], ["Systém hlási dôležitú opravu zabezpečenia", "upd", ""], ["Odišiel disk notebooku so všetkými fotkami", "bak", ""], ["Neznámy program sa pokúša pripojiť na internet", "fw", ""], ["Stiahnutý súbor obsahuje známy trójsky kôň", "av", ""]];
+const PXO = [["av", "antivírus"], ["fw", "firewall"], ["upd", "aktualizácia"], ["bak", "záloha"], ["mfa", "dvojstupňové overenie"], ["pm", "správca hesiel"]];
+const TASKS = {
+  zsort: { id: "zsort", type: "sort",
+    buckets: [{ id: "a", label: "🦠 Antivírus" }, { id: "f", label: "🧱 Firewall" }, { id: "z", label: "💾 Záloha" }, { id: "u", label: "🔄 Aktualizácie" }],
+    items: [{ id: "1", t: "nájde a odstráni známy vírus v stiahnutom súbore", b: "a" }, { id: "2", t: "presunie podozrivý súbor do karantény", b: "a" }, { id: "3", t: "zablokuje neznámy program, ktorý sa chce pripojiť na internet", b: "f" }, { id: "4", t: "nepustí nevyžiadané pripojenia zo siete dovnútra", b: "f" }, { id: "5", t: "vráti fotky po útoku ransomvéru", b: "z" }, { id: "6", t: "pomôže, keď sa pokazí disk", b: "z" }, { id: "7", t: "opraví bezpečnostnú chybu, ktorú zneužíva červ", b: "u" }, { id: "8", t: "zavrie dieru, o ktorej sa práve dozvedeli útočníci", b: "u" }] },
+  ochq: { id: "ochq", type: "mc", qs: [
+    { id: "1", ...Q("Ako antivírus rozpozná aj nový, ešte neznámy malvér?", ["heuristikou: sleduje podozrivé správanie programu", "nijako", "podľa veľkosti súboru", "podľa názvu súboru"], 0) },
+    { id: "2", ...Q("Čo je pravidlo zálohovania 3-2-1?", ["3 kópie údajov, na 2 rôznych médiách, 1 mimo domu (alebo v cloude)", "3 antivírusy, 2 firewally, 1 heslo", "zálohovať 3-krát denne", "3 heslá na 2 účtoch"], 0) },
+    { id: "3", ...Q("Prečo nemáš pracovať stále pod účtom správcu (administrátora)?", ["malvér by mal plné práva meniť systém", "počítač je pomalší", "nedá sa tlačiť", "nefunguje internet"], 0) },
+    { id: "4", ...Q("Čo je zero-day útok?", ["útok cez chybu, na ktorú ešte neexistuje oprava", "útok o polnoci", "útok, ktorý trvá 0 dní", "nultý vírus v histórii"], 0) },
+    { id: "5", ...Q("Odkiaľ je najbezpečnejšie inštalovať programy?", ["z oficiálnej stránky výrobcu alebo oficiálneho obchodu s aplikáciami", "z neznámej stránky s „crackom“", "z odkazu v reklame", "z USB kľúča nájdeného na chodbe"], 0) }
+  ]},
+  g_aud: { id: "g_aud", type: "custom", max: 7 },
+  g_pw: { id: "g_pw", type: "custom", max: 3 },
+  pin: { id: "pin", type: "input", qs: [
+    inq("1", "Koľko možností má 4-ciferný PIN (0000 až 9999)?", 10000, 0),
+    inq("2", "Útočník skúsi 1 000 PIN-ov za sekundu. Najviac koľko sekúnd mu potrvá vyskúšať všetky?", 10, 0),
+    inq("3", "Heslo tvoria 2 slová, každé vybrané zo slovníka 1 000 slov. Koľko je možností?", 1000000, 0, "1 000 × 1 000. Preto heslá z viacerých slov a ďalších znakov.")
+  ]},
+  phish: { id: "phish", type: "custom", max: 6 },
+  px: { id: "px", type: "custom", max: 6 },
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", ...Q("Firewall:", ["kontroluje sieťovú komunikáciu a blokuje nepovolené pripojenia", "maže vírusy zo súborov", "zálohuje údaje", "zrýchľuje internet"], 0) },
+    { id: "2", ...Q("Prečo treba inštalovať aktualizácie?", ["opravujú bezpečnostné chyby", "menia iba vzhľad", "spomaľujú počítač", "sú povinné iba pre firmy"], 0) },
+    { id: "3", ...Q("Ktoré heslo je najsilnejšie?", ["Kôň-Pije-Modrú-Vodu-7", "heslo123", "Jana2009", "qwertz"], 0) },
+    { id: "4", ...Q("Dvojstupňové overenie znamená:", ["okrem hesla treba ešte kód alebo potvrdenie v mobile", "heslo zadáš dvakrát", "dve rôzne heslá", "dva antivírusy"], 0) },
+    { id: "5", ...Q("Phishing je:", ["podvodná správa, ktorá láka heslá alebo údaje z karty", "druh firewallu", "zálohovanie", "aktualizácia"], 0) },
+    { id: "6", ...Q("Kde má byť záloha, aby ju nezašifroval ransomvér?", ["na disku, ktorý po zálohovaní odpojíš, alebo v cloude s históriou verzií", "na tom istom disku", "na ploche", "v koši"], 0) },
+    { id: "7", ...Q("Podozrivú prílohu od neznámeho odosielateľa:", ["neotvoríš a e-mail zmažeš alebo nahlásiš", "otvoríš, antivírus to vyrieši", "pošleš kamarátom", "uložíš na plochu"], 0) }
+  ]}
+};
+
+const VIEWS = {
+  ochrana: () => head() + `<h2>Ako sa brániť</h2>
+    <div class="theory"><p>Ochrana má viac vrstiev. Ak jedna zlyhá, zachráni ťa ďalšia:</p><ul><li><b>Antivírus</b> hľadá malvér podľa <b>signatúr</b> (známe vzorky) aj <b>heuristikou</b> (podozrivé správanie), kontroluje súbory v reálnom čase a podozrivé dáva do <b>karantény</b>. Vo Windows je zabudovaný Microsoft Defender.</li><li><b>Firewall</b> stráži sieťovú komunikáciu a blokuje nepovolené pripojenia.</li><li><b>Aktualizácie</b> (záplaty) opravujú bezpečnostné chyby. Útok cez chybu bez opravy je <b>zero-day</b>.</li><li><b>Zálohy</b> podľa pravidla <b>3-2-1</b>: 3 kópie, 2 rôzne médiá, 1 mimo domu (cloud).</li><li><b>Štandardný účet</b> namiesto správcu, programy iba z <b>oficiálnych zdrojov</b>, žiadne cracky.</li><li><b>Silné heslá</b>, <b>správca hesiel</b>, <b>dvojstupňové overenie</b> a opatrnosť pri prílohách a odkazoch.</li></ul></div>
+    <h3>Úloha 1: čo pred čím chráni?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("zsort")}</div>
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("ochq")}</div>` + nextBar(),
+  audit: () => head() + `<h2>Zabezpeč počítač</h2>
+    <div class="theory"><p>Kamarát ti dal svoj notebook, vraj „je pomalý a divný“. Pozri jeho nastavenia zabezpečenia a oprav všetko riskantné. Pozor, nie každé tlačidlo pomáha.</p></div>
+    <div class="task" id="audgoals">${goalsHTML(audGoals(), "g_aud")}</div><div id="audbox">${audHTML()}</div>` + nextBar(),
+  hesla: () => head() + `<h2>Heslá a dvojstupňové overenie</h2>${guessBox()}
+    <div class="theory"><p>Útočníci heslá hádajú (najčastejšie heslá, slová zo slovníka) alebo skúšajú všetky kombinácie <b>hrubou silou</b>. Silné heslo je <b>dlhé</b> (aspoň 12 znakov), kombinuje <b>druhy znakov</b> a neobsahuje meno, dátum narodenia ani bežné slová. Dobre sa pamätá <b>heslová fráza</b> z viacerých slov: <code>Kôň-Pije-Modrú-Vodu-7</code>.</p><p>Na každú službu použi <b>iné heslo</b> (keď uniknú z jednej stránky, ostatné sú v bezpečí). Pomôže <b>správca hesiel</b>. <b>Dvojstupňové overenie</b> (2FA) chce okrem hesla aj kód alebo potvrdenie v mobile. S ukradnutým heslom sa útočník neprihlási.</p></div>
+    <div class="task"><div id="pwgoals">${goalsHTML(pwGoals(), "g_pw")}</div><input class="in" data-pw value="${esc(PW)}" placeholder="vymysli heslo" autocomplete="off" style="max-width:420px"><div id="pwout">${pwOut()}</div></div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("pin")}</div>` + nextBar(),
+  phishing: () => head() + `<h2>Rozpoznaj podvodný e-mail</h2>
+    <div class="theory"><p><b>Phishing</b> (rybárčenie) je podvodná správa, ktorá sa tvári ako banka, kuriér, škola či známa služba a láka heslá alebo údaje z karty. Varovné znaky: <b>čudná adresa odosielateľa</b> (preklepy, cudzia doména), <b>nátlak</b> („do 24 hodín“), výhra, ktorú si nečakal, <b>odkaz</b> na prihlásenie alebo platbu, chyby v texte. Na odkaz neklikaj. Ak si nie si istý, otvor stránku služby sám a podvod nahlás.</p></div>
+    <div class="task">${selBlock("phs", PH, PHO)}${S.t.phish ? `<div class="checkbar"><span class="score ${S.t.phish.score < 6 ? "part" : ""}">Správne: ${S.t.phish.score} zo 6</span></div>` : ""}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: čo pomôže?</h2>
+    <div class="theory"><p>Pri každej situácii vyber ochranu, ktorá pomôže.</p></div>
+    <div class="task">${selBlock("pxs", PX, PXO)}${S.t.px ? `<div class="checkbar"><span class="score ${S.t.px.score < 6 ? "part" : ""}">Správne: ${S.t.px.score} zo 6</span></div>` : ""}</div>` + nextBar(),
+  test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
+};
+function aRe() { const b = document.getElementById("audbox"); if (b) b.innerHTML = audHTML(); const G = audGoals(), up = goalAward("g_aud", G), g = document.getElementById("audgoals"); if (g) g.innerHTML = goalsHTML(G, "g_aud"); if (up) renderTop(); save(); }
+function CUSTOM_CLICK(e) { if (selClick(e, { pxs: [PX, "px"], phs: [PH, "phish"] })) return true; const c = s => e.target.closest && e.target.closest(s); let el;
+  if ((el = c("[data-au]"))) { S.au[el.dataset.au] = true; S.aumsg = ["good", "✅ " + AUD.find(a => a[0] === el.dataset.au)[1] + ": opravené."]; aRe(); return true; }
+  if ((el = c("[data-trap]"))) { S.aumsg = ["miss", "❌ " + TRAP[+el.dataset.trap][1]]; aRe(); return true; }
+  return false; }
+function CUSTOM_INPUT(e) { const t = e.target, ds = t.dataset || {}; if (selInput(e)) return true;
+  if (ds.pw !== undefined) { PW = t.value; const o = document.getElementById("pwout"); if (o) o.innerHTML = pwOut(); const G = pwGoals(), up = goalAward("g_pw", G), g = document.getElementById("pwgoals"); if (g) g.innerHTML = goalsHTML(G, "g_pw"); if (up) renderTop(); save(); return true; }
+  return false; }
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { return memoHTML() + nextBar0(); }
+function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
