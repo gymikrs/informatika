@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>4.2 Komprimačné programy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:14px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-family:var(--head);font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+:root{--bg:#ECEFF1;--acc:#0B7A75;--accSoft:#D3ECEA;--track:#C8D0D6;--border:#D5DBE0;--surface2:#F4F6F7;--ink:#111A22;--muted:#56626E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0E1418;--surface:#162027;--surface2:#1C2830;--acc:#3BC0B8;--accSoft:#173A38;--track:#2F3D47;--border:#2A3740;--ink:#E6EDF2;--muted:#98A6B2}}
+:root[data-theme="dark"]{--bg:#0E1418;--surface:#162027;--surface2:#1C2830;--acc:#3BC0B8;--accSoft:#173A38;--track:#2F3D47;--border:#2A3740;--ink:#E6EDF2;--muted:#98A6B2}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc h4{margin:8px 0 4px;font-family:var(--head);font-size:17px}
+.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.wide-svg svg{width:100%;height:auto;display:block}
+.lab{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.lab{grid-template-columns:1fr}}
+.lab svg{width:100%;height:auto;display:block}
+.side{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.side h4{font-family:var(--head);margin:0 0 6px;font-size:19px}
+.tag{display:inline-block;font-size:12.5px;font-weight:600;color:var(--acc);background:var(--accSoft);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:15px;margin-top:10px}
+.kv b{font-weight:600;color:var(--muted)}
+.zone{cursor:pointer}
+.zone .hit{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.zone:hover .hit,.zone:focus .hit{stroke:#F5A524;fill:rgba(245,165,36,.16)}
+.zone.on .hit{stroke:#F5A524;fill:rgba(245,165,36,.28);stroke-width:4}
+.zone.seen .hit{stroke:rgba(11,122,117,.6);stroke-dasharray:5 4}
+.zone:focus{outline:none}
+.meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin:8px 0 4px}
+.meter i{display:block;height:100%;background:var(--acc)}
+.cpu{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(240px,1fr);gap:16px;align-items:start}
+@media (max-width:820px){.cpu{grid-template-columns:1fr}}
+.cpu svg{width:100%;height:auto;display:block}
+.regs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.reg{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:6px 12px;font-family:var(--mono);font-size:15px;min-width:70px;text-align:center}
+.reg b{display:block;font-size:11.5px;color:var(--muted);font-family:var(--font)}
+.reg.ch{border-color:var(--amber);background:var(--amberSoft)}
+.stage{display:flex;gap:6px;margin:6px 0}
+.stage span{flex:1;text-align:center;padding:6px;border-radius:8px;background:var(--surface2);border:1.5px solid var(--border);font-weight:600;font-size:14px}
+.stage span.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.demo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.demo{grid-template-columns:1fr}}
+.box2{border:2px solid var(--border);border-radius:12px;padding:12px;background:var(--surface)}
+.box2 h4{margin:0 0 8px;font-family:var(--head)}
+.box2 .ct{font-family:var(--mono);font-size:14px;min-height:60px;white-space:pre-wrap;background:var(--surface2);border-radius:8px;padding:8px}
+.off{opacity:.35;filter:grayscale(1)}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}.theory h4{margin:12px 0 4px;font-family:var(--head)}.theory ul{margin:6px 0;padding-left:22px}.theory li{margin:3px 0}
+.theory table,.tbl{border-collapse:collapse;margin:8px 0;font-size:14.5px}.theory td,.theory th,.tbl td,.tbl th{border:1px solid var(--border);padding:5px 9px;text-align:left;vertical-align:top}.theory th,.tbl th{background:var(--surface2)}
+.zone{cursor:pointer}
+.zone .hit{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.zone:hover .hit,.zone:focus .hit{stroke:#F5A524;fill:rgba(245,165,36,.16)}
+.zone.on .hit{stroke:#F5A524;fill:rgba(245,165,36,.28);stroke-width:4}
+.zone.seen .hit{stroke:rgba(11,122,117,.55);stroke-dasharray:5 4}
+.zone.ok .hit{stroke:#12805A;fill:rgba(18,128,90,.22);stroke-width:4}
+.zone.bad .hit{stroke:#C0392B;fill:rgba(192,57,43,.2);stroke-width:4}
+.zone:focus{outline:none}
+.scr{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.scr{grid-template-columns:1fr}}
+.scr svg{width:100%;height:auto;display:block}
+.side{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+.side h4{font-family:var(--head);margin:0 0 6px;font-size:19px}
+.tag{display:inline-block;font-size:12.5px;font-weight:600;color:var(--acc);background:var(--accSoft);border-radius:6px;padding:2px 8px;margin-bottom:8px}
+.meter{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin:8px 0 4px}.meter i{display:block;height:100%;background:var(--acc)}
+.prompt{font-size:17px;font-weight:600;margin:4px 0 10px}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin:12px 0}
+.key{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:15px}
+.key kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:1px 7px;font-size:13.5px;margin-right:4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc .ic{font-size:30px}.pc h4{margin:6px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}.theory ul{margin:6px 0;padding-left:22px}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:760px){.dg{grid-template-columns:1fr}}
+.dg canvas{width:100%;image-rendering:pixelated;border:1px solid var(--border);border-radius:8px;background:#fff}
+.sl{display:grid;grid-template-columns:130px 1fr 90px;gap:8px;align-items:center;margin:6px 0}.sl input{accent-color:var(--acc)}.sl b{font-family:var(--mono)}
+.big{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--acc)}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.two{grid-template-columns:1fr}}
+.ctab{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}.ctab th,.ctab td{border:1px solid var(--border);padding:5px 8px;text-align:center}.ctab th{background:var(--surface2)}
+.selr{display:grid;grid-template-columns:1fr 260px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0}
+.selr select,.fld select,.fld input[type=text]{border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;background:var(--surface2);color:var(--ink);font:inherit;width:100%;box-sizing:border-box}
+@media (max-width:700px){.selr{grid-template-columns:1fr}}
+.fld{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;align-items:center;margin:5px 0;font-size:14px}.fld label{font-weight:600}
+.fld input[type=color]{width:48px;height:30px;border:1px solid var(--border);border-radius:6px;padding:0;background:none}
+.sw{display:inline-block;padding:3px 10px;border-radius:6px;border:1px solid var(--border);font-weight:700}
+@media (max-width:600px){.sl{grid-template-columns:1fr !important;gap:2px}.fld{grid-template-columns:1fr}.tb button{padding:6px 8px;font-size:14px}}
+.theory code,.why code{overflow-wrap:anywhere}
+.qpan{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px}.qpan select,.qpan input[type=text]{border:1.5px solid var(--border);border-radius:7px;padding:4px 6px;background:var(--surface);color:var(--ink);font:inherit}.qpan input[type=text]{width:90px}.qpan b{margin-right:4px}
+.iqq span,.q legend span{overflow-wrap:anywhere}@media (max-width:600px){.ctab{display:block;overflow-x:auto}}
+.arw{background:#fff;color:#222;border:1px solid #BBB;border-radius:10px;overflow:hidden;max-width:820px}.arh{background:#ECEFF1;padding:8px 12px;font-weight:700}.arb{display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;padding:12px}@media (max-width:700px){.arb{grid-template-columns:1fr}}.arl div{font-size:14px;padding:2px 0}
+.arw .fld{grid-template-columns:160px 1fr}.arw .fld select,.arw .fld input[type=text]{background:#fff;color:#222}.arout{background:#E8F5E9;border-top:1px solid #C8E6C9;padding:10px 12px;font-size:14px}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const THEORY = {"archivy": ["Archív = viac súborov v jednom, bezstratovo skomprimovaných. ZIP (vstavaný vo Windows), 7z (7-Zip, open source), RAR (WinRAR, shareware), tar.gz (Linux).", "Funkcie: úroveň kompresie, heslo AES-256, zväzky, SFX, test archívu (CRC)."], "laboratorium": ["Texty sa komprimujú dobre, náhodné a už skomprimované dáta (JPEG, MP4, ZIP) takmer vôbec.", "DOCX, XLSX a PPTX sú vnútri ZIP archívy."], "archivator": ["Na posielanie: 7z s heslom a šifrovanými názvami, zväzky podľa limitu, heslo poslať iným kanálom. Archív otestuj."], "precvic": ["Bez archivátora = SFX, veľký súbor = zväzky, citlivé údaje = heslo, videá = iba uložiť."]};
+/* spoločné pomocné funkcie pre 1. ročník (n34+) */
+const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const inq = (id, q, ans, tol, why, unit) => ({ id, q, ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - ans) <= tol, show: String(ans).replace(".", ","), ph: "?", why, unit });
+const txq = (id, q, re, show, why) => ({ id, q, ok: v => re.test(String(v).trim()), show, ph: "?", why });
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div class="selr"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""}><option value="">— vyber —</option>${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (!S.t[gid] || S.t[gid].score < n) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function goalsHTML(list, gid) { const n = list.filter(g => g[0]).length, T = TASKS[gid]; return `<ul class="goals">${list.map(([ok, t]) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t[gid] ? `<div class="checkbar"><span class="score ${S.t[gid].score < T.max ? "part" : ""}">Splnené: ${S.t[gid].score} z ${T.max}</span></div>` : ""}`; }
+function goalAward(gid, list) { const n = list.filter(g => g[0]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) { award(gid, n); save(); return true; } return false; }
+
+const KEY = "archivatory-m42-v1";
+const LESSON = "4.2 Komprimačné programy";
+const BRAND = "4.2 Komprimačné programy";
+const CLASS_DEFAULT = "II.A";
+const WIDE = { laboratorium: 1, archivator: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 2 },
+  { id: "archivy", title: "Archívy a programy", min: 8 },
+  { id: "laboratorium", title: "Laboratórium kompresie", min: 12 },
+  { id: "archivator", title: "Vytvor archív", min: 12 },
+  { id: "precvic", title: "Precvičovanie: aká funkcia?", min: 5 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { archivy: ["fsort", "prq"], laboratorium: ["g_cmp", "pq"], archivator: ["g_arch", "rin"], precvic: ["px"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 2. ročník",
+  lead: "ZIP, 7z, RAR či tar.gz: archív zbalí veľa súborov do jedného, zmenší ich a vie ich aj zaheslovať či rozdeliť na časti. V laboratóriu skutočne skomprimuješ text, náhodné dáta, fotku aj vlastný súbor priamo v prehliadači a uvidíš, čo sa zmenší a čo nie. V simulovanom archivátore pripravíš zaheslovaný archív na poslanie e-mailom. 4 zastávky, body a na konci výsledok.",
+  guessQ: "Zbalíš do ZIP-u 50 fotiek JPEG. Ako veľmi sa zmenšia?",
+  guessNote: "Tip sa neboduje. V laboratóriu kompresie zistíš, či si mal pravdu.",
+  guesses: ["Na polovicu", "Takmer vôbec, JPEG je už skomprimovaný", "Na desatinu", "Zväčšia sa dvojnásobne"],
+  ok: 1, yes: "Presne tak! JPEG je už stratovo skomprimovaný. ZIP ušetrí iba niekoľko percent, ale zbalí fotky do jedného súboru.", no: "Takmer vôbec. JPEG je už skomprimovaný, ZIP ušetrí najviac pár percent. Výhodou je, že máš všetko v jednom súbore."
+};
+function EXTRA_STATE() { return { cg: {}, res: [], ar: { f: "zip", lv: "norm", vol: "0", pw: "", enc: false, sfx: false }, arch: null, tested: false }; }
+/* ---------- skutočná kompresia ---------- */
+async function deflate(bytes) { const cs = new CompressionStream("deflate-raw"), w = cs.writable.getWriter(); w.write(bytes); w.close(); return new Uint8Array(await new Response(cs.readable).arrayBuffer()); }
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipOne(name, data, comp) { const nm = new TextEncoder().encode(name), crc = crc32(data), lh = new DataView(new ArrayBuffer(30)), ch = new DataView(new ArrayBuffer(46)), ed = new DataView(new ArrayBuffer(22));
+  [[lh, 0, 0x04034b50]].forEach(([v, o, x]) => v.setUint32(o, x, true)); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 8, true); lh.setUint32(14, crc, true); lh.setUint32(18, comp.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, nm.length, true);
+  ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 8, true); ch.setUint32(16, crc, true); ch.setUint32(20, comp.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, nm.length, true);
+  const off = 30 + nm.length + comp.length; ed.setUint32(0, 0x06054b50, true); ed.setUint16(8, 1, true); ed.setUint16(10, 1, true); ed.setUint32(12, 46 + nm.length, true); ed.setUint32(16, off, true);
+  return new Blob([lh.buffer, nm, comp, ch.buffer, nm, ed.buffer], { type: "application/zip" }); }
+const SKTXT = "Gymnázium v Rimavskej Sobote sa nachádza v Gemeri. Žiaci sa na hodinách informatiky učia programovať, pracovať s tabuľkami, upravovať obrázky a zvuk a spoznávajú, ako fungujú počítačové siete. Kompresia je dôležitá všade: pri posielaní súborov e-mailom, pri ukladaní fotiek do mobilu aj pri streamovaní videa. Text v slovenčine obsahuje veľa opakujúcich sa slabík, napríklad pri, ne, sa, je, a niektoré písmená, ako a, o, e, sú oveľa častejšie ako q alebo x. Práve preto sa bežný text dá bezstratovo skomprimovať na menej ako polovicu.";
+function sample(k) { if (k === "rep") return new TextEncoder().encode("Informatika je super. ".repeat(200)); if (k === "sk") return new TextEncoder().encode(SKTXT); if (k === "rnd") { const b = new Uint8Array(4000); crypto.getRandomValues(b); return b; }
+  const c = document.createElement("canvas"); c.width = 320; c.height = 200; const g = c.getContext("2d"); for (let i = 0; i < 300; i++) { g.fillStyle = `hsl(${(i * 47) % 360},70%,${30 + (i * 13) % 50}%)`; g.fillRect((i * 37) % 320, (i * 53) % 200, 20 + i % 30, 15 + i % 25); } const u = c.toDataURL("image/jpeg", 0.85), s = atob(u.split(",")[1]), b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; }
+const SN = { rep: "opakujúci sa text (.txt)", sk: "bežný slovenský text (.txt)", rnd: "náhodné dáta (.bin)", jpg: "fotka (.jpg)" };
+async function run(key, name, bytes) { const c = await deflate(bytes), r = { key, name, o: bytes.length, c: c.length }; S.res.unshift(r); S.res = S.res.slice(0, 8);
+  if (key === "rep" && r.o / r.c > 5) S.cg.rep = 1; if (key === "rnd") S.cg.rnd = 1; if (key === "jpg") S.cg.jpg = 1; if (key === "own") S.cg.own = 1; save(); labUpd(); return c; }
+const kb = n => n < 1024 ? n + " B" : (n / 1024).toFixed(1).replace(".", ",") + " kB";
+function resHTML() { return S.res.length ? `<table class="ctab"><tr><th>Súbor</th><th>Pôvodne</th><th>Po kompresii (Deflate, ako ZIP)</th><th>Pomer</th><th>Ušetrené</th></tr>${S.res.map(r => `<tr><td>${esc(r.name)}</td><td>${kb(r.o)}</td><td>${kb(r.c)}</td><td>${(r.o / r.c).toFixed(1).replace(".", ",")} : 1</td><td style="color:${r.c >= r.o ? "#C62828" : "inherit"}">${Math.round((1 - r.c / r.o) * 100)} %</td></tr>`).join("")}</table>` : `<p class="muted">Zatiaľ nič. Klikni na vzorku alebo vyber vlastný súbor.</p>`; }
+function cGoals() { const g = S.cg; return [[!!g.rep, "skomprimuj opakujúci sa text (pomer viac ako 5 : 1)"], [!!g.rnd, "skomprimuj náhodné dáta a pozri, prečo sa nezmenšia"], [!!g.jpg, "skomprimuj fotku JPEG"], [!!g.own, "skomprimuj vlastný súbor z počítača (ostane iba u teba)"]]; }
+function labUpd() { const r = document.getElementById("labres"); if (r) r.innerHTML = resHTML(); const up = goalAward("g_cmp", cGoals()), g = document.getElementById("cgoals"); if (g) g.innerHTML = goalsHTML(cGoals(), "g_cmp"); if (up) renderTop(); }
+/* ---------- simulovaný archivátor ---------- */
+const AF = [["projekt.docx", 2.1, 0.03], ["prezentacia.pptx", 18.4, 0.06], ["video.mp4", 24.5, 0.01]];
+const LV = { store: ["Uložiť (bez kompresie)", 0], fast: ["Najrýchlejšia", 0.6], norm: ["Normálna", 0.85], max: ["Maximálna", 0.95], ultra: ["Ultra", 1] };
+function archSize(a) { const k = LV[a.lv][1] * (a.f === "7z" ? 1.25 : a.f === "tgz" ? 0.9 : 1); return AF.reduce((s, [, m, r]) => s + m * (1 - r * k), 0); }
+function archHTML() { const a = S.ar, A = S.arch, is7 = a.f === "7z";
+  return `<div class="arw"><div class="arh">📦 Pridať do archívu – Archivátor</div><div class="arb"><div class="arl"><b>Súbory (45,0 MB):</b>${AF.map(f => `<div>📄 ${f[0]} <span class="muted">${String(f[1]).replace(".", ",")} MB</span></div>`).join("")}</div>
+  <div class="fld"><label>Formát archívu</label><select data-ar="f"><option value="zip" ${a.f === "zip" ? "selected" : ""}>zip</option><option value="7z" ${a.f === "7z" ? "selected" : ""}>7z</option><option value="tgz" ${a.f === "tgz" ? "selected" : ""}>tar.gz</option></select>
+  <label>Úroveň kompresie</label><select data-ar="lv">${Object.keys(LV).map(k => `<option value="${k}" ${a.lv === k ? "selected" : ""}>${LV[k][0]}</option>`).join("")}</select>
+  <label>Rozdeliť na zväzky</label><select data-ar="vol">${[["0", "nerozdeľovať"], ["10", "10 MB"], ["20", "20 MB"], ["100", "100 MB"]].map(([v, l]) => `<option value="${v}" ${a.vol === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+  <label>Heslo</label><input type="text" data-ar="pw" value="${esc(a.pw)}" placeholder="${a.f === "tgz" ? "tar.gz nepodporuje heslo" : "zadaj heslo"}" ${a.f === "tgz" ? "disabled" : ""}>
+  <label></label><label class="chk"><input type="checkbox" data-ar="enc" ${a.enc ? "checked" : ""} ${is7 ? "" : "disabled"}> šifrovať aj názvy súborov ${is7 ? "" : "(iba 7z)"}</label>
+  <label></label><label class="chk"><input type="checkbox" data-ar="sfx" ${a.sfx ? "checked" : ""} ${is7 ? "" : "disabled"}> samorozbaľovací archív (SFX .exe)</label></div></div>
+  <div class="row" style="padding:0 12px 12px"><button class="primary" data-arok>Vytvoriť archív</button>${A ? `<button class="ghost" data-artest>🔎 Otestovať archív</button>` : ""}</div>
+  ${A ? `<div class="arout"><b>Vytvorené:</b> ${A.files.map(f => `<code>${f.n}</code> (${f.s.toFixed(1).replace(".", ",")} MB)`).join(", ")}<br>Spolu ${A.size.toFixed(1).replace(".", ",")} MB z 45,0 MB · ušetrené ${Math.round((1 - A.size / 45) * 100)} % ${A.pw ? "· 🔒 AES-256" + (A.enc ? ", aj názvy súborov" : ", názvy súborov viditeľné") : "· bez hesla"}${S.tested ? "<br>✅ Test archívu: všetky súbory sú v poriadku (kontrolné súčty CRC sedia)." : ""}</div>` : ""}</div>`; }
+function makeArch() { const a = S.ar, size = archSize(a), ext = a.f === "7z" ? (a.sfx ? "exe" : "7z") : a.f === "tgz" ? "tar.gz" : "zip", base = "projekt." + ext, v = +a.vol, files = [];
+  if (v && size > v) { const n = Math.ceil(size / v); for (let i = 1; i <= n; i++) files.push({ n: `projekt.${a.f === "tgz" ? "tar.gz" : a.f === "7z" ? "7z" : "zip"}.${String(i).padStart(3, "0")}`, s: i < n ? v : size - v * (n - 1) }); } else files.push({ n: base, s: size });
+  S.arch = { f: a.f, lv: a.lv, vol: v, pw: a.f !== "tgz" && a.pw.length >= 8, enc: a.f === "7z" && a.enc && a.pw.length >= 8, files, size }; S.tested = false; }
+function arGoals() { const A = S.arch; return [[!!A && A.f === "7z", "formát 7z"], [!!A && A.pw && A.enc, "heslo aspoň 8 znakov a šifrované aj názvy súborov"], [!!A && A.vol === 20 && A.files.every(f => f.s <= 20), "zväzky po 20 MB (e-mail má limit 25 MB)"], [!!A && A.lv === "ultra", "úroveň kompresie Ultra"], [!!A && S.tested, "vytvorený archív otestuj"]]; }
+
+const PX = [["Príjemca nemá žiadny program na rozbaľovanie 7z", "sfx", ""], ["Súbor má 70 MB a e-mail berie najviac 25 MB", "vol", ""], ["Archív obsahuje osobné údaje žiakov", "pw", ""], ["Chceš čo najmenší archív a čas nevadí", "ultra", ""], ["Stiahnutý archív hlási chybu, chceš zistiť, či je celý", "test", ""], ["Do archívu dávaš 2 GB videí MP4 a chceš to mať rýchlo", "store", "MP4 sa aj tak nezmenší, kompresia by iba zdržala."]];
+const PXO = [["pw", "heslo (šifrovanie AES)"], ["vol", "rozdeliť na zväzky"], ["sfx", "samorozbaľovací archív (SFX)"], ["ultra", "kompresia Ultra"], ["test", "otestovať archív"], ["store", "iba uložiť (bez kompresie)"]];
+const TASKS = {
+  fsort: { id: "fsort", type: "sort",
+    buckets: [{ id: "z", label: "ZIP" }, { id: "s", label: "7z" }, { id: "r", label: "RAR" }, { id: "t", label: "tar.gz" }],
+    items: [{ id: "1", t: "otvorí ho Windows aj macOS bez ďalšieho programu", b: "z" }, { id: "2", t: "najrozšírenejší archív, podporuje ho takmer každý program", b: "z" }, { id: "3", t: "predvolený formát bezplatného programu 7-Zip", b: "s" }, { id: "4", t: "metóda LZMA2, zvyčajne najmenší archív z týchto štyroch", b: "s" }, { id: "5", t: "vytvoriť ho vie iba WinRAR", b: "r" }, { id: "6", t: "má záznam na obnovu poškodeného archívu", b: "r" }, { id: "7", t: "najprv spojí súbory do jedného (tar), potom ho skomprimuje (gzip)", b: "t" }, { id: "8", t: "bežný v Linuxe pri zdrojových kódoch a zálohách", b: "t" }] },
+  prq: { id: "prq", type: "mc", qs: [
+    { id: "1", ...Q("Ktorý archivátor je bezplatný a open source?", ["7-Zip", "WinRAR", "WinZip", "Adobe Acrobat"], 0) },
+    { id: "2", ...Q("Ako vytvoríš ZIP vo Windows bez ďalšieho programu?", ["pravý klik na súbory → Komprimovať do súboru ZIP", "Ctrl + Z", "premenovaním prípony na .zip", "nedá sa to"], 0) },
+    { id: "3", ...Q("Aká licencia je WinRAR?", ["shareware: dá sa vyskúšať, potom by sa mal kúpiť", "open source", "freeware", "public domain"], 0) },
+    { id: "4", ...Q("Čo je archív?", ["jeden súbor, ktorý obsahuje viac súborov a priečinkov, zvyčajne skomprimovaných", "priečinok na disku", "záloha v cloude", "program na kreslenie"], 0) }
+  ]},
+  g_cmp: { id: "g_cmp", type: "custom", max: 4 },
+  pq: { id: "pq", type: "mc", qs: [
+    { id: "1", ...Q("Prečo sa náhodné dáta nezmenšili?", ["nemajú žiadne opakovanie ani vzor, ktorý by kompresia využila", "prehliadač nefunguje", "sú príliš krátke", "náhodné dáta sú vždy väčšie"], 0) },
+    { id: "2", ...Q("Prečo sa JPEG takmer nezmenšil?", ["je už skomprimovaný, opakovanie z neho zmizlo", "JPEG nemožno dať do ZIP", "fotka je čiernobiela", "kvôli heslu"], 0) },
+    { id: "3", ...Q("Ktoré súbory sa v ZIP zvyčajne zmenšia najviac?", ["texty, tabuľky CSV, BMP obrázky, logy", "MP4 a MP3", "JPEG fotky", "iné ZIP archívy"], 0) },
+    { id: "4", ...Q("Môže byť skomprimovaný súbor väčší ako pôvodný?", ["áno, pri náhodných alebo už skomprimovaných dátach o pár bajtov (hlavička)", "nie, nikdy", "iba pri hesle", "iba v Linuxe"], 0) },
+    { id: "5", ...Q("Formáty DOCX, XLSX a PPTX sú vnútri:", ["ZIP archívy s XML súbormi", "obrázky", "textové súbory TXT", "videá"], 0) }
+  ]},
+  g_arch: { id: "g_arch", type: "custom", max: 5 },
+  rin: { id: "rin", type: "input", qs: [
+    inq("1", "Archív 45 MB rozdelíš na zväzky po 20 MB. Koľko zväzkov vznikne?", 3, 0),
+    txq("2", "Zväzky sa volajú projekt.7z.001, projekt.7z.002… Akú príponu má tretí zväzok?", /^\.?003$/, "003"),
+    inq("3", "Priečinok 300 MB sa skomprimoval na 120 MB. Koľko percent sa ušetrilo?", 60, 0),
+    inq("4", "Aký je kompresný pomer v predchádzajúcej úlohe? (x : 1, napíš x)", 2.5, 0.01),
+    inq("5", "1 000 fotiek po 4 MB zbalíš do ZIP, ktorý ušetrí 1 %. Koľko MB ušetríš?", 40, 0)
+  ]},
+  px: { id: "px", type: "custom", max: 6 },
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", ...Q("Archív ZIP:", ["zbalí viac súborov do jedného a bezstratovo ich skomprimuje", "zníži kvalitu fotiek", "je iba pre Linux", "nedá sa otvoriť vo Windows"], 0) },
+    { id: "2", ...Q("Samorozbaľovací archív (SFX) je:", ["spustiteľný súbor .exe, ktorý sa rozbalí sám", "archív bez kompresie", "zaheslovaný archív", "archív v cloude"], 0) },
+    { id: "3", ...Q("Prečo e-mail niekedy zablokuje prílohu .exe?", ["spustiteľné súbory môžu obsahovať malvér", "je príliš malá", "nemá heslo", "nie je skomprimovaná"], 0) },
+    { id: "4", ...Q("Na čo sú zväzky (časti) archívu?", ["na rozdelenie veľkého archívu, napr. kvôli limitu e-mailu", "na zrýchlenie počítača", "na šifrovanie", "na zmenu formátu"], 0) },
+    { id: "5", ...Q("Ktoré šifrovanie používa 7-Zip pri hesle?", ["AES-256", "Caesarova šifra", "žiadne", "RLE"], 0) },
+    { id: "6", ...Q("Aký je rozdiel medzi tar a gzip?", ["tar iba spája súbory do jedného, gzip komprimuje", "nie je rozdiel", "tar šifruje", "gzip je pre obrázky"], 0) },
+    { id: "7", ...Q("Ako otestuješ, či archív nie je poškodený?", ["funkciou Testovať archív, ktorá overí kontrolné súčty CRC", "premenovaním", "otvorením v Poznámkovom bloku", "skopírovaním"], 0) },
+    { id: "8", ...Q("Ktoré heslo k archívu je najlepšie?", ["Gemer-Ples-2026-!", "1234", "heslo", "meno žiaka"], 0) }
+  ]}
+};
+
+const VIEWS = {
+  archivy: () => head() + `<h2>Archívy a programy</h2>${guessBox()}
+    <div class="theory"><p><b>Archív</b> je jeden súbor, ktorý obsahuje viac súborov a priečinkov, zvyčajne <b>bezstratovo skomprimovaných</b>. Archív sa ľahšie posiela, zaberie menej miesta a môže byť chránený heslom. <b>Komprimačné programy (archivátory)</b>:</p><ul><li><b>Windows a macOS</b> vedia vytvoriť a otvoriť <b>ZIP</b> bez ďalšieho programu (pravý klik → Komprimovať),</li><li><b>7-Zip</b>: zadarmo, open source, formát <b>7z</b> s najlepšou kompresiou, otvorí aj ZIP, RAR, tar, gz, ISO,</li><li><b>WinRAR</b>: shareware, jediný vie vytvoriť <b>RAR</b>, má záznam na obnovu poškodeného archívu,</li><li>v <b>Linuxe</b> sa používa <code>tar</code> (spojí súbory) a <code>gzip</code>, <code>bzip2</code> či <code>xz</code> (skomprimuje): <code>projekt.tar.gz</code>.</li></ul><p>Funkcie archivátorov: úroveň kompresie, <b>heslo</b> (šifrovanie AES-256), <b>zväzky</b> (rozdelenie na časti .001, .002…), <b>samorozbaľovací archív</b> (SFX, .exe), <b>test archívu</b> podľa kontrolných súčtov CRC.</p></div>
+    <h3>Úloha 1: ktorý formát?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("prq")}</div>` + nextBar(),
+  laboratorium: () => head() + `<h2>Laboratórium kompresie</h2>
+    <div class="theory"><p>Táto stránka komprimuje <b>naozaj</b>, rovnakou metódou <b>Deflate</b>, akú používa ZIP. Vyskúšaj vzorky a vlastný súbor. Súbor sa nikam neposiela, spracuje sa iba v tvojom prehliadači. Výsledok si môžeš stiahnuť ako skutočný ZIP.</p></div>
+    <div class="task" id="cgoals">${goalsHTML(cGoals(), "g_cmp")}</div>
+    <div class="tool"><div class="row" style="flex-wrap:wrap;gap:6px">${Object.keys(SN).map(k => `<button class="ghost" data-smp="${k}">🧪 ${SN[k]}</button>`).join("")}</div>
+    <p style="margin:10px 0 4px"><b>Vlastný súbor:</b> <input type="file" data-own style="max-width:100%"> <span id="ownlink"></span></p><div id="labres">${resHTML()}</div></div>
+    <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
+  archivator: () => head() + `<h2>Vytvor archív</h2>
+    <div class="theory"><p><b>Zadanie:</b> máš poslať projekt (3 súbory, 45 MB) učiteľke e-mailom. Školský e-mail berie prílohy do 25 MB. Projekt obsahuje osobné údaje, preto musí byť zaheslovaný tak, aby nebolo vidieť ani názvy súborov. Chceš čo najmenší archív. Nastav archivátor, vytvor archív a otestuj ho. Heslo pošli učiteľke iným spôsobom (napr. SMS), nie v tom istom e-maile.</p></div>
+    <div class="task" id="argoals">${goalsHTML(arGoals(), "g_arch")}</div><div id="arbox">${archHTML()}</div>
+    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("rin")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: aká funkcia?</h2>
+    <div class="theory"><p>Pri každej situácii vyber funkciu archivátora, ktorá pomôže.</p></div>
+    <div class="task">${selBlock("pxs", PX, PXO)}${S.t.px ? `<div class="checkbar"><span class="score ${S.t.px.score < 6 ? "part" : ""}">Správne: ${S.t.px.score} zo 6</span></div>` : ""}</div>` + nextBar(),
+  test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
+};
+function aRe() { const b = document.getElementById("arbox"); if (b) b.innerHTML = archHTML(); const up = goalAward("g_arch", arGoals()), g = document.getElementById("argoals"); if (g) g.innerHTML = goalsHTML(arGoals(), "g_arch"); if (up) renderTop(); save(); }
+function CUSTOM_CLICK(e) { if (selClick(e, { pxs: [PX, "px"] })) return true; const c = s => e.target.closest && e.target.closest(s); let el;
+  if ((el = c("[data-smp]"))) { const k = el.dataset.smp; if (!window.CompressionStream) { alert("Tento prehliadač nepodporuje kompresiu. Použi aktuálny Chrome, Edge, Firefox alebo Safari."); return true; } run(k, SN[k], sample(k)); return true; }
+  if (c("[data-arok]")) { makeArch(); aRe(); return true; }
+  if (c("[data-artest]")) { S.tested = true; aRe(); return true; }
+  return false; }
+function CUSTOM_INPUT(e) { const t = e.target, ds = t.dataset || {}; if (selInput(e)) return true;
+  if (ds.ar) { S.ar[ds.ar] = t.type === "checkbox" ? t.checked : t.value; if (ds.ar === "f" && t.value !== "7z") { S.ar.enc = false; S.ar.sfx = false; } save(); if (t.tagName === "SELECT" || t.type === "checkbox") aRe(); return true; }
+  return false; }
+document.addEventListener("change", async e => { const t = e.target; if (!(t.dataset && t.dataset.own !== undefined) || !t.files[0]) return; const f = t.files[0]; if (f.size > 50 * 1024 * 1024) { alert("Vyber súbor menší ako 50 MB."); return; } if (!window.CompressionStream) { alert("Tento prehliadač nepodporuje kompresiu."); return; }
+  const b = new Uint8Array(await f.arrayBuffer()), comp = await run("own", f.name, b), blob = zipOne(f.name, b, comp), a = document.getElementById("ownlink"); if (a) { a.innerHTML = ""; const l = document.createElement("a"); l.href = URL.createObjectURL(blob); l.download = f.name.replace(/\.[^.]*$/, "") + ".zip"; l.textContent = "⤓ Stiahnuť ako ZIP (" + kb(blob.size) + ")"; a.appendChild(l); } });
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { return memoHTML() + nextBar0(); }
+function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return T.qs.map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
