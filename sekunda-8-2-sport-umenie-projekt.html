@@ -209,6 +209,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
 
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -216,7 +221,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Technológia rieši problém: meranie, rozhodovanie, tvorba, sprístupnenie.", "Plagát: problém → ako funguje → výhody a riziká. Dva zdroje, vlastné slová, uvedené zdroje."], "sport": ["Hodinky a senzory (tep, GPS, výkon), VAR, jastrabie oko, cieľová fotografia, e-šport; riziká: zdravotné údaje, poloha."], "umenie": ["Digitálna maľba, 3D modelovanie a tlač, hudba v počítači, virtuálne galérie, AI a autorské práva."], "projekt": ["Plagát: čo to je, ako funguje, príklad, výhody, riziká, názor, aspoň 2 zdroje; vlastnými slovami."]};
+const THEORY = {"sport": ["Hodinky a senzory (tep, GPS, výkon), VAR, jastrabie oko, cieľová fotografia, e-šport; riziká: zdravotné údaje, poloha."], "umenie": ["Digitálna maľba, 3D modelovanie a tlač, hudba v počítači, virtuálne galérie, AI a autorské práva."], "projekt": ["Plagát: čo to je, ako funguje, príklad, výhody, riziká, názor, aspoň 2 zdroje; vlastnými slovami."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -269,6 +274,74 @@ function poClick(e) { const el = e.target.closest("button"); if (!el) return fal
   return false; }
 function poInput(e) { const t = e.target; if (t.dataset && t.dataset.po) { PO()[t.dataset.po] = t.value; save(); poUpd(); return true; } return false; }
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – Sekunda 8.2 Digitálne technológie v športe a umení */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#C2560C", AS = "#FBE3D2";
+return {
+  hodinky: fig(SV(440, 240, `
+    <rect x="70" y="10" width="60" height="40" rx="8" fill="#455A64"/><rect x="70" y="190" width="60" height="40" rx="8" fill="#455A64"/>
+    <rect x="40" y="44" width="120" height="152" rx="30" fill="${C.ink}"/><rect x="50" y="54" width="100" height="132" rx="22" fill="#102027"/>
+    ${T(100, 82, "❤️ 142", { a: "middle", fs: 15, b: 1, c: "#FF5252" })}${T(100, 104, "👣 8 432", { a: "middle", fs: 13, b: 1, c: "#fff" })}${T(100, 126, "📍 3,2 km", { a: "middle", fs: 13, b: 1, c: "#69F0AE" })}${T(100, 148, "😴 7 h 40 min", { a: "middle", fs: 11, c: "#B0BEC5" })}${T(100, 170, "⏱ 21:14", { a: "middle", fs: 11, c: "#B0BEC5" })}
+    ${[["❤️", "optický snímač", "tep srdca", 52], ["👣", "pohybový snímač", "kroky, pohyb", 98], ["🛰️", "GPS", "poloha, vzdialenosť", 144], ["📲", "aplikácia v mobile", "grafy, plán tréningu", 190]].map(([e, n, d, y]) => `${ar(196, y, 166, y + (y < 120 ? 18 : -8), A, 1.5)}${T(204, y + 4, e, { fs: 15 })}${T(228, y - 2, n, { fs: 11, b: 1 })}${T(228, y + 13, d, { fs: 10, c: C.mut })}`).join("")}`, "Športové hodinky"),
+    "Športové hodinky merajú <b>tep</b>, <b>pohyb</b> a <b>polohu</b> a údaje posielajú do aplikácie. Sú to citlivé údaje o zdraví."),
+  oko: fig(SV(440, 240, `
+    <rect x="20" y="30" width="400" height="170" fill="#4CAF50"/><rect x="60" y="50" width="320" height="130" fill="none" stroke="#fff" stroke-width="3"/><line x1="220" y1="50" x2="220" y2="180" stroke="#fff" stroke-width="2"/><line x1="140" y1="50" x2="140" y2="180" stroke="#fff" stroke-width="2"/><line x1="300" y1="50" x2="300" y2="180" stroke="#fff" stroke-width="2"/><line x1="140" y1="115" x2="300" y2="115" stroke="#fff" stroke-width="2"/>
+    ${[[30, 36], [410, 36], [30, 194], [410, 194], [220, 24], [220, 206]].map(([x, y]) => `<rect x="${x - 9}" y="${y - 6}" width="18" height="12" rx="2" fill="${C.ink}"/><circle cx="${x}" cy="${y}" r="3.5" fill="#64B5F6"/>`).join("")}
+    <path d="M120 150 Q240 40 376 64" fill="none" stroke="#FFEB3B" stroke-width="2" stroke-dasharray="5 4"/><ellipse cx="383" cy="62" rx="9" ry="5" fill="#C6FF00" stroke="#827717"/>
+    ${box(300, 128, 116, 46, "#fff", C.bad, 8)}${T(358, 148, "OUT", { a: "middle", fs: 14, b: 1, c: C.bad })}${T(358, 164, "o 4 mm", { a: "middle", fs: 10.5 })}
+    ${T(220, 228, "kamery okolo kurtu vypočítajú dráhu loptičky", { a: "middle", fs: 10.5, c: C.mut })}`, "Jastrabie oko v tenise"),
+    "<b>Jastrabie oko</b>: viac kamier sleduje loptičku a počítač zistí, či dopadla do dvorca, alebo mimo."),
+  tlac3d: fig(SV(440, 240, `
+    ${T(220, 18, "Od 3D modelu k soche", { a: "middle", fs: 12, b: 1 })}
+    ${box(8, 30, 128, 160, "#fff", C.line, 10)}${T(72, 50, "1 model", { a: "middle", fs: 11, b: 1, c: A })}
+    ${[0, 1, 2, 3, 4].map(i => `<ellipse cx="72" cy="${80 + i * 20}" rx="${12 + Math.sin(i * 0.9) * 14 + 8}" ry="5" fill="none" stroke="${C.blue}"/>`).join("")}<path d="M50 80 Q40 120 52 160 M94 80 Q104 120 92 160 M72 72 v94" stroke="${C.blue}" fill="none"/>
+    ${ar(140, 110, 160, 110, A, 2)}
+    ${box(164, 30, 128, 160, "#fff", C.line, 10)}${T(228, 50, "2 tlač", { a: "middle", fs: 11, b: 1, c: A })}
+    <rect x="178" y="58" width="100" height="120" fill="none" stroke="${C.ink}" stroke-width="3"/><rect x="178" y="72" width="100" height="6" fill="${C.mut}"/><rect x="214" y="70" width="20" height="18" fill="${C.ink}"/><path d="M224 88 l-4 8 h8z" fill="#FF7043"/>
+    ${[0, 1, 2, 3].map(i => `<rect x="${208 - i}" y="${160 - i * 7}" width="${32 + i * 2}" height="6" fill="#FF8A65"/>`).join("")}<rect x="186" y="166" width="84" height="6" fill="${C.mut}"/>
+    ${ar(296, 110, 316, 110, A, 2)}
+    ${box(320, 30, 112, 160, "#fff", C.line, 10)}${T(376, 50, "3 socha", { a: "middle", fs: 11, b: 1, c: A })}
+    <path d="M356 168 Q346 130 360 100 Q352 84 376 72 Q400 84 392 100 Q406 130 396 168z" fill="#FF8A65"/><rect x="346" y="168" width="60" height="10" fill="#8D6E63"/>
+    ${T(220, 214, "tlačiareň nanáša roztavený plast vrstvu po vrstve", { a: "middle", fs: 10.5, c: C.mut })}`, "3D modelovanie a 3D tlač"),
+    "Umelec navrhne <b>3D model</b> v počítači a <b>3D tlačiareň</b> ho vytlačí vrstvu po vrstve."),
+  mapping: fig(SV(440, 240, `
+    <rect x="0" y="0" width="440" height="240" fill="#1A1530"/>
+    <path d="M230 200 V90 L300 50 L370 90 V200z" fill="#6A3FD0"/>${[0, 1, 2].map(i => `<rect x="${252 + i * 34}" y="110" width="20" height="30" rx="10" fill="#FFD54F"/><rect x="${252 + i * 34}" y="156" width="20" height="30" rx="10" fill="#4DD0E1"/>`).join("")}<circle cx="300" cy="80" r="12" fill="#FF7043"/>
+    <path d="M50 200 L230 92 M50 200 L370 92 M50 200 L230 200 M50 200 L370 200" stroke="#FFF59D" stroke-width="1" opacity=".5"/><path d="M50 200 L230 92 L370 92 L370 200 L230 200z" fill="#FFF59D" opacity=".08"/>
+    <rect x="28" y="190" width="44" height="26" rx="4" fill="#B0BEC5"/><circle cx="66" cy="203" r="7" fill="#FFF59D"/>
+    ${T(50, 232, "projektor", { a: "middle", fs: 10.5, b: 1, c: "#fff" })}${T(300, 226, "budova ako plátno", { a: "middle", fs: 10.5, b: 1, c: "#fff" })}
+    ${T(20, 30, "Video mapping", { fs: 13, b: 1, c: "#FFD54F" })}${T(20, 48, "obraz sa prispôsobí tvaru", { fs: 10.5, c: "#E0D9F7" })}${T(20, 63, "fasády: okná svietia, steny sa hýbu", { fs: 10.5, c: "#E0D9F7" })}`, "Video mapping na budovu"),
+    "Pri <b>video mappingu</b> projektor premieta obraz presne na tvar budovy. Diváci tak vidia umenie vonku.")
+}; })();
+
 const KEY = "sportumenie-s82-v1";
 const LESSON = "8.2 Digitálne technológie v športe a umení – projekt";
 const BRAND = "8.2 Technológie v športe a umení";
@@ -279,13 +352,12 @@ const STEPS = [
   { id: "sport", title: "Technológie v športe", min: 8 },
   { id: "umenie", title: "Technológie v umení", min: 7 },
   { id: "projekt", title: "Projekt: digitálny plagát", min: 22 },
-  { id: "precvic", title: "Precvičovanie: technológia v praxi", min: 8 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { sport: ["ssort", "sin"], umenie: ["usort", "uq"], projekt: ["g_tema", "g_po", "g_dl"], precvic: ["g_sit", "pxq"] };
+const STEP_TASKS = { sport: ["ssort", "sin"], umenie: ["usort", "uq"], projekt: ["g_tema", "g_po", "g_dl"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Hodinky merajú tep, rozhodca kontroluje ofsajd na videu, maliar kreslí na tablete a obraz si môžeš vytlačiť v 3D. Spoznáš digitálne technológie v športe a umení, vypočítaš tempo behu a tepové zóny a potom spracuješ projekt: digitálny plagát o jednej technológii s výhodami, rizikami, príkladom a zdrojmi. 4 zastávky, body a na konci výsledok.",
+  lead: "Hodinky merajú tep, rozhodca kontroluje ofsajd na videu, maliar kreslí na tablete a obraz si môžeš vytlačiť v 3D. Spoznáš digitálne technológie v športe a umení, vypočítaš tempo behu a tepové zóny a potom spracuješ projekt: digitálny plagát o jednej technológii s výhodami, rizikami, príkladom a zdrojmi. 3 zastávky, body a na konci výsledok.",
   guessQ: "Ako zistí futbalový rozhodca, či bol hráč v ofsajde?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Podľa pocitu", "Systém VAR s videozáznamom z viacerých kamier", "Podľa hlasovania fanúšikov", "Hodí mincou"],
@@ -295,8 +367,6 @@ const TOP = ["Chytré hodinky a fitness náramky", "VAR a jastrabie oko (Hawk-Ey
 function EXTRA_STATE() { return { tema: "" }; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ok, show, why) => ({ id, q, ok, show, ph: "?", why });
-const PX_I = [["Bežec chce vedieť, akým tempom a s akým tepom behal.", "gps", ""], ["Rozhodca si nie je istý, či bol gól z ofsajdu.", "var", ""], ["Tenista tvrdí, že loptička bola v aute.", "hawk", ""], ["Dvaja šprintéri dobehli takmer naraz.", "foto", ""], ["Ilustrátorka chce kresliť priamo do počítača.", "krita", ""], ["Na námestí chcú premietnuť animáciu na fasádu radnice.", "map", ""], ["Galéria chce sprístupniť obraz online vo veľkom rozlíšení.", "digit", ""]];
-const PX_O = [["", "— vyber —"], ["gps", "Hodinky s GPS a meraním tepu"], ["var", "VAR"], ["hawk", "Jastrabie oko (Hawk-Eye)"], ["foto", "Cieľová fotografia"], ["krita", "Grafický tablet a Krita"], ["map", "Video mapping"], ["digit", "Digitalizácia diela"]];
 const TASKS = {
   ssort: { id: "ssort", type: "sort", buckets: [{ id: "m", label: "⌚ Meranie a tréning" }, { id: "r", label: "🟨 Rozhodovanie" }, { id: "d", label: "🎮 Divák a e-šport" }],
     items: [{ id: "1", t: "Hodinky s GPS a meraním tepu", b: "m" }, { id: "2", t: "Aplikácia na plán tréningu", b: "m" }, { id: "3", t: "Senzory na bicykli (výkon vo wattoch)", b: "m" }, { id: "4", t: "VAR vo futbale", b: "r" }, { id: "5", t: "Jastrabie oko v tenise", b: "r" }, { id: "6", t: "Cieľová fotografia v atletike", b: "r" }, { id: "7", t: "Online prenos so štatistikami", b: "d" }, { id: "8", t: "E-športový turnaj", b: "d" }] },
@@ -313,36 +383,24 @@ const TASKS = {
     { id: "2", ...Q("Výhoda digitálnej maľby:", ["krok späť, vrstvy, neobmedzené farby a úprava bez poškodenia", "obraz sa nedá vytlačiť", "netreba vedieť kresliť vôbec", "je vždy platená"], 0) },
     { id: "3", ...Q("Na čo slúži digitalizácia umeleckých diel v galériách?", ["zachovanie a sprístupnenie diel ľuďom na celom svete", "predaj originálov", "vymazanie originálov", "reklama"], 0) }
   ]},
-  g_tema: { id: "g_tema", type: "custom", max: 1 }, g_po: { id: "g_po", type: "custom", max: 8 }, g_dl: { id: "g_dl", type: "custom", max: 1 },
-  g_sit: { id: "g_sit", type: "custom", max: 7 },
-  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Prečo sú údaje z chytrých hodiniek citlivé?", "opts": ["prezrádzajú zdravie, polohu a denný režim", "zaberajú veľa miesta", "sú vždy nepresné", "nie sú citlivé"], "a": 0}, {"id": "2", "q": "Môže VAR úplne vylúčiť chyby v rozhodovaní?", "opts": ["nie, rozhodnutie stále robí človek", "áno, VAR sa nikdy nemýli", "áno, rozhoduje robot", "VAR rozhoduje iba o striedaní"], "a": 0}, {"id": "3", "q": "Čo je e-šport?", "opts": ["súťaže vo videohrách", "športové prenosy na webe", "elektrický bicykel", "fitness aplikácia"], "a": 0}, {"id": "4", "q": "Čo musí byť na plagáte uvedené?", "opts": ["zdroje informácií a obrázkov", "heslo k účtu", "adresa bydliska", "nič navyše"], "a": 0}, {"id": "5", "q": "Ako overíš informáciu pre plagát?", "opts": ["nájdem ju aspoň v dvoch nezávislých zdrojoch", "stačí prvý výsledok vyhľadávania", "opýtam sa umelej inteligencie a neoverím", "neoverujem"], "a": 0}, {"id": "6", "q": "Prečo písať plagát vlastnými slovami?", "opts": ["kopírovanie celých viet je plagiát a vlastné slová ukážu, že rozumieš", "aby bol text dlhší", "lebo to je rýchlejšie", "nie je to dôležité"], "a": 0}]}
+  g_tema: { id: "g_tema", type: "custom", max: 1 }, g_po: { id: "g_po", type: "custom", max: 8 }, g_dl: { id: "g_dl", type: "custom", max: 1 }
 };
 const VIEWS = {
   sport: () => head() + `<h2>Technológie v športe</h2>${guessBox()}
     <div class="theory"><ul><li><b>Meranie a tréning</b>: chytré hodinky a náramky (tep, kroky, GPS, spánok), senzory výkonu, aplikácie s tréningovým plánom, analýza videa pohybu.</li><li><b>Rozhodovanie</b>: <b>VAR</b> vo futbale, <b>jastrabie oko</b> (Hawk-Eye) v tenise, cieľová fotografia a elektronická časomiera.</li><li><b>Divák</b>: prenosy so štatistikami v reálnom čase, <b>e-šport</b> (súťaže vo videohrách).</li><li><b>Riziká</b>: citlivé údaje o zdraví a polohe, závislosť od čísel, prílišné sedenie pri obrazovke.</li></ul></div>
+    ${tfigs(TFIG.hodinky, TFIG.oko)}
     <h3>Úloha 1: roztrieď</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ssort")}</div><h3>Úloha 2: počítaj ako športové hodinky</h3><div class="task">${taskHTML("sin")}</div>` + nextBar(),
   umenie: () => head() + `<h2>Technológie v umení</h2>
     <div class="theory"><ul><li><b>Digitálna maľba a grafika</b>: tablety, programy Krita, GIMP, Procreate.</li><li><b>3D modelovanie a tlač</b>: sochy, šperky, dizajn.</li><li><b>Hudba a zvuk</b>: tvorba v počítači, elektronické nástroje.</li><li><b>Sprístupnenie</b>: digitalizácia diel, virtuálne galérie (Google Arts & Culture), video mapping.</li><li><b>Umelá inteligencia</b>: generovanie obrázkov a hudby. Otvára otázky autorských práv a originality.</li></ul></div>
+    ${tfigs(TFIG.tlac3d, TFIG.mapping)}
     <h3>Úloha 1: roztrieď</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("usort")}</div><h3>Úloha 2: otázky</h3><div class="task">${taskHTML("uq")}</div>` + nextBar(),
   projekt: () => head() + `<h2>Projekt: digitálny plagát</h2>
     <div class="theory"><p>Vyber si jednu technológiu zo športu alebo umenia, vyhľadaj o nej informácie (aspoň 2 zdroje) a spracuj plagát: čo to je, ako to funguje, príklad, výhody, riziká a tvoj názor. Píš vlastnými slovami, nekopíruj celé vety. Hotový plagát stiahni a odovzdaj podľa pokynov učiteľa (môžeš ho aj odprezentovať).</p>
     <label><b>Téma:</b> <select id="tema">${["", ...TOP].map(t => `<option ${S.tema === t ? "selected" : ""}>${t}</option>`).join("")}</select></label> <button class="primary" data-tema>✔ Vybrať</button></div>
     ${S.t.g_tema ? posterHTML() : `<p class="muted">Najprv vyber tému.</p>`}` + nextBar()
 };
-function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; if (poClick(e)) return true; const el = e.target.closest("button"); if (el && el.dataset.tema !== undefined) { S.tema = document.getElementById("tema").value; if (!S.tema) return true; if (!PO().nazov && S.tema !== "Iná téma") PO().nazov = S.tema; award("g_tema", 1); save(); render(false); return true; } return false; }
-function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; return poInput(e); }
-
-VIEWS.precvic = () => head() + `<h2>Precvičovanie: technológia v praxi</h2>
-    <div class="theory"><p>Každá technológia rieši konkrétny <b>problém</b>: meranie výkonu (hodinky, senzory), spravodlivé rozhodovanie (VAR, jastrabie oko, cieľová fotografia), tvorbu (tablet, 3D tlač) alebo sprístupnenie umenia (digitalizácia, virtuálne galérie). Pri plagáte vždy odpovedz: <b>aký problém rieši, ako funguje, aké má výhody a riziká</b>. Informácie over aspoň v dvoch zdrojoch, píš vlastnými slovami a uveď zdroje.</p><p>Pri každej situácii vyber technológiu a potom odpovedz na otázky.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
-    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar();
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function CUSTOM_CLICK(e) { if (poClick(e)) return true; const el = e.target.closest("button"); if (el && el.dataset.tema !== undefined) { S.tema = document.getElementById("tema").value; if (!S.tema) return true; if (!PO().nazov && S.tema !== "Iná téma") PO().nazov = S.tema; award("g_tema", 1); save(); render(false); return true; } return false; }
+function CUSTOM_INPUT(e) { return poInput(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -361,7 +419,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -451,10 +509,8 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
-function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
-  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
