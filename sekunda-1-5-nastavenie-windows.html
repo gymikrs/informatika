@@ -220,6 +220,11 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .key{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:15px}
 .key kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:1px 7px;font-size:13.5px;margin-right:4px}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -228,6 +233,45 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"precvic": ["Klávesnica: Čas a jazyk; mierka, nočné svetlo, zvuk, oznámenia: Systém; myš: Bluetooth a zariadenia."], "kde": ["Nastavenia otvoríš cez Štart → ⚙️ alebo skratkou <b>Win + I</b>.", "Starší nástroj na nastavenia je <b>Ovládací panel</b>."], "vzhlad": ["V časti <b>Prispôsobenie</b> zmeníš pozadie, tmavý alebo svetlý režim a farbu zvýraznenia."], "system": ["V časti <b>Systém</b> je jas, mierka, rozlíšenie, zvuk a oznámenia.", "Mierka zväčší všetko na obrazovke, rozlíšenie mení počet bodov. Voľ odporúčané rozlíšenie."], "cas": ["V časti <b>Čas a jazyk</b> nastavíš dátum, čas, časové pásmo a klávesnice.", "Medzi klávesnicami prepneš skratkou <b>Win + medzerník</b>. Slovenská klávesnica je QWERTZ.", "Myš nastavíš v časti Bluetooth a zariadenia (napr. pre ľavákov)."], "bezpecne": ["<b>Windows Update</b> inštaluje opravy chýb a bezpečnostných dier.", "Počítač zamkneš skratkou <b>Win + L</b>."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Sekunda 1.5 Nastavenie Windows */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#C2560C", AS = "#FBE3D2", W = "#0067C0";
+const key = (x, y, w, s) => `<rect x="${x}" y="${y}" width="${w}" height="30" rx="5" fill="#fff" stroke="#9AA5B4" stroke-width="1.5"/>${T(x + w / 2, y + 20, s, { a: "middle", fs: 12, b: 1 })}`;
+return {
+  cesty: fig(SV(440, 300, `
+    ${box(8, 8, 206, 136, "#fff", C.line, 12)}${PF.num(26, 26, "1", A)}${T(42, 30, "Ponuka Štart", { fs: 12.5, b: 1 })}
+    <rect x="30" y="44" width="162" height="70" rx="8" fill="#F3F3F3" stroke="#D0D4DA"/>${["📄", "🌐", "📁", "⚙️"].map((e, i) => `${i === 3 ? `<rect x="${42 + i * 36}" y="56" width="32" height="32" rx="6" fill="#DCEBFC" stroke="${W}" stroke-width="2"/>` : ""}<text x="${58 + i * 36}" y="80" text-anchor="middle" font-size="17">${e}</text>`).join("")}${T(152, 104, "Nastavenia", { a: "middle", fs: 9.5, b: 1, c: W })}<rect x="30" y="120" width="162" height="16" rx="3" fill="#E5E5E5"/>${T(44, 132, "⊞", { fs: 11, c: W, b: 1 })}
+    ${box(226, 8, 206, 136, "#fff", C.line, 12)}${PF.num(244, 26, "2", A)}${T(260, 30, "Klávesová skratka", { fs: 12.5, b: 1 })}
+    ${key(258, 60, 60, "⊞ Win")}${T(329, 80, "+", { a: "middle", fs: 18, b: 1 })}${key(342, 60, 40, "I")}${T(329, 120, "otvorí Nastavenia hneď", { a: "middle", fs: 11, c: C.mut })}
+    ${box(8, 154, 206, 138, "#fff", C.line, 12)}${PF.num(26, 172, "3", A)}${T(42, 176, "Pravý klik na plochu", { fs: 12.5, b: 1 })}
+    <rect x="30" y="190" width="162" height="92" rx="6" fill="#E6EEF7"/><rect x="70" y="200" width="112" height="72" rx="6" fill="#fff" stroke="#C9CED6"/>${["Zobraziť", "Nový", "Obrazovka", "Prispôsobiť"].map((t, i) => `${i === 3 ? `<rect x="74" y="${204 + i * 16}" width="104" height="16" rx="3" fill="#DCEBFC"/>` : ""}${T(82, 216 + i * 16, t, { fs: 10.5, b: i === 3 })}`).join("")}
+    ${box(226, 154, 206, 138, "#fff", C.line, 12)}${PF.num(244, 172, "4", A)}${T(260, 176, "Rýchle nastavenia", { fs: 12.5, b: 1 })}
+    <rect x="244" y="190" width="170" height="68" rx="8" fill="#F3F3F3" stroke="#D0D4DA"/>${[["📶", "Wi-Fi", 1], ["🔵", "Bluetooth", 0], ["🌙", "Nočné", 0]].map(([e, n, on], i) => `<rect x="${252 + i * 54}" y="198" width="48" height="30" rx="6" fill="${on ? W : "#fff"}" stroke="#C9CED6"/><text x="${276 + i * 54}" y="219" text-anchor="middle" font-size="13">${e}</text>${T(276 + i * 54, 242, n, { a: "middle", fs: 9 })}`).join("")}<rect x="252" y="248" width="154" height="5" rx="2" fill="#C9CED6"/><rect x="252" y="248" width="96" height="5" rx="2" fill="${W}"/>
+    <rect x="244" y="264" width="170" height="20" rx="3" fill="#E5E5E5"/>${T(404, 278, "📶 🔊 🔋", { a: "end", fs: 10 })}${T(250, 278, "klik vpravo dole", { fs: 9.5, c: C.mut })}`, "Kde otvoriť nastavenia Windows"),
+    "Nastavenia otvoríš cez <b>Štart → ⚙️</b> alebo <b>Win + I</b>. Vzhľad nájdeš aj cez <b>pravý klik na plochu → Prispôsobiť</b>, Wi-Fi, zvuk a jas v <b>rýchlych nastaveniach</b> vpravo dole.")
+}; })();
+
 const KEY = "win-s15-v1";
 const LESSON = "1.5 Základné nastavenie OS Windows";
 const BRAND = "1.5 Nastavenie Windows";
@@ -381,6 +425,7 @@ const VIEWS = {
       <div class="pc"><div class="ic">🔊</div><h4>Oblasť oznámení</h4><p>Kliknutím na ikonu Wi-Fi alebo zvuku rýchlo zmeníš hlasitosť, jas a sieť.</p></div>
       <div class="pc"><div class="ic">🗂️</div><h4>Ovládací panel</h4><p>Starší nástroj. Niektoré veci sa nastavujú ešte stále iba tu.</p></div></div>
     <p>Nastavenia sú rozdelené do <b>kategórií</b>: Systém, Bluetooth a zariadenia, Prispôsobenie, Čas a jazyk, Prístupnosť, Windows Update a ďalšie.</p>
+    ${tfigs(TFIG.cesty)}
     <h3>Úloha 1: otázky</h3><div class="task">${taskHTML("kdeq")}</div>
     <h3>Úloha 2: v ktorej kategórii to nájdeš?</h3><div class="task">${taskHTML("katq")}</div>` + nextBar();
   },

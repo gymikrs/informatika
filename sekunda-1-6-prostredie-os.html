@@ -188,6 +188,11 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .qimg{display:block;margin:8px 0;max-width:300px}.qimg svg{width:100%;height:auto;display:block;border-radius:10px}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
 .prompt{font-size:17px;font-weight:600;margin:4px 0 10px}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -196,6 +201,41 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"win": ["<b>Windows</b> (Microsoft) je najrozšírenejší OS na počítačoch.", "Hlavné prvky: pracovná plocha, ponuka Štart, panel úloh, Prieskumník, Microsoft Store."], "winver": ["Verzie: 95 (prvé tlačidlo Štart), XP, Vista, 7, 8 (dlaždice), 10, 11 (ikony v strede).", "Edície: Home, Pro, Education, Enterprise.", "Po skončení <b>podpory</b> verzia nedostáva bezpečnostné opravy."], "lin": ["<b>Linux</b> je bezplatný a otvorený (open source) OS.", "V Ubuntu: Aktivity, dok s aplikáciami, Súbory, Terminál, App Center."], "distro": ["Jadro Linuxu vytvoril <b>Linus Torvalds</b> v roku 1991. Maskot: tučniak Tux.", "<b>Distribúcia</b> = jadro Linuxu + programy + prostredie (Ubuntu, Mint, Debian, Fedora…).", "Ubuntu 24.04 = apríl 2024. <b>LTS</b> = dlhodobá podpora aspoň 5 rokov."], "and": ["<b>Android</b> (Google) je najrozšírenejší OS na mobiloch, postavený na Linuxe.", "Ovládanie dotykom a gestami, tlačidlá ◁ ○ □, aplikácie z Google Play."], "ios": ["<b>iOS</b> (Apple) beží iba na iPhonoch.", "Ovláda sa gestami, nemá tlačidlo Späť. Aplikácie iba z App Store."], "porov": ["Všetky OS spúšťajú aplikácie, spravujú súbory a zariadenia. Líšia sa vzhľadom a ovládaním.", "Obchody: Microsoft Store, App Center (Ubuntu), Google Play, App Store."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Sekunda 1.6 Prostredie OS */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const U = "#E95420", US = "#FDE6DC";
+return {
+  ubuntu: fig(SV(440, 220, `
+    ${T(14, 24, "Verzia = rok.mesiac vydania", { fs: 13, b: 1, c: U })}
+    <text x="300" y="30" font-size="22" font-weight="700" font-family="Consolas,monospace"><tspan fill="${U}">24</tspan><tspan fill="#5E5877">.</tspan><tspan fill="#12805A">04</tspan></text>${T(300, 46, "rok 2024 · apríl", { fs: 10.5, c: C.mut })}
+    <line x1="20" y1="122" x2="420" y2="122" stroke="#D9CFC8" stroke-width="5" stroke-linecap="round"/>
+    ${[["20.04", 1], ["20.10", 0], ["21.04", 0], ["21.10", 0], ["22.04", 1], ["22.10", 0], ["23.04", 0], ["23.10", 0], ["24.04", 1]].map(([v, lts], i) => { const x = 30 + i * 48; return `<circle cx="${x}" cy="122" r="${lts ? 10 : 6}" fill="${lts ? U : "#fff"}" stroke="${U}" stroke-width="2"/>${T(x, lts ? 98 : 150, v, { a: "middle", fs: 11, b: lts, mono: 1, c: lts ? U : C.ink })}${lts ? T(x, 82, "LTS", { a: "middle", fs: 10, b: 1, c: "#fff" }) : ""}`; }).join("")}
+    ${[30, 222, 414].map(x => `<rect x="${x - 15}" y="70" width="30" height="16" rx="8" fill="${U}"/>${T(x, 82, "LTS", { a: "middle", fs: 10, b: 1, c: "#fff" })}`).join("")}
+    ${box(14, 168, 412, 44, US, null, 10)}${T(220, 186, "Nová verzia každý apríl (.04) a október (.10).", { a: "middle", fs: 11.5, b: 1 })}${T(220, 204, "LTS každé 2 roky v apríli, podpora aspoň 5 rokov.", { a: "middle", fs: 11.5 })}`, "Verzie Ubuntu"),
+    "Ubuntu vychádza dvakrát do roka. Verzie <b>LTS</b> s dlhou podporou vychádzajú každé dva roky v apríli.")
+}; })();
+
 const KEY = "osprost-s16-v1";
 const LESSON = "1.6 Popis prostredia OS Windows, Linux, Android, iOS";
 const BRAND = "1.6 Prostredie OS";
@@ -334,53 +374,75 @@ function mini(k) { const noop = (id, hit, inner) => inner; return SCR[k].svg(noo
 const OS4 = ["Windows", "Linux", "Android", "iOS"];
 const TASKS = {
   f_win: { id: "f_win", type: "custom", max: 3 }, f_lin: { id: "f_lin", type: "custom", max: 3 }, f_and: { id: "f_and", type: "custom", max: 3 }, f_ios: { id: "f_ios", type: "custom", max: 3 },
-  winord: { id: "winord", type: "order", items: [{ id: "a", t: "Windows 95" }, { id: "b", t: "Windows XP" }, { id: "d", t: "Windows 7" }, { id: "f", t: "Windows 10" }, { id: "g", t: "Windows 11" }] },
+  winord: { id: "winord", type: "order", items: [{ id: "a", t: "Windows 95" }, { id: "b", t: "Windows XP" }, { id: "c", t: "Windows Vista" }, { id: "d", t: "Windows 7" }, { id: "e", t: "Windows 8" }, { id: "f", t: "Windows 10" }, { id: "g", t: "Windows 11" }] },
   winq: { id: "winq", type: "mc", qs: [
     { id: "1", q: "V ktorej verzii sa prvýkrát objavilo tlačidlo Štart a panel úloh?", opts: ["Windows 95", "Windows XP", "Windows 7", "Windows 11"], a: 0 },
-    { id: "3", q: "Ktorá verzia má ikony na paneli úloh v strede?", opts: ["Windows 11", "Windows 7", "Windows 95", "Windows Vista"], a: 0 }
+    { id: "2", q: "Ktorá verzia nahradila ponuku Štart veľkými dlaždicami na celú obrazovku?", opts: ["Windows 8", "Windows 7", "Windows XP", "Windows 10"], a: 0, why: "Používatelia sa sťažovali, a tak sa tlačidlo Štart vo Windows 8.1 vrátilo." },
+    { id: "3", q: "Ktorá verzia má ikony na paneli úloh v strede?", opts: ["Windows 11", "Windows 7", "Windows 95", "Windows Vista"], a: 0 },
+    { id: "4", q: "Podpora Windows 10 sa skončila v októbri 2025. Čo to znamená?", opts: ["Microsoft už nevydáva bezpečnostné opravy, počítač je zraniteľnejší", "Windows 10 sa hneď vypne", "Všetky súbory sa vymažú", "Nič, nemá to žiadny význam"], a: 0 },
+    { id: "5", q: "Čo potrebuje počítač, aby na ňom oficiálne bežali Windows 11?", opts: ["Bezpečnostný čip TPM 2.0 a dostatočne nový procesor", "Iba pripojenie na internet", "Dotykovú obrazovku", "Grafickú kartu na hry"], a: 0 }
   ]},
   edq: { id: "edq", type: "mc", keep: true, qs: [
     { id: "1", q: "Bežný domáci počítač, rodina doma.", opts: ["Home", "Pro", "Education", "Enterprise"], a: 0 },
-    { id: "2", q: "Počítače v škole pre žiakov a učiteľov.", opts: ["Home", "Pro", "Education", "Enterprise"], a: 2 }
+    { id: "2", q: "Počítače v škole pre žiakov a učiteľov.", opts: ["Home", "Pro", "Education", "Enterprise"], a: 2 },
+    { id: "3", q: "Živnostník alebo malá firma, potrebuje šifrovanie disku a vzdialenú plochu.", opts: ["Home", "Pro", "Education", "Enterprise"], a: 1 },
+    { id: "4", q: "Veľká firma s tisíckami počítačov a vlastnými správcami siete.", opts: ["Home", "Pro", "Education", "Enterprise"], a: 3 }
   ]},
   dsort2: { id: "dsort2", type: "sort",
     buckets: [{ id: "z", label: "🌱 Pre začiatočníkov", sub: "jednoduchá inštalácia a ovládanie" }, { id: "p", label: "🛠️ Pre pokročilých a špeciálne účely" }],
-    items: [{ id: "1", t: "Ubuntu", b: "z" }, { id: "2", t: "Linux Mint", b: "z" }, { id: "5", t: "Arch Linux", b: "p" }, { id: "6", t: "Kali Linux (bezpečnosť)", b: "p" }],
-    after: "Hranica nie je presná: Ubuntu beží aj na serveroch. Kali Linux však slúži odborníkom na testovanie bezpečnosti sietí." },
+    items: [{ id: "1", t: "Ubuntu", b: "z" }, { id: "2", t: "Linux Mint", b: "z" }, { id: "3", t: "Raspberry Pi OS", b: "z" }, { id: "4", t: "Zorin OS", b: "z" }, { id: "5", t: "Arch Linux", b: "p" }, { id: "6", t: "Kali Linux (bezpečnosť)", b: "p" }, { id: "7", t: "Debian (servery)", b: "p" }],
+    after: "Hranica nie je presná: Debian zvládne aj začiatočník a Ubuntu beží aj na serveroch. Kali Linux však slúži odborníkom na testovanie bezpečnosti sietí." },
   ubq: { id: "ubq", type: "mc", qs: [
+    { id: "1", q: "Čo znamená číslo verzie Ubuntu 24.04?", opts: ["Vyšla v apríli (04) roku 2024", "Je to 24. verzia, 4. oprava", "Má 24 aplikácií a 4 hry", "Vyšla 24. apríla"], a: 0 },
     { id: "2", q: "Čo znamená skratka LTS pri Ubuntu?", opts: ["Long Term Support: dlhodobá podpora, aspoň 5 rokov opráv", "Linux Test System", "Last Time Supported", "Light Terminal System"], a: 0 },
-    { id: "4", q: "Kto vytvoril jadro Linuxu v roku 1991?", opts: ["Linus Torvalds", "Bill Gates", "Steve Jobs", "Guido van Rossum"], a: 0 }
+    { id: "3", q: "Ktorá z týchto verzií je LTS?", opts: ["24.04", "24.10", "23.10", "25.10"], a: 0, why: "LTS verzie vychádzajú každé 2 roky v apríli párneho roka: 20.04, 22.04, 24.04, 26.04…" },
+    { id: "4", q: "Kto vytvoril jadro Linuxu v roku 1991?", opts: ["Linus Torvalds", "Bill Gates", "Steve Jobs", "Guido van Rossum"], a: 0 },
+    { id: "5", q: "Na ktorej distribúcii je postavené Ubuntu?", opts: ["Debian", "Windows", "Android", "iOS"], a: 0 },
+    { id: "6", q: "Linux Mint vyzerá podobne ako Windows. Na čom je postavený?", opts: ["Na Ubuntu", "Na Windows 7", "Na iOS", "Na Androide"], a: 0 }
   ]},
   ubin: { id: "ubin", type: "input", qs: [
     { id: "1", q: "Ubuntu vychádza dvakrát ročne. V ktorých mesiacoch? Napíš čísla mesiacov oddelené čiarkou.", ok: v => { const n = String(v).match(/\d+/g); return !!n && n.map(Number).sort((a, b) => a - b).join(",") === "4,10"; }, show: "4, 10 (apríl a október)", ph: "?, ?" },
+    { id: "2", q: "Verzia 22.04 sa volá Jammy Jellyfish. Aká verzia vyšla v októbri 2024?", ok: v => /^24[.,]10$/.test(String(v).trim()), show: "24.10", ph: "??.??" },
     { id: "3", q: "Ako sa volá maskot Linuxu (tučniak)?", ok: v => /tux/i.test(v), show: "Tux", ph: "?" }
   ]},
   linq: { id: "linq", type: "mc", qs: [
-    { id: "1", q: "Čím sa Linux líši od Windows?", opts: ["Je zadarmo a existuje v mnohých verziách (distribúciách), napr. Ubuntu", "Beží iba na mobiloch", "Nemá grafické prostredie", "Nedá sa naň pripojiť internet"], a: 0 }
+    { id: "1", q: "Čím sa Linux líši od Windows?", opts: ["Je zadarmo a existuje v mnohých verziách (distribúciách), napr. Ubuntu", "Beží iba na mobiloch", "Nemá grafické prostredie", "Nedá sa naň pripojiť internet"], a: 0 },
+    { id: "2", q: "Ako sa volá správca súborov v Ubuntu?", opts: ["Súbory", "Prieskumník", "Finder", "Kôš"], a: 0 }
   ]},
   andq: { id: "andq", type: "mc", qs: [
-    { id: "1", q: "Ako v Androide otvoríš oznámenia a rýchle nastavenia (Wi-Fi, baterka)?", opts: ["Potiahnem prstom zhora nadol", "Stlačím tlačidlo □", "Otvorím Obchod Play", "Zatrasiem telefónom"], a: 0 }
+    { id: "1", q: "Ako v Androide otvoríš oznámenia a rýchle nastavenia (Wi-Fi, baterka)?", opts: ["Potiahnem prstom zhora nadol", "Stlačím tlačidlo □", "Otvorím Obchod Play", "Zatrasiem telefónom"], a: 0 },
+    { id: "2", q: "Čo je widget?", opts: ["Živá časť plochy, ktorá ukazuje informácie, napr. počasie", "Ikona Koša", "Druh nabíjačky", "Tlačidlo Späť"], a: 0 }
   ]},
   iosq: { id: "iosq", type: "mc", qs: [
-    { id: "1", q: "iPhone nemá tlačidlo Späť. Ako sa v aplikácii vrátiš o krok späť?", opts: ["Potiahnem prstom od ľavého okraja doprava, alebo ťuknem na šípku vľavo hore", "Nedá sa to", "Stlačím hlasitosť", "Reštartujem telefón"], a: 0 }
+    { id: "1", q: "iPhone nemá tlačidlo Späť. Ako sa v aplikácii vrátiš o krok späť?", opts: ["Potiahnem prstom od ľavého okraja doprava, alebo ťuknem na šípku vľavo hore", "Nedá sa to", "Stlačím hlasitosť", "Reštartujem telefón"], a: 0 },
+    { id: "2", q: "Odkiaľ sa na iPhone bežne inštalujú aplikácie?", opts: ["Iba z App Store", "Z Google Play", "Z Microsoft Store", "Z USB kľúča"], a: 0 }
   ]},
   ktory: { id: "ktory", type: "mc", keep: true, qs: [
     { id: "1", q: `Ktorý systém je na obrázku?<div class="qimg">${mini("lin")}</div>`, opts: OS4, a: 1 },
     { id: "2", q: `Ktorý systém je na obrázku?<div class="qimg" style="max-width:160px">${mini("ios")}</div>`, opts: OS4, a: 3 },
+    { id: "3", q: `Ktorý systém je na obrázku?<div class="qimg">${mini("win")}</div>`, opts: OS4, a: 0 },
     { id: "4", q: `Ktorý systém je na obrázku?<div class="qimg" style="max-width:160px">${mini("and")}</div>`, opts: OS4, a: 2 }
   ]},
   fsort: { id: "fsort", type: "sort",
     buckets: OS4.map((o, i) => ({ id: ["w", "l", "a", "i"][i], label: ["🪟 ", "🐧 ", "🤖 ", "🍏 "][i] + o })),
-    items: [{ id: "1", t: "Tlačidlo Štart a panel úloh", b: "w" }, { id: "4", t: "Terminál a App Center, zadarmo", b: "l" }, { id: "5", t: "Tlačidlá ◁ ○ □", b: "a" }, { id: "8", t: "App Store na iPhone", b: "i" }] },
+    items: [{ id: "1", t: "Tlačidlo Štart a panel úloh", b: "w" }, { id: "2", t: "Prieskumník", b: "w" }, { id: "3", t: "Aktivity a dok vľavo", b: "l" }, { id: "4", t: "Terminál a App Center, zadarmo", b: "l" }, { id: "5", t: "Tlačidlá ◁ ○ □", b: "a" }, { id: "6", t: "Obchod Google Play", b: "a" }, { id: "7", t: "Dynamic Island", b: "i" }, { id: "8", t: "App Store na iPhone", b: "i" }] },
   obchod: { id: "obchod", type: "mc", keep: true, qs: [
+    { id: "1", q: "Microsoft Store patrí k systému:", opts: OS4, a: 0 },
     { id: "2", q: "Google Play patrí k systému:", opts: OS4, a: 2 },
-    { id: "3", q: "App Store patrí k systému:", opts: OS4, a: 3 }
+    { id: "3", q: "App Store patrí k systému:", opts: OS4, a: 3 },
+    { id: "4", q: "App Center (Softvér Ubuntu) patrí k systému:", opts: OS4, a: 1 }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", q: "Kde vo Windows nájdeš zoznam všetkých aplikácií?", opts: ["V ponuke Štart", "V Koši", "V oblasti oznámení", "V Prieskumníkovi"], a: 0 },
     { id: "2", q: "Ktorý systém je open source a zadarmo?", opts: ["Linux", "Windows", "iOS", "macOS"], a: 0 },
     { id: "3", q: "Tlačidlá ◁ ○ □ sú typické pre:", opts: ["Android", "iOS", "Windows", "Linux"], a: 0 },
-    { id: "7", q: "Čo majú všetky štyri systémy spoločné?", opts: ["Spúšťajú aplikácie a spravujú súbory", "Rovnaký vzhľad", "Rovnakú firmu", "Tlačidlo Štart"], a: 0 }
+    { id: "4", q: "Obchod s aplikáciami pre iPhone sa volá:", opts: ["App Store", "Google Play", "Microsoft Store", "App Center"], a: 0 },
+    { id: "5", q: "Terminál slúži na:", opts: ["zadávanie príkazov písaním", "hranie hier", "prehrávanie hudby", "kreslenie"], a: 0 },
+    { id: "6", q: "Ako v Androide zobrazíš oznámenia?", opts: ["Potiahnutím prsta zhora nadol", "Tlačidlom Domov", "Podržaním ikony", "Otvorením Fotoaparátu"], a: 0 },
+    { id: "7", q: "Čo majú všetky štyri systémy spoločné?", opts: ["Spúšťajú aplikácie a spravujú súbory", "Rovnaký vzhľad", "Rovnakú firmu", "Tlačidlo Štart"], a: 0 },
+    { id: "8", q: "Správca súborov vo Windows sa volá:", opts: ["Prieskumník", "Súbory", "Finder", "Terminál"], a: 0 },
+    { id: "9", q: "Ktorá verzia Windows je najnovšia?", opts: ["Windows 11", "Windows 10", "Windows 8", "Windows XP"], a: 0 },
+    { id: "10", q: "Ubuntu, Linux Mint a Fedora sú:", opts: ["distribúcie Linuxu", "verzie Windows", "mobilné aplikácie", "prehliadače"], a: 0 }
   ]}
 };
 
@@ -406,6 +468,7 @@ const VIEWS = {
     <div class="two"><div class="box v" style="margin:0"><p>Číslo verzie je <b>rok.mesiac</b> vydania: <b>24.04</b> = apríl 2024. Ubuntu vychádza každý <b>apríl</b> a <b>október</b>.</p><p style="margin:0">Každé 2 roky v apríli vyjde verzia <b>LTS</b> (Long Term Support) s podporou aspoň 5 rokov. Do škôl a firiem sa inštalujú hlavne LTS verzie.</p></div>
       <div class="box" style="margin:0"><p>Každá verzia má aj zábavné meno: prídavné meno a zviera na rovnaké písmeno.</p><p style="margin:0">22.04 LTS <b>Jammy Jellyfish</b> (veselá medúza)<br>24.04 LTS <b>Noble Numbat</b> (vznešený mravčiar)</p></div></div>
     <p>Ubuntu má aj „príchute“ s iným vzhľadom: <b>Kubuntu</b> (prostredie KDE Plasma), <b>Xubuntu</b> (Xfce, pre staršie počítače) a ďalšie.</p>
+    ${tfigs(TFIG.ubuntu)}
     <h3>Úloha 1: pre koho je distribúcia?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("dsort2")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("ubq")}</div>
     <h3>Úloha 3: doplň</h3><div class="task">${taskHTML("ubin")}</div>` + nextBar();
