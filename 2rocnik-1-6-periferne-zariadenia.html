@@ -220,6 +220,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .ports div{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;text-align:center;font-size:13.5px}
 .ports svg{width:100%;height:60px;display:block}
 .ports b{display:block;font-size:14.5px}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -254,6 +259,45 @@ function efClick(e) {
 document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-sz]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
+
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – 2. ročník 1.6 Periférne zariadenia */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, pc } = PF; const A = "#0B7A75", AS = "#DDF2F0";
+return {
+  jednotka: fig(SV(440, 260, `
+    <rect x="176" y="70" width="88" height="130" rx="8" fill="#2D3748"/><rect x="186" y="82" width="68" height="10" rx="2" fill="#4A5568"/><circle cx="220" cy="180" r="7" fill="#3CCB8E"/>
+    ${box(150, 206, 140, 46, AS, A, 10)}${T(220, 225, "základná jednotka", { a: "middle", fs: 11.5, b: 1, c: A })}${T(220, 241, "doska, CPU, RAM, disk", { a: "middle", fs: 10, c: C.mut })}
+    ${[["🖥️", "monitor", 40, 20, "out"], ["🖨️", "tlačiareň", 330, 20, "out"], ["⌨️", "klávesnica", 20, 110, "in"], ["🔊", "reproduktory", 340, 110, "out"], ["🖱️", "myš", 40, 196, "in"], ["📷", "webkamera", 330, 196, "in"]].map(([e, n, x, y, d]) => `${box(x, y, 80, 54, d === "in" ? C.blueS : C.okS, d === "in" ? C.blue : C.ok, 10)}<text x="${x + 40}" y="${y + 28}" text-anchor="middle" font-size="20">${e}</text>${T(x + 40, y + 46, n, { a: "middle", fs: 10, b: 1 })}<line x1="${x + (x < 200 ? 80 : 0)}" y1="${y + 27}" x2="${x < 200 ? 176 : 264}" y2="${Math.min(190, Math.max(80, y + 27))}" stroke="#9AA5B4" stroke-width="2" stroke-dasharray="4 3"/>`).join("")}
+    ${T(220, 30, "periférie = zvonka pripojené", { a: "middle", fs: 11.5, b: 1, c: A })}${T(220, 50, "modré vstupné · zelené výstupné", { a: "middle", fs: 10, c: C.mut })}`, "Základná jednotka a periférie"),
+    "<b>Základná jednotka</b> obsahuje dosku, procesor, pamäť a disk. Všetko, čo je pripojené zvonka, sú <b>periférie</b>."),
+  pnp: fig(SV(440, 260, `
+    ${box(10, 10, 420, 70, C.okS, C.ok, 12)}${T(30, 40, "🔌 Plug and Play", { fs: 14, b: 1, c: C.ok })}${T(30, 62, "zapojíš → Windows nájde ovládač → zariadenie funguje", { fs: 11.5 })}
+    ${box(10, 92, 420, 160, "#fff", "#C9CED6", 8)}<rect x="10" y="92" width="420" height="28" rx="8" fill="#F3F3F3"/>${T(22, 111, "🖥️ Správca zariadení", { fs: 12, b: 1 })}
+    ${[["▾ ⌨️ Klávesnice", 0, ""], ["   Klávesnica HID", 1, ""], ["▾ 🖨️ Tlačové fronty", 0, ""], ["   Tlačiareň Laser 200", 1, "⚠️"], ["▾ 🖱️ Myši", 0, ""], ["   Myš HID", 1, ""]].map(([t, ind, w], i) => `${T(26 + ind * 18, 140 + i * 18, t.trim(), { fs: 11, b: !ind })}${w ? `${T(26 + 18 + 150, 140 + i * 18, w, { fs: 12 })}` : ""}`).join("")}
+    ${box(250, 186, 170, 56, C.ambS, C.amb, 8)}${T(260, 206, "⚠️ = chýba ovládač", { fs: 11, b: 1, c: C.amb })}${T(260, 222, "stiahni ho z oficiálnej", { fs: 10.5 })}${T(260, 236, "stránky výrobcu", { fs: 10.5 })}`, "Plug and Play a Správca zariadení"),
+    "Väčšinu zariadení Windows nastaví sám (<b>Plug and Play</b>). Problém s ovládačom ukáže žltý trojuholník v <b>Správcovi zariadení</b>.")
+}; })();
 
 const KEY = "periferie-m16-v1";
 const LESSON = "1.6 Periférne zariadenia";
@@ -332,13 +376,14 @@ const PR = ["Atramentová", "Laserová", "Termotlačiareň", "3D tlačiareň", "
 const TASKS = {
   psort: { id: "psort", type: "sort",
     buckets: [{ id: "i", label: "⌨️ Vstupné" }, { id: "o", label: "🖥️ Výstupné" }, { id: "b", label: "🔁 Vstupno-výstupné" }],
-    items: [{ id: "1", t: "Klávesnica", b: "i" }, { id: "2", t: "Myš", b: "i" }, { id: "3", t: "Skener", b: "i" }, { id: "5", t: "Mikrofón", b: "i" }, { id: "6", t: "Monitor", b: "o" }, { id: "7", t: "Tlačiareň", b: "o" }, { id: "8", t: "Projektor", b: "o" }, { id: "10", t: "Dotyková obrazovka", b: "b" }, { id: "11", t: "Headset s mikrofónom", b: "b" }, { id: "12", t: "Multifunkčná tlačiareň so skenerom", b: "b" }],
+    items: [{ id: "1", t: "Klávesnica", b: "i" }, { id: "2", t: "Myš", b: "i" }, { id: "3", t: "Skener", b: "i" }, { id: "4", t: "Webkamera", b: "i" }, { id: "5", t: "Mikrofón", b: "i" }, { id: "6", t: "Monitor", b: "o" }, { id: "7", t: "Tlačiareň", b: "o" }, { id: "8", t: "Projektor", b: "o" }, { id: "9", t: "Reproduktory", b: "o" }, { id: "10", t: "Dotyková obrazovka", b: "b" }, { id: "11", t: "Headset s mikrofónom", b: "b" }, { id: "12", t: "Multifunkčná tlačiareň so skenerom", b: "b" }],
     after: "Vstupno-výstupné zariadenia údaje aj prijímajú, aj posielajú. Externý disk a USB kľúč sú pamäťové médiá, ktoré sa tiež často radia sem." },
   f_kb: { id: "f_kb", type: "custom", max: 5 },
   vstq: { id: "vstq", type: "mc", qs: [
     { id: "1", ...Q("Čo udáva DPI myši?", ["citlivosť: o koľko bodov sa kurzor posunie na palec pohybu", "počet tlačidiel", "dĺžku kábla", "farbu podsvietenia"], 0) },
     { id: "2", ...Q("Čo robí technológia OCR pri skenovaní?", ["rozpozná text na obrázku a urobí z neho upraviteľný text", "zväčší obrázok", "vytlačí dokument", "zmenší súbor"], 0) },
-    { id: "3", ...Q("Aké rozloženie má slovenská klávesnica?", ["QWERTZ", "QWERTY", "AZERTY", "ABCDEF"], 0) }
+    { id: "3", ...Q("Aké rozloženie má slovenská klávesnica?", ["QWERTZ", "QWERTY", "AZERTY", "ABCDEF"], 0) },
+    { id: "4", ...Q("Ktoré zariadenie používa grafik na kreslenie perom?", ["grafický tablet", "trackball", "čítačka čiarových kódov", "gamepad"], 0) }
   ]},
   monin: { id: "monin", type: "input", qs: [
     inq("1", "Koľko pixelov má obrazovka Full HD (1920 × 1080)?", 2073600), inq("2", "Koľko pixelov má 4K (3840 × 2160)?", 8294400),
@@ -349,7 +394,8 @@ const TASKS = {
     { id: "1", ...Q("Kancelária tlačí stovky čiernobielych strán denne, rýchlo a lacno.", PR, 1) },
     { id: "2", ...Q("Doma občas tlačíš farebné fotky na fotopapier.", PR, 0) },
     { id: "3", ...Q("Pokladnica v obchode tlačí bločky bez náplne, teplom.", PR, 2) },
-    { id: "4", ...Q("V škole chceme vyrobiť plastový model súčiastky.", PR, 3) }
+    { id: "4", ...Q("V škole chceme vyrobiť plastový model súčiastky.", PR, 3) },
+    { id: "5", ...Q("Firma tlačí faktúry cez kopírovací papier na viac kópií naraz.", PR, 4) }
   ]},
   portq: { id: "portq", type: "mc", keep: true, qs: [
     { id: "1", ...Q("Pripájaš externý disk.", PT, 0) }, { id: "2", ...Q("Pripájaš monitor alebo televízor s obrazom aj zvukom.", PT, 1) },
@@ -372,7 +418,9 @@ const TASKS = {
     { id: "3", ...Q("Rozlíšenie 3840 × 2160 sa označuje:", ["4K UHD", "Full HD", "HD", "VGA"], 0) },
     { id: "4", ...Q("Čo udáva ppm pri tlačiarni?", ["počet strán za minútu", "počet bodov na palec", "cenu tonera", "hlučnosť"], 0) },
     { id: "5", ...Q("Laserová tlačiareň používa:", ["toner (prášok)", "atrament", "teplo a termopapier", "plastové vlákno"], 0) },
-    { id: "6", ...Q("Ktorý konektor je obojstranný?", ["USB-C", "USB-A", "VGA", "HDMI"], 0) }
+    { id: "6", ...Q("Ktorý konektor je obojstranný?", ["USB-C", "USB-A", "VGA", "HDMI"], 0) },
+    { id: "7", ...Q("Ktoré rozhranie prenáša obraz aj zvuk do televízora?", ["HDMI", "RJ-45", "VGA", "PS/2"], 0) },
+    { id: "8", ...Q("Kde vo Windows skontroluješ, či má zariadenie ovládač?", ["v Správcovi zariadení", "v Koši", "v Poznámkovom bloku", "v Kalkulačke"], 0) }
   ]}
 };
 const VIEWS = {
@@ -380,6 +428,7 @@ const VIEWS = {
     <div class="theory"><p>Počítač sa skladá zo <b>základnej jednotky</b> (skriňa, v notebooku telo) so základnou doskou, procesorom, pamäťou a diskom a z <b>periférnych zariadení</b>, ktoré sú pripojené zvonka. Periférie zabezpečujú komunikáciu počítača s človekom a okolím.</p>
       <ul><li><b>Vstupné</b> zariadenia údaje do počítača <b>posielajú</b>: klávesnica, myš, skener, mikrofón, webkamera.</li><li><b>Výstupné</b> zariadenia údaje z počítača <b>zobrazujú alebo vydávajú</b>: monitor, tlačiareň, reproduktory, projektor.</li><li><b>Vstupno-výstupné</b> robia oboje: dotyková obrazovka, headset, multifunkčné zariadenie (tlačiareň so skenerom).</li></ul>
       <p>Na to, aby operačný systém so zariadením vedel pracovať, potrebuje <b>ovládač</b> (driver). Väčšinu bežných zariadení Windows rozpozná sám po pripojení: <b>Plug and Play</b> („zapoj a hraj“).</p></div>
+    ${tfigs(TFIG.jednotka)}
     <h3>Úloha: roztrieď zariadenia</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(); },
   vstupne() { return head() + `<h2>Vstupné zariadenia</h2>
     <div class="theory"><p><b>Klávesnica</b> je základné vstupné zariadenie. Môže byť <b>membránová</b> (tichá, lacná) alebo <b>mechanická</b> (každý kláves má vlastný spínač, dlhšia životnosť). Slovenská klávesnica má rozloženie <b>QWERTZ</b>.</p>
@@ -406,6 +455,7 @@ const VIEWS = {
     <h3>Úloha 2: rýchlosť prenosu</h3><div class="task">${taskHTML("usbin")}</div>` + nextBar(); },
   vyber() { return head() + `<h2>Výber zariadenia a ovládače</h2>
     <div class="theory"><p>Pri výbere periférie sa pýtaj: <b>na čo</b> ju potrebujem, aké <b>parametre</b> sú dôležité, <b>ako</b> ju pripojím a či má <b>ovládač</b> pre môj operačný systém. Ovládač sa zvyčajne nainštaluje automaticky cez Windows Update, inak ho stiahneme z oficiálnej stránky výrobcu. Stav zariadení ukáže <b>Správca zariadení</b> (pravým klikom na Štart).</p></div>
+    ${tfigs(TFIG.pnp)}
     <h3>Úloha: otázky</h3><div class="task">${taskHTML("vybq")}</div>` + nextBar(); },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };

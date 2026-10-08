@@ -227,6 +227,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .lab{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr);gap:18px;align-items:start}
 @media (max-width:860px){.lab{grid-template-columns:1fr}}
 .wide-svg svg{width:100%;height:auto;display:block}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -293,6 +298,57 @@ function tmHTML() {
 }
 
 const OSCARD = (c, n, d, dev) => `<div class="pc"><svg viewBox="0 0 64 64" width="54" height="54" aria-hidden="true"><rect x="4" y="10" width="56" height="40" rx="6" fill="${c}"/><rect x="10" y="16" width="44" height="28" rx="3" fill="#fff" opacity=".9"/><rect x="24" y="52" width="16" height="6" fill="${c}"/><text x="32" y="36" text-anchor="middle" font-family="Rubik,sans-serif" font-size="13" font-weight="800" fill="${c}">${n[0]}</text></svg><h4>${n}</h4><p>${d}</p><p style="margin-top:4px"><b>${dev}</b></p></div>`;
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – 2. ročník 2.2 Operačný systém */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#0B7A75", AS = "#DDF2F0";
+return {
+  cligui: fig(SV(440, 230, `
+    ${T(111, 20, "CLI: textové rozhranie", { a: "middle", fs: 12.5, b: 1, c: A })}${box(8, 30, 206, 160, "#0C0C0C", null, 8)}
+    ${["C:\\> dir", " referat.docx", " fotky", "C:\\> cd fotky", "C:\\fotky> _"].map((l, i) => T(18, 54 + i * 22, l, { fs: 11.5, mono: 1, c: "#CCCCCC" })).join("")}
+    ${T(111, 212, "píšeš príkazy", { a: "middle", fs: 11.5, b: 1 })}
+    ${T(329, 20, "GUI: grafické rozhranie", { a: "middle", fs: 12.5, b: 1, c: A })}${box(226, 30, 206, 160, "#3B82C4", null, 8)}
+    ${box(240, 44, 120, 84, "#fff", null, 6)}<rect x="240" y="44" width="120" height="16" rx="6" fill="#E5E7EB"/>${T(248, 56, "Prieskumník", { fs: 9 })}${T(256, 92, "📁", { fs: 18 })}${T(290, 92, "📄", { fs: 18 })}${T(324, 92, "🖼️", { fs: 18 })}
+    ${[0, 1, 2].map(i => T(246 + i * 24, 152, ["🗑️", "📁", "🌐"][i], { fs: 16 })).join("")}<rect x="226" y="170" width="206" height="20" fill="#1E293B"/>${T(236, 184, "⊞", { fs: 11, c: "#fff" })}<path d="M380 110 l10 26 l4 -10 l10 -2 z" fill="#fff" stroke="#000"/>
+    ${T(329, 212, "klikáš myšou na okná a ikony", { a: "middle", fs: 11.5, b: 1 })}`, "Textové a grafické rozhranie"),
+    "Kedysi sa počítač ovládal iba <b>príkazmi</b> (CLI). Dnes používame <b>grafické rozhranie</b> (GUI), príkazový riadok ostal správcom."),
+  multi: fig(SV(440, 230, `
+    ${T(111, 20, "JEDNOÚLOHOVÝ", { a: "middle", fs: 12.5, b: 1, c: C.mut })}${box(8, 30, 206, 150, "#111", null, 8)}${T(111, 100, "beží iba 1 program", { a: "middle", fs: 12, c: "#ddd" })}${T(111, 120, "(MS-DOS)", { a: "middle", fs: 11, c: "#999" })}
+    ${T(329, 20, "VIACÚLOHOVÝ (multitasking)", { a: "middle", fs: 12.5, b: 1, c: A })}${box(226, 30, 206, 150, "#DCEBFC", null, 8)}
+    ${[["🌐 prehliadač", 236, 40], ["🎵 hudba", 266, 70], ["📝 Word", 296, 100]].map(([t, x, y]) => `${box(x, y, 120, 60, "#fff", "#9AA5B4", 6)}<rect x="${x}" y="${y}" width="120" height="16" rx="6" fill="#E5E7EB"/>${T(x + 6, y + 12, t, { fs: 9.5, b: 1 })}`).join("")}
+    ${T(329, 202, "OS delí procesor a RAM medzi programy", { a: "middle", fs: 11, b: 1 })}${T(111, 202, "ďalší program až po skončení", { a: "middle", fs: 11, b: 1 })}`, "Jednoúlohový a viacúlohový systém"),
+    "<b>Viacúlohový</b> systém rýchlo strieda programy na procesore, takže sa zdá, že bežia naraz."),
+  fs: fig(SV(440, 230, `
+    ${box(8, 8, 200, 214, AS, A, 12)}${T(108, 32, "📖 OBSAH (súborový systém)", { a: "middle", fs: 11.5, b: 1, c: A })}
+    ${[["referat.docx", "blok 1–3", C.acc], ["fotka.jpg", "blok 4–14", C.ok], ["hudba.mp3", "blok 15–30", C.amb], ["poznamky.txt", "blok 31", C.blue]].map(([a, b, c], i) => `<rect x="20" y="${54 + i * 30}" width="10" height="12" rx="2" fill="${c}"/>${T(36, 64 + i * 30, a, { fs: 11, b: 1, mono: 1 })}${T(196, 64 + i * 30, b, { fs: 10.5, a: "end", c: C.mut })}<line x1="20" y1="${72 + i * 30}" x2="196" y2="${72 + i * 30}" stroke="#B8DCD8" stroke-dasharray="2 3"/>`).join("")}
+    ${T(108, 196, "kde čo leží, meno, práva", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(212, 110, 232, 110, A, 2.5)}
+    ${box(236, 8, 196, 214, "#fff", C.line, 12)}${T(334, 32, "💽 DISK (bloky)", { a: "middle", fs: 11.5, b: 1 })}
+    ${Array.from({ length: 48 }, (_, i) => { const r = Math.floor(i / 8), c = i % 8, col = i < 3 ? C.acc : i < 14 ? C.ok : i < 30 ? C.amb : i === 30 ? C.blue : "#E5E7EB"; return `<rect x="${248 + c * 22}" y="${44 + r * 26}" width="18" height="20" rx="3" fill="${col}"/>`; }).join("")}
+    ${T(334, 214, "formátovanie = nový prázdny obsah", { a: "middle", fs: 10.5, b: 1, c: C.bad })}`, "Súborový systém ako obsah knihy"),
+    "<b>Súborový systém</b> je ako obsah knihy: vie, v ktorých blokoch disku leží každý súbor. Formátovanie vytvorí nový, prázdny obsah.")
+}; })();
+
 const KEY = "os-m22-v1";
 const LESSON = "2.2 Operačný systém – vlastnosti a funkcie, druhy OS";
 const BRAND = "2.2 Operačný systém";
@@ -386,6 +442,7 @@ const VIEWS = {
     <h3>Úloha 2: ktorá funkcia OS to je?</h3><div class="task">${taskHTML("funq")}</div>` + nextBar(); },
   vlastnosti() { return head() + `<h2>Vlastnosti operačných systémov</h2>
     <div class="theory"><ul><li><b>Počet úloh</b>: jednoúlohový (starý MS-DOS) × <b>viacúlohový</b> (multitasking, dnes všetky).</li><li><b>Počet používateľov</b>: jednopoužívateľský × <b>viacpoužívateľský</b> (kontá, práva, súčasná práca viacerých ľudí na serveri).</li><li><b>Šírka slova</b>: <b>32-bitový</b> (najviac 4 GB RAM) × <b>64-bitový</b> (dnes štandard).</li><li><b>Rozhranie</b>: textové (CLI) × grafické (GUI).</li><li><b>Real-time</b> systémy zaručujú odozvu v presnom čase (autá, lietadlá, priemysel).</li><li><b>Licencia</b>: <b>proprietárny</b> (Windows, macOS; kód je tajný, platí sa licencia) × <b>open source</b> (Linux; kód je verejný, väčšinou zadarmo).</li></ul></div>
+    ${tfigs(TFIG.cligui, TFIG.multi)}
     <h3>Úloha 1: otázky</h3><div class="task">${taskHTML("vlq")}</div>
     <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("vlin")}</div>` + nextBar(); },
   fs() { return head() + `<h2>Súborové systémy</h2>
@@ -393,6 +450,7 @@ const VIEWS = {
     <div class="theory"><p><b>Súborový systém</b> určuje, ako sú súbory a priečinky zapísané na disku: kde ležia, ako sa volajú, aké majú práva. Disk ho dostane pri <b>formátovaní</b>.</p>
       <table><thead><tr><th>Systém</th><th>Kde sa používa</th><th>Poznámka</th></tr></thead><tbody><tr><td><b>FAT32</b></td><td>staršie USB kľúče, karty, zariadenia</td><td>súbor najviac 4 GB, bez práv</td></tr><tr><td><b>exFAT</b></td><td>USB kľúče, SD karty</td><td>veľké súbory, funguje vo Windows aj macOS</td></tr><tr><td><b>NTFS</b></td><td>disky s Windows</td><td>práva, šifrovanie, žurnálovanie</td></tr><tr><td><b>ext4</b></td><td>Linux</td><td>štandard väčšiny distribúcií</td></tr><tr><td><b>APFS</b></td><td>macOS, iOS</td><td>optimalizovaný pre SSD</td></tr></tbody></table>
       <p>Formátovanie vymaže obsah disku, preto ho robíme opatrne.</p></div>
+    ${tfigs(TFIG.fs)}
     <h3>Úloha: ktorý súborový systém sa hodí?</h3><div class="task">${taskHTML("fsq")}</div>` + nextBar(); },
   druhy() { return head() + `<h2>Druhy operačných systémov</h2>
     <div class="cards">${OSCARD("#1766C2", "Windows", "Najrozšírenejší desktopový OS. Verzie Home, Pro, Education, Server.", "Microsoft, proprietárny")}${OSCARD("#56626E", "macOS", "Počítače Mac, na jadre Unixového typu.", "Apple, proprietárny")}${OSCARD("#C2560C", "Linux", "Jadro Linus Torvalds (1991), distribúcie Ubuntu, Debian, Fedora. Vládne serverom.", "open source")}${OSCARD("#12805A", "Android", "Mobily a tablety, postavený na jadre Linuxu.", "Google, open source základ")}${OSCARD("#6A3FD0", "iOS / iPadOS", "iPhone a iPad.", "Apple, proprietárny")}${OSCARD("#D9A400", "ChromeOS", "Chromebooky, práca hlavne cez web.", "Google")}</div>
