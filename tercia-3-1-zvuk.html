@@ -177,6 +177,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .sr .ad{display:inline-block;font-size:11px;font-weight:700;border:1px solid #1B1B1F;border-radius:4px;padding:0 5px;margin-right:6px}
 .srch{background:#fff;border:1px solid #D9D5E5;border-radius:12px;padding:12px}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -185,6 +190,42 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"precvic": ["Editor (Audacity) na úpravy, diktafón na rýchlu nahrávku; WAV na archív a úpravy, MP3 na posielanie; zlú nahrávku radšej nahraj znova."], "zvuk": ["<b>Zvuk</b> je vlnenie vzduchu. Mikrofón ho mení na elektrický signál, reproduktor späť na zvuk.", "<b>Frekvencia</b> (Hz) určuje výšku tónu, <b>amplitúda</b> hlasitosť (dB)."], "programy": ["Nahrávanie: Zvukový záznamník (Windows), diktafón v mobile. Úpravy: <b>Audacity</b> (zadarmo).", "Prehrávanie: VLC media player, Media Player.", "Programy sťahuj z oficiálnych stránok."], "nahraj": ["Na nahrávanie potrebuješ <b>mikrofón</b> a povolenie prístupu k nemu.", "Rýchlejšie prehrávanie zvýši hlas, pomalšie ho zníži."], "uprava": ["V editore vidíš zvuk ako vlnu: vysoká vlna = hlasno, plochá = ticho.", "Označ časť → vystrihni, zosilni, stíš. Ctrl + Z vráti zmenu.", "<b>Exportom</b> vytvoríš zvukový súbor (MP3, WAV)."], "formaty": ["<b>WAV</b> je nekomprimovaný (≈ 10 MB/min), <b>FLAC</b> bezstratový.", "<b>MP3, AAC, OGG</b> sú stratové (≈ 1 MB/min).", "<b>Bitrate</b> (kbps) určuje kvalitu a veľkosť."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Tercia 3.1 Zvuk */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF;
+return {
+  programy: fig(SV(440, 230, `
+    ${[["🎙️", "NAHRAŤ", "Zvukový záznamník", "Diktafón v mobile", C.bad, C.badS], ["🎚️", "UPRAVIŤ", "Audacity", "strih, hlasitosť, efekty", C.acc, C.accS], ["▶️", "PREHRAŤ", "VLC media player", "Media Player", C.ok, C.okS]].map(([e, h, a, b, c, bg], i) => { const x = 8 + i * 146; return `${box(x, 8, 134, 180, bg, c, 12)}<text x="${x + 67}" y="62" text-anchor="middle" font-size="36">${e}</text>${T(x + 67, 92, h, { a: "middle", fs: 14, b: 1, c })}${box(x + 10, 104, 114, 32, "#fff", null, 8)}${T(x + 67, 125, a, { a: "middle", fs: 11, b: 1 })}${T(x + 67, 160, b, { a: "middle", fs: 10.5, c: C.mut })}${i < 2 ? ar(x + 136, 98, x + 144, 98, C.mut, 2) : ""}`; }).join("")}
+    ${T(220, 214, "Audacity vie všetko: nahrať, upraviť aj exportovať.", { a: "middle", fs: 11.5, b: 1, c: C.acc })}`, "Programy na zvuk"),
+    "Na každú prácu so zvukom sa hodí iný program: <b>nahrávanie</b>, <b>úpravy</b> a <b>prehrávanie</b>."),
+  formaty: fig(SV(440, 284, `
+    ${T(14, 22, "Koľko zaberie 1 minúta zvuku", { fs: 13, b: 1 })}
+    ${[[".wav", "nekomprimovaný", 10, C.bad], [".flac", "bezstratový", 5, C.amb], [".mp3", "stratový", 1, C.ok], [".m4a/.aac", "stratový", 1, C.ok], [".ogg", "stratový", 1, C.ok]].map(([f, t, mb, c], i) => { const y = 38 + i * 40, w = mb * 26; return `${T(14, y + 20, f, { fs: 13, b: 1, mono: 1 })}${T(14, y + 34, t, { fs: 10, c: C.mut })}<rect x="104" y="${y + 6}" width="${w}" height="22" rx="5" fill="${c}"/>${T(110 + w, y + 22, "≈ " + mb + " MB", { fs: 12, b: 1, c })}`; }).join("")}
+    ${box(14, 240, 412, 34, C.accS, null, 8)}${T(220, 262, "Bitrate (kbps) = koľko údajov na 1 sekundu zvuku: viac = lepšie, ale väčšie", { a: "middle", fs: 11, b: 1, c: C.acc })}`, "Veľkosť zvukových formátov"),
+    "<b>WAV</b> nie je komprimovaný, preto je najväčší. <b>FLAC</b> zmenšuje bez straty, <b>MP3</b>, <b>AAC</b> a <b>OGG</b> sú stratové a veľmi malé.")
+}; })();
+
 const KEY = "zvuk-t31-v1";
 const LESSON = "3.1 Nahrávanie a prehrávanie zvuku – vyhľadanie programov, používanie";
 const BRAND = "3.1 Nahrávanie zvuku";
@@ -371,6 +412,7 @@ const VIEWS = {
       <div class="pc"><div class="ic">🔶</div><h4>VLC media player</h4><span class="lic">zadarmo · open source</span><p>Prehrá takmer všetky zvukové aj video formáty.</p></div>
       <div class="pc"><div class="ic">▶️</div><h4>Media Player</h4><span class="lic">súčasť Windows</span><p>Prehrávač hudby a videa vo Windows.</p></div>
       <div class="pc"><div class="ic">📱</div><h4>Diktafón v mobile</h4><span class="lic">súčasť telefónu</span><p>Nahrávanie na cestách, napríklad rozhovoru.</p></div></div>
+    ${tfigs(TFIG.programy)}
     <h3>Úloha 1: nájdi Audacity bezpečne</h3><p>Pamätáš si z hodiny o komprimačných programoch, ako sa bezpečne sťahuje? Ktorý výsledok otvoríš?</p>
     <div class="srch"><div style="font-weight:700;color:#6A3FD0;margin-bottom:8px">Hľadáčik: <span style="font-weight:400;color:#1B1B1F">audacity stiahnuť</span></div>${SRCH.map(r => `<button class="sr ${S.sr === r.id ? (r.id === "off" ? "ok" : "bad") : ""}" data-sr="${r.id}"><div class="u">${r.ad ? '<span class="ad">Reklama</span>' : ""}${r.u}</div><div class="ti">${r.ti}</div><div class="de">${r.de}</div></button>`).join("")}</div>
     ${S.sr ? `<div class="fb ${S.sr === "off" ? "ok" : "bad"}">${SRCH.find(r => r.id === S.sr).fb}</div>` : ""}
@@ -404,6 +446,7 @@ const VIEWS = {
     <table style="max-width:680px"><thead><tr><th>Formát</th><th>Typ</th><th>1 minúta ≈</th><th>Kde sa používa</th></tr></thead><tbody>
       ${[[".wav", "nekomprimovaný", "10 MB", "nahrávanie, úpravy"], [".flac", "bezstratový", "5 MB", "hudba v najvyššej kvalite"], [".mp3", "stratový", "1 MB", "hudba, podcasty"], [".m4a / .aac", "stratový", "1 MB", "iPhone, YouTube, streamovanie"], [".ogg", "stratový", "1 MB", "hry, niektoré aplikácie"]].map(r => `<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}</tbody></table>
     <p style="margin-top:10px"><b>Bitrate</b> (napr. 128 kbps alebo 320 kbps) hovorí, koľko údajov pripadá na 1 sekundu zvuku. Vyšší bitrate znamená lepšiu kvalitu, ale väčší súbor.</p>
+    ${tfigs(TFIG.formaty)}
     <h3>Úloha 1: roztrieď formáty</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>
     <h3>Úloha 2: vypočítaj</h3><div class="task">${taskHTML("fin")}</div>` + nextBar();
   },
