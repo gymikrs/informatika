@@ -232,6 +232,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .pcb .slot{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:8px}.pcb .slot b{display:block;font-size:13px;margin-bottom:4px}
 .pcb .opts2{display:flex;flex-wrap:wrap;gap:6px}.pcb .opts2 button{border:1.5px solid var(--border);background:var(--surface2);border-radius:8px;padding:5px 8px;cursor:pointer;font-size:12.5px;color:var(--ink);text-align:left}.pcb .opts2 button.on{border-color:var(--acc);background:var(--accSoft);font-weight:700}
 .sum{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;position:sticky;top:120px}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -239,7 +244,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Fotky: atramentová. Veľa textu: laserová. Bločky: termo. Predmety: 3D. Všetko v jednom: multifunkčné.", "Pri častej tlači rozhoduje cena za stranu. Občasné skenovanie zvládne mobil."], "typy": ["Periférie: vstupné (skener, webkamera), výstupné (tlačiareň, projektor), vstupno-výstupné (multifunkčné zariadenie, dotyková obrazovka)."], "tlaciarne": ["Atramentová (fotky), laserová (veľa strán, lacná strana), termo (bločky), 3D; parametre ppm, DPI, duplex, Wi-Fi, cena za stranu."], "mfz": ["Multifunkčné zariadenie = tlač, sken, kópia; ADF, sklo; skenovanie 300/600 DPI, OCR, PDF."], "dalsie": ["Projektor, interaktívna tabuľa, grafický tablet, mikrofón, herné ovládače, VR."]};
+const THEORY = {"typy": ["Periférie: vstupné (skener, webkamera), výstupné (tlačiareň, projektor), vstupno-výstupné (multifunkčné zariadenie, dotyková obrazovka)."], "tlaciarne": ["Atramentová (fotky), laserová (veľa strán, lacná strana), termo (bločky), 3D; parametre ppm, DPI, duplex, Wi-Fi, cena za stranu."], "mfz": ["Multifunkčné zariadenie = tlač, sken, kópia; ADF, sklo; skenovanie 300/600 DPI, OCR, PDF."], "dalsie": ["Projektor, interaktívna tabuľa, grafický tablet, mikrofón, herné ovládače, VR."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -267,6 +272,46 @@ document.addEventListener("keydown", e => { const z = e.target.closest && e.targ
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 7.2 Typy periférií */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, pc } = PF;
+return {
+  smer: fig(SV(440, 210, `
+    ${box(160, 50, 120, 100, C.accS, C.acc, 12)}${pc(188, 64)}${T(220, 140, "počítač", { a: "middle", fs: 12, b: 1, c: C.acc })}
+    ${box(10, 50, 120, 100, C.blueS, C.blue, 12)}${T(70, 84, "📷🎤", { a: "middle", fs: 20 })}${T(70, 112, "VSTUPNÉ", { a: "middle", fs: 12, b: 1, c: C.blue })}${T(70, 130, "posielajú dnu", { a: "middle", fs: 10.5 })}${ar(134, 100, 156, 100, C.blue, 3)}
+    ${box(310, 50, 120, 100, C.okS, C.ok, 12)}${T(370, 84, "🖨️📽️", { a: "middle", fs: 20 })}${T(370, 112, "VÝSTUPNÉ", { a: "middle", fs: 12, b: 1, c: C.ok })}${T(370, 130, "vydávajú von", { a: "middle", fs: 10.5 })}${ar(284, 100, 306, 100, C.ok, 3)}
+    ${box(110, 162, 220, 40, C.ambS, C.amb, 10)}${T(220, 187, "↔ oboje: dotyková obrazovka, headset", { a: "middle", fs: 11, b: 1, c: C.amb })}
+    ${T(220, 30, "smer vždy z pohľadu počítača", { a: "middle", fs: 12, b: 1 })}`, "Vstupné a výstupné periférie"),
+    "Vstupné zariadenia posielajú údaje do počítača, výstupné ich vydávajú. Niektoré robia oboje."),
+  tlac: fig(SV(440, 250, `
+    ${[["atramentová", "kvapôčky atramentu", C.blue, C.blueS, `${[0, 1, 2, 3, 4].map(i => `<circle cx="${60 + i * 18}" cy="${108 + (i % 2) * 10}" r="4" fill="${["#00BCD4", "#E91E63", "#FFC107", "#212121", "#00BCD4"][i]}"/>`).join("")}<rect x="56" y="70" width="90" height="22" rx="4" fill="#546E7A"/>`, "fotky, farby doma"], ["laserová", "toner zapečený teplom", C.bad, C.badS, `<rect x="54" y="70" width="96" height="40" rx="20" fill="#78909C"/><path d="M70 120 h64" stroke="#212121" stroke-width="6"/>${T(102, 96, "🔥", { a: "middle", fs: 14 })}`, "veľa strán, lacná strana"], ["3D tlačiareň", "po vrstvách z plastu", C.ok, C.okS, `${[0, 1, 2, 3, 4].map(i => `<rect x="${70 + i * 4}" y="${120 - i * 10}" width="${64 - i * 8}" height="9" rx="2" fill="#43A047" opacity="${0.5 + i * 0.1}"/>`).join("")}<rect x="92" y="62" width="20" height="12" fill="#546E7A"/>`, "modely, súčiastky"]].map(([n, d, c, bg, art, u], i) => { const x = 8 + i * 144; return `${box(x, 8, 136, 234, bg, c, 12)}${T(x + 68, 34, n, { a: "middle", fs: 13, b: 1, c })}<g transform="translate(${x - 34} 0)">${art}</g>${T(x + 68, 170, d, { a: "middle", fs: 10.5 })}${T(x + 68, 200, u, { a: "middle", fs: 10.5, b: 1 })}`; }).join("")}`, "Druhy tlačiarní"),
+    "Atramentová strieka kvapôčky, laserová zapeká toner teplom a 3D tlačiareň skladá predmet po vrstvách."),
+  trieda: fig(SV(440, 220, `
+    ${[["📽️", "projektor"], ["🖍️", "interaktívna tabuľa"], ["📷", "dokumentová kamera"], ["✍️", "grafický tablet"], ["🎮", "herný ovládač"], ["🥽", "VR okuliare"], ["💳", "čítačka kariet"], ["💾", "externý disk"]].map(([e, n], i) => { const x = 8 + (i % 4) * 108, y = 8 + Math.floor(i / 4) * 104; return `${box(x, y, 100, 96, C.accS, null, 10)}<text x="${x + 50}" y="${y + 50}" text-anchor="middle" font-size="30">${e}</text>${T(x + 50, y + 78, n.split(" ")[0], { a: "middle", fs: 10.5, b: 1 })}${n.split(" ")[1] ? T(x + 50, y + 90, n.split(" ")[1], { a: "middle", fs: 10.5, b: 1 }) : ""}`; }).join("")}`, "Ďalšie periférie"),
+    "Ďalšie periférie, ktoré stretneš v škole aj doma.")
+}; })();
+
 const KEY = "periferie-p72-v1";
 const LESSON = "7.2 Typy periférnych zariadení (tlačiareň, skener, ...)";
 const BRAND = "7.2 Periférne zariadenia";
@@ -278,14 +323,13 @@ const STEPS = [
   { id: "tlaciarne", title: "Tlačiarne", min: 9 },
   { id: "mfz", title: "Multifunkčné zariadenie a skener", min: 10 },
   { id: "dalsie", title: "Ďalšie periférie", min: 5 },
-  { id: "precvic", title: "Precvičovanie: správne zariadenie", min: 7 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { typy: ["tsort"], tlaciarne: ["tq", "tin"], mfz: ["f_mf", "sq"], dalsie: ["dsort"], precvic: ["g_sit"], test: ["test"] };
+const STEP_TASKS = { typy: ["tsort"], tlaciarne: ["tq", "tin"], mfz: ["f_mf", "sq"], dalsie: ["dsort"], test: ["test"] };
 const START = {
   kicker: "Informatika, Prima",
-  lead: "Periférie sú zariadenia, ktoré rozširujú možnosti počítača: tlačiarne, skenery, webkamery, mikrofóny, projektory, grafické tablety či 3D tlačiarne. Roztriedíš ich podľa toho, čo robia, porovnáš atramentovú a laserovú tlačiareň aj s cenou za stranu, preskúmaš multifunkčné zariadenie a skener. 5 zastávok, body a na konci výsledok.",
+  lead: "Periférie sú zariadenia, ktoré rozširujú možnosti počítača: tlačiarne, skenery, webkamery, mikrofóny, projektory, grafické tablety či 3D tlačiarne. Roztriedíš ich podľa toho, čo robia, porovnáš atramentovú a laserovú tlačiareň aj s cenou za stranu, preskúmaš multifunkčné zariadenie a skener. 4 zastávky, body a na konci výsledok.",
   guessQ: "Ktorá tlačiareň sa hodí do školskej kancelárie, kde sa tlačia stovky čiernobielych strán týždenne?",
   guessNote: "Tip sa neboduje. Na zastávke Tlačiarne zistíš, či si mal pravdu.",
   guesses: ["Atramentová fototlačiareň", "Laserová tlačiareň", "3D tlačiareň", "Termotlačiareň na bločky"],
@@ -312,8 +356,6 @@ const SCRS = { mf: { zones: {
       return s + `</svg>`; } } };
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, why) => ({ id, q, ok: v => Math.abs(parseNum(v) - ans) < 0.0051, show: String(ans).replace(".", ","), ph: "?", why });
-const PX_I = [["Babka chce doma tlačiť farebné fotky vnúčat.", "atr", ""], ["Kancelária tlačí 500 strán textu týždenne.", "las", "lacná a rýchla strana"], ["Obchod potrebuje tlačiť bločky.", "term", ""], ["Na fyziku chceš vyrobiť plastovú súčiastku.", "d3", ""], ["Rodina chce tlačiť, skenovať aj kopírovať jedným zariadením.", "mfz", ""], ["Si na výlete a potrebuješ hneď poslať podpísané tlačivo.", "mob", "aplikácia urobí z fotky PDF"], ["Chceš kresliť perom priamo do počítača.", "tablet", ""], ["Učiteľ chce ukázať triede stranu z knihy cez projektor.", "viz", ""]];
-const PX_O = [["", "— vyber —"], ["atr", "Atramentová tlačiareň"], ["las", "Laserová tlačiareň"], ["term", "Termotlačiareň"], ["d3", "3D tlačiareň"], ["mfz", "Multifunkčné zariadenie"], ["mob", "Skenovanie mobilom"], ["tablet", "Grafický tablet"], ["viz", "Dokumentová kamera (vizualizér)"]];
 const TASKS = {
   tsort: { id: "tsort", type: "sort", buckets: [{ id: "v", label: "⌨️ Vstupné" }, { id: "o", label: "🖨️ Výstupné" }, { id: "b", label: "🔁 Vstupné aj výstupné" }],
     items: [{ id: "1", t: "skener", b: "v" }, { id: "2", t: "webkamera", b: "v" }, { id: "3", t: "grafický tablet", b: "v" }, { id: "4", t: "tlačiareň", b: "o" }, { id: "5", t: "projektor", b: "o" }, { id: "6", t: "reproduktory", b: "o" }, { id: "7", t: "multifunkčné zariadenie", b: "b" }, { id: "8", t: "dotykový monitor", b: "b" }, { id: "9", t: "headset (slúchadlá s mikrofónom)", b: "b" }] },
@@ -338,7 +380,6 @@ const TASKS = {
   ]},
   dsort: { id: "dsort", type: "sort", buckets: [{ id: "s", label: "🏫 Škola a prezentácie" }, { id: "t", label: "🎨 Tvorba" }, { id: "h", label: "🎮 Hry a zábava" }],
     items: [{ id: "1", t: "projektor", b: "s" }, { id: "2", t: "interaktívna tabuľa", b: "s" }, { id: "3", t: "dokumentová kamera (vizualizér)", b: "s" }, { id: "4", t: "grafický tablet s perom", b: "t" }, { id: "5", t: "mikrofón na nahrávanie podcastu", b: "t" }, { id: "6", t: "3D tlačiareň", b: "t" }, { id: "7", t: "herný ovládač (gamepad)", b: "h" }, { id: "8", t: "VR okuliare", b: "h" }] },
-  g_sit: { id: "g_sit", type: "custom", max: 8 },
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Periférne zariadenie je:", ["zariadenie pripojené k počítaču, ktoré rozširuje jeho možnosti", "procesor", "operačná pamäť", "program"], 0) },
     { id: "2", ...Q("Laserová tlačiareň používa:", ["toner (prášok)", "atramentové kazety", "plast", "termopapier"], 0) },
@@ -349,27 +390,19 @@ const TASKS = {
 };
 const VIEWS = {
   typy: () => head() + `<h2>Druhy periférií</h2><div class="theory"><p><b>Periférie</b> sú zariadenia mimo základnej jednotky počítača. <b>Vstupné</b> posielajú údaje do počítača (skener, webkamera, mikrofón, grafický tablet), <b>výstupné</b> ich z počítača vydávajú (tlačiareň, projektor, reproduktory), niektoré sú <b>vstupné aj výstupné</b> (multifunkčné zariadenie, dotykový monitor, headset).</p></div>
+    ${tfigs(TFIG.smer)}
     <h3>Úloha: roztrieď</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("tsort")}</div>` + nextBar(),
   tlaciarne: () => head() + `<h2>Tlačiarne</h2>${guessBox()}<div class="theory"><table class="cmdt"><thead><tr><th>Typ</th><th>Ako tlačí</th><th>Na čo sa hodí</th></tr></thead><tbody><tr><td><b>Atramentová</b></td><td>strieka kvapôčky atramentu</td><td>fotky, farebná tlač doma; drahšia strana</td></tr><tr><td><b>Laserová</b></td><td>toner zapečený teplom</td><td>veľa strán, kancelária; lacná a rýchla strana</td></tr><tr><td><b>Termotlačiareň</b></td><td>teplom na špeciálny papier</td><td>bločky, štítky</td></tr><tr><td><b>3D tlačiareň</b></td><td>po vrstvách z plastu</td><td>modely, súčiastky</td></tr></tbody></table><p>Parametre: <b>rýchlosť</b> (strany za minútu, ppm), <b>rozlíšenie</b> (DPI), <b>farebná</b> alebo čiernobiela, <b>duplex</b>, pripojenie (USB, Wi-Fi), <b>cena za stranu</b>.</p></div>
+    ${tfigs(TFIG.tlac)}
     <h3>Úloha 1: otázky</h3><div class="task">${taskHTML("tq")}</div><h3>Úloha 2: cena za stranu</h3><div class="task">${taskHTML("tin")}</div>` + nextBar(),
   mfz: () => head() + `<h2>Multifunkčné zariadenie a skener</h2><div class="theory"><p><b>Multifunkčné zariadenie</b> spája tlačiareň, <b>skener</b> a kopírku. Skener prevedie papierový dokument alebo fotku na digitálny obrázok či PDF. Rozlíšenie skenovania sa udáva v DPI (text 300 DPI, fotky 600 DPI). Program s <b>OCR</b> z naskenovaného textu urobí upraviteľný text.</p></div>
     <h3>Preskúmaj</h3>${efExplore("mf")}<h3>Úloha 1: nájdi</h3>${efFind("mf")}<h3>Úloha 2: otázky</h3><div class="task">${taskHTML("sq")}</div>` + nextBar(),
   dalsie: () => head() + `<h2>Ďalšie periférie</h2><div class="theory"><p>Projektor a interaktívna tabuľa v triede, dokumentová kamera, grafický tablet pre kreslenie, mikrofón a webkamera na videohovory, herné ovládače, VR okuliare, čítačka pamäťových kariet, externý disk.</p></div>
+    ${tfigs(TFIG.trieda)}
     <h3>Úloha: kde sa používajú?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("dsort")}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: správne zariadenie</h2>
-    <div class="theory"><p>Správne zariadenie vyberieš podľa <b>úlohy</b>, nie podľa ceny alebo vzhľadu. Polož si otázky: <b>Čo presne potrebujem urobiť?</b> (tlačiť fotky, veľa textu, bločky, predmety, skenovať, kresliť, premietať) <b>Ako často?</b> Pri častej tlači rozhoduje <b>cena za stranu</b>, pri občasnej skôr cena zariadenia. Niekedy netreba nič kupovať: na občasné skenovanie stačí <b>mobil</b>.</p><p>Pri každej potrebe vyber vhodné zariadenie.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 8 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 8</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return efClick(e); }
-
-function CUSTOM_INPUT(e) { return selInput(e); }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function CUSTOM_CLICK(e) { return efClick(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
