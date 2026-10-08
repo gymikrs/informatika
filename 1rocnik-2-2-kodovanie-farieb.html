@@ -198,6 +198,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tgt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}.tgt .sq{width:60px;height:40px;border-radius:8px;border:1px solid var(--border)}
 .venn{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}.venn svg{width:240px;height:220px;border-radius:12px}
 .pal{display:grid;grid-template-columns:repeat(16,1fr);gap:1px;max-width:480px}.pal span{aspect-ratio:1}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -206,6 +211,56 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"precvic": ["#RRGGBB: každá zložka 00 až FF (0 až 255); rovnaké zložky = sivá; najväčšia zložka určuje prevládajúcu farbu."], "rgb": ["RGB = aditívne miešanie svetla; R + G + B naplno = biela, nič = čierna.", "24 bitov: 8 bitov na zložku, hodnoty 0–255, 16 777 216 farieb."], "hex": ["HEX: #RRGGBB, každá zložka 00–FF. Prevod: prvá cifra × 16 + druhá (A = 10 … F = 15)."], "cmyk": ["CMYK = subtraktívne miešanie atramentov (azúrová, purpurová, žltá, čierna) pre tlač.", "HSL = odtieň (0–360°), sýtosť, svetlosť."], "paleta": ["1 bit = 2 farby, 8 bitov = 256, 24 bitov = 16,7 mil., 32 bitov = RGBA s priehľadnosťou.", "Indexované farby: paleta najviac 256 farieb, pixel = číslo farby."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – 1. ročník 2.2 Kódovanie farieb */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#B4235A", AS = "#FBE4EC";
+return {
+  hex: fig(SV(440, 250, `
+    ${T(220, 18, "Rozlúštime farbu #6B3F9C", { a: "middle", fs: 12.5, b: 1 })}
+    <text x="220" y="62" text-anchor="middle" font-size="30" font-weight="800" font-family="Consolas,monospace"><tspan fill="${C.mut}">#</tspan><tspan fill="#D32F2F">6B</tspan><tspan fill="#2E7D32">3F</tspan><tspan fill="#1565C0">9C</tspan></text>
+    ${[["R", "6B", "6·16 + 11", 107, "#D32F2F", 150], ["G", "3F", "3·16 + 15", 63, "#2E7D32", 220], ["B", "9C", "9·16 + 12", 156, "#1565C0", 290]].map(([n, h, f, v, c, x], i) => `${ar(x - 16 + i * 16, 70, 60 + i * 120, 96, c, 1.5)}${box(8 + i * 120, 100, 112, 90, "#fff", c, 10)}${T(64 + i * 120, 120, n + " = " + h, { a: "middle", fs: 13, b: 1, c, mono: 1 })}${T(64 + i * 120, 142, f, { a: "middle", fs: 11, mono: 1 })}${T(64 + i * 120, 168, "= " + v, { a: "middle", fs: 15, b: 1, c })}<rect x="${18 + i * 120}" y="178" width="${92 * v / 255}" height="6" rx="3" fill="${c}"/>`).join("")}
+    <rect x="372" y="100" width="60" height="90" rx="10" fill="#6B3F9C"/>${T(402, 206, "výsledok", { a: "middle", fs: 10, c: C.mut })}
+    ${box(8, 214, 424, 30, AS, null, 8)}${T(220, 234, "A = 10, B = 11, C = 12, D = 13, E = 14, F = 15", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Rozklad farby HEX na zložky"),
+    "Zápis <b>#RRGGBB</b> rozdelíme na tri dvojice. Každá je jedna zložka 0 až 255: <b>prvá cifra × 16 + druhá</b>."),
+  paleta: fig(SV(440, 230, `
+    ${T(220, 18, "Indexované farby: pixel ukladá iba číslo farby z palety", { a: "middle", fs: 11.5, b: 1 })}
+    ${(() => { const P = ["#FFFFFF", "#F9A825", "#6D4C41", "#43A047"], G = ["0000000", "0011100", "0111110", "0011100", "0002000", "3332333"]; return G.map((r, y) => [...r].map((d, x) => `<rect x="${24 + x * 24}" y="${36 + y * 24}" width="24" height="24" fill="${P[d]}" stroke="#BDBDBD"/>${T(36 + x * 24, 53 + y * 24, d, { a: "middle", fs: 10, b: 1, c: d === "2" || d === "3" ? "#fff" : C.ink, mono: 1 })}`).join("")).join(""); })()}
+    ${T(108, 196, "obrázok: v pixeli je index", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(200, 100, 250, 100, A, 2)}
+    ${box(256, 34, 176, 150, "#fff", A, 10)}${T(344, 54, "paleta", { a: "middle", fs: 12, b: 1, c: A })}
+    ${[["0", "#FFFFFF", "biela"], ["1", "#F9A825", "žltá"], ["2", "#6D4C41", "hnedá"], ["3", "#43A047", "zelená"]].map(([i, c, n], k) => `${T(274, 82 + k * 26, i, { fs: 12, b: 1, mono: 1 })}<rect x="290" y="${68 + k * 26}" width="34" height="18" fill="${c}" stroke="#BDBDBD"/>${T(332, 82 + k * 26, n, { fs: 11 })}`).join("")}
+    ${T(220, 220, "1 číslo na pixel namiesto 3 zložiek R, G, B", { a: "middle", fs: 11, b: 1, c: A })}`, "Indexované farby a paleta"),
+    "Pri <b>indexovaných farbách</b> obsahuje pixel len poradové číslo farby. Skutočnú farbu nájdeš v <b>palete</b>.")
+}; })();
+
 const KEY = "farby-n22-v1";
 const LESSON = "2.2 Kódovanie farieb";
 const BRAND = "2.2 Kódovanie farieb";
@@ -310,6 +365,7 @@ const VIEWS = {
   hex: () => head() + `<h2>Zápis HEX</h2>
     <div class="theory"><p>Na webe a v grafických programoch sa farba zapisuje <b>šestnástkovo</b>: <code>#RRGGBB</code>. Každá zložka má dve šestnástkové cifry (00 až FF = 0 až 255). Napríklad <code>#FF8000</code>: R = FF = 255, G = 80 = 128, B = 00 = 0, teda oranžová. Prevod: prvá cifra × 16 + druhá cifra (A = 10, B = 11, … F = 15).</p>
       <p>Príklady: <code>#000000</code> čierna, <code>#FFFFFF</code> biela, <code>#FF0000</code> červená, <code>#808080</code> sivá.</p></div>
+    ${tfigs(TFIG.hex)}
     <h3>Úloha: prevody</h3><div class="task">${taskHTML("hin")}</div>` + nextBar(),
   cmyk: () => head() + `<h2>CMYK a HSL</h2>
     <div class="theory"><p><b>Tlačiareň</b> nesvieti, ale nanáša atrament, ktorý časť svetla <b>pohltí</b>. Hovoríme o <b>subtraktívnom</b> (odčítacom) miešaní. Základné farby sú <b>azúrová (C)</b>, <b>purpurová (M)</b>, <b>žltá (Y)</b> a <b>čierna (K)</b>, ktorá sa pridáva, lebo zmes C + M + Y dáva iba tmavohnedú. Hodnoty sa udávajú v percentách 0 až 100 %.</p>
@@ -320,6 +376,7 @@ const VIEWS = {
     <div class="theory"><p><b>Farebná hĺbka</b> je počet bitov na pixel: 1 bit = 2 farby, 8 bitov = 256 farieb, 24 bitov = 16,7 milióna farieb, 32 bitov = 24 bitov farby + 8 bitov <b>priehľadnosti</b> (kanál alfa, <b>RGBA</b>).</p>
       <p>Pri <b>indexovaných farbách</b> (napr. GIF) má obrázok <b>paletu</b>, tabuľku najviac 256 farieb. Pixel obsahuje iba <b>číslo farby</b> v palete (1 bajt namiesto 3). Takto vyzerá paleta s 256 farbami:</p>
       <div class="pal">${Array.from({ length: 256 }, (_, i) => `<span style="background:hsl(${(i % 32) * 11.25},70%,${20 + Math.floor(i / 32) * 9}%)"></span>`).join("")}</div></div>
+    ${tfigs(TFIG.paleta)}
     <h3>Úloha: počítaj</h3><div class="task">${taskHTML("pin")}</div>` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: farebná výzva</h2>
     <div class="theory"><p>Precvič si prevody medzi RGB a HEX. Každá zložka je jeden bajt: v desiatkovej sústave 0 až 255, v šestnástkovej 00 až FF. Zápis #RRGGBB má najprv červenú, potom zelenú a nakoniec modrú zložku. Kde je najväčšia hodnota, tá farba prevláda. Ak sú všetky tri zložky rovnaké, farba je sivá.</p></div>
