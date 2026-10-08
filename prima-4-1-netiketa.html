@@ -234,6 +234,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .cm .lights button.on{border-color:#1B1F2A;font-weight:800}
 .cm.ok{border-color:#12805A}.cm.bad{border-color:#C0392B}
 .cm .why{font-size:13px;margin-top:6px}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -268,6 +273,46 @@ function efClick(e) {
 document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-sz]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
+
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 4.1 Netiketa */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, av, pc } = PF;
+return {
+  clovek: fig(SV(440, 230, `
+    ${pc(30, 70, 1, T(62, 98, "💬", { a: "middle", fs: 16 }))}${T(62, 150, "ty píšeš", { a: "middle", fs: 11.5, b: 1 })}
+    ${ar(104, 92, 196, 92, C.acc, 3)}${T(150, 82, "správa", { a: "middle", fs: 11, c: C.acc })}
+    ${pc(204, 70, 1, T(236, 98, "💬", { a: "middle", fs: 16 }))}
+    <circle cx="350" cy="80" r="34" fill="#FFE0B2"/><circle cx="338" cy="74" r="4" fill="#1A1530"/><circle cx="362" cy="74" r="4" fill="#1A1530"/><path d="M336 90 q14 12 28 0" stroke="#1A1530" stroke-width="3" fill="none"/>${T(350, 136, "skutočný človek", { a: "middle", fs: 11.5, b: 1 })}${T(350, 152, "s pocitmi", { a: "middle", fs: 11, c: C.mut })}
+    ${box(14, 172, 412, 50, C.accS, null, 10)}${T(220, 194, "Zlaté pravidlo netikety:", { a: "middle", fs: 12, b: 1, c: C.acc })}${T(220, 212, "píš tak, ako by si to povedal človeku do očí", { a: "middle", fs: 12 })}`, "Na druhej strane je človek"),
+    "Za obrazovkou na druhej strane sedí <b>skutočný človek</b>, ktorého tvoje slová môžu potešiť aj zraniť."),
+  ton: fig(SV(440, 230, `
+    ${box(110, 10, 220, 40, "#fff", C.line, 20)}${T(220, 36, "„No super, ďakujem.“", { a: "middle", fs: 15, b: 1 })}
+    ${ar(180, 54, 110, 92, C.ok, 2)}${ar(260, 54, 330, 92, C.bad, 2)}
+    ${box(10, 96, 200, 126, C.okS, C.ok, 12)}<text x="110" y="140" text-anchor="middle" font-size="34">😊</text>${T(110, 170, "úprimne:", { a: "middle", fs: 11.5, b: 1, c: C.ok })}${T(110, 188, "naozaj ďakujem", { a: "middle", fs: 11.5 })}${T(110, 206, "za pomoc", { a: "middle", fs: 11.5 })}
+    ${box(230, 96, 200, 126, C.badS, C.bad, 12)}<text x="330" y="140" text-anchor="middle" font-size="34">🙄</text>${T(330, 170, "ironicky:", { a: "middle", fs: 11.5, b: 1, c: C.bad })}${T(330, 188, "zase si mi to", { a: "middle", fs: 11.5 })}${T(330, 206, "pokazil…", { a: "middle", fs: 11.5 })}`, "Tá istá veta, dva významy"),
+    "V texte nepočuť tón hlasu. Tá istá veta môže byť <b>úprimná</b> aj <b>ironická</b>. Píš jasne a pri nejasnosti sa opýtaj.")
+}; })();
 
 const KEY = "netiketa-p41-v1";
 const LESSON = "4.1 Zásady slušného správania na internete";
@@ -356,9 +401,11 @@ const VIEWS = {
   zasady: () => head() + `<h2>Pravidlá netikety</h2>
     <div class="theory"><p><b>Netiketa</b> (z anglického <i>net</i> a <i>etiquette</i>) sú pravidlá slušného správania na internete. Nie sú to zákony, ale dohoda, vďaka ktorej je komunikácia príjemná. Niektoré správanie (vyhrážky, ohováranie, zverejnenie cudzích fotiek bez súhlasu) však môže porušiť aj <b>zákon</b>.</p>
       <ul><li><b>Na druhej strane je človek.</b> Nepíš nič, čo by si mu nepovedal do očí.</li><li><b>Buď slušný</b>: pozdrav, prosím, ďakujem platia aj online.</li><li><b>Nekrič</b> VEĽKÝMI PÍSMENAMI a nepoužívaj kopu výkričníkov.</li><li><b>Kritizuj vec, nie osobu.</b> Názor vysvetli a buď konkrétny.</li><li><b>Rešpektuj súkromie</b>: nezverejňuj cudzie fotky, adresy ani telefóny bez súhlasu.</li><li><b>Over, kým zdieľaš.</b> Neposielaj hoaxy a reťazové správy.</li><li><b>Neposielaj spam</b> a zbytočné správy do skupín.</li><li><b>Rešpektuj autorské práva</b> a uvádzaj zdroj.</li><li><b>Keď sa hneváš, počkaj.</b> Napíš, až keď sa upokojíš.</li></ul></div>
+    ${tfigs(TFIG.clovek)}
     <h3>Úloha: netiketa, alebo nie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("zsort")}</div>` + nextBar(),
   ton: () => head() + `<h2>Tón správy</h2>${guessBox()}
     <div class="theory"><p>V rozhovore vidíme úsmev a počujeme tón hlasu. V texte nie. Veta <i>„No super, ďakujem.“</i> môže byť úprimná aj ironická. Preto:</p><ul><li>píš <b>celé vety</b> a vysvetli, ako to myslíš,</li><li><b>emoji</b> pomôžu ukázať náladu 🙂, ale nepreháňaj to,</li><li>keď si nie si istý, ako druhý správu myslel, <b>opýtaj sa</b>, namiesto toho, aby si sa urazil,</li><li>vážne a citlivé veci rieš radšej <b>osobne</b> alebo telefonicky.</li></ul></div>
+    ${tfigs(TFIG.ton)}
     <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>
     <h3>Úloha 2: aký tón má správa?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("tsort")}</div>` + nextBar(),
   semafor: () => head() + `<h2>Semafor komentárov</h2>
