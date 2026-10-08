@@ -213,6 +213,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
 
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -247,6 +252,72 @@ function efClick(e) {
 document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-sz]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
+
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – 2. ročník 2.3 Prostredie Windows */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#0B7A75", AS = "#DDF2F0";
+return {
+  panel: fig(SV(440, 250, `
+    ${T(220, 18, "Stavový riadok systému (panel úloh)", { a: "middle", fs: 12, b: 1 })}
+    <rect x="8" y="60" width="424" height="40" rx="4" fill="#E9EEF3" stroke="#C9D1DF"/>
+    <rect x="96" y="68" width="24" height="24" rx="4" fill="#1E6FD9"/>${T(108, 85, "⊞", { a: "middle", fs: 14, b: 1, c: "#fff" })}<rect x="126" y="70" width="70" height="20" rx="10" fill="#fff" stroke="#C9D1DF"/>${T(134, 84, "🔍 Hľadať", { fs: 9.5, c: C.mut })}
+    ${["📁", "🌐", "📘", "📊"].map((e, i) => `${T(214 + i * 26, 86, e, { a: "middle", fs: 15 })}${i < 2 ? `<rect x="${208 + i * 26}" y="94" width="12" height="3" rx="1.5" fill="#1E6FD9"/>` : ""}`).join("")}
+    ${T(326, 86, "^", { a: "middle", fs: 13, b: 1 })}${T(346, 86, "📶", { a: "middle", fs: 12 })}${T(364, 86, "🔊", { a: "middle", fs: 12 })}${T(382, 86, "🔋", { a: "middle", fs: 12 })}${T(412, 78, "10:45", { a: "middle", fs: 9.5, b: 1 })}${T(412, 91, "8. 10.", { a: "middle", fs: 9 })}
+    ${ar(108, 42, 108, 64, A, 1.5)}${T(108, 38, "Štart", { a: "middle", fs: 10.5, b: 1, c: A })}
+    ${ar(250, 42, 250, 64, A, 1.5)}${T(250, 38, "pripnuté a spustené aplikácie", { a: "middle", fs: 10.5, b: 1, c: A })}
+    ${ar(326, 120, 326, 98, A, 1.5)}${T(326, 134, "skryté ikony", { a: "middle", fs: 10, b: 1, c: A })}${T(326, 147, "na pozadí", { a: "middle", fs: 9.5, c: A })}
+    ${ar(364, 160, 364, 98, A, 1.5)}${T(364, 172, "rýchle nastavenia", { a: "middle", fs: 10, b: 1, c: A })}
+    ${ar(412, 120, 412, 98, A, 1.5)}${T(408, 134, "hodiny", { a: "middle", fs: 10, b: 1, c: A })}
+    <path d="M320 104 h106 v6 h-106z" fill="none"/>${T(374, 200, "← oblasť oznámení →", { a: "middle", fs: 10, b: 1, c: C.mut })}<line x1="316" y1="190" x2="432" y2="190" stroke="${C.mut}" stroke-dasharray="3 3"/>
+    ${box(8, 210, 290, 32, AS, null, 8)}${T(20, 231, "Win + N: centrum oznámení a kalendár", { fs: 11, b: 1, c: A })}`, "Panel úloh a oblasť oznámení"),
+    "Panel úloh ukazuje <b>stav systému</b>: aplikácie, sieť, zvuk, batériu, čas a <b>oznámenia</b>."),
+  okno: fig(SV(440, 250, `
+    ${T(220, 18, "Stavový riadok okna", { a: "middle", fs: 12, b: 1 })}
+    ${box(8, 30, 206, 180, "#fff", "#C9D1DF", 6)}<rect x="8" y="30" width="206" height="22" rx="6" fill="#2B579A"/>${T(18, 46, "Referat.docx – Word", { fs: 9.5, c: "#fff" })}
+    ${[0, 1, 2, 3, 4, 5].map(i => `<rect x="30" y="${66 + i * 16}" width="${160 - (i % 3) * 20}" height="5" rx="2" fill="${C.line}"/>`).join("")}
+    <rect x="8" y="186" width="206" height="24" fill="#F3F3F3"/>${T(16, 202, "Strana 2 z 5   Slová: 812", { fs: 9.5 })}${ar(111, 232, 111, 212, A, 1.5)}
+    ${box(226, 30, 206, 180, "#fff", "#C9D1DF", 6)}<rect x="226" y="30" width="206" height="22" rx="6" fill="#F3F3F3"/>${T(236, 46, "📁 Dokumenty", { fs: 9.5 })}
+    ${["📄 sloh.docx", "📊 znamky.xlsx", "🖼️ vylet.jpg", "📄 plan.pdf"].map((t, i) => `${i === 1 || i === 2 ? `<rect x="234" y="${62 + i * 22}" width="190" height="20" fill="#DCEBFC"/>` : ""}${T(240, 76 + i * 22, t, { fs: 10 })}`).join("")}
+    <rect x="226" y="186" width="206" height="24" fill="#F3F3F3"/>${T(234, 202, "4 položky   Vybraté: 2 (1,8 MB)", { fs: 9.5 })}${ar(329, 232, 329, 212, A, 1.5)}
+    ${T(220, 244, "na spodku okna: stav dokumentu alebo priečinka", { a: "middle", fs: 10.5, b: 1, c: A })}`, "Stavový riadok okna"),
+    "<b>Stavový riadok okna</b> ukazuje stav dokumentu (strany, slová) alebo priečinka (položky, veľkosť výberu)."),
+  snap: fig(SV(440, 220, `
+    ${T(220, 18, "Prichytenie okien (Snap)", { a: "middle", fs: 12, b: 1 })}
+    <rect x="40" y="30" width="360" height="170" rx="6" fill="${C.ink}"/><rect x="48" y="38" width="344" height="146" fill="#CFE3F7"/>
+    ${box(50, 40, 168, 142, "#fff", "#2B579A", 4)}<rect x="50" y="40" width="168" height="16" fill="#2B579A"/>${T(58, 52, "Word", { fs: 9, c: "#fff" })}${[0, 1, 2, 3].map(i => `<rect x="62" y="${68 + i * 14}" width="${140 - i * 15}" height="4" fill="${C.line}"/>`).join("")}
+    ${box(222, 40, 168, 142, "#fff", "#E66000", 4)}<rect x="222" y="40" width="168" height="16" fill="#E66000"/>${T(230, 52, "Prehliadač", { fs: 9, c: "#fff" })}<rect x="234" y="66" width="144" height="60" fill="#FFF3E0"/>
+    ${T(134, 140, "Win + ←", { a: "middle", fs: 13, b: 1, c: A })}${T(306, 154, "Win + →", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="200" y="200" width="40" height="10" fill="${C.mut}"/>`, "Okná prichytené vedľa seba"),
+    "Dve okná vedľa seba: <b>Win + šípka</b> alebo ťah okna k okraju obrazovky.")
+}; })();
 
 const KEY = "win-m23-v1";
 const LESSON = "2.3 Popis prostredia OS Windows, stavový riadok, ŠTART";
@@ -397,6 +468,7 @@ const VIEWS = {
     <div class="theory"><p>Pojem <b>stavový riadok</b> sa používa v dvoch významoch:</p>
       <ul><li><b>stavový riadok systému</b>: panel úloh na spodku obrazovky. Ukazuje stav systému: spustené aplikácie, pripojenie k sieti, hlasitosť, batériu, čas a oznámenia,</li><li><b>stavový riadok okna</b>: pruh na spodku okna aplikácie. Ukazuje stav dokumentu alebo priečinka: vo Worde číslo strany a počet slov, v Prieskumníkovi počet položiek a veľkosť výberu.</li></ul>
       <p><b>Oblasť oznámení</b> (systémová lišta) obsahuje ikony programov bežiacich na pozadí (skryté pod šípkou ^), rýchle nastavenia (Wi-Fi, Bluetooth, zvuk, jas, batéria) a hodiny. Kliknutím na hodiny alebo Win + N otvoríš <b>centrum oznámení</b> s kalendárom.</p></div>
+    ${tfigs(TFIG.panel, TFIG.okno)}
     <h3>Úloha: otázky</h3><div class="task">${taskHTML("panq")}</div>` + nextBar(); },
   okno() { return head() + `<h2>Okno a jeho stavový riadok</h2>
     <div class="theory"><p>Každá aplikácia pracuje v <b>okne</b>. Okná majú spoločné časti: <b>záhlavie</b> s názvom, tlačidlá <b>minimalizovať, maximalizovať, zavrieť</b>, ponuku alebo <b>panel s nástrojmi</b>, pracovnú plochu okna, <b>posuvníky</b> a <b>stavový riadok</b>. Okno <b>Prieskumníka</b> má navyše adresný riadok, vyhľadávacie pole a navigačnú tablu.</p></div>
@@ -405,6 +477,7 @@ const VIEWS = {
   skratky() { return head() + `<h2>Práca s oknami a skratky</h2>
     <div class="theory"><p>Okná <b>presúvame</b> ťahaním za záhlavie a <b>meníme ich veľkosť</b> ťahaním za okraj. Ťahom k okraju obrazovky alebo skratkou Win + šípka okno <b>prichytíš</b> (Snap) na polovicu alebo štvrtinu obrazovky. Medzi oknami prepínaš cez Alt + Tab alebo kliknutím na panel úloh.</p></div>
     <div class="keys"><div class="key"><kbd>Win</kbd> ponuka Štart</div><div class="key"><kbd>Win</kbd><kbd>D</kbd> zobraziť plochu</div><div class="key"><kbd>Win</kbd><kbd>E</kbd> Prieskumník</div><div class="key"><kbd>Win</kbd><kbd>X</kbd> ponuka pre pokročilých</div><div class="key"><kbd>Win</kbd><kbd>Tab</kbd> zobrazenie úloh</div><div class="key"><kbd>Alt</kbd><kbd>Tab</kbd> prepínanie okien</div><div class="key"><kbd>Alt</kbd><kbd>F4</kbd> zavrieť okno</div><div class="key"><kbd>Win</kbd><kbd>←</kbd>/<kbd>→</kbd> prichytiť okno</div><div class="key"><kbd>Win</kbd><kbd>L</kbd> zamknúť</div><div class="key"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Esc</kbd> Správca úloh</div></div>
+    ${tfigs(TFIG.snap)}
     <h3>Úloha: ktorá skratka?</h3><p>Každú si vyskúšaj aj na svojom počítači.</p><div class="task">${taskHTML("skq")}</div>` + nextBar(); },
   precvic() { return head() + `<h2>Precvičovanie: Windows výzva</h2>
     <div class="theory"><p>Kto pozná skratky, pracuje rýchlejšie. Pri každej úlohe vyber najrýchlejší spôsob a potom klikni na Vyhodnotiť. Potom si ich vyskúšaj aj na svojom počítači.</p></div>
