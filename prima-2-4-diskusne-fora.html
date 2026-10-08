@@ -286,6 +286,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .newt input,.newt textarea{width:100%;border:1.5px solid #C9D1DE;border-radius:8px;padding:8px 10px;font:inherit;color:#1B1F2A;background:#fff}
 .newt textarea{min-height:130px;resize:vertical}
 .newt label{display:block;font-size:13px;color:#555;margin:8px 0 3px}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -320,6 +325,62 @@ function efClick(e) {
 document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-sz]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
+
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 2.4 Diskusné fóra */
+const TFIG = (() => { const { C, fig, SV, ar, T, TW, box, av, num } = PF;
+const post = (x, y, w, h, who, col, lines, bg, st) => `${box(x, y, w, h, bg || "#fff", st || C.line, 8)}${av(x + 20, y + 20, who[0], col, 12)}${T(x + 38, y + 24, who, { fs: 11.5, b: 1 })}${lines.map((l, i) => T(x + 12, y + 48 + i * 16, l, { fs: 11.5 })).join("")}`;
+return {
+  zly: fig(SV(440, 270, `
+    ${T(14, 22, "❌ Porušuje netiketu", { b: 1, fs: 13, c: C.bad })}
+    ${post(14, 32, 266, 86, "Kubo123", "#8E44AD", ["NIKTO MI NEPORADÍ???!!!", "TOTO FÓRUM JE NA NIČ!!!"], C.badS, C.bad)}
+    ${post(14, 126, 266, 64, "Mato_X", "#E67E22", ["Si úplný začiatočník, to vie každý 😂"], C.badS, C.bad)}
+    ${post(14, 198, 266, 64, "SuperPredaj", "#7F8C8D", ["Kúp lacné tenisky na www.zlava-xyz.top!!!"], C.badS, C.bad)}
+    ${[[50, "krik"], [134, "výsmech"], [206, "spam, reklama"]].map(([y, t]) => `<line x1="284" y1="${y + 12}" x2="296" y2="${y + 12}" stroke="${C.bad}" stroke-width="2"/>${T(300, y + 16, t, { fs: 12, b: 1, c: C.bad })}`).join("")}`, "Príspevky, ktoré porušujú netiketu"),
+    "Krik veľkými písmenami, výsmech a reklama do diskusie nepatria. Moderátor ich zmaže."),
+  dobry: fig(SV(440, 270, `
+    ${T(14, 22, "✅ V súlade s netiketou", { b: 1, fs: 13, c: C.ok })}
+    ${post(14, 32, 266, 86, "Ema_K", "#1E6FD9", ["Skús dať medzi fd(100) aj rt(90).", "Korytnačka sa musí otočiť. 🙂"], C.okS, C.ok)}
+    ${post(14, 128, 266, 70, "Kubo123", "#8E44AD", ["Ďakujem, už to funguje!"], C.okS, C.ok)}
+    ${post(14, 208, 266, 54, "Lucia", "#12805A", ["Podobná téma: Kreslenie v Pythone"], C.okS, C.ok)}
+    ${[[62, "k téme, užitočné"], [150, "poďakovanie"], [228, "odkaz na hľadanie"]].map(([y, t]) => `<line x1="284" y1="${y}" x2="296" y2="${y}" stroke="${C.ok}" stroke-width="2"/>${T(300, y + 4, t, { fs: 12, b: 1, c: C.ok })}`).join("")}`, "Príspevky v súlade s netiketou"),
+    "Dobrý príspevok je <b>k téme</b>, <b>slušný</b> a <b>užitočný</b>. Aj poďakovanie poteší."),
+  tema: fig(SV(440, 270, `
+    ${box(10, 10, 274, 250, "#fff", C.line, 10)}<rect x="10" y="10" width="274" height="30" rx="10" fill="${C.acc}"/><rect x="10" y="30" width="274" height="10" fill="${C.acc}"/>${T(22, 30, "➕ Nová téma · 🐍 Programovanie", { fs: 12, b: 1, c: "#fff" })}
+    ${T(22, 60, "Názov:", { fs: 10.5, c: C.mut })}${box(20, 66, 254, 26, C.bg, C.line, 6)}${T(28, 84, "Python: čiara namiesto štvorca", { fs: 11.5, b: 1 })}
+    ${T(22, 112, "Text:", { fs: 10.5, c: C.mut })}${box(20, 118, 254, 130, C.bg, C.line, 6)}
+    ${["Chcem nakresliť štvorec korytnačkou.", "Skúšal som 4× fd(100) za sebou,", "ale kreslí sa jedna dlhá čiara.", "", "Čo robím zle?"].map((t, i) => T(28, 138 + i * 18, t, { fs: 11.5 })).join("")}
+    ${[[79, "1", "výstižný názov"], [138, "2", "čo chcem dosiahnuť"], [156, "3", "čo som skúsil"], [174, "4", "čo sa stalo"], [210, "5", "konkrétna otázka"]].map(([y, n, t]) => `<line x1="278" y1="${y - 4}" x2="292" y2="${y - 4}" stroke="${C.acc}" stroke-width="1.5"/>${PF.num(302, y - 4, n)}${T(316, y, t, { fs: 11, b: 1, c: C.acc })}`).join("")}`, "Ako napísať dobrú tému"),
+    "Dobrá téma má výstižný <b>názov</b>, <b>opis problému</b> (čo chceš, čo si skúsil, čo sa stalo) a <b>konkrétnu otázku</b>."),
+  troll: fig(SV(440, 260, `
+    ${box(10, 10, 420, 64, C.badS, C.bad, 10)}${T(26, 36, "😈 Troll schválne provokuje,", { fs: 12.5, b: 1, c: C.bad })}${T(26, 56, "pri kyberšikane ti niekto opakovane ubližuje. Čo urobíš?", { fs: 12 })}
+    ${[["🤐", "neodpovedaj", "nereaguj na neho"], ["📸", "urob snímku", "ulož si dôkaz"], ["🚩", "nahlás", "moderátorovi"], ["🧑‍🏫", "povedz", "rodičom, učiteľovi"]].map(([e, a, b], i) => { const x = 10 + i * 106; return `${box(x, 92, 98, 158, "#fff", C.ok, 10)}${PF.num(x + 18, 110, String(i + 1), C.ok)}<text x="${x + 49}" y="${158}" text-anchor="middle" font-size="34">${e}</text>${T(x + 49, 196, a, { a: "middle", fs: 12.5, b: 1, c: C.ok })}${T(x + 49, 216, b.split(", ")[0], { a: "middle", fs: 10.5, c: C.mut })}${b.includes(", ") ? T(x + 49, 230, b.split(", ")[1], { a: "middle", fs: 10.5, c: C.mut }) : ""}${i < 3 ? `<text x="${x + 102}" y="174" text-anchor="middle" font-size="14" fill="${C.ok}">›</text>` : ""}`; }).join("")}`, "Čo robiť pri trollovi a kyberšikane"),
+    "Na provokácie <b>neodpovedaj</b>, urob <b>snímku obrazovky</b>, <b>nahlás</b> príspevok a <b>povedz</b> to dospelému."),
+  nikdy: fig(SV(440, 260, `
+    ${[["🚷", "Nestretávaj sa", "s neznámym z internetu sám"], ["🖼️", "Neposielaj fotky", "ani adresu či školu"], ["📢", "Nešír hoaxy", "poplašné nepravdivé správy"], ["🎭", "Nie každý je tým,", "za koho sa vydáva"]].map(([e, a, b], i) => { const x = 10 + (i % 2) * 214, y = 10 + Math.floor(i / 2) * 124; return `${box(x, y, 206, 116, C.ambS, C.amb, 12)}<text x="${x + 103}" y="${y + 46}" text-anchor="middle" font-size="32">${e}</text>${T(x + 103, y + 76, a, { a: "middle", fs: 12.5, b: 1, c: C.amb })}${T(x + 103, y + 96, b, { a: "middle", fs: 11 })}`; }).join("")}`, "Pravidlá bezpečnosti na fóre"),
+    "Štyri pravidlá, ktoré platia na fóre aj všade na internete.")
+}; })();
 
 const KEY = "forum-p24-v1";
 const LESSON = "2.4 Diskusné fóra, pravidlá používania";
@@ -443,6 +504,7 @@ const VIEWS = {
   netiketa() { return head() + `<h2>Netiketa: pravidlá slušnosti na internete</h2>
     ${guessBox()}
     <div class="theory"><ul><li><b>Buď slušný.</b> Na druhej strane sedí človek. Kritizuj názor, nie osobu.</li><li><b>Nekrič.</b> VEĽKÉ PÍSMENÁ a !!! pôsobia ako krik.</li><li><b>Najprv hľadaj</b>, až potom sa pýtaj. Tvoja otázka už možno má odpoveď.</li><li><b>Píš k téme</b> a do správnej kategórie. Tú istú otázku neposielaj viackrát.</li><li><b>Výstižný názov</b> témy a zrozumiteľný text: čo chceš, čo si skúsil, čo nefunguje.</li><li><b>Žiadny spam</b>, reklama ani reťazové správy.</li><li><b>Rešpektuj autorské práva</b>: cudzie texty a obrázky iba s uvedením zdroja a so súhlasom.</li><li><b>Chráň súkromie</b> svoje aj cudzie: žiadne telefóny, adresy, fotky iných bez súhlasu.</li><li><b>Poďakuj</b>, keď ti niekto pomôže.</li></ul></div>
+    ${tfigs(TFIG.zly, TFIG.dobry)}
     <h3>Úloha: v súlade s netiketou?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>` + nextBar(); },
   vlakno() { return head() + `<h2>Moderátorom na skúšku</h2>
     <div class="theory"><p>Staneš sa moderátorom. Prečítaj si celé vlákno a <b>nahlás</b> všetky príspevky, ktoré porušujú pravidlá: krik, urážky, spam, zverejnenie osobných údajov. Pozor, nenahlasuj príspevky, ktoré sú v poriadku, aj keď sa ti nepáčia.</p></div>
@@ -450,12 +512,14 @@ const VIEWS = {
   tema() { const N = S.nt, r = ntCheck(N.t, N.x); return head() + `<h2>Napíš novú tému</h2>
     <div class="theory"><p>Dobrá otázka má <b>výstižný názov</b> (z neho je jasné, o čo ide), <b>opis problému</b> (čo chceš dosiahnuť, čo si skúsil, čo sa stalo) a <b>konkrétnu otázku</b>. Nepíš veľkými písmenami a nezverejňuj osobné údaje.</p>
       <p>Zlý príklad: <i>„POMOC!!!“ – „nefunguje mi to“</i>. Dobrý príklad: <i>„Python: korytnačka kreslí iba čiaru namiesto štvorca“ – „Skúšal som fd(100) štyrikrát, ale kreslí sa jedna dlhá čiara. Čo robím zle?“</i></p></div>
+    ${tfigs(TFIG.tema)}
     <h3>Úloha: založ tému o svojom probléme (s počítačom, hrou, zvieratkom…)</h3>
     <div class="task"><ul class="goals" id="ntgoals">${RULES.map(([k, t]) => `<li>${r[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t.g_new ? `<div class="checkbar"><span class="score ${S.t.g_new.score < 4 ? "part" : ""}">Získal si ${S.t.g_new.score} zo 4 bodov</span></div>` : ""}</div>
     <div class="newt"><b>➕ Nová téma v kategórii 🐍 Programovanie</b><label for="ntt">Názov témy</label><input id="ntt" value="${esc(N.t)}" autocomplete="off"><label for="ntx">Text príspevku</label><textarea id="ntx">${esc(N.x)}</textarea><div class="row"><button class="primary" data-ntok>Zverejniť tému</button></div>${N.msg ? `<div class="fb ${N.msg.k}">${N.msg.t}</div>` : ""}</div>` + nextBar(); },
   bezpecne() { return head() + `<h2>Bezpečne na fóre</h2>
     <div class="theory"><p>Nie každý na internete je tým, za koho sa vydáva. <b>Troll</b> schválne provokuje, <b>kyberšikana</b> je opakované ubližovanie cez internet. Na provokácie <b>neodpovedaj</b>, urob <b>snímku obrazovky</b> ako dôkaz, <b>nahlás</b> príspevok moderátorovi a povedz to <b>rodičom</b> alebo učiteľovi.</p>
       <p>Neposielaj ďalej <b>hoaxy</b> (poplašné nepravdivé správy). S neznámym človekom z internetu sa nikdy nestretávaj sám a nikomu neposielaj svoje fotky ani údaje.</p></div>
+    ${tfigs(TFIG.troll, TFIG.nikdy)}
     <h3>Úloha: čo urobíš?</h3><div class="task">${taskHTML("bzq")}</div>` + nextBar(); },
   precvic() { return head() + `<h2>Precvičovanie: odpovedaj vo fóre</h2>
     <div class="theory"><p>Dobrá odpoveď na fóre je <b>k téme</b>, <b>slušná</b> a <b>užitočná</b>. Pri každej otázke vyber najlepšiu odpoveď a potom zaraď nové príspevky do správnej sekcie fóra, aby ich ostatní našli.</p></div>

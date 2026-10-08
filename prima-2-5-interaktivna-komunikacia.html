@@ -247,6 +247,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .chat .inp button{border:0;background:#2F5BEA;color:#fff;border-radius:18px;padding:7px 14px;font-weight:700;cursor:pointer}
 .emj{display:flex;gap:4px;padding:4px 8px}.emj button{border:0;background:none;font-size:18px;cursor:pointer}
 .replybar{font-size:12.5px;padding:4px 10px;background:#EEF2FB;display:flex;justify-content:space-between}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -281,6 +286,63 @@ function efClick(e) {
 document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-sz]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
+
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 2.5 Interaktívna komunikácia */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, av, phone } = PF;
+const bub = (x, y, w, t, me, time) => `${box(x, y, w, 26, me ? C.accS : "#fff", me ? C.acc : C.line, 13)}${T(x + 10, y + 17, t, { fs: 11 })}${time ? T(me ? x - 6 : x + w + 6, y + 17, time, { fs: 9.5, c: C.mut, a: me ? "end" : "start" }) : ""}`;
+return {
+  formy: fig(SV(440, 250, `
+    ${box(8, 8, 206, 234, C.okS, C.ok)}${T(111, 32, "⚡ V REÁLNOM ČASE", { a: "middle", b: 1, fs: 13, c: C.ok })}${T(111, 48, "synchrónna", { a: "middle", fs: 10.5, c: C.mut })}
+    ${av(34, 72, "J", C.acc, 13)}<circle cx="44" cy="62" r="4" fill="#3CCB8E" stroke="#fff" stroke-width="1.5"/>${av(188, 72, "T", C.blue, 13)}<circle cx="198" cy="62" r="4" fill="#3CCB8E" stroke="#fff" stroke-width="1.5"/>${T(111, 76, "obaja online", { a: "middle", fs: 10.5, c: C.ok, b: 1 })}
+    ${bub(20, 96, 140, "Ideš von o 5?", 0, "")}${bub(62, 128, 140, "Jasné, stretneme sa!", 1, "")}${bub(20, 160, 110, "Super 👍", 0, "")}
+    ${T(111, 210, "odpoveď príde hneď", { a: "middle", fs: 11.5, b: 1 })}${T(111, 228, "chat · hovor · videohovor", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(226, 8, 206, 234, C.ambS, C.amb)}${T(329, 32, "✉️ S ODSTUPOM", { a: "middle", b: 1, fs: 13, c: C.amb })}${T(329, 48, "asynchrónna", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(240, 66, 80, 60, "#fff", C.line, 8)}${T(280, 96, "📧", { a: "middle", fs: 20 })}${T(280, 118, "pondelok", { a: "middle", fs: 10, c: C.mut })}
+    ${ar(324, 96, 340, 96, C.amb, 2.5)}${box(344, 66, 76, 60, "#fff", C.line, 8)}${T(382, 96, "📭⏳", { a: "middle", fs: 16 })}${T(382, 118, "čaká", { a: "middle", fs: 10, c: C.mut })}
+    ${box(278, 140, 104, 50, "#fff", C.line, 8)}${T(330, 164, "👀 prečíta", { a: "middle", fs: 12, b: 1 })}${T(330, 180, "utorok", { a: "middle", fs: 10, c: C.mut })}
+    ${T(329, 210, "správa počká na čitateľa", { a: "middle", fs: 11.5, b: 1 })}${T(329, 228, "e-mail · fórum · komentáre", { a: "middle", fs: 10.5, c: C.mut })}`, "Komunikácia v reálnom čase a s odstupom"),
+    "<b>V reálnom čase</b> sú obaja pripojení naraz a odpovedajú hneď. <b>S odstupom</b> správa počká, kým si ju niekto prečíta."),
+  sirenie: fig(SV(440, 250, `
+    ${T(14, 24, "Poslal si fotku jednému kamarátovi…", { fs: 12.5, b: 1 })}
+    ${av(50, 80, "Ty", C.acc, 18)}${ar(72, 80, 120, 80, C.mut)}${av(142, 80, "K", C.blue, 16)}
+    ${T(142, 112, "📸 snímka", { a: "middle", fs: 10.5, c: C.mut })}
+    ${[[230, 46], [230, 114]].map(([x, y]) => `${ar(160, 80, x - 18, y, C.bad, 2)}${av(x, y, "?", "#E67E22", 14)}`).join("")}
+    ${[[320, 30], [320, 62], [320, 98], [320, 130]].map(([x, y], i) => `${ar(246, i < 2 ? 46 : 114, x - 16, y, C.bad, 1.8)}${av(x, y, "?", "#95A5A6", 12)}`).join("")}
+    ${[30, 62, 98, 130].map(y => T(342, y + 4, "… a ďalší", { fs: 10.5, c: C.mut })).join("")}
+    ${box(14, 166, 412, 74, C.badS, C.bad, 10)}${T(220, 192, "Čo raz pošleš, už nevrátiš.", { a: "middle", fs: 13.5, b: 1, c: C.bad })}${T(220, 212, "Dá sa to uložiť, odfotiť a poslať ďalej.", { a: "middle", fs: 11.5 })}${T(220, 228, "Vytvára to tvoju digitálnu stopu.", { a: "middle", fs: 11.5 })}`, "Ako sa šíri poslaná fotka"),
+    "<b>Mysli, kým pošleš.</b> Fotka či správa sa môže dostať ďalej, aj keď si ju poslal iba jednému človeku."),
+  neznamy: fig(SV(440, 250, `
+    <rect x="16" y="14" width="150" height="226" rx="16" fill="${C.ink}"/><rect x="24" y="30" width="134" height="196" rx="6" fill="#F4F6FA"/>
+    ${T(34, 48, "❓ Neznámy kontakt", { fs: 10.5, b: 1 })}
+    ${box(32, 60, 112, 34, "#fff", C.bad, 10)}${T(40, 74, "Pošli mi svoju", { fs: 9.5 })}${T(40, 87, "fotku.", { fs: 9.5, b: 1 })}
+    ${box(32, 104, 112, 34, "#fff", C.bad, 10)}${T(40, 118, "Nehovor o tom", { fs: 9.5 })}${T(40, 131, "rodičom. 🤫", { fs: 9.5, b: 1 })}
+    ${box(32, 148, 112, 34, "#fff", C.bad, 10)}${T(40, 162, "Kam chodíš", { fs: 9.5 })}${T(40, 175, "do školy?", { fs: 9.5, b: 1 })}
+    ${T(91, 210, "⚠️ varovné znaky", { a: "middle", fs: 10.5, b: 1, c: C.bad })}
+    ${[["🙅", "neodpovedaj"], ["⛔", "zablokuj"], ["🚩", "nahlás"], ["👨‍👩‍👧", "povedz rodičom"]].map(([e, t], i) => `${box(186, 18 + i * 56, 240, 48, C.okS, C.ok, 10)}<text x="${212}" y="${50 + i * 56}" text-anchor="middle" font-size="22">${e}</text>${T(238, 48 + i * 56, t, { fs: 13, b: 1, c: C.ok })}`).join("")}`, "Čo robiť pri neznámom kontakte"),
+    "Keď ti neznámy píše, pýta fotky alebo chce, aby si to tajil, <b>neodpovedaj</b>, <b>zablokuj</b>, <b>nahlás</b> a <b>povedz rodičom</b>.")
+}; })();
 
 const KEY = "komunikacia-p25-v1";
 const LESSON = "2.5 Interaktívna komunikácia";
@@ -395,6 +457,7 @@ const VIEWS = {
   formy() { return head() + `<h2>Formy komunikácie na internete</h2>${guessBox()}
     <div class="theory"><p><b>Interaktívna</b> (synchrónna) komunikácia prebieha v <b>reálnom čase</b>: obaja sú pripojení naraz a hneď reagujú. Patria sem <b>chat</b>, <b>četovacie aplikácie</b> (instant messaging: WhatsApp, Messenger, Signal, Discord, chat v Teams), <b>hlasové hovory</b> a <b>videohovory</b> (Teams, Google Meet, Zoom).</p>
       <p><b>Asynchrónna</b> komunikácia má odstup: správa počká, kým si ju niekto prečíta. Patrí sem <b>e-mail</b>, <b>fórum</b>, <b>komentáre</b>. Každá forma sa hodí na niečo iné: rýchla dohoda cez chat, dôležitá oficiálna správa e-mailom, spoločná porada videohovorom.</p></div>
+    ${tfigs(TFIG.formy)}
     <h3>Úloha: v reálnom čase, alebo s odstupom?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ksort")}</div>` + nextBar(); },
   chat() { const G = S.cg; return head() + `<h2>Chat a skupiny</h2>
     <div class="theory"><p>V <b>četovacích aplikáciách</b> si píšeš s jedným človekom alebo v <b>skupine</b> (napríklad triedna skupina). Vidíš, kto je <b>online</b>, či si správu prečítal (fajky, „Videné“), môžeš poslať <b>hlasovú správu</b>, fotku, reagovať <b>emoji</b> alebo <b>odpovedať</b> priamo na konkrétnu správu. Rušivú skupinu môžeš <b>stlmiť</b>. Nepríjemného alebo neznámeho človeka <b>zablokuješ</b> a <b>nahlásiš</b>.</p>
@@ -410,6 +473,7 @@ const VIEWS = {
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("vq")}</div>` + nextBar(); },
   pravidla() { return head() + `<h2>Pravidlá a bezpečnosť</h2>
     <div class="theory"><ul><li><b>Píš slušne</b> a k veci. Aj v chate platí netiketa: bez kriku, urážok a spamu.</li><li><b>Mysli, kým pošleš.</b> Každá správa či fotka sa dá uložiť, odfotiť a preposlať. Vytvára tvoju <b>digitálnu stopu</b>.</li><li><b>Neznámym</b> neposielaj fotky, adresu, školu ani telefónne číslo. Ak ťa niekto obťažuje, <b>neodpovedaj, zablokuj, nahlás</b> a povedz to <b>rodičom</b>.</li><li>Keď je niekto v skupine terčom posmechu (<b>kyberšikana</b>), nepridávaj sa. Urob snímku obrazovky a povedz to dospelému.</li><li>Rešpektuj <b>čas</b> druhých: do triednej skupiny nepíš v noci.</li></ul></div>
+    ${tfigs(TFIG.sirenie, TFIG.neznamy)}
     <h3>Úloha: čo urobíš?</h3><div class="task">${taskHTML("prq")}</div>
     <h3>Úloha 2: skratky v chate</h3><div class="task">${taskHTML("skq")}</div>` + nextBar(); },
   precvic() { return head() + `<h2>Precvičovanie: vyber správny nástroj</h2>

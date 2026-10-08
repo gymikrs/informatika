@@ -241,6 +241,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .chal{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .chal button{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 12px;cursor:pointer;font-weight:600;color:var(--ink)}
 .chal button.on{border-color:var(--acc);background:var(--accSoft)}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -347,6 +352,60 @@ function srchClick(e) { const el = e.target.closest("button"); if (!el) return f
   return false; }
 document.addEventListener("keydown", e => { if (e.target.dataset && e.target.dataset.sq && e.key === "Enter") { e.preventDefault(); const b = document.querySelector(`[data-sgo="${e.target.dataset.sq}"]`); if (b) b.click(); } });
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 3.1 Vyhľadávače */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, win } = PF;
+const page = (x, y, n, c) => `${box(x, y, 64, 44, "#fff", c || C.line, 6)}<rect x="${x}" y="${y}" width="64" height="10" rx="6" fill="${c || "#C9D1DF"}"/>${T(x + 32, y + 32, n, { a: "middle", fs: 10, b: 1 })}`;
+return {
+  vnoreny: fig(SV(440, 250, `
+    ${box(8, 8, 424, 234, C.accS, C.acc, 14)}${T(24, 32, "🧭 PREHLIADAČ = program", { fs: 13, b: 1, c: C.acc })}${T(24, 50, "Chrome, Edge, Firefox, Safari", { fs: 11, c: C.mut })}
+    ${win(24, 62, 392, 168, "www.google.com")}
+    ${box(110, 104, 220, 112, C.blueS, C.blue, 10)}${T(220, 128, "🔎 VYHĽADÁVAČ = stránka", { a: "middle", fs: 12.5, b: 1, c: C.blue })}
+    <rect x="130" y="142" width="180" height="26" rx="13" fill="#fff" stroke="${C.blue}"/>${T(144, 160, "najvyšší štít Tatier", { fs: 11.5 })}${T(298, 160, "🔍", { fs: 11, a: "end" })}
+    ${T(220, 194, "Google, Bing, Seznam,", { a: "middle", fs: 11, c: C.mut })}${T(220, 208, "DuckDuckGo, Ecosia", { a: "middle", fs: 11, c: C.mut })}`, "Prehliadač a vyhľadávač"),
+    "<b>Prehliadač</b> je program, v ktorom sa otvorí stránka <b>vyhľadávača</b>. Vyhľadávač je iba jedna z mnohých stránok."),
+  vyhladavace: fig(SV(440, 250, `
+    ${[["Google", "najpoužívanejší na svete", "#1E6FD9"], ["Bing", "od Microsoftu", "#12805A"], ["Seznam", "obľúbený v Česku", "#C0392B"], ["DuckDuckGo", "neukladá, čo hľadáš", "#E67E22"], ["Ecosia", "z príjmov sadí stromy 🌳", "#2E7D32"]].map(([n, d, c], i) => `${box(10, 10 + i * 47, 420, 40, "#fff", C.line, 10)}<circle cx="34" cy="${30 + i * 47}" r="12" fill="${c}"/>${T(34, 34 + i * 47, n[0], { a: "middle", fs: 12, b: 1, c: "#fff" })}${T(56, 35 + i * 47, n, { fs: 13, b: 1 })}${T(420, 35 + i * 47, d, { fs: 11.5, c: C.mut, a: "end" })}`).join("")}`, "Známe vyhľadávače"),
+    "Najznámejšie internetové vyhľadávače. Všetky fungujú na rovnakom princípe."),
+  robot: fig(SV(440, 250, `
+    ${page(20, 30, "škola")}${page(150, 20, "zoo")}${page(290, 40, "TANAP")}${page(80, 140, "svište")}${page(220, 150, "recepty")}${page(350, 160, "hory")}
+    ${[[84, 52, 150, 42], [214, 42, 290, 62], [52, 74, 100, 140], [182, 64, 230, 150], [322, 84, 370, 160], [144, 162, 220, 172]].map(([a, b, c, d]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="${C.blue}" stroke-width="1.5" stroke-dasharray="4 3"/>`).join("")}
+    <text x="232" y="116" text-anchor="middle" font-size="30">🕷️</text>${T(232, 136, "robot", { a: "middle", fs: 11, b: 1, c: C.acc })}
+    ${box(10, 210, 420, 32, C.blueS, null, 8)}${T(220, 231, "robot (crawler) ide po odkazoch zo stránky na stránku a číta ich", { a: "middle", fs: 11.5, b: 1, c: C.blue })}`, "Robot prechádza stránky po odkazoch"),
+    "<b>Robot</b> neustále prechádza internet. Z každej stránky pokračuje po <b>odkazoch</b> na ďalšie."),
+  index: fig(SV(440, 196, `
+    ${box(10, 10, 204, 176, C.ambS, C.amb, 12)}${T(112, 34, "📖 Register v knihe", { a: "middle", fs: 13, b: 1, c: C.amb })}
+    ${[["medveď", "str. 12, 40"], ["svišť", "str. 18, 77"], ["Tatry", "str. 5, 18, 90"], ["vlk", "str. 33"]].map(([a, b], i) => `${T(28, 70 + i * 34, a, { fs: 13, b: 1 })}${T(200, 70 + i * 34, b, { fs: 12, a: "end", c: C.mut })}<line x1="28" y1="${80 + i * 34}" x2="200" y2="${80 + i * 34}" stroke="#E8D9B5"/>`).join("")}
+    ${box(226, 10, 204, 176, C.blueS, C.blue, 12)}${T(328, 34, "🗂️ Index vyhľadávača", { a: "middle", fs: 13, b: 1, c: C.blue })}
+    ${[["medveď", "zoo.sk, tanap.sk"], ["svišť", "tanap.sk, wiki…"], ["Tatry", "tanap.sk, hory.sk"], ["vlk", "zoo.sk"]].map(([a, b], i) => `${T(244, 70 + i * 34, a, { fs: 13, b: 1 })}${T(416, 70 + i * 34, b, { fs: 11, a: "end", c: C.mut })}<line x1="244" y1="${80 + i * 34}" x2="416" y2="${80 + i * 34}" stroke="#C9DAF5"/>`).join("")}`, "Index ako register v knihe"),
+    "<b>Index</b> funguje ako register na konci knihy: ku každému slovu zoznam stránok, kde sa nachádza."),
+  kroky: fig(SV(440, 170, `
+    ${[["🕷️", "robot číta", "stránky"], ["🗂️", "uloží", "do indexu"], ["⌨️", "zadáš", "slová"], ["🔎", "nájde", "v indexe"], ["🏆", "zoradí", "výsledky"], ["📄", "ukáže", "výsledky"]].map(([e, a, b], i) => { const x = 8 + i * 72; return `${box(x, 20, 64, 110, "#fff", C.acc, 10)}${PF.num(x + 32, 20, String(i + 1))}<text x="${x + 32}" y="70" text-anchor="middle" font-size="24">${e}</text>${T(x + 32, 96, a, { a: "middle", fs: 10.5, b: 1 })}${T(x + 32, 111, b, { a: "middle", fs: 10.5 })}${i < 5 ? `<text x="${x + 68}" y="80" text-anchor="middle" font-size="12" fill="${C.acc}">›</text>` : ""}`; }).join("")}
+    ${T(220, 156, "1 – 2 robí vyhľadávač stále, 3 – 6 vtedy, keď hľadáš", { a: "middle", fs: 11.5, c: C.mut })}`, "Kroky vyhľadávača"),
+    "Ako vyhľadávač funguje, krok za krokom.")
+}; })();
+
 const KEY = "vyhladavace-p31-v1";
 const LESSON = "3.1 Vyhľadávanie na internete – internetové vyhľadávače";
 const BRAND = "3.1 Internetové vyhľadávače";
@@ -442,11 +501,13 @@ const VIEWS = {
   vyhladavac() { return head() + `<h2>Čo je internetový vyhľadávač</h2>
     <div class="theory"><p><b>Internetový vyhľadávač</b> je služba (webová stránka), ktorá ti pomôže nájsť na internete stránky, obrázky, videá či správy podľa <b>kľúčových slov</b>. Najznámejšie sú <b>Google</b>, <b>Bing</b> (Microsoft), <b>Seznam</b> (populárny v Česku), <b>DuckDuckGo</b> (neukladá, čo hľadáš) a <b>Ecosia</b> (z príjmov sadí stromy).</p>
       <p>Nezamieňaj si vyhľadávač s <b>prehliadačom</b>. Prehliadač (Chrome, Edge, Firefox) je <b>program</b>, ktorým stránky zobrazuješ. Vyhľadávač je <b>stránka</b>, ktorú v prehliadači otvoríš. Do adresného riadka prehliadača môžeš písať aj hľadané slová, prehliadač ich pošle nastavenému vyhľadávaču.</p></div>
+    ${tfigs(TFIG.vnoreny, TFIG.vyhladavace)}
     <h3>Otázky</h3><div class="task">${taskHTML("vq")}</div>
     <h3>Úloha 2: vyhľadávač, prehliadač, alebo stránka?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("vsort")}</div>` + nextBar(); },
   princip() { return head() + `<h2>Ako vyhľadávač funguje</h2>${guessBox()}
     <div class="theory"><p>Vyhľadávač pracuje v troch krokoch:</p><ul><li><b>Prehľadávanie</b>: programy nazývané <b>roboty</b> (crawlery, pavúky) neustále prechádzajú internet. Z každej stránky idú po <b>odkazoch</b> na ďalšie.</li><li><b>Indexovanie</b>: obsah stránok sa uloží do obrovského <b>indexu</b>, podobného registru na konci knihy: ku každému slovu zoznam stránok, kde sa vyskytuje.</li><li><b>Hodnotenie</b>: keď zadáš slová, vyhľadávač v indexe nájde zhodné stránky a <b>zoradí</b> ich podľa toho, ako dobre zodpovedajú otázke, aké sú dôveryhodné a koľko iných stránok na ne odkazuje.</li></ul></div>
-    <h3>Úloha 1: zoraď kroky</h3><div class="task">${taskHTML("kroky")}</div>
+    ${tfigs(TFIG.robot, TFIG.index)}
+    <h3>Úloha 1: zoraď kroky</h3><div class="task">${taskHTML("kroky")}</div>${S.t.kroky ? tfigs(TFIG.kroky) : ""}
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(); },
   serp() { return head() + `<h2>Stránka s výsledkami</h2>
     <div class="theory"><p>Výsledky vyhľadávania nie sú všetky rovnaké. Hore býva <b>reklama</b> (Sponzorované), za ktorú firma zaplatila. Pri každom výsledku vidíš <b>adresu</b> stránky (kto ju prevádzkuje), <b>titulok</b> (odkaz) a <b>úryvok</b> textu so zvýraznenými slovami. Karty ako <b>Obrázky</b> či <b>Mapy</b> zmenia druh výsledkov.</p></div>

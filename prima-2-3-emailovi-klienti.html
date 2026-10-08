@@ -286,6 +286,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .proto button{border:0;padding:7px 14px;background:var(--surface);cursor:pointer;font-weight:700;color:var(--ink)}
 .proto button.on{background:var(--acc);color:#fff}
 .card2{background:#FFFBEA;border:1px dashed #E0A100;border-radius:12px;padding:10px 14px;font-size:14px;font-family:var(--mono)}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -320,6 +325,62 @@ function efClick(e) {
 document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-sz]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); z.dispatchEvent(new MouseEvent("click", { bubbles: true })); } });
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
+
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 2.3 Klienti elektronickej pošty */
+const TFIG = (() => { const { C, fig, SV, ar, T, TW, box, pc, phone, server, num, win } = PF;
+return {
+  webklient: fig(SV(440, 250, `
+    ${box(8, 8, 206, 234, C.blueS, C.blue)}${T(111, 32, "🌐 WEBMAIL", { a: "middle", b: 1, fs: 14, c: C.blue })}
+    ${win(22, 44, 178, 96, "outlook.com")}${T(32, 94, "Doručená pošta", { fs: 11, b: 1 })}${[0, 1].map(i => `<rect x="32" y="${102 + i * 14}" width="${140 - i * 30}" height="6" rx="3" fill="#C9D1DF"/>`).join("")}
+    ${TW(22, 162, "otvoríš v prehliadači na ktoromkoľvek počítači", 30, { fs: 11.5 })}${T(22, 200, "✓ nič neinštaluješ", { fs: 11.5, c: C.ok, b: 1 })}${T(22, 220, "✗ bez internetu nefunguje", { fs: 11.5, c: C.bad, b: 1 })}
+    ${box(226, 8, 206, 234, C.accS, C.acc)}${T(329, 32, "📥 E-MAILOVÝ KLIENT", { a: "middle", b: 1, fs: 14, c: C.acc })}
+    ${pc(244, 56, 1, T(276, 85, "✉️", { a: "middle", fs: 16 }))}${phone(352, 46, T(372, 85, "✉️", { a: "middle", fs: 16 }))}
+    ${T(240, 162, "aplikácia v počítači či mobile", { fs: 11.5 })}${T(240, 184, "✓ viac účtov naraz, oznámenia", { fs: 11.5, c: C.ok, b: 1 })}${T(240, 204, "✓ stiahnuté správy aj offline", { fs: 11.5, c: C.ok, b: 1 })}${T(240, 224, "✗ treba inštalovať a nastaviť", { fs: 11.5, c: C.bad, b: 1 })}`, "Webmail a e-mailový klient"),
+    "<b>Webmail</b> otvoríš v prehliadači. <b>Klient</b> je aplikácia, ktorá si poštu sťahuje do zariadenia."),
+  aplikacie: fig(SV(440, 250, `
+    ${box(8, 8, 206, 234, "#fff", C.line)}${pc(79, 22, 1, T(111, 50, "⊞", { a: "middle", fs: 18, c: C.blue }))}${T(111, 100, "Windows", { a: "middle", b: 1, fs: 14 })}
+    ${[["Outlook pre Windows", "predinštalovaný"], ["Microsoft Outlook", "Microsoft 365"], ["Thunderbird", "zadarmo, open source"]].map(([a, b], i) => `${box(20, 112 + i * 42, 182, 36, C.bg, C.line, 8)}${T(30, 128 + i * 42, a, { fs: 12, b: 1 })}${T(30, 142 + i * 42, b, { fs: 10.5, c: C.mut })}`).join("")}
+    ${box(226, 8, 206, 234, "#fff", C.line)}${phone(309, 18, T(329, 58, "🤖", { a: "middle", fs: 16 }))}${T(329, 104, "Android", { a: "middle", b: 1, fs: 14 })}
+    ${[["Gmail", "predinštalovaný"], ["Outlook", "pre školský účet"], ["Samsung E-mail", "Samsung"], ["Thunderbird", "zadarmo"]].map(([a, b], i) => `${box(238, 112 + i * 31, 182, 27, C.bg, C.line, 8)}${T(248, 130 + i * 31, a, { fs: 12, b: 1 })}${T(410, 130 + i * 31, b, { fs: 10, c: C.mut, a: "end" })}`).join("")}`, "E-mailové klienty pre Windows a Android"),
+    "Najznámejšie e-mailové klienty pre <b>Windows</b> a pre <b>Android</b>."),
+  protokoly: fig(SV(440, 250, `
+    ${server(197, 70)}${T(220, 150, "poštový server", { a: "middle", fs: 11.5, b: 1 })}
+    ${pc(24, 18)}${T(56, 88, "tvoj počítač", { a: "middle", fs: 11 })}${phone(36, 156)}${T(56, 240, "tvoj mobil", { a: "middle", fs: 11 })}
+    ${pc(352, 18)}${T(384, 88, "počítač v škole", { a: "middle", fs: 11 })}${phone(364, 156)}${T(384, 240, "tablet", { a: "middle", fs: 11 })}
+    ${ar(94, 40, 190, 82, C.amb, 3)}${T(132, 40, "SMTP: odošle", { fs: 12, b: 1, c: C.amb })}
+    ${ar(190, 120, 82, 176, C.ok, 3, 1)}${ar(250, 82, 348, 44, C.ok, 3, 1)}${ar(250, 120, 358, 176, C.ok, 3, 1)}
+    ${T(300, 52, "IMAP", { fs: 12, b: 1, c: C.ok, a: "middle" })}${T(124, 140, "IMAP", { fs: 12, b: 1, c: C.ok, a: "end" })}${T(316, 140, "IMAP", { fs: 12, b: 1, c: C.ok })}
+    ${box(140, 168, 160, 52, C.okS, C.ok, 8)}${T(220, 188, "pošta ostáva na serveri,", { a: "middle", fs: 11, b: 1, c: C.ok })}${T(220, 206, "všade vidíš to isté", { a: "middle", fs: 11, c: C.ok })}`, "SMTP a IMAP"),
+    "<b>SMTP</b> poštu odosiela. <b>IMAP</b> ju nechá na serveri a všetky zariadenia ukazujú to isté."),
+  imappop: fig(SV(440, 250, `
+    ${[[8, "IMAP", C.ok, C.okS, "pošta zostáva na serveri", "mobil aj počítač vidia všetko", 1], [226, "POP3", C.amb, C.ambS, "pošta sa stiahne do jedného", "zariadenia, inde chýba", 0]].map(([x, n, c, bg, a, b, imap]) => `${box(x, 8, 206, 234, bg, c)}${T(x + 103, 32, n, { a: "middle", b: 1, fs: 16, c })}
+      ${server(x + 80, 44)}${T(x + 103, 122, imap ? "✉️✉️✉️" : "(prázdny)", { a: "middle", fs: imap ? 14 : 11, c: C.mut })}
+      ${phone(x + 22, 136, T(x + 42, 176, "✉️✉️✉️", { a: "middle", fs: 9 }))}${pc(x + 120, 146, 1, T(x + 152, 172, imap ? "✉️✉️✉️" : "—", { a: "middle", fs: 10, c: C.mut }))}
+      ${T(x + 103, 222, a, { a: "middle", fs: 11, b: 1 })}${T(x + 103, 236, b, { a: "middle", fs: 10.5, c: C.mut })}`).join("")}`, "IMAP a POP3"),
+    "Pri <b>IMAP</b> sú správy v mobile aj v počítači. Pri <b>POP3</b> ich má iba zariadenie, ktoré ich stiahlo prvé.")
+}; })();
 
 const KEY = "klienti-p23-v1";
 const LESSON = "2.3 Klienti elektronickej pošty pre Windows a Android";
@@ -447,6 +508,7 @@ const VIEWS = {
     <div class="theory"><p>Poštu môžeme čítať dvoma spôsobmi. <b>Webmail</b> otvoríš v internetovom <b>prehliadači</b> (napr. gmail.com, outlook.com, azet.sk). Nič neinštaluješ a funguje na akomkoľvek počítači, ale potrebuješ internet.</p>
       <p><b>E-mailový klient</b> je <b>aplikácia</b> nainštalovaná v počítači alebo mobile. Poštu si sťahuje zo servera, takže stiahnuté správy prečítaš aj bez internetu. V jednom okne môžeš mať <b>viac účtov</b> naraz a klient ťa upozorní <b>oznámením</b> na novú poštu. Často obsahuje aj kalendár a kontakty.</p>
       <p><b>Windows</b>: nový <b>Outlook pre Windows</b> (predinštalovaný, nahradil aplikáciu Pošta), <b>Microsoft Outlook</b> (súčasť Microsoft 365), <b>Mozilla Thunderbird</b> (zadarmo, open source). <b>Android</b>: <b>Gmail</b> (predinštalovaný), <b>Outlook</b>, <b>Samsung E-mail</b>, <b>Thunderbird</b>.</p></div>
+    ${tfigs(TFIG.webklient, TFIG.aplikacie)}
     <h3>Úloha: webmail, alebo klient?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("wsort")}</div>` + nextBar(); },
   win() { return head() + `<h2>E-mailový klient vo Windows</h2>
     <div class="theory"><p>Takto vyzerá <b>Outlook</b>. Thunderbird má podobné časti: vľavo <b>účty a priečinky</b>, v strede <b>zoznam správ</b>, vpravo <b>čitáreň</b> s obsahom správy a hore tlačidlo <b>Nová pošta</b> a <b>pás s nástrojmi</b>.</p></div>
@@ -462,6 +524,7 @@ const VIEWS = {
     <div class="theory"><p>Klient sa so serverom „rozpráva“ podľa pravidiel, <b>protokolov</b>:</p>
       <ul><li><b>SMTP</b> slúži na <b>odosielanie</b> pošty.</li><li><b>IMAP</b> slúži na čítanie: pošta zostáva na serveri a klient ju iba zobrazuje. Všetky zariadenia vidia to isté a stav (prečítané, priečinky) sa <b>synchronizuje</b>.</li><li><b>POP3</b> poštu <b>stiahne</b> do jedného zariadenia a predvolene ju zo servera <b>zmaže</b>. Iné zariadenie ju už neuvidí.</li></ul>
       <p>Dnes takmer vždy používame <b>IMAP</b>, lebo máme mobil aj počítač.</p></div>
+    ${tfigs(TFIG.protokoly, TFIG.imappop)}
     <h3>Vyskúšaj synchronizáciu</h3><p>Skontroluj poštu v mobile a v počítači. Prečítaj správu v mobile a potom znova skontroluj počítač. Vyskúšaj IMAP aj POP3.</p>
     <div class="task"><ul class="goals"><li>${G.imap ? "✅" : "⬜"} Pri IMAP prečítaj správu v mobile a over, že je prečítaná aj v počítači.</li><li>${G.pop ? "✅" : "⬜"} Pri POP3 zisti, že po stiahnutí do mobilu počítač poštu nedostane.</li></ul></div>
     <div class="tool">${syncHTML()}</div>

@@ -241,6 +241,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .chal{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .chal button{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 12px;cursor:pointer;font-weight:600;color:var(--ink)}
 .chal button.on{border-color:var(--acc);background:var(--accSoft)}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -347,6 +352,67 @@ function srchClick(e) { const el = e.target.closest("button"); if (!el) return f
   return false; }
 document.addEventListener("keydown", e => { if (e.target.dataset && e.target.dataset.sq && e.key === "Enter") { e.preventDefault(); const b = document.querySelector(`[data-sgo="${e.target.dataset.sq}"]`); if (b) b.click(); } });
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 3.2 Kľúčové slová */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF;
+const venn = (x, y, title, sub, mode) => { const cx1 = x + 54, cx2 = x + 86, cy = y + 62, r = 30, A = C.blue, B = C.amb;
+  const fillA = mode === "or" || mode === "minus" ? "rgba(106,63,208,.45)" : "none", fillB = mode === "or" ? "rgba(106,63,208,.45)" : "none";
+  const clip = `pf32c${x}${y}`;
+  return `${box(x, y, 132, 128, "#fff", C.line, 10)}${T(x + 66, y + 20, title, { a: "middle", fs: 12.5, b: 1, c: C.acc, mono: 1 })}
+  <defs><clipPath id="${clip}"><circle cx="${cx1}" cy="${cy}" r="${r}"/></clipPath></defs>
+  <circle cx="${cx1}" cy="${cy}" r="${r}" fill="${fillA}" stroke="${A}" stroke-width="2"/><circle cx="${cx2}" cy="${cy}" r="${r}" fill="${mode === "minus" ? "#fff" : fillB}" stroke="${B}" stroke-width="2"/>
+  ${mode === "and" ? `<circle cx="${cx2}" cy="${cy}" r="${r}" clip-path="url(#${clip})" fill="rgba(106,63,208,.55)"/>` : ""}
+  ${mode === "minus" ? `<circle cx="${cx2}" cy="${cy}" r="${r}" fill="none" stroke="${B}" stroke-width="2"/>` : ""}
+  ${T(cx1 - 14, cy + 4, "A", { a: "middle", fs: 11, b: 1, c: A })}${T(cx2 + 14, cy + 4, "B", { a: "middle", fs: 11, b: 1, c: B })}
+  ${T(x + 66, y + 110, sub, { a: "middle", fs: 10.5 })}`; };
+return {
+  veta: fig(SV(440, 250, `
+    ${T(14, 26, "Otázka človeku:", { fs: 11.5, c: C.mut })}
+    ${box(10, 34, 420, 56, C.bg, C.line, 10)}
+    <text x="22" y="58" font-size="13.5" fill="${C.mut}"><tspan text-decoration="line-through">Môžeš mi prosím povedať,</tspan> <tspan text-decoration="line-through">koľko</tspan> <tspan fill="${C.acc}" font-weight="700">nôh</tspan> <tspan text-decoration="line-through">má</tspan> <tspan fill="${C.acc}" font-weight="700">pavúk</tspan>?</text>
+    ${T(22, 80, "prečiarknuté slová vyhľadávač nepotrebuje", { fs: 10.5, c: C.mut, i: 1 })}
+    ${ar(220, 98, 220, 128, C.acc, 3)}
+    ${T(14, 146, "Dopyt pre vyhľadávač:", { fs: 11.5, c: C.mut })}
+    <rect x="70" y="156" width="300" height="38" rx="19" fill="#fff" stroke="${C.acc}" stroke-width="2"/>${T(92, 181, "pavúk počet nôh", { fs: 15, b: 1 })}${T(352, 181, "🔍", { fs: 14, a: "end" })}
+    ${T(220, 220, "2 až 4 slová · hlavne podstatné mená", { a: "middle", fs: 12, b: 1, c: C.acc })}${T(220, 238, "bez „prosím“, „ako“, „je“, „má“", { a: "middle", fs: 11, c: C.mut })}`, "Z otázky kľúčové slová"),
+    "Z otázky vyber iba <b>kľúčové slová</b>. Zdvorilosti a malé slová vyhľadávač nepotrebuje."),
+  lievik: fig(SV(440, 250, `
+    <path d="M30 20 H410 L330 90 H110 Z" fill="${C.badS}" stroke="${C.bad}" stroke-width="1.5"/>${T(220, 46, "zviera", { a: "middle", fs: 14, b: 1, mono: 1 })}${T(220, 68, "asi 2 000 000 výsledkov 😵", { a: "middle", fs: 11.5, c: C.bad })}
+    <path d="M110 96 H330 L290 160 H150 Z" fill="${C.ambS}" stroke="${C.amb}" stroke-width="1.5"/>${T(220, 120, "pavúk", { a: "middle", fs: 14, b: 1, mono: 1 })}${T(220, 140, "asi 80 000", { a: "middle", fs: 11.5, c: C.amb })}
+    <path d="M150 166 H290 L262 222 H178 Z" fill="${C.okS}" stroke="${C.ok}" stroke-width="1.5"/>${T(220, 188, "pavúk počet nôh", { a: "middle", fs: 12, b: 1, mono: 1 })}${T(220, 206, "presné ✓", { a: "middle", fs: 11.5, c: C.ok, b: 1 })}
+    ${T(424, 128, "pridaj slovo", { a: "end", fs: 11.5, b: 1, c: C.acc })}${T(424, 144, "= presnejšie", { a: "end", fs: 11.5, c: C.acc })}${ar(380, 160, 300, 200, C.acc, 2)}
+    ${T(16, 128, "nič si nenašiel?", { fs: 11.5, b: 1, c: C.blue })}${T(16, 144, "skús iné slovo", { fs: 11.5, c: C.blue })}${T(16, 160, "alebo synonymum", { fs: 11.5, c: C.blue })}
+    ${T(220, 244, "Viac slov = menej, ale presnejších výsledkov", { a: "middle", fs: 11.5, c: C.mut })}`, "Viac slov, presnejšie výsledky"),
+    "Keď je výsledkov veľa a nesúvisia, <b>pridaj slovo</b>. Keď nenájdeš nič, skús <b>iné slovo</b> alebo synonymum."),
+  operatory: fig(SV(440, 290, `
+    ${venn(8, 8, "A B", "obe slová naraz", "and")}${venn(154, 8, "A OR B", "stačí jedno z nich", "or")}${venn(300, 8, "A -B", "A, ale bez B", "minus")}
+    ${box(8, 146, 132, 136, "#fff", C.line, 10)}${T(74, 166, "\"A B\"", { a: "middle", fs: 12.5, b: 1, c: C.acc, mono: 1 })}${box(20, 182, 108, 28, C.okS, C.ok, 6)}${T(74, 201, "zimný spánok", { a: "middle", fs: 11, b: 1 })}${box(20, 216, 108, 28, C.badS, C.bad, 6)}${T(74, 235, "spánok … zimný", { a: "middle", fs: 11 })}${T(74, 268, "presne za sebou", { a: "middle", fs: 10.5 })}
+    ${box(154, 146, 132, 136, "#fff", C.line, 10)}${T(220, 166, "site:tanap.sk", { a: "middle", fs: 12, b: 1, c: C.acc, mono: 1 })}${["tanap.sk ✓", "zoo.sk ✗", "wiki ✗"].map((t, i) => `${box(170, 180 + i * 24, 100, 20, i ? C.badS : C.okS, null, 6)}${T(220, 194 + i * 24, t, { a: "middle", fs: 10.5, b: !i })}`).join("")}${T(220, 268, "iba z jedného webu", { a: "middle", fs: 10.5 })}
+    ${box(300, 146, 132, 136, "#fff", C.line, 10)}${T(366, 166, "filetype:pdf", { a: "middle", fs: 12, b: 1, c: C.acc, mono: 1 })}<rect x="340" y="180" width="52" height="64" rx="4" fill="#fff" stroke="${C.bad}" stroke-width="2"/><rect x="340" y="226" width="52" height="18" fill="${C.bad}"/>${T(366, 240, "PDF", { a: "middle", fs: 11, b: 1, c: "#fff" })}${T(366, 268, "iba súbory PDF", { a: "middle", fs: 10.5 })}`, "Operátory vyhľadávania"),
+    "Operátory upravia, čo vyhľadávač hľadá. Fialová plocha ukazuje, ktoré stránky dostaneš.")
+}; })();
+
 const KEY = "klucove-p32-v1";
 const LESSON = "3.2 Kľúčové slová, kombinácie kľúčových slov";
 const BRAND = "3.2 Kľúčové slová";
@@ -425,6 +491,7 @@ const VIEWS = {
     <div class="theory"><p>Vyhľadávaču nepíšeme celé vety ako človeku. Stačia <b>kľúčové slová</b>: najdôležitejšie slová, ktoré vystihujú, čo hľadáme. Obyčajne sú to <b>podstatné mená</b> a dôležité prídavné mená, spolu 2 až 4 slová.</p>
       <ul><li>vynechaj zbytočné slová: prosím, chcel by som, ako, je, a…</li><li>píš <b>správne</b>, bez preklepov (diakritika až taká dôležitá nie je),</li><li>ak nič nenájdeš, skús <b>iné slová</b> alebo <b>synonymá</b> (výška / vysoký, spánok / spí),</li><li>ak je výsledkov veľa a nesúvisia, <b>pridaj</b> ďalšie slovo, ktoré tému spresní.</li></ul>
       <p>Veľké a malé písmená vyhľadávač nerozlišuje. Keď napíšeš viac slov vedľa seba, hľadá stránky, ktoré obsahujú <b>všetky</b> tieto slová.</p></div>
+    ${tfigs(TFIG.veta, TFIG.lievik)}
     <h3>Úloha 1: ktoré slová sa hodia?</h3><div class="task"><div class="ins">Otázka: „Prosím, chcel by som vedieť, ako dlho spí svišť v Tatrách?“ Klikni na kartičku a potom na kôš.</div>${taskHTML("ksort")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("kq")}</div>
     <h3>Úloha 3: najlepší dopyt</h3><div class="task">${taskHTML("kq2")}</div>` + nextBar(),
@@ -437,6 +504,7 @@ const VIEWS = {
       <tr><td><code>site:</code></td><td>hľadá iba na <b>jednom webe</b> alebo doméne</td><td><code>svišť site:tanap.sk</code></td></tr>
       <tr><td><code>filetype:</code></td><td>iba súbory daného <b>typu</b></td><td><code>svišť filetype:pdf</code></td></tr></tbody></table>
       <p>Operátory fungujú v Google, Bingu aj ďalších vyhľadávačoch a aj v našom Hľadáčiku. Môžeš ich kombinovať: <code>"zimný spánok" -svišť</code>.</p></div>
+    ${tfigs(TFIG.operatory)}
     <h3>Vyskúšaj</h3><p>Porovnaj výsledky pre <code>zimný spánok</code> a <code>"zimný spánok"</code>, alebo pre <code>python</code> a <code>python -had</code>.</p>${srchHTML("o", { ads: false })}
     <h3>Otázky</h3><div class="task">${taskHTML("oq")}</div>
     <h3>Ktorý operátor?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("osort")}</div>` + nextBar(),
