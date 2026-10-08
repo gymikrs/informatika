@@ -199,6 +199,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .cp{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}.cp select{border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font:inherit;background:var(--surface2);color:var(--ink)}
 .bits{font-family:var(--mono);font-size:18px;letter-spacing:1px}.bits .h{color:#C0392B;font-weight:800}.bits .d{color:#1766C2;font-weight:800}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -207,6 +212,48 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"precvic": ["A–Z = 65–90, a–z = 97–122, 0–9 = 48–57; malé písmeno = veľké + 32.", "UTF-8: ASCII 1 bajt, slovenské písmená 2 bajty, emoji 4 bajty."], "ascii": ["Kódovanie = dohoda, ktoré číslo znamená ktorý znak. ASCII: 7 bitov, 128 znakov.", "0–31 riadiace, 32 medzera, 48–57 číslice, 65–90 A–Z, 97–122 a–z (malé = veľké + 32)."], "stranky": ["8-bitové kódové stránky (256 znakov): Windows-1250, ISO-8859-2 pre strednú Európu.", "Rozsypaný čaj (mojibake) = text otvorený v inom kódovaní, než v akom bol uložený."], "unicode": ["Unicode = spoločný zoznam znakov všetkých písiem, kódový bod U+hex (č = U+010D, 😀 = U+1F600).", "Unicode určuje číslo znaku, kódovanie (UTF-8, UTF-16) jeho zápis do bajtov."], "utf8": ["UTF-8: 1 až 4 bajty na znak; ASCII 1 bajt, diakritika 2, € 3, emoji 4.", "Vzory: 0xxxxxxx, 110xxxxx 10xxxxxx… UTF-8 je spätne kompatibilné s ASCII."], "koder": ["Zakódovať = text → bajty, dekódovať = bajty → text, vždy tým istým kódovaním.", "Bajty sa často zapisujú šestnástkovo (2 cifry na bajt)."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – 1. ročník 1.6 Reprezentácia znakov */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#B4235A", AS = "#FBE4EC";
+return {
+  unicode: fig(SV(440, 260, `
+    ${T(14, 24, "Unicode: jeden zoznam pre všetky písma sveta", { fs: 13, b: 1, c: A })}
+    ${[["A", "U+0041", "latinka"], ["č", "U+010D", "diakritika"], ["Ж", "U+0416", "azbuka"], ["Ω", "U+03A9", "grécke"], ["中", "U+4E2D", "čínske"], ["€", "U+20AC", "symbol"], ["😀", "U+1F600", "emoji"], ["π", "U+03C0", "matematika"]].map(([z, k, n], i) => { const x = 14 + (i % 4) * 104, y = 36 + Math.floor(i / 4) * 92; return `${box(x, y, 96, 84, "#fff", A, 10)}${T(x + 48, y + 38, z, { a: "middle", fs: 26, b: 1 })}${T(x + 48, y + 58, k, { a: "middle", fs: 11.5, b: 1, mono: 1, c: A })}${T(x + 48, y + 74, n, { a: "middle", fs: 10, c: C.mut })}`; }).join("")}
+    ${box(14, 222, 412, 32, AS, null, 8)}${T(220, 243, "Unicode dá znaku číslo · UTF-8 povie, ako ho zapísať do bajtov", { a: "middle", fs: 11.5, b: 1 })}`, "Znaky v Unicode"),
+    "Každý znak sveta má v Unicode svoje číslo, <b>kódový bod</b> (U+ a šestnástkové číslo)."),
+  koder: fig(SV(440, 250, `
+    ${box(14, 20, 100, 60, "#fff", A, 10)}${T(64, 58, "Pes", { a: "middle", fs: 22, b: 1 })}${T(64, 98, "text", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(120, 42, 210, 42, A, 3)}${T(165, 34, "zakóduj", { a: "middle", fs: 11, b: 1, c: A })}
+    ${box(216, 20, 210, 60, AS, A, 10)}${[["50", "P"], ["65", "e"], ["73", "s"]].map(([h, z], i) => `${box(230 + i * 64, 30, 56, 40, "#fff", null, 6)}${T(258 + i * 64, 56, h, { a: "middle", fs: 15, b: 1, mono: 1 })}`).join("")}${T(321, 98, "bajty (šestnástkovo)", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(210, 64, 120, 64, A, 3)}${T(165, 76, "dekóduj", { a: "middle", fs: 11, b: 1, c: A })}
+    ${box(14, 124, 412, 116, C.badS, C.bad, 10)}${T(26, 146, "⚠️ Dekóduješ iným kódovaním, než bolo zakódované:", { fs: 12, b: 1, c: C.bad })}
+    ${T(26, 174, "uložené v UTF-8:", { fs: 11.5 })}${T(170, 174, "Ľubica", { fs: 14, b: 1 })}
+    ${T(26, 204, "otvorené ako Windows-1250:", { fs: 11.5 })}${T(210, 204, "Ä˝ubica", { fs: 14, b: 1, c: C.bad })}
+    ${T(26, 228, "= „rozsypaný čaj“. Pomôže otvoriť súbor so správnym kódovaním.", { fs: 11, c: C.mut })}`, "Kódovanie a dekódovanie"),
+    "Text sa <b>zakóduje</b> na bajty a <b>dekóduje</b> späť. Funguje to iba vtedy, keď obe strany použijú <b>to isté kódovanie</b>.")
+}; })();
+
 const KEY = "znaky-n16-v1";
 const LESSON = "1.6 Reprezentácia znakov v počítači";
 const BRAND = "1.6 Znaky v počítači";
@@ -344,6 +391,7 @@ const VIEWS = {
   unicode: () => head() + `<h2>Unicode</h2>
     <div class="theory"><p>Riešením chaosu kódových stránok je <b>Unicode</b>: jeden spoločný zoznam znakov všetkých písiem sveta. Obsahuje latinku s diakritikou, azbuku, grécke, arabské, čínske či japonské znaky, matematické symboly aj <b>emoji</b>, spolu vyše 150 000 znakov. Každý znak má svoje číslo, <b>kódový bod</b>, zapisovaný <code>U+</code> a šestnástkovým číslom: <code>A = U+0041</code>, <code>č = U+010D</code>, <code>€ = U+20AC</code>, <code>😀 = U+1F600</code>.</p>
       <p>Unicode hovorí iba to, <b>aké číslo</b> znak má. Ako sa toto číslo zapíše do bajtov, určuje <b>kódovanie</b>: <b>UTF-8</b>, UTF-16 alebo UTF-32.</p></div>
+    ${tfigs(TFIG.unicode)}
     <h3>Otázky</h3><div class="task">${taskHTML("uq")}</div>` + nextBar(),
   utf8: () => head() + `<h2>UTF-8 bajt po bajte</h2>${guessBox()}
     <div class="theory"><p><b>UTF-8</b> je dnes najrozšírenejšie kódovanie (používa ho drvivá väčšina webových stránok). Znak zaberá <b>1 až 4 bajty</b> podľa veľkosti kódového bodu:</p>
@@ -354,6 +402,7 @@ const VIEWS = {
     <h3>Úloha: koľko bajtov?</h3><div class="task">${taskHTML("u8in")}</div>` + nextBar(),
   koder: () => head() + `<h2>Kóder a dekóder</h2>
     <div class="theory"><p><b>Zakódovať</b> znamená previesť text na čísla (bajty). <b>Dekódovať</b> znamená previesť čísla späť na text, a to vždy podľa toho istého kódovania. Bajty sa často zapisujú <b>šestnástkovo</b> (každý bajt = 2 šestnástkové cifry).</p></div>
+    ${tfigs(TFIG.koder)}
     <h3>Úloha: dekóduj a zakóduj</h3><p>Pomôž si tabuľkou ASCII z prvej zastávky alebo kóderom.</p><div class="task">${taskHTML("dein")}</div>` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: tajné správy</h2>
     <div class="theory"><p>Počítače posielajú text ako čísla. Rozlúšti tajné správy zapísané kódmi ASCII v desiatkovej, dvojkovej aj šestnástkovej sústave. Pomôže tabuľka ASCII z prvej zastávky aj kóder. Veľké písmená A až Z majú kódy 65 až 90, malé a až z kódy 97 až 122.</p></div>

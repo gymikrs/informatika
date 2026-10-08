@@ -193,6 +193,11 @@ sub{font-size:.7em}
 .egy svg{width:100%;height:auto;display:block}
 .blocks{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap;margin:10px 0}
 .blocks .col{text-align:center}.blocks .col small{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -201,6 +206,45 @@ sub{font-size:.7em}
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"pojmy": ["<b>Cifra</b> je znak (0 – 9, A – F), <b>číslo</b> vyjadruje množstvo.", "<b>Základ</b> sústavy = počet rôznych cifier. Sústava so základom z používa cifry 0 až z − 1."], "nepozicne": ["V <b>nepozičnej</b> sústave má znak vždy rovnakú hodnotu (čiarky, egyptské, rímske čísla).", "Rímske: I 1, V 5, X 10, L 50, C 100, D 500, M 1000. Menší znak pred väčším sa odčíta (IV = 4)."], "pozicne": ["V <b>pozičnej</b> sústave závisí hodnota cifry od jej pozície (váhy).", "Váhy sú mocniny základu: 1, 10, 100… alebo 1, 2, 4, 8…", "Pozičná sústava potrebuje <b>nulu</b>."], "pocitadlo": ["Keď cifra prekročí najväčšiu hodnotu, vráti sa na 0 a zvýši sa cifra naľavo.", "Zápis 10 v ľubovoľnej sústave znamená hodnotu základu."], "okolo": ["60: čas a uhly (Babylončania), 12: tucet, 2: počítače, 16: farby, 8: práva v Linuxe."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – 1. ročník 1.3 Číselné sústavy */
+const TFIG = (() => { const { C, fig, SV, T, box } = PF; const A = "#B4235A", AS = "#FBE4EC";
+return {
+  cifry: fig(SV(440, 262, `
+    ${T(14, 24, "Základ = koľko rôznych cifier sústava má", { fs: 13, b: 1, c: A })}
+    ${[["2", "dvojková", "0 1"], ["8", "osmičková", "0 1 2 3 4 5 6 7"], ["10", "desiatková", "0 1 2 3 4 5 6 7 8 9"], ["16", "šestnástková", "0 1 2 3 4 5 6 7 8 9 A B C D E F"]].map(([z, n, cf], i) => { const y = 40 + i * 50; return `${box(14, y, 412, 42, i === 2 ? AS : "#fff", A, 10)}<circle cx="40" cy="${y + 21}" r="16" fill="${A}"/>${T(40, y + 26, z, { a: "middle", fs: 13, b: 1, c: "#fff" })}${T(64, y + 26, n, { fs: 12, b: 1 })}${T(170, y + 27, cf, { fs: 13, b: 1, mono: 1, c: A })}`; }).join("")}
+    ${T(220, 254, "Najväčšia cifra je vždy o 1 menšia ako základ.", { a: "middle", fs: 11.5, c: C.mut })}`, "Cifry v sústavách"),
+    "<b>Základ</b> sústavy hovorí, koľko rôznych <b>cifier</b> používa. Šestnástková si cifry 10 až 15 požičiava z abecedy."),
+  okolo: fig(SV(440, 250, `
+    <circle cx="110" cy="122" r="96" fill="#fff" stroke="${A}" stroke-width="3"/>
+    ${Array.from({ length: 60 }, (_, i) => { const a = i * 6 * Math.PI / 180, r1 = i % 5 ? 88 : 80; return `<line x1="${110 + Math.sin(a) * r1}" y1="${122 - Math.cos(a) * r1}" x2="${110 + Math.sin(a) * 94}" y2="${122 - Math.cos(a) * 94}" stroke="${i % 5 ? "#C9C3DA" : A}" stroke-width="${i % 5 ? 1 : 2.5}"/>`; }).join("")}
+    ${Array.from({ length: 12 }, (_, i) => { const a = (i + 1) * 30 * Math.PI / 180; return T(110 + Math.sin(a) * 66, 127 - Math.cos(a) * 66, String(i + 1), { a: "middle", fs: 13, b: 1 }); }).join("")}
+    <line x1="110" y1="122" x2="110" y2="60" stroke="${C.ink}" stroke-width="3"/><line x1="110" y1="122" x2="150" y2="122" stroke="${C.ink}" stroke-width="5"/><circle cx="110" cy="122" r="5" fill="${A}"/>
+    ${[["12", "hodín na ciferníku, mesiacov", "dvanástková"], ["60", "minút, sekúnd · 360° kruh", "šesťdesiatková"], ["2", "prúd ide / nejde", "dvojková (počítače)"], ["16", "farby #FF8800, adresy", "šestnástková"]].map(([n, a, b], i) => { const y = 14 + i * 58; return `${box(222, y, 210, 50, AS, null, 10)}${T(246, y + 32, n, { a: "middle", fs: 18, b: 1, c: A })}${T(272, y + 22, b, { fs: 11.5, b: 1 })}${T(272, y + 38, a, { fs: 10.5, c: C.mut })}`; }).join("")}`, "Sústavy okolo nás"),
+    "Hodiny sú živá ukážka starých sústav: <b>12</b> hodín, <b>60</b> minút. Počítače používajú <b>2</b> a programátori <b>16</b>.")
+}; })();
+
 const KEY = "sustavy-n13-v1";
 const LESSON = "1.3 Číselné sústavy, základné pojmy, druhy číselných sústav";
 const BRAND = "1.3 Číselné sústavy";
@@ -288,7 +332,7 @@ const TASKS = {
   ]},
   cifsort: { id: "cifsort", type: "sort",
     buckets: [{ id: "y", label: "✅ Platné číslo", sub: "v uvedenej sústave" }, { id: "n", label: "❌ Neplatné číslo", sub: "obsahuje nepovolenú cifru" }],
-    items: [{ id: "1", t: "1011₂", b: "y" }, { id: "2", t: "777₈", b: "y" }, { id: "3", t: "4F₁₆", b: "y" }, { id: "5", t: "1021₂", b: "n" }, { id: "6", t: "189₈", b: "n" }, { id: "7", t: "G5₁₆", b: "n" }] },
+    items: [{ id: "1", t: "1011₂", b: "y" }, { id: "2", t: "777₈", b: "y" }, { id: "3", t: "4F₁₆", b: "y" }, { id: "4", t: "4321₅", b: "y" }, { id: "5", t: "1021₂", b: "n" }, { id: "6", t: "189₈", b: "n" }, { id: "7", t: "G5₁₆", b: "n" }, { id: "8", t: "305₅", b: "n" }] },
   dalsie: { id: "dalsie", type: "input", qs: [
     inq("1", "Aké číslo nasleduje po 111<sub>2</sub>?", "1000"), inq("2", "Aké číslo nasleduje po 17<sub>8</sub>?", "20"), inq("3", "Aké číslo nasleduje po 1F<sub>16</sub>?", "20"),
     inq("4", "Aké číslo nasleduje po 44<sub>5</sub>?", "100"), inq("5", "Aké číslo je tesne pred 100<sub>2</sub>?", "11"), inq("6", "Aké číslo je tesne pred A0<sub>16</sub>?", "9F")
@@ -296,19 +340,24 @@ const TASKS = {
   druhsort: { id: "druhsort", type: "sort",
     buckets: [{ id: "p", label: "📍 Pozičné", sub: "hodnota cifry závisí od miesta" }, { id: "n", label: "🧱 Nepozičné", sub: "znak má vždy rovnakú hodnotu" }],
     items: [{ id: "1", t: "Desiatková sústava", b: "p" }, { id: "2", t: "Dvojková sústava", b: "p" }, { id: "3", t: "Šestnástková sústava", b: "p" }, { id: "4", t: "Babylonská šesťdesiatková", b: "p" },
-      { id: "5", t: "Rímske číslice", b: "n" }, { id: "6", t: "Egyptské hieroglyfy", b: "n" }],
+      { id: "5", t: "Rímske číslice", b: "n" }, { id: "6", t: "Egyptské hieroglyfy", b: "n" }, { id: "7", t: "Čiarky na palici (zárezy)", b: "n" }],
     after: "Babylončania mali pozičnú sústavu so základom 60 už pred 4000 rokmi. Preto má hodina 60 minút a minúta 60 sekúnd." },
   okoloq: { id: "okoloq", type: "mc", keep: true, qs: [
     { id: "1", q: "Hodina má 60 minút, kruh 360 stupňov.", opts: ["Šesťdesiatková", "Dvanástková", "Dvojková", "Šestnástková", "Osmičková"], a: 0 },
     { id: "2", q: "Tucet vajec, 12 mesiacov, 12 hodín na ciferníku.", opts: ["Šesťdesiatková", "Dvanástková", "Dvojková", "Šestnástková", "Osmičková"], a: 1 },
-    { id: "3", q: "Počítač ukladá všetko ako zapnuté a vypnuté.", opts: ["Šesťdesiatková", "Dvanástková", "Dvojková", "Šestnástková", "Osmičková"], a: 2 }
+    { id: "3", q: "Počítač ukladá všetko ako zapnuté a vypnuté.", opts: ["Šesťdesiatková", "Dvanástková", "Dvojková", "Šestnástková", "Osmičková"], a: 2 },
+    { id: "4", q: "Farba na webe #FF8800.", opts: ["Šesťdesiatková", "Dvanástková", "Dvojková", "Šestnástková", "Osmičková"], a: 3 },
+    { id: "5", q: "Práva k súborom v Linuxe, napríklad 755.", opts: ["Šesťdesiatková", "Dvanástková", "Dvojková", "Šestnástková", "Osmičková"], a: 4 }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", q: "Základ sústavy určuje:", opts: ["počet rôznych cifier v sústave", "počet cifier v čísle", "najväčšie číslo", "počet pozícií"], a: 0 },
     { id: "2", q: "Rímske číslice sú sústava:", opts: ["nepozičná", "pozičná", "dvojková", "šestnástková"], a: 0 },
     { id: "3", q: "XC = ?", opts: ["90", "110", "40", "60"], a: 0 },
     { id: "4", q: "Ktoré číslo NIE JE platné v dvojkovej sústave?", opts: ["102", "101", "1", "1110"], a: 0 },
-    { id: "5", q: "Čo nasleduje po 1111₂?", opts: ["10000", "1112", "2000", "11110"], a: 0 }
+    { id: "5", q: "Čo nasleduje po 1111₂?", opts: ["10000", "1112", "2000", "11110"], a: 0 },
+    { id: "6", q: "Koľko rôznych cifier má šestnástková sústava?", opts: ["16", "15", "10", "6"], a: 0 },
+    { id: "7", q: "Čo znamená zápis 10 v sústave so základom 8?", opts: ["osem", "desať", "jeden", "osemdesiat"], a: 0 },
+    { id: "8", q: "Prečo má hodina 60 minút?", opts: ["Po Babylončanoch, ktorí používali sústavu so základom 60", "Lebo 60 je najväčšie dvojciferné číslo", "Kvôli počítačom", "Náhodou"], a: 0 }
   ]}
 };
 
@@ -323,6 +372,7 @@ const VIEWS = {
       <div class="pc"><div class="big">📐</div><h4>Číselná sústava</h4><p>Pravidlá, podľa ktorých z cifier skladáme zápis čísla.</p></div>
       <div class="pc"><div class="big">10</div><h4>Základ sústavy</h4><p>Koľko rôznych cifier sústava používa. Desiatková má 10 cifier (0 až 9).</p></div></div>
     <div class="box v"><p>Sústava so základom <b>z</b> používa cifry <b>0 až z − 1</b>. Dvojková má teda iba 0 a 1, osmičková 0 až 7.</p></div>
+    ${tfigs(TFIG.cifry)}
     <h3>Úloha: otázky</h3><div class="task">${taskHTML("pojq")}</div>` + nextBar();
   },
   nepozicne() {
@@ -364,6 +414,7 @@ const VIEWS = {
       <div class="pc"><div class="big">2</div><h4>Počítače</h4><p>Prúd ide / nejde: 1 / 0. Popísal ju G. W. Leibniz.</p></div>
       <div class="pc"><div class="big">16</div><h4>Programátori</h4><p>Farby, adresy v pamäti, sieťové adresy.</p></div>
       <div class="pc"><div class="big">8</div><h4>Linux</h4><p>Práva k súborom, napríklad 755.</p></div></div>
+    ${tfigs(TFIG.okolo)}
     <h3>Úloha 1: pozičná, alebo nepozičná?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("druhsort")}</div>
     <h3>Úloha 2: ktorá sústava sa tu skrýva?</h3><div class="task">${taskHTML("okoloq")}</div>` + nextBar();
   },

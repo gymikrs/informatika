@@ -202,6 +202,11 @@ sub{font-size:.7em}
 .cm svg{width:100%;height:auto;display:block}
 .cm .zone{cursor:pointer}.cm .zone rect{transition:stroke .15s}.cm .zone:hover rect,.cm .zone.on rect{stroke:#F5A524;stroke-width:4}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -210,6 +215,40 @@ sub{font-size:.7em}
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"veda": ["<b>Informatika</b> je veda o získavaní, uchovávaní, spracovaní a prenose informácií pomocou počítačov.", "Odbory: programovanie a algoritmy, siete, kyberbezpečnosť, databázy, umelá inteligencia, grafika, robotika.", "Osobnosti: Ada Lovelace, Alan Turing, John von Neumann, Grace Hopper, Tim Berners-Lee."], "info": ["<b>Údaj</b> je zápis, <b>informácia</b> je údaj, ktorému rozumieme a ktorý nám povie niečo nové.", "Činnosti s informáciou: získavanie, uchovávanie, spracovanie, prenos.", "Model prenosu: zdroj → kódovanie → kanál (šum) → dekódovanie → príjemca."], "kodovanie": ["<b>Kódovanie</b> = prevod informácie do iného tvaru podľa verejných pravidiel (kódu).", "Príklady: Morseovka, Braillovo písmo, čiarový a QR kód, ASCII, Unicode.", "ASCII: A = 65, a = 97. Diakritika a emoji: Unicode (UTF-8)."], "sifry": ["<b>Šifrovanie</b> skrýva obsah. Bez tajného <b>kľúča</b> správu neprečítaš.", "Otvorený text → šifrovanie → šifrový text → dešifrovanie → otvorený text.", "Caesarova šifra posúva písmená o k miest. Má iba 25 kľúčov, prelomí sa hrubou silou."], "dnes": ["HTTPS a zámok 🔒 = šifrované spojenie. End-to-end = správu prečíta iba odosielateľ a príjemca.", "Symetrické šifrovanie: jeden spoločný kľúč. Asymetrické: verejný a súkromný kľúč.", "Silné heslo: dlhé (12+ znakov), rôzne druhy znakov, nie slovo zo slovníka."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – 1. ročník 1.2 Informatika ako veda */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#B4235A", AS = "#FBE4EC";
+return {
+  veda: fig(SV(440, 270, `
+    ${box(60, 8, 140, 44, "#fff", A, 10)}${T(130, 36, "INFORMÁCIA", { a: "middle", fs: 14, b: 1, c: A })}${T(220, 36, "+", { a: "middle", fs: 20, b: 1 })}${box(240, 8, 140, 44, "#fff", A, 10)}${T(310, 36, "AUTOMATIKA", { a: "middle", fs: 14, b: 1, c: A })}
+    ${ar(220, 58, 220, 78, A, 3)}${box(120, 82, 200, 36, A, null, 18)}${T(220, 106, "INFORMATIKA", { a: "middle", fs: 15, b: 1, c: "#fff" })}
+    ${[["📥", "získavať", 70, 150], ["💾", "uchovávať", 370, 150], ["⚙️", "spracovať", 370, 236], ["📡", "prenášať", 70, 236]].map(([e, t, x, y]) => `${box(x - 56, y - 26, 112, 48, AS, A, 12)}<text x="${x - 30}" y="${y + 7}" text-anchor="middle" font-size="20">${e}</text>${T(x - 12, y + 5, t, { fs: 12.5, b: 1, c: A })}`).join("")}
+    ${ar(130, 150, 310, 150, A, 2)}${ar(370, 180, 370, 206, A, 2)}${ar(310, 236, 130, 236, A, 2)}${ar(70, 206, 70, 180, A, 2)}
+    ${T(220, 196, "s informáciami", { a: "middle", fs: 12, b: 1 })}${T(220, 212, "pomocou počítačov", { a: "middle", fs: 11, c: C.mut })}`, "Čo robí informatika"),
+    "<b>Informatika</b> (informácia + automatika) skúma, ako informácie <b>získavať</b>, <b>uchovávať</b>, <b>spracovať</b> a <b>prenášať</b>.")
+}; })();
+
 const KEY = "info-n12-v1";
 const LESSON = "1.2 Informatika ako veda, informácia, kódovanie, šifrovanie informácií";
 const BRAND = "1.2 Informatika a šifry";
@@ -272,7 +311,8 @@ const TASKS = {
     { id: "1", ...Q("Napísala prvý program na svete pre Babbageov analytický stroj (1843).", OS, 0) },
     { id: "2", ...Q("Opísal teoretický model počítača a počas vojny pomohol rozlúštiť šifru Enigma.", OS, 1) },
     { id: "3", ...Q("Navrhol architektúru počítača, v ktorej sú program aj údaje v tej istej pamäti.", OS, 2) },
-    { id: "4", ...Q("Vytvorila prvý kompilátor a zaviedla pojem „bug“ (chyba v programe).", OS, 3) }
+    { id: "4", ...Q("Vytvorila prvý kompilátor a zaviedla pojem „bug“ (chyba v programe).", OS, 3) },
+    { id: "5", ...Q("V roku 1991 vytvoril World Wide Web.", OS, 4) }
   ]},
   odbor: { id: "odbor", type: "sort",
     buckets: [{ id: "p", label: "💻 Programovanie a algoritmy" }, { id: "s", label: "🌐 Siete a bezpečnosť" }, { id: "d", label: "🗄️ Údaje a umelá inteligencia" }],
@@ -282,6 +322,7 @@ const TASKS = {
     items: [{ id: "1", t: "Teplomer meria teplotu", b: "z" }, { id: "2", t: "Fotografuješ tabuľu", b: "z" }, { id: "3", t: "Ukladáš referát na disk", b: "u" }, { id: "4", t: "Záloha fotiek v cloude", b: "u" }, { id: "5", t: "Excel vypočíta priemer známok", b: "s" }, { id: "6", t: "Navigácia nájde trasu", b: "s" }, { id: "7", t: "Posielaš správu kamarátovi", b: "p" }, { id: "8", t: "Pozeráš živý prenos zápasu", b: "p" }] },
   infq: { id: "infq", type: "mc", qs: [
     { id: "1", ...Q("Kedy je správa pre nás informáciou?", ["Keď jej rozumieme a dozvieme sa z nej niečo nové", "Vždy, keď je dlhá", "Iba keď je na papieri", "Iba keď ju pošle počítač"], 0) },
+    { id: "2", ...Q("Kamarát ti povie, že v pondelok je pondelok. Aká je to informácia?", ["Takmer žiadna, nie je v nej nič nové", "Veľmi cenná", "Šifrovaná", "Zakódovaná"], 0) },
     { id: "3", ...Q("Čo je šum pri prenose informácie?", ["Rušenie, ktoré signál po ceste pokazí", "Zdroj informácie", "Kľúč k šifre", "Druh kódu"], 0) }
   ]},
   morse: { id: "morse", type: "input", qs: [
@@ -304,20 +345,25 @@ const TASKS = {
   sifq: { id: "sifq", type: "mc", qs: [
     { id: "1", ...Q("Koľko rôznych kľúčov má Caesarova šifra s anglickou abecedou?", ["25 (posun 0 nič nezmení)", "1000", "3", "Neobmedzene"], 0, "Preto sa dá rozlúštiť za pár minút aj ručne.") },
     { id: "2", ...Q("Čo je kľúč pri šifrovaní?", ["Tajný údaj, ktorý určuje, ako sa správa zašifruje a dešifruje", "Heslo k Wi-Fi", "Tabuľka Morseovky", "Názov šifry"], 0) },
-    { id: "3", ...Q("Ktorú šifru používala nemecká armáda v 2. svetovej vojne?", ["Enigma", "Morseovka", "ASCII", "QR kód"], 0) }
+    { id: "3", ...Q("Ktorú šifru používala nemecká armáda v 2. svetovej vojne?", ["Enigma", "Morseovka", "ASCII", "QR kód"], 0) },
+    { id: "4", ...Q("Ako sa dá prelomiť jednoduchá substitučná šifra v dlhom texte?", ["Frekvenčnou analýzou: najčastejšie písmeno v šifre asi zodpovedá najčastejšiemu písmenu jazyka", "Nedá sa", "Iba superpočítačom", "Hádaním hesla k e-mailu"], 0) }
   ]},
   heslo: { id: "heslo", type: "custom", max: 1 },
   dnesq: { id: "dnesq", type: "mc", qs: [
     { id: "1", ...Q("Čo znamená zámok 🔒 a https:// v prehliadači?", ["Spojenie so stránkou je šifrované", "Stránka je vždy dôveryhodná", "Stránka je zadarmo", "Stránka nemá reklamy"], 0, "Šifrovanie chráni údaje po ceste. Podvodná stránka však tiež môže mať zámok, preto kontroluj aj adresu.") },
     { id: "2", ...Q("Čo je šifrovanie end-to-end (napr. v aplikácii WhatsApp alebo Signal)?", ["Správu prečíta iba odosielateľ a príjemca, ani prevádzkovateľ služby nie", "Správa sa šifruje iba na konci dňa", "Správu vidí každý", "Správa sa nedá poslať"], 0) },
-    { id: "3", ...Q("Pri asymetrickom šifrovaní:", ["verejným kľúčom sa šifruje, súkromným dešifruje", "je jeden kľúč pre všetkých", "kľúč sa posiela e-mailom", "sa nepoužívajú kľúče"], 0) }
+    { id: "3", ...Q("Pri asymetrickom šifrovaní:", ["verejným kľúčom sa šifruje, súkromným dešifruje", "je jeden kľúč pre všetkých", "kľúč sa posiela e-mailom", "sa nepoužívajú kľúče"], 0) },
+    { id: "4", ...Q("Ako by mala stránka ukladať tvoje heslo?", ["Ako hash, teda jednosmerne zakódované, aby sa nedalo spätne prečítať", "Ako obyčajný text", "V Morseovke", "Caesarovou šifrou"], 0) }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Informatika je veda o:", ["získavaní, uchovávaní, spracovaní a prenose informácií pomocou počítačov", "opravovaní počítačov", "písaní na klávesnici", "hraní hier"], 0) },
     { id: "2", ...Q("Kódovanie je:", ["prevod informácie do iného tvaru podľa verejných pravidiel", "skrývanie informácie pred cudzími", "mazanie údajov", "tlač dokumentu"], 0) },
     { id: "3", ...Q("Šifrovanie je:", ["úprava správy tak, aby ju bez kľúča nikto neprečítal", "prevod textu na Morseovku", "zmena veľkosti písma", "komprimácia"], 0) },
     { id: "4", ...Q("Písmeno E v Morseovke je:", [".", "-", "..", ".-"], 0) },
-    { id: "5", ...Q("Koľko bitov používa pôvodný kód ASCII?", ["7", "16", "3", "64"], 0, "Dnes sa bežne ukladá do 8 bitov (1 bajt). Na diakritiku a emoji sa používa Unicode (UTF-8).") }
+    { id: "5", ...Q("Koľko bitov používa pôvodný kód ASCII?", ["7", "16", "3", "64"], 0, "Dnes sa bežne ukladá do 8 bitov (1 bajt). Na diakritiku a emoji sa používa Unicode (UTF-8).") },
+    { id: "6", ...Q("Caesar s posunom 1 zmení slovo HAL na:", ["IBM", "GZK", "HAL", "JCN"], 0) },
+    { id: "7", ...Q("Kto pomohol rozlúštiť Enigmu?", ["Alan Turing", "Bill Gates", "Tim Berners-Lee", "Ada Lovelace"], 0) },
+    { id: "8", ...Q("Ktoré heslo je najsilnejšie?", ["Modry-Vlak!Ide7Rano", "heslo123", "jana2009", "qwertz"], 0) }
   ]}
 };
 
@@ -334,6 +380,7 @@ const VIEWS = {
       <div class="pc"><span class="yr">1945</span><h4>John von Neumann</h4><p>architektúra počítača, ktorú používame dodnes</p></div>
       <div class="pc"><span class="yr">1952</span><h4>Grace Hopper</h4><p>prvý kompilátor, jazyk COBOL, pojem „bug“</p></div>
       <div class="pc"><span class="yr">1991</span><h4>Tim Berners-Lee</h4><p>World Wide Web, prvá webová stránka</p></div></div>
+    ${tfigs(TFIG.veda)}
     <h3>Úloha 1: kto to bol?</h3><div class="task">${taskHTML("osob")}</div>
     <h3>Úloha 2: ktorý odbor informatiky?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("odbor")}</div>` + nextBar();
   },
