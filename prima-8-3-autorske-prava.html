@@ -234,6 +234,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .sum{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;position:sticky;top:120px}
 .cc{display:flex;gap:6px;flex-wrap:wrap}.cc span{background:#222;color:#fff;border-radius:6px;padding:4px 8px;font-weight:800;font-family:var(--mono)}
 .cit{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;max-width:640px}.cit input{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:5px 8px;font:inherit;background:var(--surface2);color:var(--ink);margin-bottom:6px}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -241,7 +246,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Voľné dielo, súkromné použitie, krátka citácia so zdrojom: smieš. Licencia: dodrž podmienky. Inak: povolenie autora.", "ND zakazuje úpravy, NC zarábanie, BY vyžaduje autora, SA rovnakú licenciu."], "pojmy": ["Autorské právo vzniká automaticky; licencia = povolenie; ochrana 70 rokov po smrti autora, potom voľné dielo."], "smiem": ["Smiem: súkromné použitie, vlastné a voľné dielo; s podmienkou: citácia, CC licencia; nesmiem: zverejniť, upravovať či predávať cudzie dielo bez licencie."], "cc": ["Creative Commons: BY uveď autora, NC nie komerčne, ND bez úprav, SA rovnaká licencia, CC0 voľne."], "citacia": ["Citácia podľa STN ISO 690: PRIEZVISKO, Meno. Názov [online]. Rok [cit. dátum]. Dostupné na: adresa. Plagiát = cudzia práca za vlastnú."]};
+const THEORY = {"pojmy": ["Autorské právo vzniká automaticky; licencia = povolenie; ochrana 70 rokov po smrti autora, potom voľné dielo."], "smiem": ["Smiem: súkromné použitie, vlastné a voľné dielo; s podmienkou: citácia, CC licencia; nesmiem: zverejniť, upravovať či predávať cudzie dielo bez licencie."], "cc": ["Creative Commons: BY uveď autora, NC nie komerčne, ND bez úprav, SA rovnaká licencia, CC0 voľne."], "citacia": ["Citácia podľa STN ISO 690: PRIEZVISKO, Meno. Názov [online]. Rok [cit. dátum]. Dostupné na: adresa. Plagiát = cudzia práca za vlastnú."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -269,6 +274,50 @@ document.addEventListener("keydown", e => { const z = e.target.closest && e.targ
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 8.3 Autorské práva */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF;
+const badge = (x, y, t, sub, c) => `<circle cx="${x}" cy="${y}" r="28" fill="#fff" stroke="${c}" stroke-width="3"/>${T(x, y + 6, t, { a: "middle", fs: 15, b: 1, c })}${T(x, y + 48, sub, { a: "middle", fs: 10.5, b: 1 })}`;
+return {
+  autor: fig(SV(440, 200, `
+    ${box(8, 30, 120, 110, C.accS, C.acc, 12)}${T(68, 74, "🧑‍🎨", { a: "middle", fs: 32 })}${T(68, 104, "AUTOR", { a: "middle", fs: 12.5, b: 1, c: C.acc })}${T(68, 122, "tvorí", { a: "middle", fs: 10.5 })}
+    ${ar(132, 85, 154, 85, C.acc, 3)}
+    ${box(158, 30, 124, 110, C.ambS, C.amb, 12)}${T(220, 70, "🖼️🎵📝", { a: "middle", fs: 20 })}${T(220, 104, "DIELO", { a: "middle", fs: 12.5, b: 1, c: C.amb })}${T(220, 122, "právo vzniká samo", { a: "middle", fs: 10 })}
+    ${ar(286, 85, 308, 85, C.amb, 3)}
+    ${box(312, 30, 120, 110, C.okS, C.ok, 12)}${T(372, 74, "📜", { a: "middle", fs: 30 })}${T(372, 104, "LICENCIA", { a: "middle", fs: 12.5, b: 1, c: C.ok })}${T(372, 122, "povolenie pre iných", { a: "middle", fs: 9.5 })}
+    ${T(220, 176, "Autor rozhoduje, kto a ako smie jeho dielo použiť.", { a: "middle", fs: 12, b: 1 })}`, "Autor, dielo, licencia"),
+    "Autorské právo vznikne <b>automaticky</b> vytvorením diela. Iní ho smú použiť podľa <b>licencie</b>."),
+  cc: fig(SV(440, 210, `
+    ${box(8, 8, 424, 194, C.bg, C.line, 12)}${T(220, 32, "Licencie Creative Commons", { a: "middle", fs: 13, b: 1 })}
+    ${badge(60, 86, "BY", "uveď autora", C.ok)}${badge(160, 86, "NC", "nie na zárobok", C.amb)}${badge(260, 86, "ND", "neupravuj", C.bad)}${badge(360, 86, "SA", "rovnaká licencia", C.blue)}
+    ${box(60, 156, 320, 36, "#fff", C.acc, 18)}${T(220, 179, "napr. CC BY-NC = uveď autora a nezarábaj", { a: "middle", fs: 12, b: 1, c: C.acc })}`, "Skratky Creative Commons"),
+    "Skratky licencie <b>Creative Commons</b> hovoria, čo s dielom smieš."),
+  smiem: fig(SV(440, 200, `
+    ${[["✅", "smiem", "súkromne počúvať, vlastné dielo, voľné dielo", C.ok, C.okS], ["⚠️", "s podmienkou", "uveď autora a zdroj, dodrž licenciu", C.amb, C.ambS], ["❌", "nesmiem", "zverejniť, upraviť, predať bez licencie", C.bad, C.badS]].map(([e, a, b, c, bg], i) => { const x = 8 + i * 144; return `${box(x, 8, 136, 184, bg, c, 12)}<text x="${x + 68}" y="54" text-anchor="middle" font-size="30">${e}</text>${T(x + 68, 86, a, { a: "middle", fs: 13, b: 1, c })}${PF.TW(x + 12, 112, b, 20, { fs: 10.5 })}`; }).join("")}`, "Smiem to použiť?"),
+    "Zhrnutie: čo smieš s cudzím dielom urobiť.")
+}; })();
+
 const KEY = "autorske-p83-v1";
 const LESSON = "8.3 Autorské práva";
 const BRAND = "8.3 Autorské práva";
@@ -280,14 +329,13 @@ const STEPS = [
   { id: "smiem", title: "Smiem to použiť?", min: 8 },
   { id: "cc", title: "Licencie Creative Commons", min: 8 },
   { id: "citacia", title: "Citácia a plagiát", min: 10 },
-  { id: "precvic", title: "Precvičovanie: smiem to použiť?", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { pojmy: ["pq"], smiem: ["ssort"], cc: ["cq", "usort"], citacia: ["g_cit", "plq"], precvic: ["g_sit"], test: ["test"] };
+const STEP_TASKS = { pojmy: ["pq"], smiem: ["ssort"], cc: ["cq"], citacia: ["g_cit", "plq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Prima",
-  lead: "Fotka z internetu, pesnička do videa, text do referátu: kto ich vytvoril a smieš ich použiť? Zistíš, kto je autor a čo je dielo, rozhodneš v desiatich situáciách, čo smieš a čo nie, naučíš sa čítať licencie Creative Commons a správne citovať zdroj, aby tvoj referát nebol plagiát. 5 zastávok, body a na konci výsledok.",
+  lead: "Fotka z internetu, pesnička do videa, text do referátu: kto ich vytvoril a smieš ich použiť? Zistíš, kto je autor a čo je dielo, rozhodneš v desiatich situáciách, čo smieš a čo nie, naučíš sa čítať licencie Creative Commons a správne citovať zdroj, aby tvoj referát nebol plagiát. 4 zastávky, body a na konci výsledok.",
   guessQ: "Nakreslil si obrázok. Kedy máš k nemu autorské práva?",
   guessNote: "Tip sa neboduje. Na zastávke Autor a dielo zistíš, či si mal pravdu.",
   guesses: ["Až keď ho zaregistrujem na úrade", "Hneď, keď ho vytvorím", "Až keď ho predám", "Nikdy, som ešte dieťa"],
@@ -299,8 +347,6 @@ function citText() { const c = S.ci, au = c.au.trim().split(/\s+/), name = au.le
 function citGoals() { const c = S.ci; return { au: c.au.trim().split(/\s+/).length >= 2, ti: c.ti.trim().length >= 3, yr: /^(19|20)\d\d$/.test(c.yr.trim()), url: /^https?:\/\/\S+\.\S+/.test(c.url.trim()), dt: /\d{1,2}\.\s?\d{1,2}\.\s?20\d\d/.test(c.dt.trim()) }; }
 const CL = [["au", "autor (meno a priezvisko)"], ["ti", "názov článku"], ["yr", "rok vydania (napr. 2025)"], ["url", "webová adresa začínajúca https://"], ["dt", "dátum citovania (napr. 1. 10. 2026)"]];
 function citHTML() { const c = S.ci, G = citGoals(); return `<div class="cit"><p>Zdroj: článok <b>Ako žijú svište v Tatrách</b> od <b>Petra Horáka</b>, vydaný v roku <b>2025</b> na stránke <b>https://www.priroda-tatier.sk/svište</b> (vymyslený príklad).</p>${CL.map(([k, l]) => `<label style="font-size:13px;font-weight:600">${G[k] ? "✅" : "⬜"} ${l}</label><input type="text" data-ci="${k}" value="${esc(c[k])}">`).join("")}<p style="margin:8px 0 0"><b>Citácia:</b><br><span id="cittxt">${citText()}</span></p></div>`; }
-const PX_I = [["Fotku s licenciou CC BY chceš dať na školský plagát.", "ok", ""], ["Báseň Hviezdoslava (zomrel v roku 1921) chceš uverejniť v školskom časopise.", "free", "od smrti autora uplynulo viac ako 70 rokov"], ["Obrázok CC BY-NC chceš použiť v reklame e-shopu.", "nc", ""], ["Kresbu CC BY-ND chceš prefarbiť a zverejniť.", "nd", ""], ["Pesničku známej kapely chceš dať do zverejneného videa.", "perm", ""], ["Dve vety z článku chceš dať do referátu.", "cite", ""], ["Kúpený film si chceš pozrieť doma s rodinou.", "priv", ""]];
-const PX_O = [["", "— vyber —"], ["ok", "Smiem, ak uvediem autora"], ["free", "Smiem voľne (voľné dielo)"], ["nc", "Nesmiem, licencia zakazuje zarábanie"], ["nd", "Nesmiem upraviť (ND)"], ["perm", "Potrebujem povolenie autora (licenciu)"], ["cite", "Smiem citovať s uvedením zdroja"], ["priv", "Smiem na súkromné použitie"]];
 const TASKS = {
   pq: { id: "pq", type: "mc", qs: [
     { id: "1", ...Q("Čo je autorské dielo?", ["výsledok tvorivej činnosti: text, fotka, hudba, video, kresba aj program", "iba kniha", "iba obraz v galérii", "každá informácia, napr. dátum"], 0) },
@@ -324,8 +370,6 @@ const TASKS = {
     { id: "2", ...Q("Ako napíšeš referát bez plagiátu?", ["vlastnými slovami, citáty v úvodzovkách a so zdrojom, na konci zoznam zdrojov", "skopírujem Wikipédiu", "skopírujem spolužiaka", "použijem AI a nepoviem to"], 0) },
     { id: "3", ...Q("Text ti pomohla napísať umelá inteligencia. Čo je férové?", ["priznať to podľa pravidiel učiteľa a text si overiť a prepracovať", "tváriť sa, že je celý môj", "nič neoverovať", "vymazať zdroje"], 0) }
   ]},
-  g_sit: { id: "g_sit", type: "custom", max: 7 },
-  usort: {"id": "usort", "type": "sort", "buckets": [{"id": "y", "label": "✏️ Smiem upraviť"}, {"id": "n", "label": "🚫 Nesmiem upraviť"}], "items": [{"id": "1", "t": "CC BY", "b": "y"}, {"id": "2", "t": "CC BY-SA", "b": "y"}, {"id": "3", "t": "CC BY-NC", "b": "y"}, {"id": "4", "t": "CC0", "b": "y"}, {"id": "5", "t": "CC BY-ND", "b": "n"}, {"id": "6", "t": "CC BY-NC-ND", "b": "n"}], "after": "Úpravu zakazuje iba ND (bez odvodených diel). Pri SA musíš upravené dielo zverejniť pod rovnakou licenciou."},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Autorské právo vzniká:", ["automaticky vytvorením diela", "registráciou", "zaplatením", "zverejnením na Facebooku"], 0) },
     { id: "2", ...Q("Licencia CC BY znamená:", ["dielo smieš použiť, ak uvedieš autora", "dielo nesmieš použiť", "dielo je iba na predaj", "dielo smieš podpísať ako svoje"], 0) },
@@ -336,29 +380,19 @@ const TASKS = {
 };
 const VIEWS = {
   pojmy: () => head() + `<h2>Autor a dielo</h2>${guessBox()}<div class="theory"><p><b>Autor</b> je človek, ktorý dielo vytvoril. <b>Dielo</b> je výsledok jeho tvorivej činnosti: text, fotka, kresba, hudba, video, počítačový program. <b>Autorské právo</b> vzniká <b>automaticky</b> vytvorením diela. Autor rozhoduje, kto a ako smie jeho dielo použiť, a dáva na to <b>licenciu</b>. Majetkové práva trvajú počas života autora a <b>70 rokov po jeho smrti</b>, potom je dielo <b>voľné</b>. Na Slovensku to upravuje <b>Autorský zákon</b>.</p></div>
+    ${tfigs(TFIG.autor)}
     <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
   smiem: () => head() + `<h2>Smiem to použiť?</h2><div class="theory"><p>Bez povolenia smieš dielo použiť na <b>súkromné účely</b> (napr. počúvať doma), ak ide o <b>voľné dielo</b> alebo o <b>citáciu</b> v primeranom rozsahu s uvedením zdroja. Na zverejnenie, úpravu či predaj cudzieho diela potrebuješ <b>licenciu</b>.</p></div>
-    <h3>Úloha: rozhodni</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ssort")}</div>` + nextBar(),
+    <h3>Úloha: rozhodni</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ssort")}</div>${S.t.ssort ? tfigs(TFIG.smiem) : ""}` + nextBar(),
   cc: () => head() + `<h2>Licencie Creative Commons</h2><div class="theory"><p>Autori často zverejňujú diela pod licenciou <b>Creative Commons (CC)</b>. Skratky hovoria, čo smieš:</p><table class="cmdt"><thead><tr><th>Skratka</th><th>Význam</th></tr></thead><tbody><tr><td><span class="cc"><span>BY</span></span></td><td>uveď autora</td></tr><tr><td><span class="cc"><span>NC</span></span></td><td>nie na komerčné účely (zarábanie)</td></tr><tr><td><span class="cc"><span>ND</span></span></td><td>nesmieš upravovať</td></tr><tr><td><span class="cc"><span>SA</span></span></td><td>úpravu zverejni pod rovnakou licenciou</td></tr><tr><td><span class="cc"><span>CC0</span></span></td><td>autor sa vzdal práv, použiješ voľne</td></tr></tbody></table><p>Príklad: <b>CC BY-NC-SA</b> = uveď autora, nie na zarábanie, úpravy pod rovnakou licenciou.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("cq")}</div>
-    <h3>Úloha 2: smiem dielo upraviť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("usort")}</div>` + nextBar(),
+    ${tfigs(TFIG.cc)}
+    <h3>Otázky</h3><div class="task">${taskHTML("cq")}</div>` + nextBar(),
   citacia: () => head() + `<h2>Citácia a plagiát</h2><div class="theory"><p><b>Citácia</b> je uvedenie zdroja, z ktorého čerpáš. Na Slovensku sa používa norma <b>STN ISO 690</b>. Pri webovom zdroji: PRIEZVISKO, Meno. <i>Názov</i> [online]. Rok [cit. dátum]. Dostupné na: adresa. <b>Plagiát</b> je vydávanie cudzej práce za svoju a v škole je to vážny priestupok.</p></div>
     <h3>Úloha 1: zostav citáciu</h3>${S.t.g_cit ? `<div class="checkbar"><span class="score ${S.t.g_cit.score < 5 ? "part" : ""}">Splnené: ${S.t.g_cit.score} z 5</span></div>` : ""}<div class="tool" id="citbox">${citHTML()}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("plq")}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: smiem to použiť?</h2>
-    <div class="theory"><p>Pri každom cudzom diele postupuj podľa otázok: <b>1. Je to voľné dielo?</b> (autor zomrel pred viac ako 70 rokmi) → smieš. <b>2. Je to súkromné použitie?</b> → smieš. <b>3. Je to krátka citácia so zdrojom?</b> → smieš. <b>4. Má dielo licenciu (napr. CC)?</b> → dodrž jej podmienky. <b>5. Nič z toho?</b> → potrebuješ povolenie autora. Takto sa rozhoduje aj profesionálny grafik či novinár.</p><p>Pri každej situácii vyber správnu odpoveď.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; const t = e.target; if (t.dataset && t.dataset.ci) { S.ci[t.dataset.ci] = t.value; const G = citGoals(), n = Object.values(G).filter(Boolean).length; if (n && (!S.t.g_cit || S.t.g_cit.score < n)) award("g_cit", n); save(); document.getElementById("cittxt").innerHTML = citText(); document.querySelectorAll("#citbox label").forEach((l, i) => { l.textContent = (G[CL[i][0]] ? "✅ " : "⬜ ") + CL[i][1]; }); return true; } return false; }
-
-function CUSTOM_CLICK(e) { return selClick(e, { px: [PX_I, "g_sit"] }); }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function CUSTOM_INPUT(e) { const t = e.target; if (t.dataset && t.dataset.ci) { S.ci[t.dataset.ci] = t.value; const G = citGoals(), n = Object.values(G).filter(Boolean).length; if (n && (!S.t.g_cit || S.t.g_cit.score < n)) award("g_cit", n); save(); document.getElementById("cittxt").innerHTML = citText(); document.querySelectorAll("#citbox label").forEach((l, i) => { l.textContent = (G[CL[i][0]] ? "✅ " : "⬜ ") + CL[i][1]; }); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };

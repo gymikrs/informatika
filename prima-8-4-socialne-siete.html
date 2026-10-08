@@ -235,6 +235,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .feed{max-width:460px;background:#fff;color:#222;border:1px solid #CCD;border-radius:14px;overflow:hidden;font-family:Arial,sans-serif;font-size:14px}
 .feed .hd{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #EEE}.feed .av{width:44px;height:44px;border-radius:50%;background:#FFCC80;display:grid;place-items:center;font-size:24px}
 .feed .post{padding:10px 12px;border-bottom:1px solid #EEE}.rk{cursor:pointer;border-radius:4px;padding:0 2px}.rk:hover{background:#FFF3CD}.rk.found{background:#FDE2E0;outline:2px solid #E53935}.rk.miss{background:#E8F5E9}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -242,7 +247,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Súkromný profil, iba známi, limity, overovanie. Pri problémoch zablokuj, nahlás a povedz dospelému.", "Informačná bublina: algoritmus ukazuje najmä to, čo potvrdzuje tvoje názory."], "siete": ["Sociálne siete väčšinou od 13 rokov, zarábajú na reklame; digitálna stopa."], "profil": ["Nezverejňuj adresu, školu s časom, polohu, že si sám doma, telefón, nápovedu k heslu."], "cudzi": ["Falošný profil: nový, málo príspevkov, cudzí priatelia, chce fotky či stretnutie, tajnosti pred rodičmi."], "cas": ["Algoritmy držia pozornosť; časový limit, vypnuté upozornenia; overuj informácie pred zdieľaním."]};
+const THEORY = {"siete": ["Sociálne siete väčšinou od 13 rokov, zarábajú na reklame; digitálna stopa."], "profil": ["Nezverejňuj adresu, školu s časom, polohu, že si sám doma, telefón, nápovedu k heslu."], "cudzi": ["Falošný profil: nový, málo príspevkov, cudzí priatelia, chce fotky či stretnutie, tajnosti pred rodičmi."], "cas": ["Algoritmy držia pozornosť; časový limit, vypnuté upozornenia; overuj informácie pred zdieľaním."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -270,6 +275,52 @@ document.addEventListener("keydown", e => { const z = e.target.closest && e.targ
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Prima 8.4 Sociálne siete */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, phone } = PF;
+return {
+  zadarmo: fig(SV(440, 220, `
+    <rect x="30" y="30" width="80" height="140" rx="14" fill="${C.ink}"/><rect x="36" y="44" width="68" height="112" rx="6" fill="#fff"/>${T(70, 80, "👍❤️", { a: "middle", fs: 16 })}<rect x="42" y="96" width="56" height="40" rx="4" fill="${C.ambS}"/>${T(70, 121, "reklama", { a: "middle", fs: 9, b: 1, c: C.amb })}
+    ${T(70, 192, "ty", { a: "middle", fs: 11.5, b: 1 })}
+    ${ar(118, 70, 250, 70, C.acc, 2.5)}${T(184, 60, "lajky, čas, poloha, záujmy", { a: "middle", fs: 10, b: 1, c: C.acc })}
+    ${box(254, 40, 176, 70, C.accS, C.acc, 10)}${T(342, 70, "🏢 sociálna sieť", { a: "middle", fs: 12.5, b: 1 })}${T(342, 90, "zostaví tvoj profil záujmov", { a: "middle", fs: 10 })}
+    ${ar(342, 114, 342, 136, C.amb, 2.5)}
+    ${box(254, 140, 176, 60, C.ambS, C.amb, 10)}${T(342, 166, "💰 predá reklamu", { a: "middle", fs: 12.5, b: 1, c: C.amb })}${T(342, 184, "presne pre teba", { a: "middle", fs: 10 })}
+    ${ar(250, 170, 118, 120, C.amb, 2)}`, "Ako zarábajú sociálne siete"),
+    "Sociálne siete sú „zadarmo“, lebo platíš <b>údajmi o sebe</b>. Podľa nich ti ukazujú reklamu."),
+  profil: fig(SV(440, 210, `
+    ${box(10, 20, 180, 170, "#fff", C.line, 12)}<circle cx="100" cy="70" r="30" fill="${C.blueS}"/>${T(100, 80, "😊", { a: "middle", fs: 28 })}${T(100, 122, "Lukáš, 13 r.", { a: "middle", fs: 13, b: 1 })}${T(100, 142, "„hrám Minecraft“", { a: "middle", fs: 11 })}${T(100, 172, "profil na sieti", { a: "middle", fs: 10, c: C.mut })}
+    ${ar(196, 105, 240, 105, C.bad, 3)}${T(218, 92, "?", { a: "middle", fs: 18, b: 1, c: C.bad })}
+    ${box(246, 20, 184, 170, C.badS, C.bad, 12)}${T(338, 52, "kto naozaj píše?", { a: "middle", fs: 12, b: 1, c: C.bad })}${[["🧒", "rovesník"], ["🧔", "dospelý"], ["🤖", "bot"], ["🎭", "podvodník"]].map(([e, t], i) => `${T(258 + (i % 2) * 86, 100 + Math.floor(i / 2) * 50, e, { fs: 22 })}${T(286 + (i % 2) * 86, 96 + Math.floor(i / 2) * 50, t, { fs: 9.5, b: 1 })}`).join("")}`, "Za profilom môže byť ktokoľvek"),
+    "Fotka a meno na profile nemusia byť pravdivé. Za profilom môže byť <b>ktokoľvek</b>."),
+  algoritmus: fig(SV(440, 230, `
+    ${[["👀", "pozeráš", 80, 50], ["📊", "algoritmus si zapamätá", 300, 50], ["📲", "ukáže ešte viac podobného", 300, 170], ["⏰", "zostaneš dlhšie", 80, 170]].map(([e, t, x, y]) => `${box(x - 70, y - 34, 140, 68, C.accS, C.acc, 12)}<text x="${x - 44}" y="${y + 9}" text-anchor="middle" font-size="24">${e}</text>${PF.TW(x - 22, y - 4, t, 14, { fs: 10.5, b: 1 })}`).join("")}
+    ${ar(152, 50, 228, 50, C.acc, 2.5)}${ar(300, 86, 300, 134, C.acc, 2.5)}${ar(228, 170, 152, 170, C.acc, 2.5)}${ar(80, 134, 80, 86, C.acc, 2.5)}
+    ${T(190, 116, "🔄 bludný kruh", { a: "middle", fs: 12, b: 1, c: C.acc })}`, "Algoritmus sociálnej siete"),
+    "Algoritmus ti ukazuje to, pri čom zostaneš najdlhšie. Pomôže <b>časový limit</b> a vypnuté upozornenia.")
+}; })();
+
 const KEY = "socsiete-p84-v1";
 const LESSON = "8.4 Sociálne siete a ich riziká";
 const BRAND = "8.4 Sociálne siete";
@@ -281,14 +332,13 @@ const STEPS = [
   { id: "profil", title: "Detektív profilu", min: 10 },
   { id: "cudzi", title: "Falošné profily a cudzí ľudia", min: 7 },
   { id: "cas", title: "Čas, algoritmy a pravda", min: 8 },
-  { id: "precvic", title: "Precvičovanie: múdro na sieťach", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { siete: ["sq"], profil: ["g_pr"], cudzi: ["fsort", "cq"], cas: ["tin", "aq", "hsort"], precvic: ["g_sit", "pxq"], test: ["test"] };
+const STEP_TASKS = { siete: ["sq"], profil: ["g_pr"], cudzi: ["fsort", "cq"], cas: ["tin", "aq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Prima",
-  lead: "Facebook, Instagram, TikTok, YouTube, Snapchat, WhatsApp: sociálne siete spájajú ľudí, ale skrývajú aj riziká. Zistíš, ako fungujú a prečo sú od 13 rokov, ako detektív nájdeš na profile informácie, ktoré tam nemali byť, rozpoznáš falošný profil, spočítaš, koľko času strávime na sieťach, a naučíš sa overovať, čo čítaš. 5 zastávok, body a na konci výsledok.",
+  lead: "Facebook, Instagram, TikTok, YouTube, Snapchat, WhatsApp: sociálne siete spájajú ľudí, ale skrývajú aj riziká. Zistíš, ako fungujú a prečo sú od 13 rokov, ako detektív nájdeš na profile informácie, ktoré tam nemali byť, rozpoznáš falošný profil, spočítaš, koľko času strávime na sieťach, a naučíš sa overovať, čo čítaš. 4 zastávky, body a na konci výsledok.",
   guessQ: "Zverejnil si fotku a po hodine si ju zmazal. Je naozaj preč?",
   guessNote: "Tip sa neboduje. Na zastávke Detektív profilu zistíš, či si mal pravdu.",
   guesses: ["Áno, úplne", "Nemusí, niekto si ju mohol uložiť alebo urobiť snímku obrazovky", "Áno, ak mala málo lajkov", "Áno, po týždni"],
@@ -300,8 +350,6 @@ function prHTML() { const D = S.pd; return `<div class="feed"><div class="hd"><d
   <p class="muted" style="font-size:13px">Klikni na časti textu, ktoré by Lucka nemala zverejniť. Opätovným klikom označenie zrušíš.</p>${D ? "" : `<div class="row"><button class="primary" data-pok>✔ Vyhodnotiť</button></div>`}${D ? `<div class="fb ${S.prm.k}">${S.prm.t}</div>` : ""}`; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, tol, why) => ({ id, q, ok: v => Math.abs(parseNum(v) - ans) <= tol, show: String(ans).replace(".", ","), ph: "?", why });
-const PX_I = [["Žiadosť o priateľstvo od neznámej „modelky“ s jedinou fotkou.", "decline", "typický falošný profil"], ["Neznámy ti sľubuje skiny, ak mu pošleš fotku.", "block", ""], ["Tvoje fotky z dovolenky vidí ktokoľvek.", "priv", ""], ["Chceš zdieľať šokujúce video o „tajnom lieku“.", "over", ""], ["Každý deň scrolluješ do polnoci.", "limit", ""], ["Zverejnil si fotku, na ktorej je vidieť číslo domu.", "del", ""], ["Kamarátku zosmiešňujú v komentároch.", "support", "svedok môže pomôcť"]];
-const PX_O = [["", "— vyber —"], ["decline", "Žiadosť neprijať"], ["block", "Zablokovať, nahlásiť a povedať dospelému"], ["priv", "Nastaviť profil ako súkromný"], ["over", "Overiť v dôveryhodných zdrojoch, nezdieľať"], ["limit", "Nastaviť časový limit"], ["del", "Príspevok zmazať"], ["support", "Podporiť ju a povedať to dospelému"]];
 const TASKS = {
   sq: { id: "sq", type: "mc", qs: [
     { id: "1", ...Q("Od koľkých rokov dovoľuje väčšina sociálnych sietí založiť konto?", ["od 13 rokov", "od 6 rokov", "od 3 rokov", "bez obmedzenia"], 0) },
@@ -326,9 +374,6 @@ const TASKS = {
     { id: "2", ...Q("Ako si nastavíš zdravší čas na sieťach?", ["limit času v mobile, vypnuté upozornenia, mobil mimo izby v noci", "budem pozerať viac", "vypnem budík", "nič"], 0) },
     { id: "3", ...Q("Video tvrdí šokujúcu „pravdu“, ktorú vraj „všetci tajia“. Čo urobíš?", ["overím si to v dôveryhodných zdrojoch, kým to zdieľam", "hneď zdieľam", "uverím, lebo to má veľa lajkov", "pošlem všetkým"], 0) }
   ]},
-  g_sit: { id: "g_sit", type: "custom", max: 7 },
-  hsort: {"id": "hsort", "type": "sort", "buckets": [{"id": "z", "label": "⚠️ Varovný signál"}, {"id": "h", "label": "✅ Zdravý návyk"}], "items": [{"id": "1", "t": "Mobil kontroluješ hneď po zobudení", "b": "z"}, {"id": "2", "t": "Kvôli scrollovaniu nestíhaš úlohy", "b": "z"}, {"id": "3", "t": "Si nervózny, keď nemáš mobil pri sebe", "b": "z"}, {"id": "4", "t": "V noci scrolluješ namiesto spánku", "b": "z"}, {"id": "5", "t": "Máš nastavený denný limit", "b": "h"}, {"id": "6", "t": "Počas učenia máš vypnuté upozornenia", "b": "h"}, {"id": "7", "t": "Večer necháš mobil mimo izby", "b": "h"}, {"id": "8", "t": "Najprv povinnosti, potom siete", "b": "h"}]},
-  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Kto vidí príspevok v súkromnom profile?", "opts": ["iba ľudia, ktorých si schválil, ale aj oni ho môžu preposlať", "nikto, ani ja", "úplne každý", "iba polícia"], "a": 0}, {"id": "2", "q": "Čo je informačná bublina?", "opts": ["vidíš najmä obsah, ktorý potvrdzuje tvoje názory", "chyba v aplikácii", "druh reklamy na mydlo", "súkromná skupina kamarátov"], "a": 0}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Ktorú informáciu nezverejníš?", ["adresu bydliska a telefónne číslo", "obľúbenú farbu", "že máš rád kone", "obrázok, ktorý si nakreslil"], 0) },
     { id: "2", ...Q("Falošný profil spoznáš napríklad podľa toho, že:", ["je nový, má málo príspevkov a chce súkromné fotky", "patrí spolužiakovi", "je oficiálny profil školy", "má starú históriu"], 0) },
@@ -339,29 +384,19 @@ const TASKS = {
 };
 const VIEWS = {
   siete: () => head() + `<h2>Čo sú sociálne siete</h2><div class="theory"><p><b>Sociálne siete</b> sú služby na zdieľanie príspevkov, fotiek, videí a komunikáciu: Facebook, Instagram, TikTok, YouTube, Snapchat, chatovacie aplikácie ako WhatsApp. Väčšina dovoľuje konto <b>od 13 rokov</b>. Sú „zadarmo“, lebo zarábajú na <b>reklame</b> podľa údajov o tebe. Všetko, čo zverejníš, tvorí tvoju <b>digitálnu stopu</b>.</p></div>
+    ${tfigs(TFIG.zadarmo)}
     <h3>Otázky</h3><div class="task">${taskHTML("sq")}</div>` + nextBar(),
   profil: () => head() + `<h2>Detektív profilu</h2>${guessBox()}<div class="theory"><p>Lucka (vymyslená postava) má verejný profil. Nájdi päť informácií, ktoré by nikdy nemala zverejniť, lebo môžu ohroziť jej bezpečnosť alebo jej účet.</p></div><div class="tool" id="prbox">${prHTML()}</div>` + nextBar(),
   cudzi: () => head() + `<h2>Falošné profily a cudzí ľudia</h2><div class="theory"><p>Na internete sa ktokoľvek môže vydávať za niekoho iného. <b>Neprijímaj žiadosti</b> od ľudí, ktorých nepoznáš naživo, <b>neposielaj fotky</b> a osobné údaje, s človekom z internetu sa <b>nestretávaj</b> bez rodičov. Ak ti niekto píše niečo nepríjemné, <b>zablokuj a nahlás</b> ho a povedz to dospelému.</p></div>
+    ${tfigs(TFIG.profil)}
     <h3>Úloha 1: falošný, alebo bežný?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div><h3>Úloha 2: situácie</h3><div class="task">${taskHTML("cq")}</div>` + nextBar(),
   cas: () => head() + `<h2>Čas, algoritmy a pravda</h2><div class="theory"><p>Sociálne siete používajú <b>algoritmy</b>, ktoré ti ukazujú obsah tak, aby si na nich zostal čo najdlhšie. Nastav si <b>časový limit</b> a vypni upozornenia. Nie všetko je pravda: šíria sa aj <b>dezinformácie</b> a <b>hoaxy</b>. Pred zdieľaním si informáciu over.</p></div>
-    <h3>Úloha 1: počítaj</h3><div class="task">${taskHTML("tin")}</div><h3>Úloha 2: otázky</h3><div class="task">${taskHTML("aq")}</div>
-    <h3>Úloha 3: varovný signál, alebo zdravý návyk?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("hsort")}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: múdro na sieťach</h2>
-    <div class="theory"><p>Sociálne siete sú navrhnuté tak, aby si na nich zostal čo najdlhšie. Algoritmus ti ukazuje obsah, ktorý sa ti páči, a tak sa ľahko ocitneš v <b>informačnej bubline</b>: vidíš najmä to, čo potvrdzuje tvoje názory. Múdry používateľ má <b>súkromný profil</b>, prijíma iba známych, nastavuje si <b>limity</b>, šokujúce správy <b>overuje</b> a pri problémoch sa nebojí <b>zablokovať, nahlásiť a povedať to dospelému</b>.</p><p>Pri každej situácii vyber najlepšiu reakciu.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
-    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
+    ${tfigs(TFIG.algoritmus)}
+    <h3>Úloha 1: počítaj</h3><div class="task">${taskHTML("tin")}</div><h3>Úloha 2: otázky</h3><div class="task">${taskHTML("aq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; const sg = e.target.closest && e.target.closest("[data-sg]"); if (sg && !S.pd) { const i = sg.dataset.sg; if (S.mk[i]) delete S.mk[i]; else S.mk[i] = true; save(); render(false); return true; }
+function CUSTOM_CLICK(e) { const sg = e.target.closest && e.target.closest("[data-sg]"); if (sg && !S.pd) { const i = sg.dataset.sg; if (S.mk[i]) delete S.mk[i]; else S.mk[i] = true; save(); render(false); return true; }
   const el = e.target.closest("button"); if (el && el.dataset.pok !== undefined) { const risky = SEG.map((s, i) => [s, i]).filter(([s]) => s[2]), hit = risky.filter(([, i]) => S.mk[i]).length, wrong = Object.keys(S.mk).filter(i => !SEG[i][2]).length; const sc = Math.max(0, hit - wrong); S.pd = true; S.prm = sc === 5 ? { k: "ok", t: "✅ Výborne! Adresa, škola s časom odchodu, „som doma sama“, telefón a návod na heslo. Toto patrí iba rodine a kamarátom naživo." } : { k: "info", t: `Našiel si ${hit} z 5 rizikových informácií${wrong ? ` a ${wrong}× si označil niečo neškodné` : ""}. Zelené sú tie, ktoré si prehliadol.` }; if (sc) award("g_pr", sc); save(); render(false); return true; } return false; }
-
-function CUSTOM_INPUT(e) { return selInput(e); }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
