@@ -202,6 +202,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .fname{font-family:var(--mono);font-size:clamp(20px,3vw,28px);font-weight:700;display:flex;gap:2px;justify-content:center;flex-wrap:wrap;margin:10px 0}
 .fname span{padding:4px 10px;border-radius:8px}.fname small{display:block;font-family:var(--font);font-size:12px;text-align:center}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -210,6 +215,50 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"info": ["<b>Údaj</b> je zápis čísla, textu, obrázka alebo zvuku.", "<b>Informácia</b> je údaj, ktorému rozumieme a ktorý nám niečo nové povie.", "Formy informácie: text, obrázok, zvuk, video."], "bity": ["<b>Bit</b> je najmenšia jednotka informácie, má hodnotu 0 alebo 1.", "<b>Bajt</b> (B) = 8 bitov. Do jedného bajtu sa zmestí jeden znak.", "Jeden bajt má 256 rôznych kombinácií."], "jednotky": ["1 kB = 1024 B · 1 MB = 1024 kB · 1 GB = 1024 MB · 1 TB = 1024 GB.", "Fotka má asi 3 MB, pesnička 5 MB, film 2 GB."], "subor": ["<b>Súbor</b> je pomenovaný celok údajov uložený na disku.", "Meno súboru = <b>názov</b> + bodka + <b>prípona</b> (vylet.jpg).", "Zakázané znaky v mene: \\ / : * ? \" &lt; &gt; |"], "typ": ["<b>Prípona</b> určuje typ súboru a program, ktorý ho otvorí.", "Príklady: .docx text, .jpg obrázok, .mp3 zvuk, .mp4 video, .exe program, .zip archív.", "Zmenou prípony sa obsah súboru nezmení."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Sekunda 1.2 Informácia, údaj, súbor */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#C2560C", AS = "#FBE3D2";
+const icon = (x, y, ext, col, emo) => `<path d="M${x} ${y} h34 l12 12 v46 h-46z" fill="#fff" stroke="${col}" stroke-width="2"/><path d="M${x + 34} ${y} v12 h12" fill="none" stroke="${col}" stroke-width="2"/><rect x="${x}" y="${y + 40}" width="46" height="18" fill="${col}"/>${T(x + 23, y + 53, ext, { a: "middle", fs: 10.5, b: 1, c: "#fff" })}<text x="${x + 23}" y="${y + 33}" text-anchor="middle" font-size="16">${emo}</text>`;
+return {
+  info: fig(SV(440, 230, `
+    ${box(8, 8, 150, 214, C.bg, C.line, 12)}${T(83, 32, "📊 ÚDAJ", { a: "middle", fs: 13, b: 1, c: C.mut })}
+    ${T(83, 110, "38,5", { a: "middle", fs: 40, b: 1, mono: 1 })}${T(83, 148, "iba číslo,", { a: "middle", fs: 11.5 })}${T(83, 164, "nevieme, čo znamená", { a: "middle", fs: 11.5 })}
+    ${ar(164, 110, 210, 110, A, 3)}${T(187, 98, "+ význam", { a: "middle", fs: 10.5, b: 1, c: A })}
+    ${box(216, 8, 216, 214, AS, A, 12)}${T(324, 32, "💡 INFORMÁCIA", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="238" y="50" width="16" height="104" rx="8" fill="#fff" stroke="${C.mut}" stroke-width="2"/><rect x="242" y="80" width="8" height="70" rx="4" fill="${C.bad}"/><circle cx="246" cy="164" r="14" fill="${C.bad}" stroke="${C.mut}" stroke-width="2"/>
+    ${T(268, 82, "Teplota: 38,5 °C", { fs: 12.5, b: 1 })}${T(268, 106, "Máš horúčku,", { fs: 12 })}${T(268, 124, "zostaneš doma", { fs: 12 })}${T(268, 142, "a ideš k lekárovi.", { fs: 12 })}
+    ${T(324, 204, "údaj, ktorému rozumieme", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Údaj a informácia"),
+    "<b>Údaj</b> je iba zápis (číslo 38,5). <b>Informáciou</b> sa stane, keď mu rozumieme: je to teplota a máš horúčku."),
+  schody: fig(SV(440, 240, `
+    ${[["B", "bajt", "8 bitov"], ["kB", "kilobajt", ""], ["MB", "megabajt", ""], ["GB", "gigabajt", ""], ["TB", "terabajt", ""]].map(([u, n], i) => { const x = 10 + i * 86, h = 50 + i * 34, y = 220 - h; return `<rect x="${x}" y="${y}" width="78" height="${h}" rx="8" fill="${["#FDF1D3", "#FBE3D2", "#F8CFB1", "#F2A877", "#C2560C"][i]}" stroke="${A}"/>${T(x + 39, y + 24, u, { a: "middle", fs: 17, b: 1, c: i === 4 ? "#fff" : C.ink })}${T(x + 39, y + 40, n, { a: "middle", fs: 10, c: i === 4 ? "#fff" : C.mut })}${i ? `${T(x - 4, y - 6, "×1024", { a: "middle", fs: 10.5, b: 1, c: A })}` : ""}`; }).join("")}
+    ${T(14, 26, "Každý schod je 1024-krát väčší", { fs: 12.5, b: 1, c: A })}${T(14, 44, "(1024 = 2¹⁰)", { fs: 11, c: C.mut })}`, "Jednotky informácie ako schody"),
+    "Jednotky ako schody: každá väčšia jednotka je <b>1024-krát</b> väčšia ako predchádzajúca."),
+  typy: fig(SV(440, 230, `
+    ${[[".txt", "#6B7280", "📝", "Poznámkový blok"], [".docx", "#2B579A", "📄", "Word"], [".pdf", "#C0392B", "📕", "prehliadač PDF"], [".jpg", "#12805A", "🖼️", "Fotografie"], [".mp3", "#8E44AD", "🎵", "prehrávač"], [".mp4", "#D35400", "🎬", "prehrávač videa"], [".exe", "#231812", "⚙️", "spustí sa"], [".zip", "#B07400", "🗜️", "archív"]].map(([e, c, m, p], i) => { const x = 18 + (i % 4) * 106, y = 10 + Math.floor(i / 4) * 110; return `${icon(x + 20, y, e, c, m)}${T(x + 43, y + 78, p, { a: "middle", fs: 10.5 })}`; }).join("")}`, "Ikony typov súborov"),
+    "Podľa <b>prípony</b> Windows priradí súboru <b>ikonu</b> a <b>program</b>, ktorým sa otvorí.")
+}; })();
+
 const KEY = "info-s12-v1";
 const LESSON = "1.2 Pojem informácia, údaj, jednotky informácie, súbor, meno a typ súboru";
 const BRAND = "1.2 Informácia a súbor";
@@ -240,44 +289,55 @@ const FORBID = /[\\/:*?"<>|]/;
 /* ---------- tasks ---------- */
 const TASKS = {
   infoq: { id: "infoq", type: "mc", qs: [
+    { id: "1", q: "Na papieri je napísané iba <b>38,5</b>. Čo to je?", opts: ["Údaj: nevieme, čo znamená", "Informácia: presne vieme, čo znamená", "Súbor", "Bajt"], a: 0 },
     { id: "2", q: "Mama povie: <b>„Máš horúčku 38,5 °C, zostaneš doma.“</b> Čo to je?", opts: ["Informácia: údaj s významom, ktorý nám niečo hovorí", "Iba údaj bez významu", "Program", "Prípona súboru"], a: 0 },
-    { id: "3", q: "Kedy sa z údaja stane informácia?", opts: ["Keď mu rozumieme a niečo nové sa z neho dozvieme", "Keď ho uložíme na disk", "Keď ho vytlačíme", "Keď má viac ako 8 bitov"], a: 0 }
+    { id: "3", q: "Kedy sa z údaja stane informácia?", opts: ["Keď mu rozumieme a niečo nové sa z neho dozvieme", "Keď ho uložíme na disk", "Keď ho vytlačíme", "Keď má viac ako 8 bitov"], a: 0 },
+    { id: "4", q: "Počítač spracúva:", opts: ["údaje, ktoré sú uložené ako bity", "iba informácie", "iba čísla od 1 do 10", "iba obrázky"], a: 0 }
   ]},
   formy: { id: "formy", type: "sort",
     buckets: [{ id: "t", label: "📝 Text" }, { id: "o", label: "🖼️ Obrázok" }, { id: "z", label: "🔊 Zvuk" }, { id: "v", label: "🎬 Video" }],
-    items: [{ id: "1", t: "SMS správa", b: "t" }, { id: "3", t: "Fotka z výletu", b: "o" }, { id: "5", t: "Pesnička", b: "z" }, { id: "7", t: "Film", b: "v" }],
+    items: [{ id: "1", t: "SMS správa", b: "t" }, { id: "2", t: "Kniha", b: "t" }, { id: "3", t: "Fotka z výletu", b: "o" }, { id: "4", t: "Mapa", b: "o" }, { id: "5", t: "Pesnička", b: "z" }, { id: "6", t: "Hlasová správa", b: "z" }, { id: "7", t: "Film", b: "v" }, { id: "8", t: "Videohovor", b: "v" }],
     after: "Všetky tieto formy počítač nakoniec uloží rovnako: ako jednotky a nuly, teda bity." },
   bulbgoal: { id: "bulbgoal", type: "custom", max: 2 },
   bitin: { id: "bitin", type: "input", qs: [
     { id: "1", q: "Koľko bitov má 1 bajt?", ok: v => parseNum(v) === 8, show: "8", ph: "?", unit: "bitov" },
+    { id: "2", q: "Koľko bitov majú 3 bajty?", ok: v => parseNum(v) === 24, show: "24", ph: "?", unit: "bitov" },
     { id: "3", q: "Koľko rôznych stavov má 1 bit?", ok: v => parseNum(v) === 2, show: "2", ph: "?", why: "0 alebo 1, zapnuté alebo vypnuté." },
+    { id: "4", q: "Koľko rôznych kombinácií dávajú 2 bity? (00, 01, …)", ok: v => parseNum(v) === 4, show: "4", ph: "?", why: "00, 01, 10, 11. Každý ďalší bit počet možností zdvojnásobí." },
     { id: "5", q: "Koľko rôznych kombinácií má 1 bajt (8 bitov)?", ok: v => parseNum(v) === 256, show: "256", ph: "?", why: "2·2·2·2·2·2·2·2 = 256. Preto sa do 1 bajtu zmestí jeden znak." }
   ]},
   jporadie: { id: "jporadie", type: "order", items: [{ id: "a", t: "bit" }, { id: "b", t: "bajt (B)" }, { id: "c", t: "kilobajt (kB)" }, { id: "d", t: "megabajt (MB)" }, { id: "e", t: "gigabajt (GB)" }, { id: "f", t: "terabajt (TB)" }] },
-  velk: { id: "velk", type: "order", items: [{ id: "a", t: "💬 SMS správa" }, { id: "c", t: "📷 Fotka z mobilu" }, { id: "d", t: "🎬 Film" }, { id: "e", t: "💽 Celý disk počítača" }] },
+  velk: { id: "velk", type: "order", items: [{ id: "a", t: "💬 SMS správa" }, { id: "b", t: "📄 Referát v editore" }, { id: "c", t: "📷 Fotka z mobilu" }, { id: "d", t: "🎬 Film" }, { id: "e", t: "💽 Celý disk počítača" }] },
   jin: { id: "jin", type: "input", qs: [
     { id: "1", q: "1 kB = ? B", ok: v => parseNum(v) === 1024, show: "1024", ph: "?", unit: "B" },
+    { id: "2", q: "2 MB = ? kB", ok: v => parseNum(v) === 2048, show: "2048", ph: "?", unit: "kB" },
     { id: "3", q: "Koľko GB má 1 TB?", ok: v => parseNum(v) === 1024, show: "1024", ph: "?", unit: "GB" },
     { id: "4", q: "Na USB kľúč s voľným miestom 1 GB (1024 MB) ukladáš pesničky po 4 MB. Koľko sa ich zmestí?", ok: v => parseNum(v) === 256, show: "256", ph: "?", unit: "pesničiek" }
   ]},
   ren: { id: "ren", type: "custom", max: 3 },
   msort: { id: "msort", type: "sort",
     buckets: [{ id: "y", label: "✅ Povolený názov" }, { id: "n", label: "❌ Nepovolený názov", sub: "Windows ho nedovolí" }],
-    items: [{ id: "1", t: "vylet_tatry.jpg", b: "y" }, { id: "2", t: "referat-vtaky.docx", b: "y" }, { id: "4", t: "2026-09-25 rozvrh.pdf", b: "y" },
-      { id: "5", t: "otazky?.txt", b: "n" }, { id: "7", t: "\"citat\".txt", b: "n" }, { id: "8", t: "hra*.exe", b: "n" }],
+    items: [{ id: "1", t: "vylet_tatry.jpg", b: "y" }, { id: "2", t: "referat-vtaky.docx", b: "y" }, { id: "3", t: "Úloha 3.txt", b: "y" }, { id: "4", t: "2026-09-25 rozvrh.pdf", b: "y" },
+      { id: "5", t: "otazky?.txt", b: "n" }, { id: "6", t: "a/b.docx", b: "n" }, { id: "7", t: "\"citat\".txt", b: "n" }, { id: "8", t: "hra*.exe", b: "n" }],
     after: "Zakázané znaky: \\ / : * ? \" < > |. Medzery a diakritika sú povolené, ale pri posielaní súborov cez internet je lepšie ich nepoužívať." },
   tsort: { id: "tsort", type: "sort",
     buckets: [{ id: "t", label: "📄 Text a dokumenty" }, { id: "o", label: "🖼️ Obrázky" }, { id: "z", label: "🎵 Zvuk" }, { id: "v", label: "🎬 Video" }, { id: "p", label: "⚙️ Programy" }, { id: "a", label: "🗜️ Archívy" }],
-    items: [{ id: "1", t: ".docx", b: "t" }, { id: "4", t: ".jpg", b: "o" }, { id: "6", t: ".mp3", b: "z" }, { id: "8", t: ".mp4", b: "v" }, { id: "9", t: ".exe", b: "p" }, { id: "10", t: ".zip", b: "a" }] },
+    items: [{ id: "1", t: ".docx", b: "t" }, { id: "2", t: ".pdf", b: "t" }, { id: "3", t: ".txt", b: "t" }, { id: "4", t: ".jpg", b: "o" }, { id: "5", t: ".png", b: "o" }, { id: "6", t: ".mp3", b: "z" }, { id: "7", t: ".wav", b: "z" }, { id: "8", t: ".mp4", b: "v" }, { id: "9", t: ".exe", b: "p" }, { id: "10", t: ".zip", b: "a" }] },
   typq: { id: "typq", type: "mc", qs: [
     { id: "1", q: "Podľa čoho Windows vie, ktorým programom má súbor otvoriť?", opts: ["Podľa prípony", "Podľa veľkosti", "Podľa dátumu", "Podľa farby ikony"], a: 0 },
+    { id: "2", q: "Premenoval si fotka.jpg na fotka.txt. Čo sa stane?", opts: ["Súbor sa otvorí v Poznámkovom bloku ako nezmyselné znaky, obsah sa nezmenil", "Fotka sa zmení na text", "Súbor zmizne", "Fotka sa zmenší"], a: 0, why: "Prípona iba hovorí, čo je v súbore. Keď ju zmeníš, obsah zostane rovnaký, len ho Windows otvorí zlým programom." },
+    { id: "3", q: "Prípony nevidíš. Kde ich zapneš?", opts: ["V Prieskumníkovi: Zobraziť → Prípony názvov súborov", "V Koši", "V Správcovi úloh", "V ponuke Štart → Vypnúť"], a: 0 },
     { id: "4", q: "Prečo je nebezpečný súbor s názvom <code>fotka.jpg.exe</code>?", opts: ["Tvári sa ako fotka, ale je to program, ktorý môže byť vírus", "Je príliš veľký", "Nedá sa otvoriť", "Nie je nebezpečný"], a: 0 }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", q: "Najmenšia jednotka informácie je:", opts: ["bit", "bajt", "kilobajt", "znak"], a: 0 },
     { id: "2", q: "1 bajt má:", opts: ["8 bitov", "10 bitov", "1024 bitov", "2 bity"], a: 0 },
+    { id: "3", q: "1 MB je:", opts: ["1024 kB", "1000 B", "1024 GB", "8 kB"], a: 0 },
+    { id: "4", q: "Ktoré je najväčšie?", opts: ["1 TB", "900 GB", "1000 MB", "2 GB"], a: 0 },
     { id: "5", q: "V názve <code>rozvrh.pdf</code> je prípona:", opts: ["pdf", "rozvrh", "rozvrh.pdf", ".rozvrh"], a: 0 },
-    { id: "6", q: "Ktorý znak sa NESMIE použiť v názve súboru?", opts: ["?", "_", "-", "medzera"], a: 0 }
+    { id: "6", q: "Ktorý znak sa NESMIE použiť v názve súboru?", opts: ["?", "_", "-", "medzera"], a: 0 },
+    { id: "7", q: "Súbor s príponou .mp3 obsahuje:", opts: ["zvuk", "obrázok", "text", "program"], a: 0 },
+    { id: "8", q: "Rozdiel medzi údajom a informáciou:", opts: ["informácia je údaj, ktorému rozumieme a má pre nás význam", "údaj je vždy väčší", "informácia je iba na papieri", "nie je medzi nimi rozdiel"], a: 0 }
   ]}
 };
 
@@ -308,6 +368,7 @@ const VIEWS = {
     <div class="two"><div class="box" style="margin:0"><p><b>📊 Údaj</b> (dáta) je zápis čísla, textu, obrázka alebo zvuku. Sám osebe nemusí nič znamenať.<br>Príklad: <code>38,5</code></p></div>
       <div class="box v" style="margin:0"><p><b>💡 Informácia</b> je údaj, ktorému rozumieme a ktorý nám niečo nové povie.<br>Príklad: <i>„Máš horúčku 38,5 °C, zostaneš doma.“</i></p></div></div>
     <p>Počítač pracuje s <b>údajmi</b>. Informácie z nich získavame my, ľudia, keď im rozumieme. Informácie môžu mať rôznu podobu: text, obrázok, zvuk aj video.</p>
+    ${tfigs(TFIG.info)}
     <h3>Úloha 1: údaj, alebo informácia?</h3><div class="task">${taskHTML("infoq")}</div>
     <h3>Úloha 2: aká je to forma informácie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("formy")}</div>` + nextBar();
   },
@@ -324,6 +385,7 @@ const VIEWS = {
     return head() + `<h2>Jednotky informácie</h2>
     <p>Väčšie jednotky sú vždy <b>1024-krát</b> väčšie ako menšie (1024 = 2<sup>10</sup>):</p>
     <div class="task" style="font-family:var(--mono);font-size:16px;line-height:1.9">1 B = 8 bitov<br>1 kB (kilobajt) = 1024 B<br>1 MB (megabajt) = 1024 kB<br>1 GB (gigabajt) = 1024 MB<br>1 TB (terabajt) = 1024 GB</div>
+    ${tfigs(TFIG.schody)}
     <p>Aké veľké bývajú súbory?</p>
     <div class="sizes"><div><b>💬</b><span>≈ 100 B</span><small>SMS správa</small></div><div><b>📄</b><span>≈ 30 kB</span><small>referát</small></div><div><b>📷</b><span>≈ 3 MB</span><small>fotka z mobilu</small></div><div><b>🎵</b><span>≈ 5 MB</span><small>pesnička MP3</small></div><div><b>🎬</b><span>≈ 2 GB</span><small>film</small></div><div><b>💽</b><span>≈ 1 TB</span><small>disk počítača</small></div></div>
     <h3>Úloha 1: zoraď jednotky od najmenšej</h3><div class="task">${taskHTML("jporadie")}</div>
@@ -344,6 +406,7 @@ const VIEWS = {
     <p><b>Prípona</b> hovorí, aký je to <b>typ súboru</b>: či je v ňom text, obrázok, zvuk alebo program. Podľa prípony Windows vie, ktorým programom má súbor otvoriť, a zobrazí mu správnu ikonu.</p>
     <table style="max-width:620px"><thead><tr><th>Prípona</th><th>Typ</th><th>Otvorí sa napríklad v</th></tr></thead><tbody>
       ${[[".txt", "textový dokument", "Poznámkový blok"], [".docx", "dokument Word", "Microsoft Word"], [".pdf", "dokument PDF", "prehliadač, Adobe Reader"], [".jpg, .png", "obrázok", "Fotografie"], [".mp3", "zvuk", "prehrávač médií"], [".mp4", "video", "prehrávač médií"], [".exe", "program", "spustí sa priamo"], [".zip", "archív", "Prieskumník, 7-Zip"]].map(r => `<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}</tbody></table>
+    ${tfigs(TFIG.typy)}
     <h3>Úloha 1: roztrieď prípony</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("tsort")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("typq")}</div>` + nextBar();
   },

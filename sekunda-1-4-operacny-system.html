@@ -180,6 +180,11 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .path{font-family:var(--mono);background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:15px}
 .path span{padding:2px 6px;border-radius:6px}
 .tree{font-family:var(--mono);font-size:14.5px;line-height:1.9;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;white-space:pre}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -188,6 +193,47 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 <main id="main" tabindex="-1"></main>
 <script>
 const THEORY = {"co": ["<b>Operačný systém</b> (OS) je hlavný program, ktorý riadi počítač a umožňuje spúšťať ďalšie programy.", "Je prostredníkom medzi <b>používateľom</b>, <b>aplikáciami</b> a <b>hardvérom</b>.", "Spúšťa sa hneď po zapnutí, po BIOS/UEFI."], "ulohy": ["Úlohy OS: správa súborov, pamäte a procesora, ovládanie zariadení cez <b>ovládače</b>, rozhranie, účty a bezpečnosť, aktualizácie.", "Zamrznutý program ukončíš v <b>Správcovi úloh</b> (Ctrl + Shift + Esc)."], "druhy": ["Počítače: Windows (Microsoft), macOS (Apple), Linux (zadarmo, open source), ChromeOS.", "Mobily: Android (Google), iOS (Apple)."], "rozhranie": ["<b>Grafické rozhranie</b>: okná, ikony, ponuky, ovládanie myšou alebo dotykom.", "Časti plochy: ikony, Kôš, okná, tlačidlo Štart, panel úloh, oblasť oznámení."], "subory": ["OS ukladá súbory do stromu priečinkov.", "Podľa prípony vie, ktorým programom súbor otvorí."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Sekunda 1.4 Operačný systém */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, pc, phone } = PF; const A = "#C2560C", AS = "#FBE3D2";
+return {
+  ovladac: fig(SV(440, 200, `
+    ${box(8, 40, 110, 96, AS, A, 12)}${T(63, 76, "🪟", { a: "middle", fs: 26 })}${T(63, 104, "operačný", { a: "middle", fs: 12, b: 1, c: A })}${T(63, 120, "systém", { a: "middle", fs: 12, b: 1, c: A })}
+    ${ar(122, 76, 166, 76, A)}${ar(166, 102, 122, 102, A)}
+    ${box(170, 40, 110, 96, "#FDF1D3", C.amb, 12)}${T(225, 76, "🧩", { a: "middle", fs: 26 })}${T(225, 104, "ovládač", { a: "middle", fs: 12, b: 1, c: C.amb })}${T(225, 120, "(driver)", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(284, 76, 328, 76, C.amb)}${ar(328, 102, 284, 102, C.amb)}
+    ${box(332, 40, 100, 96, "#fff", C.line, 12)}${T(382, 82, "🖨️", { a: "middle", fs: 30 })}${T(382, 112, "tlačiareň", { a: "middle", fs: 12, b: 1 })}
+    ${T(144, 66, "„tlač“", { a: "middle", fs: 10, c: A })}${T(306, 66, "povely", { a: "middle", fs: 10, c: C.amb })}
+    ${T(220, 22, "Ovládač = prekladateľ medzi systémom a zariadením", { a: "middle", fs: 12.5, b: 1 })}
+    ${T(220, 166, "Bez ovládača systém nevie, ako so zariadením hovoriť.", { a: "middle", fs: 11.5 })}${T(220, 184, "Nové zariadenie = nainštaluj ovládač (často sa to stane samo).", { a: "middle", fs: 11.5, c: C.mut })}`, "Ovládač zariadenia"),
+    "Operačný systém ovláda tlačiareň, myš či grafiku cez <b>ovládače</b>. Ovládač prekladá povely systému do reči zariadenia."),
+  zariadenia: fig(SV(440, 230, `
+    ${[[8, "💻 Počítače a notebooky", A, AS, [["🪟", "Windows"], ["🍏", "macOS"], ["🐧", "Linux"], ["🌐", "ChromeOS"]]], [226, "📱 Mobily a tablety", C.ok, C.okS, [["🤖", "Android"], ["🍏", "iOS"], ["📱", "iPadOS"]]]].map(([x, h, c, bg, L]) => `${box(x, 8, 206, 158, bg, c, 12)}${T(x + 103, 32, h, { a: "middle", fs: 12.5, b: 1, c })}${L.map(([e, n], i) => `${box(x + 14 + (i % 2) * 92, 46 + Math.floor(i / 2) * 56, 86, 46, "#fff", C.line, 8)}${T(x + 21 + (i % 2) * 92, 75 + Math.floor(i / 2) * 56, e, { fs: 15 })}${T(x + 41 + (i % 2) * 92, 74 + Math.floor(i / 2) * 56, n, { fs: 10.5, b: 1 })}`).join("")}`).join("")}
+    ${box(8, 176, 424, 46, "#fff", C.line, 10)}${T(220, 196, "Svoj OS majú aj ⌚ hodinky, 📺 televízory, 🚗 autá, 🎮 konzoly", { a: "middle", fs: 11.5 })}${T(220, 212, "a 🖥️ servery (najčastejšie Linux)", { a: "middle", fs: 11.5, c: C.mut })}`, "Kde beží ktorý operačný systém"),
+    "Na počítačoch vládne Windows, na mobiloch Android. Svoj operačný systém má takmer každé chytré zariadenie.")
+}; })();
+
 const KEY = "os-s14-v1";
 const LESSON = "1.4 Operačný systém, základná charakteristika";
 const BRAND = "1.4 Operačný systém";
@@ -289,17 +335,20 @@ const TASKS = {
     { id: "1", q: "Uložíš referát do priečinka Dokumenty.", opts: ["Správa súborov", "Správa pamäte a procesora", "Ovládanie zariadení", "Používateľské rozhranie", "Účty a bezpečnosť", "Aktualizácie"], a: 0 },
     { id: "2", q: "Pripojíš novú tlačiareň a začne tlačiť.", opts: ["Správa súborov", "Správa pamäte a procesora", "Ovládanie zariadení", "Používateľské rozhranie", "Účty a bezpečnosť", "Aktualizácie"], a: 2 },
     { id: "3", q: "Súčasne ti beží hudba, prehliadač aj hra.", opts: ["Správa súborov", "Správa pamäte a procesora", "Ovládanie zariadení", "Používateľské rozhranie", "Účty a bezpečnosť", "Aktualizácie"], a: 1 },
-    { id: "4", q: "Prihlásiš sa heslom a vidíš iba svoje súbory, nie súrodencove.", opts: ["Správa súborov", "Správa pamäte a procesora", "Ovládanie zariadení", "Používateľské rozhranie", "Účty a bezpečnosť", "Aktualizácie"], a: 4 }
+    { id: "4", q: "Prihlásiš sa heslom a vidíš iba svoje súbory, nie súrodencove.", opts: ["Správa súborov", "Správa pamäte a procesora", "Ovládanie zariadení", "Používateľské rozhranie", "Účty a bezpečnosť", "Aktualizácie"], a: 4 },
+    { id: "5", q: "Klikáš na ikony, otváraš okná a presúvaš ich myšou.", opts: ["Správa súborov", "Správa pamäte a procesora", "Ovládanie zariadení", "Používateľské rozhranie", "Účty a bezpečnosť", "Aktualizácie"], a: 3 },
+    { id: "6", q: "Počítač si stiahne opravu bezpečnostnej chyby a pri vypínaní ju nainštaluje.", opts: ["Správa súborov", "Správa pamäte a procesora", "Ovládanie zariadení", "Používateľské rozhranie", "Účty a bezpečnosť", "Aktualizácie"], a: 5 }
   ]},
   tmsim: { id: "tmsim", type: "custom", max: 2 },
   dsort: { id: "dsort", type: "sort",
     buckets: [{ id: "pc", label: "💻 Počítače a notebooky" }, { id: "mob", label: "📱 Mobily a tablety" }],
-    items: [{ id: "1", t: "Windows", b: "pc" }, { id: "2", t: "macOS", b: "pc" }, { id: "3", t: "Linux (napr. Ubuntu)", b: "pc" }, { id: "5", t: "Android", b: "mob" }, { id: "6", t: "iOS (iPhone)", b: "mob" }],
+    items: [{ id: "1", t: "Windows", b: "pc" }, { id: "2", t: "macOS", b: "pc" }, { id: "3", t: "Linux (napr. Ubuntu)", b: "pc" }, { id: "4", t: "ChromeOS", b: "pc" }, { id: "5", t: "Android", b: "mob" }, { id: "6", t: "iOS (iPhone)", b: "mob" }, { id: "7", t: "iPadOS (iPad)", b: "mob" }],
     after: "Aj inteligentné hodinky, televízory, autá či herné konzoly majú svoj operačný systém." },
   dq: { id: "dq", type: "mc", qs: [
     { id: "1", q: "Ktorý operačný systém je zadarmo a môže si ho ktokoľvek upraviť (open source)?", opts: ["Linux", "Windows", "macOS", "iOS"], a: 0 },
     { id: "2", q: "Ktorá firma vyrába Windows?", opts: ["Microsoft", "Apple", "Google", "Samsung"], a: 0 },
-    { id: "3", q: "Ktorý systém je v telefónoch iPhone?", opts: ["iOS", "Android", "Windows", "Linux"], a: 0 }
+    { id: "3", q: "Ktorý systém je v telefónoch iPhone?", opts: ["iOS", "Android", "Windows", "Linux"], a: 0 },
+    { id: "4", q: "Na ktorom systéme je postavený Android?", opts: ["Na Linuxe", "Na Windows", "Na macOS", "Na iOS"], a: 0 }
   ]},
   dfind: { id: "dfind", type: "custom", max: DFIND.length },
   rq: { id: "rq", type: "mc", qs: [
@@ -309,7 +358,7 @@ const TASKS = {
   ]},
   psort: { id: "psort", type: "sort",
     buckets: [{ id: "t", label: "📄 Text a dokumenty" }, { id: "o", label: "🖼️ Obrázky" }, { id: "h", label: "🎵 Zvuk a video" }, { id: "p", label: "⚙️ Programy" }],
-    items: [{ id: "1", t: "referat.docx", b: "t" }, { id: "2", t: "ulohy.pdf", b: "t" }, { id: "4", t: "dovolenka.jpg", b: "o" }, { id: "5", t: "logo.png", b: "o" }, { id: "6", t: "pesnicka.mp3", b: "h" }, { id: "8", t: "hra.exe", b: "p" }],
+    items: [{ id: "1", t: "referat.docx", b: "t" }, { id: "2", t: "ulohy.pdf", b: "t" }, { id: "3", t: "poznamky.txt", b: "t" }, { id: "4", t: "dovolenka.jpg", b: "o" }, { id: "5", t: "logo.png", b: "o" }, { id: "6", t: "pesnicka.mp3", b: "h" }, { id: "7", t: "video.mp4", b: "h" }, { id: "8", t: "hra.exe", b: "p" }],
     after: "Podľa prípony (časť za bodkou) operačný systém vie, ktorým programom má súbor otvoriť." },
   cesta: { id: "cesta", type: "input", qs: [
     { id: "1", q: "Na ktorom disku je súbor <code>C:\\Používatelia\\Jana\\Dokumenty\\Škola\\referat.docx</code>? (jedno písmeno)", ok: v => /^c:?$/i.test(String(v).trim()), show: "C", ph: "?" },
@@ -322,7 +371,10 @@ const TASKS = {
     { id: "2", q: "Ktoré z toho je operačný systém?", opts: ["Android", "Google Chrome", "Microsoft Word", "YouTube"], a: 0 },
     { id: "3", q: "Ktorá vrstva je priamo nad hardvérom?", opts: ["Operačný systém", "Aplikácie", "Používateľ", "Internet"], a: 0 },
     { id: "4", q: "Program zamrzol a nereaguje. Kde ho ukončíš?", opts: ["V Správcovi úloh (Ctrl + Shift + Esc)", "V Koši", "V ponuke Štart → Obrázky", "Na pracovnej ploche"], a: 0 },
-    { id: "5", q: "Čo je ovládač (driver)?", opts: ["Program, cez ktorý OS ovláda konkrétne zariadenie", "Joystick na hry", "Tlačidlo Štart", "Kábel k tlačiarni"], a: 0 }
+    { id: "5", q: "Čo je ovládač (driver)?", opts: ["Program, cez ktorý OS ovláda konkrétne zariadenie", "Joystick na hry", "Tlačidlo Štart", "Kábel k tlačiarni"], a: 0 },
+    { id: "6", q: "Ktorý systém je open source a zadarmo?", opts: ["Linux", "Windows", "macOS", "iOS"], a: 0 },
+    { id: "7", q: "Podľa čoho OS vie, ktorým programom otvorí súbor?", opts: ["Podľa prípony, napr. .jpg", "Podľa veľkosti súboru", "Podľa dátumu vytvorenia", "Podľa farby ikony na ploche"], a: 0 },
+    { id: "8", q: "Kde na pracovnej ploche nájdeš hodiny a Wi-Fi?", opts: ["V oblasti oznámení vpravo dole", "V Koši", "V záhlaví okna", "V ponuke Štart"], a: 0 }
   ]}
 };
 function norm2(v) { return String(v).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
@@ -352,6 +404,7 @@ const VIEWS = {
       <div class="pc"><div class="ic">🖱️</div><h4>Používateľské rozhranie</h4><p>Okná, ikony, ponuky, aby si počítač mohol ovládať.</p></div>
       <div class="pc"><div class="ic">🔐</div><h4>Účty a bezpečnosť</h4><p>Prihlasovanie, heslá, oprávnenia, ochrana pred vírusmi.</p></div>
       <div class="pc"><div class="ic">🔄</div><h4>Aktualizácie</h4><p>Opravy chýb a nové funkcie, ktoré prichádzajú cez internet.</p></div></div>
+    ${tfigs(TFIG.ovladac)}
     <h3>Úloha 1: ktorá úloha OS to je?</h3><div class="task">${taskHTML("ulq")}</div>
     <h3>Úloha 2: Správca úloh</h3>
     <p>V Správcovi úloh vidíš, ako OS delí procesor a pamäť medzi programy. Otvoríš ho skratkou <b>Ctrl + Shift + Esc</b>. Počítač je strašne pomalý, lebo jeden program zamrzol. Nájdi ho, označ ho a ukonči.</p>
@@ -365,7 +418,7 @@ const VIEWS = {
     return head() + `<h2>Druhy operačných systémov</h2>
     <div class="cards">${OSCARD("#1766C2", "Windows", "Najrozšírenejší na počítačoch. Platený, býva predinštalovaný.", "firma Microsoft")}${OSCARD("#56626E", "macOS", "Na počítačoch Mac.", "firma Apple")}${OSCARD("#C2560C", "Linux", "Zadarmo, open source. Napr. Ubuntu. Beží aj na väčšine serverov.", "komunita")}${OSCARD("#12805A", "Android", "Najrozšírenejší na mobiloch. Postavený na Linuxe.", "firma Google")}${OSCARD("#6A3FD0", "iOS", "Na iPhonoch. Pre iPady je iPadOS.", "firma Apple")}${OSCARD("#D9A400", "ChromeOS", "Na Chromebookoch, jednoduchý, veľa práce cez internet.", "firma Google")}</div>
     <div class="box"><p><b>Open source</b> znamená, že zdrojový kód systému je verejný a ktokoľvek ho môže skúmať aj upravovať.</p></div>
-    <h3>Úloha 1: počítač, alebo mobil?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("dsort")}</div>
+    <h3>Úloha 1: počítač, alebo mobil?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("dsort")}</div>${S.t.dsort ? tfigs(TFIG.zariadenia) : ""}
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("dq")}</div>` + nextBar();
   },
   rozhranie() {
