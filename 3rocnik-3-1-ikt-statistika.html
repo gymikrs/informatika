@@ -206,6 +206,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .sal{display:flex;align-items:flex-end;gap:6px;height:180px;border-bottom:2px solid var(--border);padding:0 6px}
 .sal div{flex:1;background:#90CAF9;border-radius:4px 4px 0 0;position:relative;min-width:18px}.sal div span{position:absolute;top:-18px;left:0;right:0;text-align:center;font-size:11px;font-family:var(--mono)}
 .stat2{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.stat2 div{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center}.stat2 b{display:block;font-size:22px;font-family:var(--mono);color:var(--acc)}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -213,7 +218,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Priemer bez extrémov, medián pri extrémoch, modus = najčastejšia hodnota (aj slovná), rozpätie = max − min.", "Zber: online formulár. Slovensko: ŠÚ SR (DATAcube). EÚ: Eurostat."], "pojmy": ["Súbor, znak, absolútna a relatívna početnosť; priemer, medián, modus, rozpätie, rozptyl, smerodajná odchýlka."], "priemer": ["Priemer je citlivý na odľahlé hodnoty, medián nie; pri platoch a cenách je výstižnejší medián."], "nastroje": ["Zber: Forms; spracovanie: Excel, Calc, Google Tabuľky, JASP, R, Python; vizualizácia: grafy, Power BI, Datawrapper; prenos CSV."], "zdroje": ["Štatistický úrad SR (DATAcube), Eurostat, data.slovensko.sk; over zdroj, dátum, vzorku a spôsob zberu."]};
+const THEORY = {"pojmy": ["Súbor, znak, absolútna a relatívna početnosť; priemer, medián, modus, rozpätie, rozptyl, smerodajná odchýlka."], "priemer": ["Priemer je citlivý na odľahlé hodnoty, medián nie; pri platoch a cenách je výstižnejší medián."], "nastroje": ["Zber: Forms; spracovanie: Excel, Calc, Google Tabuľky, JASP, R, Python; vizualizácia: grafy, Power BI, Datawrapper; prenos CSV."], "zdroje": ["Štatistický úrad SR (DATAcube), Eurostat, data.slovensko.sk; over zdroj, dátum, vzorku a spôsob zberu."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -315,6 +320,63 @@ function chartSVG(c) { const W = 560, H = 340, L = c.labels || [], V = c.values 
   return s + `</svg>`; }
 function dlText(name, text, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – 3. ročník 3.1 Nástroje IKT pre štatistiku */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = C.acc, AS = C.accS;
+const D = [2, 4, 4, 5, 9, 11, 14], X = v => 40 + v * 26;
+return {
+  os: fig(SV(440, 250, `
+    ${T(220, 18, "Počet prečítaných kníh za rok (7 žiakov)", { a: "middle", fs: 12, b: 1 })}
+    <line x1="30" y1="120" x2="420" y2="120" stroke="${C.mut}" stroke-width="1.5"/>${[0, 2, 4, 6, 8, 10, 12, 14].map(v => `<line x1="${X(v)}" y1="116" x2="${X(v)}" y2="124" stroke="${C.mut}"/>${T(X(v), 138, String(v), { a: "middle", fs: 9.5, c: C.mut })}`).join("")}
+    ${(() => { const seen = {}; return D.map(v => { seen[v] = (seen[v] || 0) + 1; return `<circle cx="${X(v)}" cy="${112 - (seen[v] - 1) * 18}" r="8" fill="${v === 4 ? C.amb : A}"/>`; }).join(""); })()}
+    <line x1="${X(5)}" y1="52" x2="${X(5)}" y2="120" stroke="${C.ok}" stroke-width="2.5" stroke-dasharray="5 3"/>${T(X(5), 46, "medián 5", { a: "middle", fs: 11, b: 1, c: C.ok })}
+    <line x1="${X(7)}" y1="52" x2="${X(7)}" y2="120" stroke="${C.bad}" stroke-width="2.5" stroke-dasharray="5 3"/>${T(X(7) + 6, 64, "priemer 7", { fs: 11, b: 1, c: C.bad })}
+    ${T(X(4) - 14, 100, "modus 4", { a: "end", fs: 11, b: 1, c: C.amb })}
+    ${ar(X(2), 156, X(14), 156, C.mut, 1.5, 1)}${T(X(8), 172, "variačné rozpätie 14 − 2 = 12", { a: "middle", fs: 10.5, b: 1, c: C.mut })}
+    ${box(8, 184, 424, 58, AS, null, 8)}${T(20, 204, "priemer = (2+4+4+5+9+11+14) ÷ 7 = 49 ÷ 7 = 7", { fs: 10.5, mono: 1 })}${T(20, 222, "medián = prostredná (4.) hodnota zoradených dát = 5", { fs: 10.5, mono: 1 })}${T(20, 238, "dve vysoké hodnoty potiahli priemer nad medián", { fs: 10, c: C.mut })}`, "Priemer, medián, modus a rozpätie na číselnej osi"),
+    "Na osi vidno, že <b>medián</b> je v strede zoradených dát, <b>modus</b> je najčastejšia hodnota a <b>priemer</b> posúvajú extrémne hodnoty."),
+  postup: fig(SV(440, 210, `
+    ${T(220, 18, "Cesta dát", { a: "middle", fs: 12, b: 1 })}
+    ${[["📝", "zber", "formulár, meranie", "#E3F2FD", C.blue], ["🧮", "spracovanie", "tabuľka, funkcie", AS, A], ["📊", "vizualizácia", "graf, infografika", C.okS, C.ok]].map(([e, n, d, bg, c], i) => `${box(8 + i * 148, 34, 128, 110, bg, c, 12)}${T(72 + i * 148, 72, e, { a: "middle", fs: 26 })}${T(72 + i * 148, 102, n, { a: "middle", fs: 12.5, b: 1, c })}${T(72 + i * 148, 122, d, { a: "middle", fs: 10 })}${i < 2 ? `${ar(138 + i * 148, 89, 154 + i * 148, 89, C.mut, 2)}` : ""}`).join("")}
+    ${box(110, 158, 220, 40, "#fff", C.line, 8)}${T(220, 176, "medzi programami najčastejšie", { a: "middle", fs: 10, c: C.mut })}${T(220, 191, "súbor CSV alebo XLSX", { a: "middle", fs: 11, b: 1 })}`, "Zber, spracovanie a vizualizácia dát"),
+    "Dáta najprv <b>zozbierame</b>, potom <b>spracujeme</b> výpočtami a nakoniec <b>zobrazíme</b> v grafe."),
+  over: fig(SV(440, 230, `
+    ${box(8, 8, 230, 214, "#fff", C.line, 10)}${T(20, 30, "📰 Titulok v článku:", { fs: 10, c: C.mut })}${T(20, 52, "„9 z 10 žiakov", { fs: 13, b: 1 })}${T(20, 70, "miluje matematiku!“", { fs: 13, b: 1 })}
+    ${[90, 70, 85].map((h, i) => `<rect x="${40 + i * 56}" y="${190 - h}" width="36" height="${h}" fill="${A}" opacity="${0.5 + i * 0.2}"/>`).join("")}<line x1="30" y1="190" x2="210" y2="190" stroke="${C.mut}"/>
+    ${T(123, 210, "bez zdroja, dátumu a počtu", { a: "middle", fs: 9.5, c: C.bad })}
+    ${box(250, 8, 182, 214, AS, A, 10)}${T(341, 30, "Pred uverením over:", { a: "middle", fs: 11.5, b: 1, c: A })}
+    ${[["🏛️", "zdroj", "kto to zistil?"], ["📅", "dátum", "kedy?"], ["👥", "veľkosť vzorky", "10 ľudí či 10 000?"], ["❓", "spôsob zberu", "ako sa pýtali?"]].map(([e, n, d], i) => `${T(262, 64 + i * 42, e, { fs: 16 })}${T(286, 58 + i * 42, n, { fs: 11.5, b: 1 })}${T(286, 74 + i * 42, d, { fs: 9.5, c: C.mut })}`).join("")}`, "Kontrola štatistiky"),
+    "Štatistika bez <b>zdroja</b>, <b>dátumu</b>, <b>veľkosti vzorky</b> a <b>spôsobu zberu</b> môže klamať.")
+}; })();
+
 const KEY = "statikt-r31-v1";
 const LESSON = "3.1 Nástroje IKT pre štatistiku";
 const BRAND = "3.1 IKT a štatistika";
@@ -326,14 +388,13 @@ const STEPS = [
   { id: "priemer", title: "Priemer verzus medián", min: 8 },
   { id: "nastroje", title: "Nástroje IKT", min: 9 },
   { id: "zdroje", title: "Zdroje dát", min: 6 },
-  { id: "precvic", title: "Precvičovanie: vyber charakteristiku a zdroj", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { pojmy: ["pin", "zsort"], priemer: ["g_out", "pq"], nastroje: ["nsort"], zdroje: ["zq"], precvic: ["g_sit", "pxin"], test: ["test"] };
+const STEP_TASKS = { pojmy: ["pin"], priemer: ["g_out", "pq"], nastroje: ["nsort"], zdroje: ["zq"], test: ["test"] };
 const START = {
   kicker: "Informatika, 3. ročník",
-  lead: "Štatistika je všade: priemerná známka, prieskum v triede, graf nezamestnanosti v správach. Zopakuješ si základné štatistické pojmy a charakteristiky, na simulácii uvidíš, prečo je medián niekedy výstižnejší ako priemer, a spoznáš nástroje IKT, ktoré pomáhajú dáta zbierať, spracovať a zobraziť, aj zdroje oficiálnych štatistických dát. 5 zastávok, body a na konci výsledok.",
+  lead: "Štatistika je všade: priemerná známka, prieskum v triede, graf nezamestnanosti v správach. Zopakuješ si základné štatistické pojmy a charakteristiky, na simulácii uvidíš, prečo je medián niekedy výstižnejší ako priemer, a spoznáš nástroje IKT, ktoré pomáhajú dáta zbierať, spracovať a zobraziť, aj zdroje oficiálnych štatistických dát. 4 zastávky, body a na konci výsledok.",
   guessQ: "Na firme zarába 9 ľudí po 1 000 € a riaditeľ 20 000 €. Čo lepšie vystihuje „bežný“ plat?",
   guessNote: "Tip sa neboduje. Na zastávke Priemer verzus medián zistíš, či si mal pravdu.",
   guesses: ["Priemer (2 900 €)", "Medián (1 000 €)", "Maximum", "Súčet"],
@@ -348,8 +409,6 @@ function salHTML() { const all = [...SAL, S.ceo], mx = Math.max(...all), mean = 
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, why) => ({ id, q, ok: v => Math.abs(parseNum(v) - ans) < 0.051, show: String(ans).replace(".", ","), ph: "?", why });
 const D1 = "2, 3, 3, 5, 7, 8, 8, 8, 10", D2 = "4, 1, 6, 3";
-const PX_I = [["Platy vo firme, kde riaditeľ zarába 20-krát viac ako ostatní.", "med", "medián extrémy nezmenia"], ["Najčastejšie predávaná veľkosť topánok v obchode.", "mod", ""], ["Priemerná známka triedy, v dátach nie sú extrémy.", "avg", ""], ["O koľko sa líši najteplejší a najchladnejší deň mesiaca?", "rozp", ""], ["Chceš zozbierať odpovede spolužiakov na dotazník.", "forms", ""], ["Potrebuješ počet obyvateľov okresu Rimavská Sobota.", "dc", ""], ["Porovnávaš nezamestnanosť Slovenska a Rakúska.", "euro", ""]];
-const PX_O = [["", "— vyber —"], ["avg", "aritmetický priemer"], ["med", "medián"], ["mod", "modus"], ["rozp", "rozpätie (max − min)"], ["forms", "Microsoft Forms / Google Formuláre"], ["dc", "DATAcube Štatistického úradu SR"], ["euro", "Eurostat"]];
 const TASKS = {
   pin: { id: "pin", type: "input", qs: [
     inq("1", `Údaje: <b>${D1}</b>. Aritmetický priemer?`, 6, "54 / 9 = 6"), inq("2", `Údaje: <b>${D1}</b>. Medián?`, 7, "Prostredná z 9 usporiadaných hodnôt je 5. hodnota."), inq("3", `Údaje: <b>${D1}</b>. Modus?`, 8),
@@ -371,12 +430,6 @@ const TASKS = {
     { id: "3", ...Q("Na čo slúži portál otvorených dát verejnej správy (data.slovensko.sk)?", ["na stiahnutie otvorených dát inštitúcií v strojovo čitateľnej forme (napr. CSV)", "na nákup softvéru", "na chat", "na hranie hier"], 0) },
     { id: "4", ...Q("Čo si overíš pri štatistike v článku?", ["zdroj, dátum, veľkosť vzorky a spôsob zberu", "iba farbu grafu", "počet lajkov", "nič"], 0) }
   ]},
-  g_sit: { id: "g_sit", type: "custom", max: 7 },
-  zsort: {"id": "zsort", "type": "sort", "buckets": [{"id": "l", "label": "🔤 Kvalitatívny znak (slovom)"}, {"id": "n", "label": "🔢 Kvantitatívny znak (číslom)"}], "items": [{"id": "1", "t": "Obľúbený predmet", "b": "l"}, {"id": "2", "t": "Farba očí", "b": "l"}, {"id": "3", "t": "Druh dopravy do školy", "b": "l"}, {"id": "4", "t": "Typ školy", "b": "l"}, {"id": "5", "t": "Výška v cm", "b": "n"}, {"id": "6", "t": "Počet súrodencov", "b": "n"}, {"id": "7", "t": "Čas cesty do školy v minútach", "b": "n"}, {"id": "8", "t": "Body z testu", "b": "n"}], "after": "Pri kvalitatívnom znaku počítame iba početnosti a modus. Priemer a medián majú zmysel iba pri číselných (kvantitatívnych) znakoch."},
-  pxin: { id: "pxin", type: "input", qs: [
-    { id: "1", q: "Dáta: 2, 3, 3, 5, 7, 10. Aký je aritmetický priemer?", ok: v => Math.abs(parseNum(v) - 5) <= 0, show: "5 (30 ÷ 6)", ph: "?" },
-    { id: "2", q: "Aký je medián týchto dát?", ok: v => Math.abs(parseNum(v) - 4) <= 0, show: "4 ((3 + 5) ÷ 2)", ph: "?" }
-  ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Modus je:", ["najčastejšia hodnota", "prostredná hodnota", "priemer", "rozdiel max a min"], 0) },
     { id: "2", ...Q("Medián hodnôt 1, 2, 9 je:", ["2", "4", "9", "12"], 0) },
@@ -390,9 +443,8 @@ const VIEWS = {
   pojmy: () => head() + `<h2>Štatistické pojmy</h2>
     <div class="theory"><p><b>Štatistický súbor</b> tvoria skúmané jednotky (žiaci triedy), <b>štatistický znak</b> je vlastnosť, ktorú sledujeme (výška, známka, obľúbený predmet), jej hodnoty sú dáta. <b>Absolútna početnosť</b> je počet výskytov hodnoty, <b>relatívna</b> je jej podiel (v %).</p>
       <table class="cmdt"><thead><tr><th>Charakteristika</th><th>Význam</th></tr></thead><tbody><tr><td><b>aritmetický priemer</b></td><td>súčet hodnôt ÷ ich počet</td></tr><tr><td><b>medián</b></td><td>prostredná hodnota usporiadaných dát (pri párnom počte priemer dvoch prostredných)</td></tr><tr><td><b>modus</b></td><td>najčastejšia hodnota</td></tr><tr><td><b>variačné rozpätie</b></td><td>max − min</td></tr><tr><td><b>rozptyl, smerodajná odchýlka</b></td><td>ako veľmi sú hodnoty rozptýlené okolo priemeru</td></tr></tbody></table></div>
-    <h3>Úloha: vypočítaj</h3><div class="task">${taskHTML("pin")}</div>
-    <div class="theory"><p><b>Druhy štatistických znakov:</b> <b>kvalitatívny</b> znak má hodnoty vyjadrené slovom (farba, predmet, druh dopravy), <b>kvantitatívny</b> znak má hodnoty vyjadrené číslom, s ktorým sa dá počítať (výška, počet, čas, body). Od druhu znaku závisí, ktoré charakteristiky môžeme použiť.</p></div>
-    <h3>Úloha 2: aký je to znak?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("zsort")}</div>` + nextBar(),
+    ${tfigs(TFIG.os)}
+    <h3>Úloha: vypočítaj</h3><div class="task">${taskHTML("pin")}</div>` + nextBar(),
   priemer: () => head() + `<h2>Priemer verzus medián</h2>${guessBox()}
     <div class="theory"><p>Posúvaj plat riaditeľa a sleduj, ako sa mení priemer a medián platov desiatich zamestnancov.</p></div>
     <div class="task"><ul class="goals" style="list-style:none;padding:0"><li>${S.t.g_out ? "✅" : "⬜"} nastav plat riaditeľa tak, aby bol priemer aspoň o 1 500 € vyšší ako medián</li></ul></div>
@@ -400,25 +452,15 @@ const VIEWS = {
     <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
   nastroje: () => head() + `<h2>Nástroje IKT pre štatistiku</h2>
     <div class="theory"><ul><li><b>Zber dát</b>: online formuláre (Microsoft Forms, Google Formuláre), ktoré odpovede rovno ukladajú do tabuľky.</li><li><b>Spracovanie</b>: tabuľkové procesory (Excel, Google Tabuľky, LibreOffice Calc) so štatistickými funkciami a doplnkom Analýza dát; pokročilé nástroje JASP, PSPP, R, Python s knižnicou pandas.</li><li><b>Vizualizácia</b>: grafy v tabuľkových procesoroch, Power BI, Datawrapper, infografiky.</li><li>Dáta sa medzi programami prenášajú najčastejšie vo formáte <b>CSV</b> alebo XLSX.</li></ul></div>
+    ${tfigs(TFIG.postup)}
     <h3>Úloha: roztrieď nástroje</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>` + nextBar(),
   zdroje: () => head() + `<h2>Zdroje dát</h2>
     <div class="theory"><p>Oficiálne štatistiky o Slovensku zverejňuje <b>Štatistický úrad SR</b> (databáza <b>DATAcube</b>), o krajinách EÚ <b>Eurostat</b>, otvorené dáta verejnej správy nájdeš na portáli <b>data.slovensko.sk</b>. Pri každej štatistike si over <b>zdroj</b>, <b>dátum</b>, <b>veľkosť vzorky</b> a <b>spôsob zberu</b>.</p></div>
+    ${tfigs(TFIG.over)}
     <h3>Otázky</h3><div class="task">${taskHTML("zq")}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: vyber charakteristiku a zdroj</h2>
-    <div class="theory"><p>Pri každej štatistickej otázke rozhoduješ dve veci. <b>Ktorá charakteristika</b>: priemer, ak dáta nemajú extrémy, medián, ak sa v nich vyskytujú extrémne hodnoty, modus pre najčastejšiu hodnotu (aj pri slovných znakoch) a rozpätie alebo smerodajná odchýlka pre to, ako veľmi sa hodnoty líšia. <b>Odkiaľ dáta vezmeš</b>: vlastný zber cez online formulár, údaje o Slovensku zo Štatistického úradu SR, údaje o krajinách EÚ z Eurostatu.</p><p>Pri každej situácii vyber charakteristiku alebo zdroj a potom počítaj.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
-    <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; const t = e.target; if (t.dataset && t.dataset.ceo !== undefined) { S.ceo = +t.value; const all = [...SAL, S.ceo], mean = all.reduce((a, b) => a + b, 0) / 10, o = [...all].sort((a, b) => a - b); if (mean - (o[4] + o[5]) / 2 >= 1500) award("g_out", 1); save(); document.getElementById("salbox").innerHTML = salHTML(); const n = document.querySelector("[data-ceo]"); if (n) n.focus(); return true; } return false; }
-
-function CUSTOM_CLICK(e) { return selClick(e, { px: [PX_I, "g_sit"] }); }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function CUSTOM_INPUT(e) { const t = e.target; if (t.dataset && t.dataset.ceo !== undefined) { S.ceo = +t.value; const all = [...SAL, S.ceo], mean = all.reduce((a, b) => a + b, 0) / 10, o = [...all].sort((a, b) => a - b); if (mean - (o[4] + o[5]) / 2 >= 1500) award("g_out", 1); save(); document.getElementById("salbox").innerHTML = salHTML(); const n = document.querySelector("[data-ceo]"); if (n) n.focus(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
