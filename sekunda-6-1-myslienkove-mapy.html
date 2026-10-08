@@ -209,6 +209,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
 
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -216,7 +221,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Kontrola mapy: téma v strede, farebné vetvy, kľúčové slová, všetko spojené, pojmy pod správnymi vetvami, obrázky.", "Mapa na súvislosti, zoznam na postupy, tabuľka na čísla."], "princip": ["Myšlienková mapa: téma v strede, hlavné vetvy, podvetvy, kľúčové slová, farby, obrázky (Tony Buzan)."], "pravidla": ["Papier na šírku, téma v strede, jedno kľúčové slovo na vetvu, vetva = farba, obrázky, všetko spojené."], "doplna": ["Každé kľúčové slovo patrí k tej vetve, ktorú rozvádza."], "vyuzitie": ["Učenie a opakovanie, brainstorming, plánovanie, osnova slohu či prezentácie, poznámky."]};
+const THEORY = {"princip": ["Myšlienková mapa: téma v strede, hlavné vetvy, podvetvy, kľúčové slová, farby, obrázky (Tony Buzan)."], "pravidla": ["Papier na šírku, téma v strede, jedno kľúčové slovo na vetvu, vetva = farba, obrázky, všetko spojené."], "doplna": ["Každé kľúčové slovo patrí k tej vetve, ktorú rozvádza."], "vyuzitie": ["Učenie a opakovanie, brainstorming, plánovanie, osnova slohu či prezentácie, poznámky."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -244,6 +249,61 @@ document.addEventListener("keydown", e => { const z = e.target.closest && e.targ
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – Sekunda 6.1 Princíp myšlienkových máp */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#C2560C", AS = "#FBE3D2";
+/* mapa: stred (cx, cy), vetvy [text, farba, uhol°, [podvetvy]] */
+return {
+  pravidla: fig(SV(440, 250, `
+    ${box(8, 8, 300, 234, C.okS, C.ok, 12)}${T(158, 28, "✅ myšlienková mapa", { a: "middle", fs: 12, b: 1, c: C.ok })}
+    ${PF.mm(158, 138, "🌲 Les", [["stromy", "#2E7D32", -1, 54, 84, ["smrek", "buk"]], ["huby", "#6D4C41", -1, 60, 196, ["hríb", "bedľa"]], ["zvieratá", "#C62828", 1, 258, 84, ["srnka", "líška"]], ["ochrana", "#1565C0", 1, 254, 196, ["ticho", "odpad"]]], { fs: 10.5, sfs: 9, rx: 40 })}
+    ${box(318, 8, 114, 234, C.badS, C.bad, 12)}${T(375, 28, "❌ obyčajný zápis", { a: "middle", fs: 10.5, b: 1, c: C.bad })}
+    ${T(326, 50, "Les", { fs: 11, b: 1 })}${["V lese rastú", "stromy, smrek", "aj buk. Žijú", "tam srnky,", "líšky a veľa", "zvierat. Rastú", "tam huby, hríb", "aj bedľa. Les", "treba chrániť,", "nehádzať odpad…"].map((t, i) => T(326, 68 + i * 15, t, { fs: 9, c: C.mut })).join("")}
+    ${T(375, 230, "dlhé vety, 1 farba", { a: "middle", fs: 9.5, b: 1, c: C.bad })}`, "Myšlienková mapa a obyčajný zápis"),
+    "Tie isté poznámky ako mapa: <b>téma v strede</b>, každá vetva <b>inou farbou</b>, na vetve <b>kľúčové slovo</b>."),
+  hrubka: fig(SV(440, 250, `
+    ${T(220, 20, "Od stredu k detailom", { a: "middle", fs: 12, b: 1 })}
+    <path d="M60 140 Q150 120 220 140" fill="none" stroke="${A}" stroke-width="10" stroke-linecap="round"/><path d="M220 140 Q280 100 340 90" fill="none" stroke="${A}" stroke-width="4" stroke-linecap="round"/><path d="M220 140 Q290 160 340 190" fill="none" stroke="${A}" stroke-width="4" stroke-linecap="round"/><path d="M340 90 Q370 80 400 70" fill="none" stroke="${A}" stroke-width="1.5"/><path d="M340 90 Q370 96 400 104" fill="none" stroke="${A}" stroke-width="1.5"/>
+    <ellipse cx="60" cy="140" rx="44" ry="24" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(60, 145, "TÉMA", { a: "middle", fs: 12, b: 1 })}
+    ${T(150, 118, "hlavná vetva", { a: "middle", fs: 11, b: 1, c: A })}${T(150, 164, "hrubá", { a: "middle", fs: 10, c: C.mut })}
+    ${T(272, 102, "podvetva", { a: "middle", fs: 10.5, b: 1, c: A })}${T(300, 186, "podvetva", { a: "middle", fs: 10.5, b: 1, c: A })}
+    ${T(404, 72, "detail", { fs: 9.5 })}${T(404, 108, "detail", { fs: 9.5 })}
+    ${box(8, 210, 424, 32, AS, null, 8)}${T(220, 231, "čím ďalej od stredu, tým tenšia čiara a menšie písmo", { a: "middle", fs: 11, b: 1, c: A })}`, "Hrúbka vetiev"),
+    "<b>Hlavné vetvy</b> sú hrubé, <b>podvetvy</b> tenšie. Všetko je spojené so stredom."),
+  vylet: fig(SV(440, 250, `
+    ${PF.mm(220, 120, "🚌 Výlet", [["kam", "#1565C0", -1, 96, 50, ["hrad", "jaskyňa"]], ["čo zbaliť", "#6D4C41", -1, 96, 196, ["desiata", "pršiplášť"]], ["kto", "#7B1FA2", -1, 70, 122, ["trieda", "učitelia"]], ["kedy", "#2E7D32", 1, 344, 50, ["jún", "piatok"]], ["peniaze", "#C62828", 1, 344, 196, ["autobus 8 €", "vstup 5 €"]]], { sfs: 9.5 })}
+    ${T(220, 242, "plán triedneho výletu na jednom papieri", { a: "middle", fs: 10.5, c: C.mut })}`, "Mapa na plánovanie výletu"),
+    "Mapa pomáha aj pri <b>plánovaní</b>: všetko podstatné o výlete vidíš naraz.")
+}; })();
+
 const KEY = "mapy-s61-v1";
 const LESSON = "6.1 Princíp a význam používania myšlienkových máp";
 const BRAND = "6.1 Myšlienkové mapy";
@@ -255,14 +315,13 @@ const STEPS = [
   { id: "pravidla", title: "Pravidlá dobrej mapy", min: 7 },
   { id: "doplna", title: "Doplň mapu", min: 10 },
   { id: "vyuzitie", title: "Na čo sa hodí", min: 6 },
-  { id: "precvic", title: "Precvičovanie: oprav mapu", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { princip: ["pq"], pravidla: ["rsort"], doplna: ["msort"], vyuzitie: ["vq", "usort"], precvic: ["g_sit"], test: ["test"] };
+const STEP_TASKS = { princip: ["pq"], pravidla: ["rsort"], doplna: ["msort"], vyuzitie: ["vq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Myšlienková mapa je obrázok z myšlienok: v strede téma, okolo nej farebné vetvy s kľúčovými slovami. Mozog si ju zapamätá ľahšie ako strany poznámok. Spoznáš, ako mapa vyzerá, aké má pravidlá, doplníš rozpracovanú mapu a zistíš, kde sa hodí pri učení aj plánovaní. 5 zastávok, body a na konci výsledok.",
+  lead: "Myšlienková mapa je obrázok z myšlienok: v strede téma, okolo nej farebné vetvy s kľúčovými slovami. Mozog si ju zapamätá ľahšie ako strany poznámok. Spoznáš, ako mapa vyzerá, aké má pravidlá, doplníš rozpracovanú mapu a zistíš, kde sa hodí pri učení aj plánovaní. 4 zastávky, body a na konci výsledok.",
   guessQ: "Čo patrí do stredu myšlienkovej mapy?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Najdlhšia veta", "Hlavná téma (ideálne aj s obrázkom)", "Zoznam zdrojov", "Meno autora"],
@@ -273,8 +332,6 @@ const DEMO = `<svg viewBox="0 0 640 330" style="width:100%;max-width:640px;backg
   ${[["#E53935", 150, 70, "Skupenstvá", [["🧊 ľad", 40, 30], ["💧 voda", 40, 110]]], ["#1E88E5", 490, 70, "Kolobeh", [["☁️ výpar", 600, 30], ["🌧️ zrážky", 600, 110]]], ["#43A047", 150, 260, "Využitie", [["🚿 hygiena", 40, 220], ["⚡ energia", 40, 300]]], ["#8E24AA", 490, 260, "Ochrana", [["🚰 šetrenie", 600, 220], ["🏭 čistota", 600, 300]]]].map(([c, x, y, t, ch]) => `<path d="M320 165 C${(320 + x) / 2} 165, ${(320 + x) / 2} ${y}, ${x} ${y}" stroke="${c}" stroke-width="8" fill="none" stroke-linecap="round"/>${ch.map(([ct, cx, cy]) => `<path d="M${x} ${y} C${(x + cx) / 2} ${y}, ${(x + cx) / 2} ${cy}, ${cx} ${cy}" stroke="${c}" stroke-width="3" fill="none"/><rect x="${cx - 48}" y="${cy - 13}" width="96" height="26" rx="13" fill="#fff" stroke="${c}" stroke-width="2"/><text x="${cx}" y="${cy + 5}" font-size="12" text-anchor="middle">${ct}</text>`).join("")}<rect x="${x - 55}" y="${y - 16}" width="110" height="32" rx="16" fill="${c}"/><text x="${x}" y="${y + 5}" font-size="14" font-weight="700" fill="#fff" text-anchor="middle">${t}</text>`).join("")}
   <rect x="265" y="140" width="110" height="50" rx="25" fill="#37474F"/><text x="320" y="171" font-size="20" font-weight="800" fill="#fff" text-anchor="middle">💧 Voda</text></svg>`;
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
-const PX_I = [["Na vetve je veta „Procesor je mozog počítača a vykonáva príkazy“.", "kw", ""], ["Téma je v ľavom hornom rohu a pod ňou je zoznam.", "stred", ""], ["Celá mapa je čiernou farbou a ťažko sa v nej orientuješ.", "farba", ""], ["Jedna vetva visí samostatne, s ničím nie je spojená.", "spoj", ""], ["„Myš“ je pod vetvou Výstupné zariadenia.", "pod", "myš je vstupné zariadenie"], ["Mapa je iba text a ťažko si ju zapamätáš.", "obr", ""]];
-const PX_O = [["", "— vyber —"], ["kw", "Skrátiť na kľúčové slovo"], ["stred", "Presunúť tému do stredu"], ["farba", "Dať každej hlavnej vetve inú farbu"], ["spoj", "Pripojiť vetvu k nadradenej vetve"], ["pod", "Presunúť pojem pod správnu vetvu"], ["obr", "Pridať obrázok alebo symbol"]];
 const TASKS = {
   pq: { id: "pq", type: "mc", qs: [
     { id: "1", ...Q("Kto myšlienkové mapy spopularizoval?", ["britský psychológ Tony Buzan", "Bill Gates", "Albert Einstein", "Steve Jobs"], 0) },
@@ -290,8 +347,6 @@ const TASKS = {
     { id: "2", ...Q("Pred písaním slohu ti mapa pomôže:", ["usporiadať nápady a osnovu", "opraviť pravopis", "spočítať slová", "vytlačiť text"], 0) },
     { id: "3", ...Q("Ako pomôže mapa pri učení na písomku?", ["na jednej strane vidím súvislosti celého učiva", "nahradí učenie", "urobí úlohy za mňa", "nijako"], 0) }
   ]},
-  g_sit: { id: "g_sit", type: "custom", max: 6 },
-  usort: {"id": "usort", "type": "sort", "buckets": [{"id": "m", "label": "🧠 Hodí sa myšlienková mapa"}, {"id": "i", "label": "📋 Lepší je iný zápis"}], "items": [{"id": "1", "t": "Opakovanie kapitoly z biológie", "b": "m"}, {"id": "2", "t": "Zbieranie nápadov na triednu akciu", "b": "m"}, {"id": "3", "t": "Osnova slohu", "b": "m"}, {"id": "4", "t": "Plánovanie výletu", "b": "m"}, {"id": "5", "t": "Presný postup pokusu krok za krokom", "b": "i"}, {"id": "6", "t": "Namerané hodnoty z fyziky", "b": "i"}, {"id": "7", "t": "Rozvrh hodín", "b": "i"}, {"id": "8", "t": "Riešenie rovnice", "b": "i"}], "after": "Na postupy sa hodí očíslovaný zoznam, na čísla tabuľka. Mapa je najlepšia tam, kde treba vidieť súvislosti a celok."},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Myšlienková mapa sa kreslí:", ["zo stredu k okrajom", "zhora nadol ako zoznam", "sprava doľava", "iba v tabuľke"], 0) },
     { id: "2", ...Q("Na vetvu píšeme:", ["kľúčové slovo", "celý odsek", "iba čísla", "nič"], 0) },
@@ -306,28 +361,17 @@ const VIEWS = {
     <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
   pravidla: () => head() + `<h2>Pravidlá dobrej mapy</h2>
     <div class="theory"><ol><li>Papier na šírku, <b>téma v strede</b>, ideálne s obrázkom.</li><li>Hlavné vetvy <b>hrubšie</b>, podvetvy tenšie, všetko navzájom <b>spojené</b>.</li><li>Na vetve <b>jedno kľúčové slovo</b> (najviac 2 až 3).</li><li>Každá hlavná vetva <b>vlastnou farbou</b>.</li><li><b>Obrázky a symboly</b> pomáhajú pamäti.</li><li>Mapa je <b>otvorená</b>: kedykoľvek môžeš pridať ďalšiu vetvu.</li></ol></div>
+    ${tfigs(TFIG.pravidla, TFIG.hrubka)}
     <h3>Úloha: správne, alebo nesprávne?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("rsort")}</div>` + nextBar(),
   doplna: () => head() + `<h2>Doplň mapu</h2>
     <div class="theory"><p>Mapa <b>🖥️ Počítač</b> má štyri hlavné vetvy. Priraď kľúčové slová ku správnej vetve.</p></div>
     <div class="task"><div class="ins">Klikni na kartičku a potom na vetvu.</div>${taskHTML("msort")}</div>` + nextBar(),
   vyuzitie: () => head() + `<h2>Na čo sa hodí</h2>
     <div class="theory"><ul><li><b>Učenie a opakovanie:</b> celé učivo kapitoly na jednej strane.</li><li><b>Brainstorming:</b> zbieranie nápadov v skupine.</li><li><b>Plánovanie:</b> výlet, projekt, akcia triedy.</li><li><b>Príprava slohu či prezentácie:</b> osnova a nápady.</li><li><b>Poznámky z hodiny či prednášky</b>.</li></ul><p>Mapy môžeš kresliť na papier alebo v programoch, ktoré spoznáš na ďalšej hodine.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("vq")}</div>
-    <h3>Úloha 2: mapa, alebo iný zápis?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("usort")}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: oprav mapu</h2>
-    <div class="theory"><p>Dobrú mapu spoznáš podľa toho, že ju <b>pochopí aj niekto iný</b> a že si ju vieš <b>vybaviť spamäti</b>. Pri kontrole sa pýtaj: Je téma v strede? Sú hlavné vetvy odlíšené farbou? Je na každej vetve iba kľúčové slovo? Je všetko spojené? Patrí každý pojem pod správnu vetvu? Pomáhajú obrázky? Mapa sa nikdy nemusí kresliť naraz. Je otvorená a môžeš ju dopĺňať.</p><p>Pri každej chybe vyber opravu.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
+    ${tfigs(TFIG.vylet)}
+    <h3>Otázky</h3><div class="task">${taskHTML("vq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-
-function CUSTOM_CLICK(e) { return selClick(e, { px: [PX_I, "g_sit"] }); }
-
-function CUSTOM_INPUT(e) { return selInput(e); }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -346,7 +390,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -436,10 +480,8 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
-function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
-  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });

@@ -209,6 +209,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
 
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -216,7 +221,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Bez internetu: Freeplane. Spolupráca: online nástroj. Dizajn: Canva. Rýchly diagram: SmartArt.", "Export: PNG do dokumentu, PDF na tlač, odkaz na zdieľanie (vidí ho každý s odkazom)."], "programy": ["Online: MindMeister, Coggle, MindMup, Canva; inštalácia: Freeplane (open source), XMind; v Office: SmartArt."], "vyber": ["Online = spolupráca, treba internet a konto; desktop = offline. Over cenu, export, zdieľanie; sťahuj oficiálne; chráň údaje."], "prostredie": ["Tab = podtéma, Enter = súrodenec, Delete = zmazať, F2 = premenovať; export PNG/PDF, zdieľanie odkazom."]};
+const THEORY = {"programy": ["Online: MindMeister, Coggle, MindMup, Canva; inštalácia: Freeplane (open source), XMind; v Office: SmartArt."], "vyber": ["Online = spolupráca, treba internet a konto; desktop = offline. Over cenu, export, zdieľanie; sťahuj oficiálne; chráň údaje."], "prostredie": ["Tab = podtéma, Enter = súrodenec, Delete = zmazať, F2 = premenovať; export PNG/PDF, zdieľanie odkazom."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -244,6 +249,54 @@ document.addEventListener("keydown", e => { const z = e.target.closest && e.targ
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – Sekunda 6.2 Programy na myšlienkové mapy */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, win, pc } = PF; const A = "#C2560C", AS = "#FBE3D2";
+const mini = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="14" ry="8" fill="#fff" stroke="${C.ink}" stroke-width="1.2"/>${[[-30, -16, "#2E7D32"], [30, -16, "#C62828"], [-30, 16, "#1565C0"], [30, 16, "#7B1FA2"]].map(([dx, dy, c]) => `<path d="M${x} ${y} Q${x + dx / 2} ${y + dy / 2 + 3} ${x + dx} ${y + dy}" stroke="${c}" stroke-width="3" fill="none"/>`).join("")}`;
+return {
+  online: fig(SV(440, 250, `
+    ${box(8, 8, 206, 234, C.blueS, C.blue, 12)}${T(111, 30, "🌐 online nástroj", { a: "middle", fs: 12.5, b: 1, c: C.blue })}
+    ${win(22, 42, 178, 78, "mapy-priklad.com")}${mini(111, 90)}
+    ${["✔ bez inštalácie", "✔ spolupráca naraz", "✔ z hocijakého zariadenia", "✘ treba internet", "✘ často treba konto"].map((t, i) => T(22, 144 + i * 19, t, { fs: 11, b: 1, c: t[0] === "✔" ? C.ok : C.bad })).join("")}
+    ${box(226, 8, 206, 234, AS, A, 12)}${T(329, 30, "💻 inštalovaný program", { a: "middle", fs: 12.5, b: 1, c: A })}
+    ${pc(297, 50, 1, mini(329, 71))}
+    ${["✔ funguje offline", "✔ súbory máš u seba", "✔ často bez konta", "✘ treba inštalovať", "✘ ťažšia spolupráca"].map((t, i) => T(240, 144 + i * 19, t, { fs: 11, b: 1, c: t[0] === "✔" ? C.ok : C.bad })).join("")}`, "Online nástroj a inštalovaný program"),
+    "Vyber podľa potreby: <b>online</b> nástroj na spoluprácu, <b>inštalovaný</b> program na prácu bez internetu."),
+  export: fig(SV(440, 250, `
+    ${box(150, 14, 140, 90, "#fff", C.line, 10)}${mini(220, 59)}${T(220, 96, "hotová mapa", { a: "middle", fs: 10.5, b: 1 })}
+    ${ar(170, 108, 70, 150, A, 2)}${ar(220, 108, 220, 150, A, 2)}${ar(270, 108, 370, 150, A, 2)}
+    ${[["🖼️", "PNG", "obrázok do", "referátu"], ["📕", "PDF", "na tlač", "a odovzdanie"], ["🔗", "odkaz", "zdieľanie", "so spolužiakmi"]].map(([e, n, a, b], i) => { const x = 14 + i * 142; return `${box(x, 156, 128, 86, i === 2 ? C.blueS : AS, i === 2 ? C.blue : A, 10)}${T(x + 30, 192, e, { a: "middle", fs: 22 })}${T(x + 54, 188, n, { fs: 13, b: 1 })}${T(x + 64, 214, a, { a: "middle", fs: 10 })}${T(x + 64, 228, b, { a: "middle", fs: 10 })}`; }).join("")}`, "Export a zdieľanie mapy"),
+    "Pred výberom over, či program vie mapu <b>exportovať</b> (PNG, PDF) a <b>zdieľať</b> odkazom.")
+}; })();
+
 const KEY = "mapyprogramy-s62-v1";
 const LESSON = "6.2 Programy na tvorbu myšlienkových máp, vyhľadanie, inštalácia";
 const BRAND = "6.2 Programy na mapy";
@@ -254,14 +307,13 @@ const STEPS = [
   { id: "programy", title: "Prehľad programov", min: 9 },
   { id: "vyber", title: "Ako vybrať a nainštalovať", min: 8 },
   { id: "prostredie", title: "Prostredie editora máp", min: 9 },
-  { id: "precvic", title: "Precvičovanie: vyber nástroj", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { programy: ["psort"], vyber: ["vq", "osort"], prostredie: ["f_mm", "kq"], precvic: ["g_sit", "pxq"], test: ["test"] };
+const STEP_TASKS = { programy: ["psort"], vyber: ["vq"], prostredie: ["f_mm", "kq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Mapy sa dajú kresliť na papier, ale v počítači ich ľahko upravíš, presunieš vetvy, pridáš obrázky a zdieľaš so spolužiakmi. Spoznáš programy a online nástroje na tvorbu myšlienkových máp, naučíš sa vybrať ten správny a bezpečne ho získať a preskúmaš prostredie typického editora vrátane klávesových skratiek. 4 zastávky, body a na konci výsledok.",
+  lead: "Mapy sa dajú kresliť na papier, ale v počítači ich ľahko upravíš, presunieš vetvy, pridáš obrázky a zdieľaš so spolužiakmi. Spoznáš programy a online nástroje na tvorbu myšlienkových máp, naučíš sa vybrať ten správny a bezpečne ho získať a preskúmaš prostredie typického editora vrátane klávesových skratiek. 3 zastávky, body a na konci výsledok.",
   guessQ: "Ktorý kláves v editoroch máp (napr. XMind, MindMeister) pridá podtému k vybranému uzlu?",
   guessNote: "Tip sa neboduje. Na zastávke Prostredie editora máp zistíš, či si mal pravdu.",
   guesses: ["Esc", "Tab", "F1", "Delete"],
@@ -284,8 +336,6 @@ const SCRS = { mm: { zones: {
       s += z("stred", [[295, 196, 130, 48]], `<rect x="295" y="198" width="130" height="44" rx="22" fill="#37474F"/>${T_(360, 226, "🖥️ Počítač", 17, "#fff", 800, "middle")}`);
       return s + `</svg>`; } } };
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
-const PX_I = [["Doma nemáš internet a chceš mapu v počítači zadarmo.", "fp", ""], ["Traja spolužiaci robia mapu naraz, každý zo svojho domu.", "online", ""], ["Chceš mapu s pekným dizajnom na nástenku.", "canva", ""], ["Potrebuješ jednoduchý diagram priamo v prezentácii.", "smart", ""], ["Mapu chceš vložiť ako obrázok do Wordu.", "png", ""], ["Učiteľka chce mapu vytlačiť v dobrej kvalite.", "pdf", ""], ["Kamarát má mapu len pozrieť, bez sťahovania.", "link", ""], ["Na opakovanie v lavici nemôžeš použiť počítač.", "paper", ""]];
-const PX_O = [["", "— vyber —"], ["fp", "Freeplane"], ["online", "MindMeister alebo Coggle (online)"], ["canva", "Canva"], ["smart", "SmartArt v PowerPointe"], ["png", "Exportovať ako PNG"], ["pdf", "Exportovať ako PDF"], ["link", "Zdieľať odkazom"], ["paper", "Papier a farbičky"]];
 const TASKS = {
   psort: { id: "psort", type: "sort", buckets: [{ id: "o", label: "🌐 Online v prehliadači" }, { id: "d", label: "💻 Inštalácia do počítača" }, { id: "k", label: "🧩 Súčasť iného programu" }],
     items: [{ id: "1", t: "MindMeister", b: "o" }, { id: "2", t: "Coggle", b: "o" }, { id: "3", t: "Canva (šablóny máp)", b: "o" }, { id: "4", t: "MindMup", b: "o" }, { id: "5", t: "Freeplane (open source)", b: "d" }, { id: "6", t: "XMind (aj desktop)", b: "d" }, { id: "7", t: "SmartArt vo Worde a PowerPointe", b: "k" }, { id: "8", t: "Whiteboard v Teams / OneNote", b: "k" }],
@@ -301,9 +351,6 @@ const TASKS = {
     { id: "1", ...Q("Kláves Enter v editore mapy zvyčajne:", ["pridá súrodenca na rovnakej úrovni", "zmaže uzol", "exportuje mapu", "zavrie program"], 0) },
     { id: "2", ...Q("Ako vložíš mapu do prezentácie?", ["exportujem ju ako obrázok PNG alebo SVG a vložím", "odfotím obrazovku mobilom", "prepíšem ju ručne", "nedá sa"], 0) }
   ]},
-  g_sit: { id: "g_sit", type: "custom", max: 8 },
-  osort: {"id": "osort", "type": "sort", "buckets": [{"id": "o", "label": "🌐 Online nástroj"}, {"id": "d", "label": "💻 Nainštalovaný program"}], "items": [{"id": "1", "t": "Viac ľudí upravuje mapu naraz", "b": "o"}, {"id": "2", "t": "Netreba nič inštalovať", "b": "o"}, {"id": "3", "t": "Bez internetu nefunguje", "b": "o"}, {"id": "4", "t": "Často treba konto", "b": "o"}, {"id": "5", "t": "Funguje aj bez internetu", "b": "d"}, {"id": "6", "t": "Súbory máš vo svojom počítači", "b": "d"}, {"id": "7", "t": "Treba ho najprv nainštalovať", "b": "d"}, {"id": "8", "t": "Nepotrebuje konto (napr. Freeplane)", "b": "d"}]},
-  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Vyberieš uzol a stlačíš Delete. Čo sa stane?", "opts": ["zmaže sa uzol aj s podtémami", "pridá sa podtéma", "mapa sa uloží", "nič"], "a": 0}, {"id": "2", "q": "Ako premenuješ uzol?", "opts": ["dvojklikom alebo klávesom F2", "klávesom Tab", "klávesom Delete", "nedá sa premenovať"], "a": 0}, {"id": "3", "q": "Čo je výhoda open source programu?", "opts": ["je zadarmo a jeho kód môže ktokoľvek skontrolovať", "je vždy online", "nemá žiadne chyby", "funguje iba v škole"], "a": 0}, {"id": "4", "q": "Prečo nedávať do mapy v online nástroji osobné údaje?", "opts": ["mapa je uložená na cudzom serveri a dá sa zdieľať", "online nástroj ich vymaže", "mapa bude pomalá", "nie je to problém"], "a": 0}, {"id": "5", "q": "Bezplatná verzia povoľuje iba 3 mapy. Čo urobíš?", "opts": ["staré mapy exportujem a zmažem alebo použijem iný bezplatný program", "pošlem nástroju svoju kartu bez opýtania", "založím falošné kontá", "prestanem robiť mapy"], "a": 0}, {"id": "6", "q": "Kto vidí mapu zdieľanú ako „ktokoľvek s odkazom“?", "opts": ["každý, kto odkaz dostane", "iba ja", "iba učiteľ", "nikto"], "a": 0}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Ktorý program na mapy je open source a inštaluje sa do počítača?", ["Freeplane", "MindMeister", "Coggle", "Canva"], 0) },
     { id: "2", ...Q("Výhoda online nástroja:", ["spolupráca viacerých ľudí a prístup z akéhokoľvek zariadenia", "funguje bez internetu vždy", "nikdy nevyžaduje konto", "je vždy bez obmedzení"], 0) },
@@ -318,26 +365,14 @@ const VIEWS = {
     <h3>Úloha: roztrieď nástroje</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(),
   vyber: () => head() + `<h2>Ako vybrať a nainštalovať</h2>
     <div class="theory"><ul><li>Rozhodni sa podľa potreby: <b>online</b> (spolupráca, žiadna inštalácia, treba internet a často konto) alebo <b>inštalovaný program</b> (funguje offline, súbory máš u seba).</li><li>Overiť: <b>cena a obmedzenia</b> bezplatnej verzie, <b>export</b> (PNG, PDF), <b>zdieľanie</b>, podpora tvojho zariadenia.</li><li>Program sťahuj z <b>oficiálnej stránky</b> alebo obchodu s aplikáciami, pri inštalácii zvoľ vlastnú inštaláciu a odmietni pribalené ponuky (ako pri programe na fotky).</li><li>Pri online nástrojoch chráň <b>osobné údaje</b>: prihlás sa školským kontom, ak je podporované, a nezdieľaj heslo.</li></ul></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("vq")}</div>
-    <h3>Úloha 2: online, alebo nainštalovaný?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("osort")}</div>` + nextBar(),
+    ${tfigs(TFIG.online, TFIG.export)}
+    <h3>Otázky</h3><div class="task">${taskHTML("vq")}</div>` + nextBar(),
   prostredie: () => head() + `<h2>Prostredie editora máp</h2>${guessBox()}
     <div class="theory"><p>Editory máp sa ovládajú podobne: vyberieš uzol a klávesom <kbd>Tab</kbd> pridáš <b>podtému</b>, klávesom <kbd>Enter</kbd> <b>súrodenca</b>, <kbd>Delete</kbd> uzol zmaže, dvojklik alebo <kbd>F2</kbd> ho premenuje. Hotovú mapu <b>exportuješ</b> ako obrázok alebo PDF, prípadne <b>zdieľaš</b> odkazom.</p></div>
     <h3>Preskúmaj editor</h3>${efExplore("mm")}<h3>Úloha 1: nájdi v editore</h3>${efFind("mm")}<h3>Úloha 2: otázky</h3><div class="task">${taskHTML("kq")}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: vyber nástroj</h2>
-    <div class="theory"><p>Nástroj vyberáš podľa <b>situácie</b>: bez internetu inštalovaný program (Freeplane), na spoluprácu online nástroj (MindMeister, Coggle), na pekný dizajn Canva, na rýchly diagram v dokumente SmartArt. Rovnako dôležité je, <b>ako mapu odovzdáš</b>: obrázok PNG do dokumentu, PDF na tlač, odkaz na zdieľanie. Pri zdieľaní odkazom mysli na to, kto ho môže dostať. A niekedy je najlepší nástroj stále <b>papier</b>.</p><p>Pri každej situácii vyber nástroj alebo spôsob exportu.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 8 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 8</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
-    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return efClick(e); }
-
-function CUSTOM_INPUT(e) { return selInput(e); }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function CUSTOM_CLICK(e) { return efClick(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -356,7 +391,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -446,10 +481,8 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
-function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
-  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
