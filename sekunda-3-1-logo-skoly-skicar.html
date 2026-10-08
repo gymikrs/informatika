@@ -219,6 +219,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .paint canvas{background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.25);cursor:crosshair;max-width:100%;touch-action:none}
 .paint .st{font-size:12px;color:#555;padding:4px 10px;background:#F3F3F3;border-top:1px solid #DADADA;display:flex;gap:20px}
 .paint .grp button.sw{min-width:0;width:22px;height:22px;padding:0;border-radius:50%;border:1px solid #999}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -226,7 +231,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Skicár je rastrový: nastav farbu, hrúbku a výplň pred kreslením, omyl vráť Ctrl + Z.", "Shift = presný kruh, kvapkadlo = rovnaká farba, lupa = detaily, Obrázok › Zmeniť veľkosť."], "logo": ["Dobré logo: jednoduché, čitateľné aj malé, jedinečné, 2–3 farby, funguje aj čiernobielo.", "Postup: náčrty na papier → výber → kreslenie v počítači."], "skicar": ["Skicár = rastrový editor: Obrázok, Nástroje (ceruzka, výplň, text, guma, kvapkadlo, lupa), Štetce, Tvary, Veľkosť, Farby.", "Shift = presný kruh/štvorec. Výplň funguje iba v uzavretej ploche."], "kreslenie": ["Najprv nastav farbu, hrúbku a výplň, potom kresli. Omyl: Ctrl + Z. Ulož ako PNG."]};
+const THEORY = {"logo": ["Dobré logo: jednoduché, čitateľné aj malé, jedinečné, 2–3 farby, funguje aj čiernobielo.", "Postup: náčrty na papier → výber → kreslenie v počítači."], "skicar": ["Skicár = rastrový editor: Obrázok, Nástroje (ceruzka, výplň, text, guma, kvapkadlo, lupa), Štetce, Tvary, Veľkosť, Farby.", "Shift = presný kruh/štvorec. Výplň funguje iba v uzavretej ploche."], "kreslenie": ["Najprv nastav farbu, hrúbku a výplň, potom kresli. Omyl: Ctrl + Z. Ulož ako PNG."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -298,6 +303,54 @@ function paintClick(e) { const el = e.target.closest("button, input"); if (!el) 
 function paintInput(e) { const t = e.target, P = PS(); if (t.dataset.psize !== undefined) { P.size = +t.value; save(); return true; } if (t.dataset.pfill !== undefined) { P.filled = t.checked; save(); return true; } if (t.dataset.pcc !== undefined) { P.col = t.value.toUpperCase(); save(); pUI(); return true; } return false; }
 setInterval(() => { const c = document.getElementById("pcv"); if (c && !c.dataset.on) { PC = null; pInit(); } }, 250);
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Sekunda 3.1 Logo školy v Skicári */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#C2560C", AS = "#FBE3D2";
+/* jednoduché logo: lipový list v kruhu */
+const leaf = (cx, cy, s, c1, c2, txt = 1) => `<g transform="translate(${cx} ${cy}) scale(${s})"><circle r="40" fill="${c1}"/><path d="M0 -26 C22 -20 26 6 0 26 C-26 6 -22 -20 0 -26z" fill="${c2}"/><path d="M0 -20 V26" stroke="${c1}" stroke-width="3"/>${txt ? `<text y="62" text-anchor="middle" font-size="15" font-weight="700" fill="${c1}">ZŠ Lipová</text>` : ""}</g>`;
+return {
+  dobre: fig(SV(440, 250, `
+    ${box(8, 8, 206, 234, C.okS, C.ok, 12)}${T(111, 30, "✅ Dobré logo", { a: "middle", fs: 13, b: 1, c: C.ok })}
+    ${leaf(111, 104, 1, "#2E7D32", "#A5D6A7")}
+    ${["jednoduchý tvar", "2 farby", "krátky názov"].map((t, i) => T(111, 192 + i * 16, "✔ " + t, { a: "middle", fs: 10.5, b: 1, c: C.ok })).join("")}
+    ${box(226, 8, 206, 234, C.badS, C.bad, 12)}${T(329, 30, "❌ Zlé logo", { a: "middle", fs: 13, b: 1, c: C.bad })}
+    <circle cx="329" cy="104" r="44" fill="url(#s31rb)"/><defs><linearGradient id="s31rb"><stop offset="0" stop-color="#E53935"/><stop offset=".33" stop-color="#FDD835"/><stop offset=".66" stop-color="#43A047"/><stop offset="1" stop-color="#1E88E5"/></linearGradient></defs>
+    ${[[-18, -14], [14, -20], [-6, 12], [20, 8], [-24, 18]].map(([dx, dy], i) => `<text x="${329 + dx}" y="${104 + dy}" font-size="${12 + i * 2}" text-anchor="middle">${["📚", "✏️", "🌳", "⚽", "🎨"][i]}</text>`).join("")}
+    <text x="329" y="164" text-anchor="middle" font-size="9" font-family="Brush Script MT,cursive" fill="#8E24AA">Základná škola s materskou školou Lipová ulica</text>
+    ${["veľa detailov", "dúha farieb", "dlhý text, zlé písmo"].map((t, i) => T(329, 192 + i * 16, "✘ " + t, { a: "middle", fs: 10.5, b: 1, c: C.bad })).join("")}`, "Dobré a zlé logo"),
+    "Dobré logo je <b>jednoduché</b>, má <b>málo farieb</b> a súvisí so školou (lipa = ZŠ Lipová)."),
+  test: fig(SV(440, 250, `
+    ${T(220, 20, "Test loga: funguje malé aj čiernobiele?", { a: "middle", fs: 12, b: 1 })}
+    ${leaf(70, 92, 1, "#2E7D32", "#A5D6A7")}${T(70, 176, "web, plagát", { a: "middle", fs: 10.5, c: C.mut })}
+    ${leaf(170, 92, 0.5, "#2E7D32", "#A5D6A7", 0)}${T(170, 176, "ikona", { a: "middle", fs: 10.5, c: C.mut })}
+    ${leaf(232, 92, 0.25, "#2E7D32", "#A5D6A7", 0)}${T(232, 176, "pečiatka", { a: "middle", fs: 10.5, c: C.mut })}
+    <line x1="270" y1="40" x2="270" y2="190" stroke="${C.line}" stroke-dasharray="4 4"/>
+    ${leaf(350, 92, 1, "#222", "#BBB")}${T(350, 176, "čiernobiela tlač", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(8, 196, 424, 46, AS, null, 8)}${T(220, 216, "Aj zmenšené a bez farieb ho spoznáš → dobré logo.", { a: "middle", fs: 11.5, b: 1, c: A })}${T(220, 233, "Postup: náčrty na papier → výber → kreslenie v počítači", { a: "middle", fs: 10.5 })}`, "Test loga v rôznych veľkostiach"),
+    "Dobré logo spoznáš aj ako <b>malú ikonu</b> a aj v <b>čiernobielej</b> tlači.")
+}; })();
+
 const KEY = "logoskoly-s31-v1";
 const LESSON = "3.1 Tvorba loga školy v prostredí Skicára";
 const BRAND = "3.1 Logo školy v Skicári";
@@ -309,14 +362,13 @@ const STEPS = [
   { id: "logo", title: "Čo je dobré logo", min: 6 },
   { id: "skicar", title: "Prostredie Skicára", min: 8 },
   { id: "kreslenie", title: "Nakresli logo školy", min: 20 },
-  { id: "precvic", title: "Precvičovanie: Skicár v praxi", min: 8 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { logo: ["lq", "lsort"], skicar: ["f_pa", "sq", "nsort"], kreslenie: ["g_logo"], precvic: ["g_sit"], test: ["test"] };
+const STEP_TASKS = { logo: ["lq"], skicar: ["f_pa", "sq"], kreslenie: ["g_logo"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Logo je tvár školy: nájdeš ho na webe, vysvedčení aj tričkách. Zistíš, čo robí logo dobrým, spoznáš nástroje Skicára (Paint) a v skutočnom kresliacom programe priamo v stránke nakreslíš vlastný návrh loga našej školy a uložíš ho ako obrázok PNG. 4 zastávky, body a na konci výsledok.",
+  lead: "Logo je tvár školy: nájdeš ho na webe, vysvedčení aj tričkách. Zistíš, čo robí logo dobrým, spoznáš nástroje Skicára (Paint) a v skutočnom kresliacom programe priamo v stránke nakreslíš vlastný návrh loga našej školy a uložíš ho ako obrázok PNG. 3 zastávky, body a na konci výsledok.",
   guessQ: "Koľko farieb by malo mať jednoduché logo?",
   guessNote: "Tip sa neboduje. Na prvej zastávke zistíš, či si mal pravdu.",
   guesses: ["Čo najviac, aby bolo pestré", "2 až 3", "Iba jednu, vždy čiernu", "Presne 12"],
@@ -349,8 +401,6 @@ function logoGoals() { const P = PS(), u = P.used; return { shape: u.ellipse || 
 function PAINTCHANGE() { const n = Object.values(logoGoals()).filter(Boolean).length; if (n && (!S.t.g_logo || S.t.g_logo.score < n)) award("g_logo", n); const g = document.getElementById("lgoals"); if (g) g.innerHTML = goalsLI(); }
 function goalsLI() { const G = logoGoals(); return [["shape", "použi tvar (elipsa alebo obdĺžnik)"], ["fill", "vyfarbi plochu nástrojom Výplň farbou"], ["text", "pridaj text (napr. GIK alebo Gymnázium Ivana Kraska)"], ["cols", "použi aspoň 3 farby"], ["save", "ulož logo ako PNG"]].map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join(""); }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
-const PX_I = [["Chceš presný kruh, nie oválne vajíčko.", "shift", ""], ["Po vyliatí farby sa zafarbilo celé plátno.", "uzavri", "farba vytiekla cez medzeru v obryse"], ["Chceš použiť presne tú istú modrú, ktorú už máš v logu.", "kvap", ""], ["Logo je hotové a chceš ho uložiť ostré a bez strát.", "png", ""], ["Chceš do loga dopísať GIK.", "text", ""], ["Obrázok má šírku 2 000 px, na web potrebuješ 500 px.", "velk", ""], ["Chceš opraviť drobný detail pri okraji písmena.", "lupa", ""], ["Nakreslil si čiaru na zlé miesto.", "z", ""]];
-const PX_O = [["", "— vyber —"], ["shift", "Elipsa so stlačeným Shift"], ["uzavri", "Ctrl + Z, uzavrieť medzeru v obryse a vyliať znova"], ["kvap", "Výber farby (kvapkadlo)"], ["png", "Súbor › Uložiť ako › PNG"], ["text", "Nástroj Text (A)"], ["velk", "Obrázok › Zmeniť veľkosť"], ["lupa", "Lupa (priblíženie)"], ["z", "Ctrl + Z"]];
 const TASKS = {
   lq: { id: "lq", type: "mc", qs: [
     { id: "1", ...Q("Aké má byť dobré logo?", ["jednoduché, zapamätateľné, čitateľné aj v malej veľkosti", "čo najzložitejšie", "s veľkým množstvom textu", "vždy fotografia"], 0) },
@@ -365,9 +415,6 @@ const TASKS = {
     { id: "4", ...Q("Čo robí nástroj Výber farby (kvapkadlo)?", ["nasaje farbu z obrázka, aby si ju mohol znova použiť", "vymaže farbu", "vyplní plochu", "napíše text"], 0) }
   ]},
   g_logo: { id: "g_logo", type: "custom", max: 5 },
-  g_sit: { id: "g_sit", type: "custom", max: 8 },
-  lsort: {"id": "lsort", "type": "sort", "buckets": [{"id": "y", "label": "👍 Dobré logo"}, {"id": "n", "label": "👎 Zlé logo"}], "items": [{"id": "1", "t": "Jednoduchý tvar, ktorý si ľahko zapamätáš", "b": "y"}, {"id": "2", "t": "Čitateľné aj na malej pečiatke", "b": "y"}, {"id": "3", "t": "Dve až tri farby", "b": "y"}, {"id": "4", "t": "Symbol súvisí so školou (kniha, sova)", "b": "y"}, {"id": "5", "t": "Fotografia budovy školy", "b": "n"}, {"id": "6", "t": "Celý názov školy drobným písmom v piatich riadkoch", "b": "n"}, {"id": "7", "t": "Desať rôznych farieb a prechodov", "b": "n"}, {"id": "8", "t": "Skopírované logo známej firmy", "b": "n"}]},
-  nsort: {"id": "nsort", "type": "sort", "buckets": [{"id": "n", "label": "🖌️ Nástroje"}, {"id": "t", "label": "⬭ Tvary"}, {"id": "o", "label": "🖼️ Obrázok"}], "items": [{"id": "1", "t": "Ceruzka", "b": "n"}, {"id": "2", "t": "Výplň farbou (vedro)", "b": "n"}, {"id": "3", "t": "Guma", "b": "n"}, {"id": "4", "t": "Výber farby (kvapkadlo)", "b": "n"}, {"id": "5", "t": "Elipsa", "b": "t"}, {"id": "6", "t": "Hviezda", "b": "t"}, {"id": "7", "t": "Orezať", "b": "o"}, {"id": "8", "t": "Otočiť", "b": "o"}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Skicár je:", ["jednoduchý rastrový grafický editor vo Windows", "vektorový editor", "textový editor", "prehliadač"], 0) },
     { id: "2", ...Q("Kde v Skicári nastavíš, či má tvar výplň?", ["Obrys a Výplň pri tvaroch", "Súbor", "Lupa", "Guma"], 0) },
@@ -379,34 +426,23 @@ const TASKS = {
 const VIEWS = {
   logo: () => head() + `<h2>Čo je dobré logo</h2>${guessBox()}
     <div class="theory"><p><b>Logo</b> je grafický znak, podľa ktorého ľudia spoznajú školu, firmu alebo podujatie. Dobré logo je:</p><ul><li><b>jednoduché</b>: málo detailov, dá sa ľahko zapamätať,</li><li><b>čitateľné</b> aj v malej veľkosti (ikona, pečiatka),</li><li><b>jedinečné</b> a súvisí s tým, čo predstavuje (škola: kniha, pero, sova, iniciály),</li><li>má <b>2 až 3 farby</b> a funguje aj <b>čiernobielo</b>.</li></ul><p>Postup: najprv niekoľko <b>náčrtov na papier</b>, potom výber najlepšieho a nakoniec kreslenie v počítači.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("lq")}</div>
-    <h3>Úloha 2: dobré, alebo zlé logo?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("lsort")}</div>` + nextBar(),
+    ${tfigs(TFIG.dobre, TFIG.test)}
+    <h3>Otázky</h3><div class="task">${taskHTML("lq")}</div>` + nextBar(),
   skicar: () => head() + `<h2>Prostredie Skicára</h2>
     <div class="theory"><p><b>Skicár</b> (Paint) je jednoduchý <b>rastrový</b> editor, ktorý je súčasťou Windows. Hore je pás s nástrojmi: <b>Obrázok</b> (výber, orezanie, zmena veľkosti), <b>Nástroje</b> (ceruzka, výplň, text, guma, výber farby, lupa), <b>Štetce</b>, <b>Tvary</b>, <b>Veľkosť</b> a <b>Farby</b>. V strede je <b>plátno</b>, dole <b>stavový riadok</b> so súradnicami a veľkosťou obrázka. Tvary kreslíme ťahaním, so <b>Shift</b> vznikne kruh alebo štvorec. <b>Výplň</b> vyfarbí uzavretú plochu.</p></div>
     <h3>Preskúmaj Skicár</h3>${efExplore("pa")}
     <h3>Úloha 1: nájdi v Skicári</h3>${efFind("pa")}
-    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("sq")}</div>
-    <h3>Úloha 3: v ktorej skupine to nájdeš?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>` + nextBar(),
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("sq")}</div>` + nextBar(),
   kreslenie: () => head() + `<h2>Nakresli logo školy</h2>
     <div class="theory"><p>Tento kresliaci program funguje ako Skicár. Tvary a čiary kreslíš ťahaním myšou, <b>Výplň</b> klikom do uzavretej plochy, <b>Text</b> klikom a napísaním. Pred kreslením tvaru nastav farbu, hrúbku a či má byť tvar vyplnený. Omyl vráti ↶. Hotové logo ulož tlačidlom 💾 PNG.</p>
       <p>Nápady: kruh s iniciálami <b>GIK</b>, otvorená kniha, pero, sova múdrosti, obrys budovy. Použi farby, ktoré sa k škole hodia.</p></div>
     <div class="task"><ul class="goals" id="lgoals">${goalsLI()}</ul>${S.t.g_logo ? `<div class="checkbar"><span class="score ${S.t.g_logo.score < 5 ? "part" : ""}">Splnené: ${S.t.g_logo.score} z 5</span></div>` : ""}</div>
     ${paintHTML(520, 380)}
     <p class="muted" style="font-size:13.5px">Tip: v skutočnom Skicári postupuj rovnako a logo ulož cez Súbor › Uložiť ako › Obrázok PNG.</p>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: Skicár v praxi</h2>
-    <div class="theory"><p>Skicár je <b>rastrový</b> editor: obrázok sa skladá z bodov (pixelov). Čo raz nakreslíš, sa stane súčasťou plátna a nedá sa už samostatne posunúť ako objekt vo Worde. Preto je dôležité <b>pred kreslením</b> nastaviť farbu, hrúbku a výplň a omyly hneď vracať cez <b>Ctrl + Z</b>. Pri jemnej práci pomôže <b>lupa</b>, pri rovnakých farbách <b>kvapkadlo</b>. Pri zmenšovaní obrázka sa body zlúčia a obrázok zostane ostrý. Pri zväčšovaní sa body roztiahnu a obrázok sa rozmaže.</p><p>Pri každej situácii vyber, ktorý nástroj alebo príkaz Skicára použiješ.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 8 ? "part" : ""}">Správne: ${S.t.g_sit.score} z 8</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return efClick(e) || paintClick(e); }
-function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; return paintInput(e); }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function CUSTOM_CLICK(e) { return efClick(e) || paintClick(e); }
+function CUSTOM_INPUT(e) { return paintInput(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
