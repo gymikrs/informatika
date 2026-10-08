@@ -204,6 +204,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .types{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.types button{border:1.5px solid var(--border);background:var(--surface);border-radius:8px;padding:6px 2px;cursor:pointer;font-size:20px;color:var(--ink)}.types button.on{border-color:var(--acc);background:var(--accSoft)}.types small{display:block;font-size:10px}
 .dsb{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.dsb button{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:600;color:var(--ink)}.dsb button.on{border-color:var(--acc);background:var(--accSoft)}
 
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -211,7 +216,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Kontrola grafu: typ, názov, osi s jednotkami, legenda, os y od nuly, zdroj.", "Vizuálny dojem môže klamať: prepočítaj skutočný rozdiel."], "casti": ["Časti grafu: názov, osi x a y s názvami a jednotkami, rad údajov, mriežka, menovky, legenda.", "Vloženie: označ údaje so záhlavím › Vložiť › Grafy; graf sa pri zmene údajov prekreslí."], "typy": ["Stĺpcový/pruhový = porovnanie kategórií, čiarový = vývoj v čase, koláčový = podiel z celku, bodový XY = závislosť dvoch veličín."], "tvorba": ["Vyber typ podľa údajov, napíš výstižný názov a názvy osí s jednotkami."], "klam": ["Os y nezačínajúca od nuly zväčšuje rozdiely; 3D skresľuje. Kontroluj osi, jednotky a zdroj."]};
+const THEORY = {"casti": ["Časti grafu: názov, osi x a y s názvami a jednotkami, rad údajov, mriežka, menovky, legenda.", "Vloženie: označ údaje so záhlavím › Vložiť › Grafy; graf sa pri zmene údajov prekreslí."], "typy": ["Stĺpcový/pruhový = porovnanie kategórií, čiarový = vývoj v čase, koláčový = podiel z celku, bodový XY = závislosť dvoch veličín."], "tvorba": ["Vyber typ podľa údajov, napíš výstižný názov a názvy osí s jednotkami."], "klam": ["Os y nezačínajúca od nuly zväčšuje rozdiely; 3D skresľuje. Kontroluj osi, jednotky a zdroj."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -313,6 +318,48 @@ function chartSVG(c) { const W = 560, H = 340, L = c.labels || [], V = c.values 
   return s + `</svg>`; }
 function dlText(name, text, type) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – Tercia 5.3 Použitie grafov */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = C.acc, AS = C.accS;
+const axes = (x, y, w, h) => `<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y + h}" stroke="${C.mut}"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" stroke="${C.mut}"/>`;
+const card = (x, y, ic, n, kedy, title, inner) => `${box(x, y, 206, 146, "#fff", C.line, 10)}${T(x + 12, y + 20, ic + " " + n, { fs: 12, b: 1, c: A })}${T(x + 12, y + 35, kedy, { fs: 9.5, c: C.mut })}${T(x + 103, y + 54, title, { a: "middle", fs: 9.5, b: 1 })}${inner}`;
+return {
+  typy: fig(SV(440, 310, `
+    ${card(8, 8, "📊", "stĺpcový", "porovnanie kategórií", "Prečítané knihy podľa tried", `${axes(36, 64, 160, 66)}${[["5.A", 40], ["5.B", 58], ["6.A", 30], ["6.B", 50]].map(([n, v], i) => `<rect x="${48 + i * 38}" y="${130 - v}" width="24" height="${v}" fill="#7E57C2"/>${T(60 + i * 38, 143, n, { a: "middle", fs: 9, c: C.mut })}`).join("")}`)}
+    ${card(226, 8, "📈", "čiarový", "vývoj v čase", "Výška slnečnice po týždňoch", `${axes(254, 64, 160, 66)}<polyline points="262,126 290,118 318,104 346,86 374,72 402,68" fill="none" stroke="#7E57C2" stroke-width="2.5"/>${[262, 290, 318, 346, 374, 402].map((x, i) => `<circle cx="${x}" cy="${[126, 118, 104, 86, 72, 68][i]}" r="3" fill="#7E57C2"/>`).join("")}`)}
+    ${card(8, 162, "🥧", "koláčový", "podiel z celku (100 %)", "Zloženie vzduchu", `<circle cx="80" cy="264" r="34" fill="#7E57C2"/>${(() => { const p = (a0, a1, c) => { const r = 34, x0 = 80 + r * Math.sin(a0), y0 = 264 - r * Math.cos(a0), x1 = 80 + r * Math.sin(a1), y1 = 264 - r * Math.cos(a1); return `<path d="M80 264 L${x0.toFixed(1)} ${y0.toFixed(1)} A34 34 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}z" fill="${c}"/>`; }; const t = 2 * Math.PI; return p(0, t * 0.78, "#7E57C2") + p(t * 0.78, t * 0.99, "#26A69A") + p(t * 0.99, t, "#FFB300"); })()}${T(132, 236, "■ dusík 78 %", { fs: 9.5, c: "#7E57C2", b: 1 })}${T(132, 254, "■ kyslík 21 %", { fs: 9.5, c: "#26A69A", b: 1 })}${T(132, 272, "■ ostatné 1 %", { fs: 9.5, c: "#B07400", b: 1 })}`)}
+    ${card(226, 162, "⁘", "bodový XY", "závislosť dvoch veličín", "Perióda kyvadla od dĺžky", `${axes(254, 218, 160, 66)}${[[0.2, 0.9], [0.4, 1.27], [0.6, 1.55], [0.8, 1.79], [1.0, 2.0]].map(([l, t]) => `<circle cx="${254 + l * 150}" cy="${284 - (t - 0.6) * 40}" r="3.5" fill="#7E57C2"/>`).join("")}${T(410, 298, "l [m]", { a: "end", fs: 9, c: C.mut })}${T(258, 226, "T [s]", { fs: 9, c: C.mut })}`)}`, "Štyri základné typy grafov"),
+    "Typ grafu vyber podľa toho, čo chceš ukázať: <b>porovnanie</b>, <b>vývoj v čase</b>, <b>podiel z celku</b> alebo <b>závislosť</b> dvoch veličín.")
+}; })();
+
 const KEY = "grafy-t53-v1";
 const LESSON = "5.3 Použitie grafov";
 const BRAND = "5.3 Grafy";
@@ -324,14 +371,13 @@ const STEPS = [
   { id: "typy", title: "Aký graf kedy", min: 8 },
   { id: "tvorba", title: "Tvorba grafov", min: 16 },
   { id: "klam", title: "Klamlivé grafy", min: 6 },
-  { id: "precvic", title: "Precvičovanie: oprav graf", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { casti: ["f_ch"], typy: ["tq", "gsort"], tvorba: ["g_ch"], klam: ["kq", "kin"], precvic: ["g_sit", "pxq"], test: ["test"] };
+const STEP_TASKS = { casti: ["f_ch"], typy: ["tq"], tvorba: ["g_ch"], klam: ["kq"], test: ["test"] };
 const START = {
   kicker: "Informatika, Tercia",
-  lead: "Stĺpec čísel povie málo, graf povie veľa na prvý pohľad. Ale ktorý graf vybrať? Spoznáš časti grafu, naučíš sa, kedy použiť stĺpcový, čiarový, koláčový či bodový graf, vytvoríš grafy zo štyroch súborov údajov a odhalíš, ako sa dá grafom klamať. 5 zastávok, body a na konci výsledok.",
+  lead: "Stĺpec čísel povie málo, graf povie veľa na prvý pohľad. Ale ktorý graf vybrať? Spoznáš časti grafu, naučíš sa, kedy použiť stĺpcový, čiarový, koláčový či bodový graf, vytvoríš grafy zo štyroch súborov údajov a odhalíš, ako sa dá grafom klamať. 4 zastávky, body a na konci výsledok.",
   guessQ: "Aký graf je najlepší na zobrazenie teploty počas týždňa?",
   guessNote: "Tip sa neboduje. Na zastávke Aký graf kedy zistíš, či si mal pravdu.",
   guesses: ["Koláčový", "Čiarový", "Iba tabuľka", "Pruhový"],
@@ -378,8 +424,6 @@ const SCRS = { ch: { zones: {
 function klamHTML() { const L = ["Firma A", "Firma B"], V = [96, 100]; return `<div class="row"><label style="display:flex;gap:6px"><input type="checkbox" data-zero ${S.zero ? "checked" : ""}> Os y začína od nuly</label></div><div class="chartw" style="max-width:520px">${chartSVG({ type: "bar", title: "Spokojnosť zákazníkov [%]", labels: L, values: V, dl: true, ymin: S.zero ? 0 : 95 })}</div>`; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const GT = ["stĺpcový", "čiarový", "koláčový", "bodový XY"];
-const PX_I = [["Graf nemá žiadny nadpis.", "nazov", ""], ["Na osi y sú čísla, ale nevieš, či sú to °C alebo %.", "osi", ""], ["V grafe sú dve čiary a nevieš, ktorá je ktorá.", "leg", ""], ["Malý rozdiel vyzerá obrovský, lebo os y začína na 90.", "nula", ""], ["Vývoj teploty za týždeň je nakreslený ako koláčový graf.", "typ", ""], ["Body z merania pružiny ležia takmer na priamke a chceš to ukázať.", "trend", ""], ["Graf v novinách neuvádza, odkiaľ sú čísla.", "zdroj", ""]];
-const PX_O = [["", "— vyber —"], ["nazov", "Doplniť názov grafu"], ["osi", "Doplniť názvy osí s jednotkami"], ["leg", "Pridať legendu"], ["nula", "Začať os y od nuly"], ["typ", "Zmeniť typ grafu"], ["trend", "Pridať spojnicu trendu"], ["zdroj", "Uviesť zdroj údajov"]];
 const TASKS = {
   f_ch: { id: "f_ch", type: "custom", max: 4 },
   tq: { id: "tq", type: "mc", keep: true, qs: [
@@ -393,15 +437,6 @@ const TASKS = {
     { id: "2", ...Q("Koláčový graf, kde súčet dielov je 130 %:", ["je chybný, koláč musí dávať 100 %", "je v poriadku", "je bodový", "je presnejší"], 0) },
     { id: "3", ...Q("Čo kontroluješ, keď čítaš graf v novinách?", ["začiatok osi, jednotky, zdroj údajov a či je názov pravdivý", "iba farby", "iba veľkosť", "nič"], 0) }
   ]},
-  g_sit: { id: "g_sit", type: "custom", max: 7 },
-  gsort: {"id": "gsort", "type": "sort", "buckets": [{"id": "y", "label": "✅ Vhodný graf"}, {"id": "n", "label": "❌ Nevhodný graf"}], "items": [{"id": "1", "t": "Čiarový graf teploty počas dňa", "b": "y"}, {"id": "2", "t": "Koláčový graf rozpočtu, spolu 100 %", "b": "y"}, {"id": "3", "t": "Stĺpcový graf obľúbených predmetov", "b": "y"}, {"id": "4", "t": "Bodový graf výška – hmotnosť", "b": "y"}, {"id": "5", "t": "Koláčový graf teploty počas týždňa", "b": "n"}, {"id": "6", "t": "Čiarový graf obľúbených farieb", "b": "n"}, {"id": "7", "t": "Koláčový graf s 15 dielmi", "b": "n"}, {"id": "8", "t": "3D koláč, ktorý zväčšuje predný diel", "b": "n"}]},
-  kin: { id: "kin", type: "input", qs: [
-    { id: "1", q: "Stĺpce 96 % a 100 %, os y začína na 95 %. Koľkokrát vyšší sa zdá stĺpec 100 %?", ok: v => Math.abs(parseNum(v) - 5) <= 0.01, show: "5-krát (5 dielikov oproti 1)", ph: "?" },
-    { id: "2", q: "Aký je skutočný rozdiel medzi 96 % a 100 % v percentuálnych bodoch?", ok: v => Math.abs(parseNum(v) - 4) <= 0.01, show: "4 percentuálne body", ph: "?" },
-    { id: "3", q: "Koláčový graf: jedlo 40 %, hry 25 %, oblečenie 20 %, zvyšok úspory. Koľko % sú úspory?", ok: v => Math.abs(parseNum(v) - 15) <= 0.01, show: "15 %", ph: "?" },
-    { id: "4", q: "Vreckové je 30 €. Koľko eur ide na jedlo (40 %)?", ok: v => Math.abs(parseNum(v) - 12) <= 0.01, show: "12 €", ph: "?" }
-  ]},
-  pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Prečo označiť údaje aj so záhlavím?", "opts": ["Excel z neho vytvorí názvy radov a legendu", "graf bude farebnejší", "inak sa graf nedá vložiť", "nemá to význam"], "a": 0}, {"id": "2", "q": "Máš počty predaných lístkov na 3 filmy, ktoré netvoria celok. Aký graf?", "opts": ["stĺpcový, koláč ukazuje iba časti celku", "koláčový", "čiarový", "bodový"], "a": 0}, {"id": "3", "q": "Kde upravíš vzhľad grafu v Exceli?", "opts": ["po kliknutí na graf na kartách Návrh grafu a Formát", "v Nastaveniach Windows", "v ponuke Súbor › Tlačiť", "nedá sa upraviť"], "a": 0}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Koláčový graf sa hodí na:", ["podiely častí z celku", "vývoj v čase", "závislosť dvoch veličín", "veľa kategórií (20+)"], 0) },
     { id: "2", ...Q("Bodový (XY) graf sa hodí na:", ["závislosť dvoch číselných veličín, napr. z merania", "podiely", "iba text", "rozvrh"], 0) },
@@ -422,8 +457,8 @@ const VIEWS = {
       <tr><td>📈 <b>čiarový</b></td><td>vývoj hodnoty v čase</td><td>teplota počas týždňa, počet obyvateľov</td></tr>
       <tr><td>🥧 <b>koláčový</b></td><td>podiel častí z celku (spolu 100 %), najviac asi 6 dielov</td><td>rozdelenie dňa, rozpočet</td></tr>
       <tr><td>⁘ <b>bodový XY</b></td><td>závislosť dvoch číselných veličín, merania</td><td>predĺženie pružiny od sily</td></tr></tbody></table></div>
-    <h3>Úloha: aký graf zvolíš?</h3><div class="task">${taskHTML("tq")}</div>
-    <h3>Úloha 2: vhodný, alebo nevhodný graf?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("gsort")}</div>` + nextBar(),
+    ${tfigs(TFIG.typy)}
+    <h3>Úloha: aký graf zvolíš?</h3><div class="task">${taskHTML("tq")}</div>` + nextBar(),
   tvorba: () => head() + `<h2>Tvorba grafov</h2>
     <div class="theory"><p>Pre každý zo štyroch súborov údajov vyber <b>vhodný typ grafu</b>, napíš <b>výstižný názov</b> a pri grafoch s osami aj <b>názvy osí s jednotkami</b>. Pri meraní pružiny skús aj spojnicu trendu: body ležia takmer na priamke, čo potvrdzuje Hookov zákon.</p></div>
     <div class="task"><ul class="goals">${DS.map((d, i) => `<li>${S.done[i] ? "✅" : "⬜"} ${d.n}</li>`).join("")}</ul>${S.t.g_ch ? `<div class="checkbar"><span class="score ${S.t.g_ch.score < 4 ? "part" : ""}">Splnené: ${S.t.g_ch.score} zo 4</span></div>` : ""}</div>
@@ -431,30 +466,18 @@ const VIEWS = {
   klam: () => head() + `<h2>Klamlivé grafy</h2>
     <div class="theory"><p>Grafom sa dá aj <b>klamať</b>: os y, ktorá nezačína od nuly, zväčší malé rozdiely; 3D efekty skresľujú veľkosť dielov; chýbajúce jednotky a zdroj zakryjú, čo sa vlastne meria. Keď čítaš graf, vždy skontroluj <b>osi, jednotky a zdroj</b>.</p></div>
     <h3>Vyskúšaj: vypni a zapni začiatok osi od nuly</h3><div class="tool" id="klbox">${klamHTML()}</div>
-    <h3>Otázky</h3><div class="task">${taskHTML("kq")}</div>
-    <h3>Úloha 2: prepočítaj, čo graf naozaj ukazuje</h3><div class="task">${taskHTML("kin")}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: oprav graf</h2>
-    <div class="theory"><p>Dobrý graf odpovie na otázku <b>na prvý pohľad a pravdivo</b>. Kontrolný zoznam: správny <b>typ</b> (porovnanie, vývoj, podiel, závislosť), <b>názov</b>, <b>osi s jednotkami</b>, <b>legenda</b> pri viacerých radoch, os y od <b>nuly</b> pri stĺpcoch a <b>zdroj</b> údajov. Pri meraní pomôže <b>spojnica trendu</b>. Keď graf čítaš, prepočítaj si, aký veľký je rozdiel naozaj: vizuálny dojem môže klamať.</p><p>Pri každom grafe vyber opravu a potom odpovedz.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
-    <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("kq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function chCheck() { const i = S.di; if (chGoal(i)) S.done[i] = true; const n = Object.keys(S.done).length; if (n && (!S.t.g_ch || S.t.g_ch.score < n)) award("g_ch", n); }
-function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; if (efClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+function CUSTOM_CLICK(e) { if (efClick(e)) return true; const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.di !== undefined) { S.di = +ds.di; save(); render(false); return true; }
   if (ds.ct) { S.C[S.di].type = ds.ct; chCheck(); save(); render(false); return true; }
   return false; }
-function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; const t = e.target, ds = t.dataset || {};
+function CUSTOM_INPUT(e) { const t = e.target, ds = t.dataset || {};
   if (ds.cf) { const c = S.C[S.di]; c[ds.cf] = t.type === "checkbox" ? t.checked : t.value; const was = !!S.done[S.di]; chCheck(); save(); const d = DS[S.di]; document.getElementById("chv").innerHTML = chartSVG({ type: c.type, title: c.title, xt: c.xt, yt: c.yt, dl: c.dl, trend: c.trend, labels: d.L, values: d.V }); if (!was && S.done[S.di]) { const id = ds.cf; render(false); const n = document.querySelector(`[data-cf="${id}"]`); if (n) { n.focus(); if (n.setSelectionRange && n.type === "text") n.setSelectionRange(n.value.length, n.value.length); } } return true; }
   if (ds.zero !== undefined) { S.zero = t.checked; save(); document.getElementById("klbox").innerHTML = klamHTML(); return true; }
   return false; }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
@@ -473,7 +496,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return TASKS.test ? !!S.t.test : allDone(); return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -563,10 +586,8 @@ if (!VIEWS.start) VIEWS.start = function () {
   <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
-function allDone() { return STEPS.every(s => s.id === "start" || s.id === "vysledok" || (STEP_TASKS[s.id] || []).every(t => S.t[t])); }
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (TASKS.test && !S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
-  if (!TASKS.test && !allDone()) { const i = STEPS.findIndex(s => s.id !== "start" && s.id !== "vysledok" && !(STEP_TASKS[s.id] || []).every(t => S.t[t])); return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď splníš všetky úlohy.</p><button class="primary" data-go="${i}">Prejsť na nesplnenú zastávku: ${STEPS[i].title}</button>`; }
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
