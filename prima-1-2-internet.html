@@ -193,6 +193,11 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px 18px 10px}
 .memo h3{margin:0 0 6px;font-family:var(--font);font-size:18px;color:var(--line)}
 .memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+.figs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.figs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.figs{grid-template-columns:1fr}}
+.fig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.fig svg{width:100%;height:auto;display:block}
+.fig figcaption{font-size:14px;line-height:1.45;color:#3B4660;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
@@ -415,6 +420,118 @@ function nextBar0() {
 const head = () => `<p class="kicker">Zastávka ${S.cur} zo 7${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 
 /* ---------- Views ---------- */
+/* Ilustrácie k teórii – Prima 1.2 Internet */
+const FIGF = `font-family="Lexend,Segoe UI,Arial,sans-serif"`;
+const fig = (svg, cap) => `<figure class="fig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const figs = (...a) => `<div class="figs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FIGF}>${body}</svg>`;
+const MK = c => `<marker id="a${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`;
+const DEFS = `<defs>${MK("#566381")}${MK("#12805A")}${MK("#2F5BEA")}${MK("#B4570B")}${MK("#C0392B")}</defs>`;
+const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#a${c.slice(1)})"${both ? ` marker-start="url(#a${c.slice(1)})"` : ""}/>`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}">${s}</text>`;
+const pc = (x, y, sc = 1) => `<g transform="translate(${x} ${y}) scale(${sc})"><rect x="0" y="0" width="64" height="42" rx="4" fill="#16213A"/><rect x="4" y="4" width="56" height="34" rx="2" fill="#D5DFFB"/><rect x="26" y="42" width="12" height="8" fill="#566381"/><rect x="16" y="50" width="32" height="5" rx="2" fill="#566381"/></g>`;
+const server = (x, y) => `<g transform="translate(${x} ${y})"><rect x="0" y="0" width="50" height="66" rx="5" fill="#16213A"/>${[0, 1, 2].map(i => `<rect x="6" y="${7 + i * 19}" width="38" height="13" rx="2" fill="#34425F"/><circle cx="38" cy="${13.5 + i * 19}" r="2.5" fill="#3CCB8E"/>`).join("")}</g>`;
+const router = (x, y) => `<g transform="translate(${x} ${y})"><rect x="0" y="20" width="62" height="22" rx="5" fill="#16213A"/><line x1="12" y1="20" x2="6" y2="0" stroke="#16213A" stroke-width="3"/><line x1="50" y1="20" x2="56" y2="0" stroke="#16213A" stroke-width="3"/>${[0, 1, 2].map(i => `<circle cx="${14 + i * 9}" cy="31" r="2.5" fill="#3CCB8E"/>`).join("")}</g>`;
+
+const FIG = {
+  /* ARPANET 1969 – štyri uzly */
+  arpa: fig(SV(440, 250, `
+    <rect x="8" y="8" width="424" height="234" rx="12" fill="#F5F7FA"/>
+    <path d="M40 80 Q60 40 120 50 Q170 30 230 44 Q300 30 360 50 Q410 60 405 110 Q420 160 380 190 Q330 220 250 210 Q180 225 120 205 Q60 200 45 160 Q25 120 40 80z" fill="#E7EEDB" stroke="#B9C9A5"/>
+    ${T(220, 32, "USA, rok 1969", { a: "middle", b: 1, fs: 14 })}
+    <g stroke="#2F5BEA" stroke-width="3" fill="none"><path d="M110 150 L150 95"/><path d="M110 150 L105 185"/><path d="M150 95 L105 185"/><path d="M150 95 L320 110"/></g>
+    ${[[150, 95, "SRI", "Stanford"], [110, 150, "UCLA", "Los Angeles"], [105, 185, "UCSB", "Santa Barbara"], [320, 110, "Utah", "Salt Lake City"]].map(([x, y, n, m]) => `<circle cx="${x}" cy="${y}" r="13" fill="#2F5BEA" stroke="#fff" stroke-width="3"/><text x="${x}" y="${y + 4}" text-anchor="middle" font-size="10" fill="#fff">💻</text>${T(x + (x > 200 ? 0 : 20), y + (x > 200 ? 30 : 4), n, { b: 1, fs: 12.5, a: x > 200 ? "middle" : "start" })}${T(x + (x > 200 ? 0 : 20), y + (x > 200 ? 44 : 18), m, { fs: 10.5, c: "#566381", a: x > 200 ? "middle" : "start" })}`).join("")}
+    ${T(300, 228, "ARPANET: prvé 4 prepojené počítače", { a: "middle", fs: 12, c: "#2F5BEA", b: 1 })}`, "Sieť ARPANET v roku 1969"),
+    "Internet začal ako malá sieť <b>ARPANET</b>: štyri počítače na univerzitách v USA. Dnes sú prepojené miliardy zariadení na celom svete."),
+  /* sieť sietí */
+  siet: fig(SV(440, 250, DEFS + `
+    ${[[70, 70, "🏫 škola"], [70, 190, "🏠 domácnosť"], [370, 70, "🏢 firma"], [370, 190, "📱 mobilná sieť"]].map(([x, y, n]) => `<ellipse cx="${x}" cy="${y}" rx="62" ry="40" fill="#D5DFFB" stroke="#2F5BEA" stroke-width="1.5"/>${[-22, 0, 22].map(d => `<circle cx="${x + d}" cy="${y + 6}" r="7" fill="#2F5BEA"/>`).join("")}${T(x, y - 14, n, { a: "middle", b: 1, fs: 12 })}`).join("")}
+    <circle cx="220" cy="130" r="44" fill="#FDF1D3" stroke="#F0B429" stroke-width="2"/>${T(220, 126, "🌍", { a: "middle", fs: 26 })}${T(220, 150, "internet", { a: "middle", b: 1, fs: 12.5 })}
+    ${[[128, 86, 180, 112], [128, 176, 180, 150], [312, 86, 260, 112], [312, 176, 260, 150]].map(([a, b, c, d]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#566381" stroke-width="3"/>`).join("")}
+    ${T(220, 242, "Internet = sieť, ktorá spája iné siete", { a: "middle", fs: 12.5, c: "#566381" })}`, "Internet spája siete"),
+    "<b>Internet</b> je sieť sietí: spája siete škôl, domácností, firiem aj mobilných operátorov po celom svete."),
+  /* časová os – po vyriešení */
+  os: fig(SV(440, 170, `
+    <line x1="24" y1="80" x2="420" y2="80" stroke="#C9D1DF" stroke-width="6" stroke-linecap="round"/>
+    ${[[1969, "ARPANET", "4 počítače"], [1971, "prvý e-mail", "znak @"], [1983, "TCP/IP", "narodeniny"], [1991, "web (WWW)", "Berners-Lee"], [1998, "Google", "vyhľadávač"], [2005, "YouTube", "videá"]].map(([r, a, b], i) => { const x = 40 + i * 72, up = i % 2 === 0; return `<circle cx="${x}" cy="80" r="9" fill="#2F5BEA" stroke="#fff" stroke-width="3"/>${T(x, up ? 56 : 112, r, { a: "middle", b: 1, fs: 14, c: "#2F5BEA" })}${T(x, up ? 26 : 134, a, { a: "middle", b: 1, fs: 11.5 })}${T(x, up ? 40 : 148, b, { a: "middle", fs: 10.5, c: "#566381" })}`; }).join("")}`, "Časová os internetu"),
+    "Časová os: internet je o viac ako 20 rokov starší ako web."),
+  /* cesty a vozidlá */
+  cesty: fig(SV(440, 230, `
+    <rect x="8" y="8" width="424" height="214" rx="12" fill="#E7EEDB"/>
+    <path d="M8 120 H432" stroke="#5C6577" stroke-width="44"/><path d="M8 120 H432" stroke="#fff" stroke-width="2.5" stroke-dasharray="16 12"/>
+    <path d="M220 8 V222" stroke="#5C6577" stroke-width="34"/><path d="M220 8 V98 M220 142 V222" stroke="#fff" stroke-width="2.5" stroke-dasharray="14 10"/>
+    ${[[60, 108, "🚗", "web (WWW)"], [140, 134, "🚚", "prenos súborov"], [300, 108, "🚌", "videohovor"], [380, 134, "🛵", "e-mail"], [220, 52, "🚑", "chat"], [220, 196, "🏍️", "online hra"]].map(([x, y, e, n]) => `<text x="${x}" y="${y + 8}" text-anchor="middle" font-size="24">${e}</text><rect x="${x - n.length * 3.6 - 6}" y="${y - (y < 120 ? 34 : -14)}" width="${n.length * 7.2 + 12}" height="20" rx="10" fill="#fff" stroke="#2F5BEA"/>${T(x, y - (y < 120 ? 20 : -28), n, { a: "middle", fs: 11.5, b: 1, c: "#2F5BEA" })}`).join("")}
+    <rect x="16" y="16" width="148" height="26" rx="13" fill="#16213A"/>${T(90, 33, "cesty = internet", { a: "middle", b: 1, fs: 12, c: "#fff" })}
+    <rect x="276" y="16" width="148" height="26" rx="13" fill="#2F5BEA"/>${T(350, 33, "vozidlá = služby", { a: "middle", b: 1, fs: 12, c: "#fff" })}`, "Cesty sú internet, vozidlá sú služby"),
+    "Internet sú <b>cesty</b>. Web, e-mail, videohovory či prenos súborov sú <b>vozidlá</b>, ktoré po nich jazdia."),
+  /* internet vs web */
+  vsweb: fig(SV(440, 230, `
+    <rect x="10" y="10" width="420" height="210" rx="16" fill="#FDF1D3" stroke="#F0B429" stroke-width="2"/>${T(26, 36, "🌍 INTERNET (sieť)", { b: 1, fs: 14 })}${T(26, 54, "služby, ktoré po ňom fungujú:", { fs: 11.5, c: "#566381" })}
+    <rect x="26" y="68" width="170" height="136" rx="12" fill="#2F5BEA"/>${T(111, 98, "🌐 WEB (WWW)", { a: "middle", b: 1, fs: 14, c: "#fff" })}${T(111, 122, "webové stránky", { a: "middle", fs: 11.5, c: "#fff" })}${T(111, 140, "v prehliadači", { a: "middle", fs: 11.5, c: "#fff" })}${T(111, 170, "Wikipédia, EduPage,", { a: "middle", fs: 11, c: "#D5DFFB" })}${T(111, 186, "YouTube …", { a: "middle", fs: 11, c: "#D5DFFB" })}
+    ${[["✉️ e-mail", 214, 68], ["📹 videohovor", 322, 68], ["📁 FTP súbory", 214, 116], ["💬 chat", 322, 116], ["🎮 online hry", 214, 164], ["🎵 streamovanie", 322, 164]].map(([n, x, y]) => `<rect x="${x}" y="${y}" width="100" height="38" rx="10" fill="#fff" stroke="#D6DCE6"/>${T(x + 50, y + 24, n, { a: "middle", fs: 11.5, b: 1 })}`).join("")}`, "Web je jedna zo služieb internetu"),
+    "<b>Web</b> je iba jedna zo služieb internetu. E-mail alebo videohovor fungujú aj bez webu."),
+  /* ISP ako vodáreň */
+  voda: fig(SV(440, 210, DEFS + `
+    ${T(16, 26, "💧 Voda", { b: 1, fs: 13 })}
+    <rect x="16" y="38" width="90" height="56" rx="8" fill="#D5DFFB" stroke="#2F5BEA"/>${T(61, 62, "🏭", { a: "middle", fs: 20 })}${T(61, 84, "vodáreň", { a: "middle", fs: 11.5, b: 1 })}
+    <path d="M106 66 H300" stroke="#7FB3F0" stroke-width="10"/>${T(203, 58, "potrubie", { a: "middle", fs: 11, c: "#566381" })}
+    <rect x="300" y="38" width="124" height="56" rx="8" fill="#F5F7FA" stroke="#D6DCE6"/>${T(362, 62, "🚰", { a: "middle", fs: 20 })}${T(362, 84, "kohútik doma", { a: "middle", fs: 11.5, b: 1 })}
+    ${T(16, 128, "🌐 Internet", { b: 1, fs: 13 })}
+    <rect x="16" y="140" width="90" height="56" rx="8" fill="#FDF1D3" stroke="#F0B429"/>${T(61, 164, "🏢", { a: "middle", fs: 20 })}${T(61, 186, "ISP", { a: "middle", fs: 11.5, b: 1 })}
+    <path d="M106 168 H300" stroke="#F0B429" stroke-width="6" stroke-dasharray="2 0"/>${T(203, 160, "kábel, optika, vysielač", { a: "middle", fs: 11, c: "#566381" })}
+    <rect x="300" y="140" width="124" height="56" rx="8" fill="#F5F7FA" stroke="#D6DCE6"/>${T(362, 164, "🏠", { a: "middle", fs: 20 })}${T(362, 186, "pripojenie doma", { a: "middle", fs: 11.5, b: 1 })}
+    ${T(203, 112, "💶 rodičia platia každý mesiac", { a: "middle", fs: 11.5, c: "#B4570B", b: 1 })}`, "ISP je ako vodáreň"),
+    "<b>ISP</b> dodáva internet podobne ako vodáreň vodu. Za pripojenie sa platí každý mesiac."),
+  /* spôsoby pripojenia */
+  pripoj: fig(SV(440, 210, `
+    ${[["🔌", "kábel / optika", "do domu vedie kábel", "#2F5BEA"], ["📶", "Wi-Fi", "router posiela signál vzduchom", "#12805A"], ["📱", "mobilné dáta", "signál z vysielača (4G, 5G)", "#B4570B"], ["🛰️", "satelit", "aj na samote v horách", "#7A4FD0"]].map(([e, n, d, c], i) => { const x = 14 + (i % 2) * 212, y = 12 + Math.floor(i / 2) * 98; return `<rect x="${x}" y="${y}" width="200" height="88" rx="12" fill="#fff" stroke="${c}" stroke-width="1.5"/><text x="${x + 32}" y="${y + 54}" text-anchor="middle" font-size="30">${e}</text>${T(x + 62, y + 38, n, { b: 1, fs: 13.5, c })}${T(x + 62, y + 58, d.length > 22 ? d.slice(0, d.lastIndexOf(" ", 22)) : d, { fs: 11, c: "#566381" })}${d.length > 22 ? T(x + 62, y + 73, d.slice(d.lastIndexOf(" ", 22) + 1), { fs: 11, c: "#566381" }) : ""}`; }).join("")}`, "Spôsoby pripojenia na internet"),
+    "Na internet sa dá pripojiť <b>káblom</b>, cez <b>Wi-Fi</b>, <b>mobilnými dátami</b> alebo cez <b>satelit</b>."),
+  /* cesta požiadavky – po vyriešení */
+  cesta: fig(SV(440, 150, DEFS + `
+    ${pc(8, 40, 0.8)}${T(34, 108, "počítač", { a: "middle", fs: 11, b: 1 })}
+    ${router(84, 38)}${T(115, 108, "router", { a: "middle", fs: 11, b: 1 })}
+    <text x="180" y="78" text-anchor="middle" font-size="30">🏢</text>${T(180, 108, "ISP", { a: "middle", fs: 11, b: 1 })}
+    <text x="262" y="80" text-anchor="middle" font-size="34">🌍</text>${T(262, 108, "internet", { a: "middle", fs: 11, b: 1 })}
+    ${server(356, 26)}${T(381, 108, "server", { a: "middle", fs: 11, b: 1 })}
+    ${ar(62, 62, 80, 62, "#566381", 2)}${ar(150, 62, 162, 62, "#566381", 2)}${ar(200, 62, 238, 62, "#566381", 2)}${ar(288, 62, 350, 62, "#566381", 2)}
+    ${T(220, 140, "požiadavka ide tam, stránka sa vráti späť tou istou cestou", { a: "middle", fs: 11, c: "#566381" })}`, "Cesta požiadavky na stránku"),
+    "Cesta tvojej požiadavky: počítač → router → ISP → internet → server so stránkou."),
+  /* URL ako adresa na balíku */
+  url: fig(SV(440, 260, `
+    <rect x="10" y="12" width="420" height="40" rx="20" fill="#F5F7FA" stroke="#D6DCE6"/>${T(28, 38, "🔒", { fs: 14 })}
+    <text x="50" y="38" font-size="15" font-family="IBM Plex Mono,Consolas,monospace" font-weight="700"><tspan fill="#B4570B">https://</tspan><tspan fill="#2F5BEA">www.gymrs.sk</tspan><tspan fill="#12805A">/kontakt/telefon.html</tspan></text>
+    <path d="M50 58v8h70v-8" stroke="#B4570B" fill="none" stroke-width="2"/><path d="M128 58v8h106v-8" stroke="#2F5BEA" fill="none" stroke-width="2"/><path d="M240 58v8h186v-8" stroke="#12805A" fill="none" stroke-width="2"/>
+    ${[[16, "#B4570B", "#FDF1D3", "🚚", "PROTOKOL", "ako doručiť", "kuriér"], [156, "#2F5BEA", "#D5DFFB", "🏠", "DOMÉNA", "ktorý server", "dom"], [296, "#12805A", "#DDF3EA", "🚪", "CESTA", "priečinky a súbor", "izba v dome"]].map(([x, c, bg, e, n, d, an], i) => `<line x1="${[85, 181, 333][i]}" y1="66" x2="${x + 64}" y2="92" stroke="${c}" stroke-width="1.5" stroke-dasharray="3 3"/><rect x="${x}" y="92" width="128" height="156" rx="12" fill="${bg}" stroke="${c}" stroke-width="1.5"/><text x="${x + 64}" y="138" text-anchor="middle" font-size="32">${e}</text>${T(x + 64, 166, n, { a: "middle", b: 1, fs: 13, c })}${T(x + 64, 184, d, { a: "middle", fs: 11.5 })}${T(x + 64, 222, "na balíku:", { a: "middle", fs: 10.5, c: "#566381" })}${T(x + 64, 238, an, { a: "middle", fs: 12, b: 1 })}`).join("")}`, "Časti adresy URL"),
+    "URL je ako adresa na balíku: <b>protokol</b> = ako doručiť, <b>doména</b> = do ktorého domu (servera), <b>cesta</b> = do ktorej izby (súboru)."),
+  /* pohľadnica vs obálka */
+  obalka: fig(SV(440, 220, `
+    <rect x="12" y="12" width="200" height="196" rx="12" fill="#FBE3E0" stroke="#C0392B" stroke-width="1.5"/>${T(112, 36, "HTTP = pohľadnica", { a: "middle", b: 1, fs: 13, c: "#C0392B" })}
+    <rect x="30" y="50" width="164" height="104" rx="4" fill="#fff" stroke="#D6DCE6"/><line x1="112" y1="58" x2="112" y2="146" stroke="#D6DCE6"/>${T(38, 76, "meno:", { fs: 11 })}${T(38, 94, "jana.prima", { fs: 11, b: 1 })}${T(38, 116, "heslo:", { fs: 11 })}${T(38, 134, "mackaMica7", { fs: 11, b: 1, c: "#C0392B" })}<rect x="160" y="58" width="26" height="30" fill="#F0B429"/>
+    ${T(112, 178, "🕵️ ktokoľvek po ceste", { a: "middle", fs: 11.5 })}${T(112, 196, "si ju prečíta", { a: "middle", fs: 11.5, b: 1, c: "#C0392B" })}
+    <rect x="228" y="12" width="200" height="196" rx="12" fill="#DDF3EA" stroke="#12805A" stroke-width="1.5"/>${T(328, 36, "HTTPS = obálka", { a: "middle", b: 1, fs: 13, c: "#12805A" })}
+    <rect x="248" y="56" width="160" height="96" rx="4" fill="#fff" stroke="#D6DCE6"/><path d="M248 56 L328 108 L408 56" fill="none" stroke="#B9C2D2" stroke-width="2"/><circle cx="328" cy="108" r="13" fill="#C0392B"/>${T(328, 113, "🔒", { a: "middle", fs: 12 })}
+    ${T(328, 178, "zašifrované: x8#Qp!2v…", { a: "middle", fs: 11.5 })}${T(328, 196, "prečíta iba server", { a: "middle", fs: 11.5, b: 1, c: "#12805A" })}`, "HTTP ako pohľadnica, HTTPS ako zalepená obálka"),
+    "Pri <b>HTTP</b> ide všetko ako pohľadnica. Pri <b>HTTPS</b> je to zalepená obálka, ktorú otvorí iba server."),
+  /* zámok v prehliadači */
+  zamok: fig(SV(440, 220, `
+    <rect x="10" y="10" width="420" height="200" rx="10" fill="#fff" stroke="#D6DCE6"/><rect x="10" y="10" width="420" height="34" rx="10" fill="#E9EDF3"/><rect x="10" y="34" width="420" height="10" fill="#E9EDF3"/>
+    <rect x="22" y="16" width="130" height="28" rx="6" fill="#fff"/>${T(32, 35, "EduPage – prihlásenie", { fs: 10.5 })}
+    <rect x="22" y="52" width="396" height="30" rx="15" fill="#F5F7FA" stroke="#D6DCE6"/>${T(40, 72, "🔒", { fs: 13 })}${T(62, 72, "https://", { fs: 12.5, c: "#566381" })}${T(118, 72, "mojaskola.edupage.org/login", { fs: 12.5, b: 1 })}
+    <circle cx="40" cy="67" r="17" fill="none" stroke="#12805A" stroke-width="2.5"/>
+    ${ar(70, 120, 46, 88, "#12805A", 2)}${T(76, 126, "zámok = HTTPS, spojenie je šifrované", { fs: 12, b: 1, c: "#12805A" })}${T(76, 144, "heslo zadávaj iba tu", { fs: 11.5, c: "#566381" })}
+    <rect x="22" y="160" width="396" height="30" rx="15" fill="#FBE3E0" stroke="#C0392B"/>${T(40, 180, "⚠️", { fs: 12 })}${T(62, 180, "Nezabezpečené   http://", { fs: 12.5, c: "#C0392B", b: 1 })}${T(250, 180, "heslo sem nezadávaj", { fs: 11.5, c: "#C0392B" })}`, "Zámok v adresnom riadku prehliadača"),
+    "Zámok 🔒 v adresnom riadku znamená <b>HTTPS</b>. Pri nápise <b>Nezabezpečené</b> heslo nezadávaj."),
+  /* upload / download */
+  ftp: fig(SV(440, 170, DEFS + `<g transform="translate(0 -46)">
+    ${pc(26, 70, 1.3)}${T(68, 160, "💻 tvoj počítač", { a: "middle", b: 1, fs: 12.5 })}
+    ${server(352, 60)}${T(377, 160, "🖥️ server", { a: "middle", b: 1, fs: 12.5 })}
+    ${ar(130, 86, 340, 86, "#B4570B", 4)}${T(235, 74, "⬆️ UPLOAD = nahratie", { a: "middle", b: 1, fs: 13, c: "#B4570B" })}
+    ${ar(340, 126, 130, 126, "#2F5BEA", 4)}${T(235, 150, "⬇️ DOWNLOAD = stiahnutie", { a: "middle", b: 1, fs: 13, c: "#2F5BEA" })}
+    <rect x="200" y="96" width="70" height="20" rx="4" fill="#fff" stroke="#D6DCE6"/>${T(235, 110, "📄 súbor", { a: "middle", fs: 11 })}
+    ${T(220, 196, "Tvorca webu nahrá stránku na server → celý svet si ju môže otvoriť.", { a: "middle", fs: 11.5, c: "#566381" })}</g>`, "Upload a download"),
+    "<b>FTP</b> prenáša súbory: <b>upload</b> = z počítača na server, <b>download</b> = zo servera do počítača.")
+};
+
 const VIEWS = {
   start() {
     return `<p class="kicker">Informatika, Prima</p>
@@ -437,6 +554,7 @@ const VIEWS = {
   historia() {
     return head() + `<h2>Ako vznikol internet</h2>
     <p>Internet nevznikol naraz. Viac ako 50 rokov ho postupne budovali vedci, univerzity aj firmy. Si detektív: prečítaj si stopy a zoraď udalosti od najstaršej po najnovšiu.</p>
+    ${figs(FIG.arpa, FIG.siet)}
     <div class="box"><p><b>🔎 Stopy</b></p><ul class="clues">
       <li>Všetko začalo v roku 1969, keď v USA prepojili prvé štyri počítače. Sieť dostala meno ARPANET.</li>
       <li>Prvý e-mail odišiel, keď mal ARPANET iba 2 roky.</li>
@@ -446,13 +564,14 @@ const VIEWS = {
       <li>YouTube je o 7 rokov mladší ako Google.</li>
     </ul></div>
     <div class="task"><div class="ins">Klikaj na kartičky v poradí od najstaršej. Kartičku vrátiš kliknutím na ňu v zozname.</div>${taskHTML("hist")}</div>
-    ${S.t.hist ? `<div class="box blue"><p><b>Vedel si?</b> Internet je o viac ako 20 rokov starší ako web. Prvá webová stránka na svete vznikla v laboratóriu CERN vo Švajčiarsku a obsahovala iba text, žiadne obrázky.</p></div>` : ""}
+    ${S.t.hist ? `<div class="box blue"><p><b>Vedel si?</b> Internet je o viac ako 20 rokov starší ako web. Prvá webová stránka na svete vznikla v laboratóriu CERN vo Švajčiarsku a obsahovala iba text, žiadne obrázky.</p></div>${figs(FIG.os)}` : ""}
     ` + nextBar();
   },
 
   sluzby() {
     return head() + `<h2>Internet nie je to isté ako web</h2>
     <p>Predstav si internet ako sieť ciest, ktorá spája mestá na celom svete. Po cestách jazdia rôzne vozidlá: web (WWW), e-mail, videohovory alebo prenos súborov. <b>Cesty sú internet, vozidlá sú jeho služby.</b></p>
+    ${figs(FIG.cesty, FIG.vsweb)}
     <div class="task"><div class="ins">Rozhodni o každom tvrdení, či je pravdivé.</div>${taskHTML("tf")}</div>` + nextBar();
   },
 
@@ -460,9 +579,10 @@ const VIEWS = {
     const g = S.guess !== null ? `<div class="box ${S.guess === GUESS_OK ? "blue" : ""}"><p>Na začiatku si tipoval: <b>„${GUESSES[S.guess]}“</b>. ${S.guess === GUESS_OK ? "Trafil si! Presne o tejto firme je táto zastávka." : "Nie celkom. Prečítaj si, ako to naozaj funguje."}</p></div>` : "";
     return head() + `<h2>Kto ti dodáva internet?</h2>
     <p>Tvoj počítač sa na internet nepripojí sám. Potrebuje firmu, ktorá ti internet dodáva, podobne ako vodáreň dodáva vodu do vodovodu. Takej firme hovoríme <b>ISP</b> (Internet Service Provider), po slovensky <b>poskytovateľ internetu</b>. Rodičia jej každý mesiac platia za pripojenie.</p>
+    ${figs(FIG.voda, FIG.pripoj)}
     ${g}
     <h3>Úloha 1: cesta k stránke</h3>
-    <div class="task"><div class="ins">Poskladaj, cez čo prejde tvoja požiadavka, keď otvoríš webovú stránku. Začni pri sebe.</div>${taskHTML("cesta")}</div>
+    <div class="task"><div class="ins">Poskladaj, cez čo prejde tvoja požiadavka, keď otvoríš webovú stránku. Začni pri sebe.</div>${taskHTML("cesta")}</div>${S.t.cesta ? figs(FIG.cesta) : ""}
     <h3>Úloha 2: je to ISP?</h3>
     <div class="task"><div class="ins">Klikni na kartičku a potom na správny kôš. Na počítači ich môžeš aj ťahať myšou.</div>${taskHTML("ispsort")}</div>` + nextBar();
   },
@@ -475,6 +595,7 @@ const VIEWS = {
       <div class="part"><b class="p2">Doména</b><span>Názov servera, teda „dom“, kde stránka býva</span></div>
       <div class="part"><b class="p3">Cesta</b><span>Priečinky a súbor na serveri, teda „izba“</span></div>
     </div>
+    ${figs(FIG.url)}
     <h3>Úloha 1: rozober adresy</h3>
     <div class="task"><div class="ins">Tieto dve adresy sme rozstrihali na kúsky:</div>
       <div class="urlbar">🔒 ${S.t.urlsort ? '<span class="p1">https://</span><span class="p2">sk.wikipedia.org</span><span class="p3">/wiki/Internet</span>' : "https://sk.wikipedia.org/wiki/Internet"}</div>
@@ -493,6 +614,7 @@ const VIEWS = {
     }
     return head() + `<h2>HTTP a HTTPS: pravidlá rozhovoru</h2>
     <p>Keď prehliadač pýta od servera stránku, obaja dodržiavajú rovnaké pravidlá. Tie sa volajú <b>HTTP</b> (HyperText Transfer Protocol). Pri <b>HTTPS</b> pribudlo písmeno S ako secure, teda zabezpečený: všetko, čo sa posiela, je zašifrované.</p>
+    ${figs(FIG.obalka, FIG.zamok)}
     <h3>Pokus: kto vidí tvoje heslo?</h3>
     <div class="task">
       <div class="ins">Vymysli si heslo (<b>nie tvoje skutočné!</b>) a pošli ho raz cez http:// a raz cez https://. Sleduj, čo vidí zvedavec, ktorý tajne sleduje dáta v sieti.</div>
@@ -524,6 +646,7 @@ const VIEWS = {
     return head() + `<h2>FTP: prenos súborov</h2>
     <p><b>FTP</b> (File Transfer Protocol) slúži na prenos súborov medzi tvojím počítačom a serverom. Používajú ho napríklad tvorcovia webov, keď svoju stránku nahrávajú na server, aby ju videl celý svet.</p>
     <div class="box"><p><b>⬆️ Upload (nahratie):</b> z tvojho počítača na server.<br><b>⬇️ Download (stiahnutie):</b> zo servera do tvojho počítača.</p></div>
+    ${figs(FIG.ftp)}
     <h3>Simulácia: si správca školského webu</h3>
     <div class="task">
       <div class="ins">Klikni na súbor a potom na tlačidlo uprostred.</div>

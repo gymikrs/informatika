@@ -196,6 +196,11 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .key{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:15px}
 .key kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:1px 7px;font-size:13.5px;margin-right:6px}
 
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3B4660;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
@@ -247,7 +252,7 @@ const PART = {
   scroll: ["Posuvník", "Ukazuje, kde na stránke si. Posúvať sa dá aj kolieskom myši."]
 };
 const PKEYS = Object.keys(PART);
-const FIND = [["newtab", "Kde otvoríš novú kartu?"], ["back", "Ktorým tlačidlom sa vrátiš na predchádzajúcu stránku?"], ["star", "Kde pridáš stránku do záložiek?"], ["lock", "Kde vidíš, že je stránka zabezpečená?"]];
+const FIND = [["newtab", "Kde otvoríš novú kartu?"], ["back", "Ktorým tlačidlom sa vrátiš na predchádzajúcu stránku?"], ["star", "Kde pridáš stránku do záložiek?"], ["lock", "Kde vidíš, že je stránka zabezpečená?"], ["menu", "Kde nájdeš ponuku s nastaveniami a históriou?"], ["reload", "Ktorým tlačidlom stránku znova načítaš?"]];
 
 function EXTRA_STATE() { return { exp: null, seen: [], find: { i: 0, res: [], last: null }, br: freshBr() }; }
 function freshBr() { return { tabs: [{ h: ["www.mojaskola.sk"], i: 0 }], act: 0, bm: ["sk.wikipedia.org"], hist: [], showH: false, msg: "", g: {} }; }
@@ -255,47 +260,62 @@ function freshBr() { return { tabs: [{ h: ["www.mojaskola.sk"], i: 0 }], act: 0,
 const TASKS = {
   jeto: { id: "jeto", type: "sort",
     buckets: [{ id: "y", label: "🌐 Je to prehliadač", sub: "program na otváranie stránok" }, { id: "n", label: "🚫 Nie je to prehliadač", sub: "stránka, služba alebo iný program" }],
-    items: [{ id: "1", t: "Google Chrome", b: "y" }, { id: "2", t: "Mozilla Firefox", b: "y" }, { id: "3", t: "Microsoft Edge", b: "y" }, { id: "6", t: "Google", b: "n" }, { id: "7", t: "YouTube", b: "n" }, { id: "9", t: "Windows", b: "n" }],
-    after: "Google je vyhľadávač, YouTube je webová stránka a Windows je operačný systém." },
+    items: [{ id: "1", t: "Google Chrome", b: "y" }, { id: "2", t: "Mozilla Firefox", b: "y" }, { id: "3", t: "Microsoft Edge", b: "y" }, { id: "4", t: "Safari", b: "y" }, { id: "5", t: "Opera", b: "y" },
+      { id: "6", t: "Google", b: "n" }, { id: "7", t: "YouTube", b: "n" }, { id: "8", t: "Wikipédia", b: "n" }, { id: "9", t: "Windows", b: "n" }, { id: "10", t: "Microsoft Word", b: "n" }],
+    after: "Google je vyhľadávač, YouTube a Wikipédia sú webové stránky, Windows je operačný systém a Word je textový editor." },
   find: { id: "find", type: "custom", max: FIND.length },
   tf: { id: "tf", type: "mc", keep: true, qs: [
     { id: "1", q: "Prehliadač je program, ktorý je nainštalovaný v počítači alebo v mobile.", opts: ["Pravda", "Nepravda"], a: 0 },
     { id: "2", q: "Google je prehliadač.", opts: ["Pravda", "Nepravda"], a: 1, why: "Google je vyhľadávač, teda stránka. Prehliadač od firmy Google sa volá Chrome." },
-    { id: "4", q: "Bez prehliadača si webovú stránku neotvoríš.", opts: ["Pravda", "Nepravda"], a: 0 }
+    { id: "3", q: "Tú istú stránku otvoríš v Chrome aj vo Firefoxe.", opts: ["Pravda", "Nepravda"], a: 0 },
+    { id: "4", q: "Bez prehliadača si webovú stránku neotvoríš.", opts: ["Pravda", "Nepravda"], a: 0 },
+    { id: "5", q: "YouTube je prehliadač.", opts: ["Pravda", "Nepravda"], a: 1 },
+    { id: "6", q: "Aj v mobile máš prehliadač, napríklad Chrome alebo Safari.", opts: ["Pravda", "Nepravda"], a: 0 }
   ]},
   skratky: { id: "skratky", type: "mc", keep: true, qs: [
     { id: "1", q: "Čo urobí <b>Ctrl + T</b>?", opts: ["Otvorí novú kartu", "Zavrie kartu", "Pridá záložku", "Ukáže históriu", "Obnoví stránku"], a: 0 },
     { id: "2", q: "Čo urobí <b>Ctrl + W</b>?", opts: ["Otvorí novú kartu", "Zavrie kartu", "Pridá záložku", "Ukáže históriu", "Obnoví stránku"], a: 1 },
-    { id: "3", q: "Čo urobí <b>Ctrl + D</b>?", opts: ["Otvorí novú kartu", "Zavrie kartu", "Pridá záložku", "Ukáže históriu", "Obnoví stránku"], a: 2 }
+    { id: "3", q: "Čo urobí <b>Ctrl + D</b>?", opts: ["Otvorí novú kartu", "Zavrie kartu", "Pridá záložku", "Ukáže históriu", "Obnoví stránku"], a: 2 },
+    { id: "4", q: "Čo urobí <b>Ctrl + H</b>?", opts: ["Otvorí novú kartu", "Zavrie kartu", "Pridá záložku", "Ukáže históriu", "Obnoví stránku"], a: 3 },
+    { id: "5", q: "Čo urobí kláves <b>F5</b>?", opts: ["Otvorí novú kartu", "Zavrie kartu", "Pridá záložku", "Ukáže históriu", "Obnoví stránku"], a: 4 }
   ]},
   adrsort: { id: "adrsort", type: "sort",
     buckets: [{ id: "a", label: "🏠 Adresa stránky", sub: "prehliadač otvorí priamo stránku" }, { id: "h", label: "🔎 Hľadanie", sub: "prehliadač pošle slová vyhľadávaču" }],
-    items: [{ id: "1", t: "www.zvieratka.sk", b: "a" }, { id: "2", t: "sk.wikipedia.org", b: "a" }, { id: "3", t: "www.mojaskola.sk", b: "a" }, { id: "5", t: "ako sa volá mláďa koňa", b: "h" }, { id: "6", t: "počasie zajtra", b: "h" }, { id: "7", t: "recept na palacinky", b: "h" }],
+    items: [{ id: "1", t: "www.zvieratka.sk", b: "a" }, { id: "2", t: "sk.wikipedia.org", b: "a" }, { id: "3", t: "www.mojaskola.sk", b: "a" }, { id: "4", t: "youtube.com", b: "a" },
+      { id: "5", t: "ako sa volá mláďa koňa", b: "h" }, { id: "6", t: "počasie zajtra", b: "h" }, { id: "7", t: "recept na palacinky", b: "h" }, { id: "8", t: "najvyšší vrch Slovenska", b: "h" }],
     after: "Adresa nemá medzery a má bodky, napríklad www.nieco.sk. Slová s medzerami prehliadač berie ako hľadanie." },
   det: { id: "det", type: "input", qs: [
     { id: "1", q: "Čo je dnes v škole na obed? (stránka Moja škola)", ok: v => norm(v).includes("rizot"), show: "rizoto", ph: "?" },
     { id: "2", q: "Ako sa volá mláďa kravy? (stránka Zvieratká)", ok: v => /teliat|tela/.test(norm(v)), show: "teliatko", ph: "?" },
-    { id: "4", q: "Aká je dnes teplota? Stránku nepoznáš, tak napíš do adresného riadka slovo <b>počasie</b>.", ok: v => parseNum(v) === 18, show: "18 °C", ph: "?", unit: "°C" }
+    { id: "3", q: "Koľko minút máš dnes na hry? (stránka Hry pre deti)", ok: v => parseNum(v) === 10, show: "10", ph: "?", unit: "minút" },
+    { id: "4", q: "Aká je dnes teplota? Stránku nepoznáš, tak napíš do adresného riadka slovo <b>počasie</b>.", ok: v => parseNum(v) === 18, show: "18 °C", ph: "?", unit: "°C" },
+    { id: "5", q: "V ktorom roku vznikla Wikipédia? (je v záložkách)", ok: v => parseNum(v) === 2001, show: "2001", ph: "?" }
   ]},
   bezsort: { id: "bezsort", type: "sort",
     buckets: [{ id: "ok", label: "👍 Bezpečné", sub: "takto je to v poriadku" }, { id: "no", label: "⚠️ Nebezpečné", sub: "toto radšej nerob" }],
-    items: [{ id: "1", t: "Heslo zadám iba na stránke so zámkom 🔒", b: "ok" }, { id: "2", t: "Na školskom počítači sa na konci hodiny odhlásim", b: "ok" }, { id: "4", t: "Keď si nie som istý, spýtam sa učiteľa alebo rodičov", b: "ok" },
-      { id: "5", t: "Kliknem na „Vyhral si mobil!“", b: "no" }, { id: "6", t: "Stiahnem hru z neznámej stránky", b: "no" }, { id: "7", t: "Na cudzom počítači nechám zapamätané heslo", b: "no" }] },
+    items: [{ id: "1", t: "Heslo zadám iba na stránke so zámkom 🔒", b: "ok" }, { id: "2", t: "Na školskom počítači sa na konci hodiny odhlásim", b: "ok" }, { id: "3", t: "Vyskakovacie okno s výhrou zavriem", b: "ok" }, { id: "4", t: "Keď si nie som istý, spýtam sa učiteľa alebo rodičov", b: "ok" },
+      { id: "5", t: "Kliknem na „Vyhral si mobil!“", b: "no" }, { id: "6", t: "Stiahnem hru z neznámej stránky", b: "no" }, { id: "7", t: "Na cudzom počítači nechám zapamätané heslo", b: "no" }, { id: "8", t: "Do formulára na stránke bez zámku napíšem svoju adresu", b: "no" }] },
   adr: { id: "adr", type: "custom", max: 2 },
   adrq: { id: "adrq", type: "mc", qs: [
+    { id: "1", q: "Napísal si do adresného riadka www.zvieratka.sk. Čo sa stalo?", opts: ["Prehliadač otvoril priamo túto stránku", "Prehliadač začal hľadať slovo zvieratka", "Nič, adresa sa musí písať inam", "Otvorila sa náhodná stránka"], a: 0 },
     { id: "2", q: "Napísal si slová „ako sa volá mláďa koňa“. Čo urobil prehliadač?", opts: ["Poslal ich do vyhľadávača a ukázal výsledky", "Otvoril stránku s takou adresou", "Ukázal chybu", "Zatvoril sa"], a: 0 },
     { id: "3", q: "Napísal si adresu s preklepom: www.zvieratak.sk. Čo sa stane?", opts: ["Stránka sa nenájde, alebo sa otvorí iná, preto adresu kontroluj", "Prehliadač chybu vždy sám opraví", "Otvorí sa správna stránka", "Počítač sa reštartuje"], a: 0 }
   ]},
   kar: { id: "kar", type: "custom", max: 4 },
   bezq: { id: "bezq", type: "mc", qs: [
     { id: "1", q: "Čo robí súkromné okno (inkognito)?", opts: ["Po zatvorení nezostane v tomto počítači história", "Na internete ťa nikto nevidí", "Chráni pred vírusmi", "Zrýchli internet"], a: 0, why: "Súkromné okno iba neukladá históriu a prihlásenia v počítači. Škola, poskytovateľ internetu aj navštívená stránka ťa stále vidia." },
-    { id: "3", q: "Chceš zadať heslo. Čo skontroluješ v adresnom riadku?", opts: ["Zámok a správnu adresu stránky", "Či je stránka farebná", "Počet otvorených kariet", "Či je v adrese slovo „zadarmo“"], a: 0 }
+    { id: "2", q: "Vyskočilo okno: „Vyhral si mobil! Klikni sem.“ Čo urobíš?", opts: ["Okno zavriem a na nič neklikám", "Kliknem, veď je to zadarmo", "Napíšem tam svoje meno a adresu", "Pošlem to kamarátom"], a: 0 },
+    { id: "3", q: "Chceš zadať heslo. Čo skontroluješ v adresnom riadku?", opts: ["Zámok a správnu adresu stránky", "Či je stránka farebná", "Počet otvorených kariet", "Či je v adrese slovo „zadarmo“"], a: 0 },
+    { id: "4", q: "Si na školskom počítači a prihlásil si sa do svojho účtu. Čo urobíš na konci hodiny?", opts: ["Odhlásim sa", "Nechám to tak, nabudúce to bude rýchlejšie", "Iba zatvorím kartu", "Vypnem monitor"], a: 0 }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", q: "Prehliadač je:", opts: ["program na zobrazovanie webových stránok", "vyhľadávač, napríklad Google", "jedna webová stránka", "celý internet"], a: 0 },
+    { id: "2", q: "Ktoré z toho je prehliadač?", opts: ["Mozilla Firefox", "Google", "YouTube", "Windows"], a: 0 },
     { id: "3", q: "Ktorým tlačidlom sa vrátiš na predchádzajúcu stránku?", opts: ["←", "↻", "☆", "⋮"], a: 0 },
+    { id: "4", q: "Hviezdička v adresnom riadku slúži na:", opts: ["pridanie stránky do záložiek", "hodnotenie stránky", "otvorenie novej karty", "vytlačenie stránky"], a: 0 },
     { id: "5", q: "Čo urobí prehliadač, keď do adresného riadka napíšeš slová namiesto adresy?", opts: ["Vyhľadá ich vo vyhľadávači", "Ukáže chybu", "Zatvorí sa", "Otvorí náhodnú stránku"], a: 0 },
-    { id: "6", q: "Súkromné (inkognito) okno:", opts: ["neukladá históriu v tomto počítači", "ťa robí na internete neviditeľným", "chráni pred vírusmi", "zrýchli internet"], a: 0 }
+    { id: "6", q: "Súkromné (inkognito) okno:", opts: ["neukladá históriu v tomto počítači", "ťa robí na internete neviditeľným", "chráni pred vírusmi", "zrýchli internet"], a: 0 },
+    { id: "7", q: "Karta v prehliadači je:", opts: ["jedna otvorená stránka v tom istom okne", "papierová mapa internetu", "záložka v knihe", "program na kreslenie"], a: 0 }
   ]}
 };
 
@@ -377,6 +397,82 @@ function browserHTML() {
 function goalsHTML(list) { return `<ul class="goals">${list.map(([k, t]) => `<li>${S.br.g[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`; }
 
 /* ---------- views ---------- */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+/* Ilustrácie k teórii – Prima 1.3 Prehliadače */
+const TFIG = (() => {
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const MK = c => `<marker id="m13${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`;
+const DEFS = `<defs>${MK("#566381")}${MK("#12805A")}${MK("#2F5BEA")}${MK("#C0392B")}</defs>`;
+const ar = (x1, y1, x2, y2, c, w) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#m13${c.slice(1)})"/>`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}>${s}</text>`;
+const pill = (x, y, w, s, c) => `<rect x="${x}" y="${y}" width="${w}" height="22" rx="11" fill="${c}"/>${T(x + w / 2, y + 15, s, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+/* malé okno prehliadača */
+const win = (x, y, w, h, url, lock) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#fff" stroke="#C9D1DF"/><rect x="${x}" y="${y}" width="${w}" height="30" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 20}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 6}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 16, y + 19, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 30 : 16), y + 19, url, { fs: 10.5 })}`;
+
+return {
+  /* ako prehliadač zobrazí stránku */
+  kod: fig(SV(440, 220, DEFS + `
+    <rect x="12" y="20" width="96" height="70" rx="10" fill="#16213A"/>${T(60, 52, "🖥️", { a: "middle", fs: 22 })}${T(60, 76, "server", { a: "middle", fs: 11.5, b: 1, c: "#fff" })}
+    ${ar(114, 46, 160, 46, "#566381")}${T(137, 38, "kód", { a: "middle", fs: 10, c: "#566381" })}
+    <rect x="166" y="12" width="120" height="90" rx="8" fill="#1E1E1E"/>${["&lt;h1&gt;Zvieratká&lt;/h1&gt;", "&lt;p&gt;Mačka je…&lt;/p&gt;", "&lt;img src=…&gt;", "&lt;a href=…&gt;"].map((t, i) => T(174, 32 + i * 18, t, { fs: 10, c: "#9CDCFE", mono: 1 })).join("")}
+    ${T(226, 118, "HTML kód stránky", { a: "middle", fs: 11, c: "#566381" })}
+    ${ar(290, 56, 318, 56, "#2F5BEA", 3)}
+    ${win(322, 12, 110, 110, "zvieratka.sk", 1)}${T(330, 62, "Zvieratká", { fs: 13, b: 1 })}<rect x="330" y="70" width="44" height="34" rx="4" fill="#F0B429"/>${T(352, 93, "🐱", { a: "middle", fs: 16 })}${T(380, 82, "Mačka je", { fs: 9 })}${T(380, 94, "domáce", { fs: 9 })}${T(380, 106, "zviera…", { fs: 9 })}
+    <rect x="96" y="150" width="248" height="56" rx="12" fill="#D5DFFB"/>${T(220, 174, "🧭 Prehliadač = prekladateľ", { a: "middle", fs: 13, b: 1, c: "#2F5BEA" })}${T(220, 194, "z kódu urobí stránku, ktorú vidíš", { a: "middle", fs: 11.5 })}`, "Prehliadač premení kód na stránku"),
+    "Server pošle stránku ako <b>kód HTML</b>. Prehliadač ho prečíta a vykreslí ti pekné nadpisy, texty, obrázky a odkazy."),
+  /* popísaný prehliadač – ťahák */
+  casti: fig(SV(440, 282, `
+    <rect x="10" y="40" width="420" height="190" rx="10" fill="#fff" stroke="#C9D1DF"/><rect x="10" y="40" width="420" height="68" rx="10" fill="#E9EDF3"/><rect x="10" y="98" width="420" height="10" fill="#E9EDF3"/>
+    <rect x="20" y="48" width="120" height="24" rx="6" fill="#fff"/>${T(30, 64, "Zvieratká  ✕", { fs: 11 })}<rect x="144" y="48" width="96" height="24" rx="6" fill="#DDE2EA"/>${T(152, 64, "Hry  ✕", { fs: 11 })}${T(252, 66, "＋", { fs: 16, b: 1 })}
+    ${T(22, 96, "←", { fs: 16 })}${T(42, 96, "→", { fs: 16, c: "#9AA7C4" })}${T(62, 96, "⟳", { fs: 15 })}${T(82, 96, "⌂", { fs: 16 })}
+    <rect x="104" y="80" width="262" height="22" rx="11" fill="#fff" stroke="#C9D1DF"/>${T(114, 95, "🔒", { fs: 10 })}${T(130, 95, "www.zvieratka.sk/macky", { fs: 11 })}${T(354, 96, "☆", { fs: 14, a: "end", c: "#F0B429", b: 1 })}${T(384, 96, "🕘", { fs: 12 })}${T(408, 96, "⋮", { fs: 16, b: 1 })}
+    ${T(22, 136, "Mačky", { fs: 16, b: 1 })}<rect x="22" y="146" width="120" height="70" rx="6" fill="#FDF1D3"/>${T(82, 190, "🐱", { a: "middle", fs: 28 })}${T(154, 160, "Mačka je domáce zviera…", { fs: 11 })}${T(154, 180, "Pozri aj: psy", { fs: 11, c: "#2F5BEA" })}<line x1="208" y1="183" x2="230" y2="183" stroke="#2F5BEA"/>
+    ${[[60, 26, 60, 46, "karty"], [252, 14, 252, 54, "＋ nová karta"], [26, 252, 24, 104, "Späť"], [72, 274, 64, 104, "Obnoviť"], [120, 252, 84, 104, "Domov"], [200, 252, 200, 104, "adresný riadok"], [118, 14, 116, 80, "zámok"], [346, 14, 350, 80, "☆ záložka"], [394, 252, 384, 102, "história"], [425, 14, 408, 80, "ponuka"]].map(([tx, ty, x, y, s]) => `<line x1="${tx}" y1="${ty + (ty < 40 ? 4 : -12)}" x2="${x}" y2="${y}" stroke="#2F5BEA" stroke-width="1.2"/>${T(tx, ty, s, { a: tx > 410 ? "end" : "middle", fs: 11, b: 1, c: "#2F5BEA" })}`).join("")}`, "Časti prehliadača"),
+    "Ťahák: hlavné časti okna prehliadača."),
+  /* adresa vs hľadanie */
+  adresa: fig(SV(440, 250, DEFS + `
+    <rect x="10" y="10" width="206" height="230" rx="12" fill="#D5DFFB"/>${T(113, 32, "🏠 napíšeš ADRESU", { a: "middle", b: 1, fs: 12.5, c: "#2F5BEA" })}
+    <rect x="22" y="42" width="182" height="24" rx="12" fill="#fff" stroke="#2F5BEA"/>${T(34, 58, "www.zvieratka.sk", { fs: 11.5, b: 1 })}
+    ${ar(113, 72, 113, 96, "#2F5BEA")}
+    ${win(22, 100, 182, 120, "zvieratka.sk", 1)}${T(32, 150, "Zvieratká", { fs: 14, b: 1 })}${T(32, 170, "🐱 🐶 🐴 🐰", { fs: 16 })}${T(32, 204, "otvorí sa priamo stránka", { fs: 11, c: "#2F5BEA", b: 1 })}
+    <rect x="224" y="10" width="206" height="230" rx="12" fill="#FDF1D3"/>${T(327, 32, "🔎 napíšeš SLOVÁ", { a: "middle", b: 1, fs: 12.5, c: "#B4570B" })}
+    <rect x="236" y="42" width="182" height="24" rx="12" fill="#fff" stroke="#F0B429"/>${T(248, 58, "ako sa volá mláďa koňa", { fs: 11.5, b: 1 })}
+    ${ar(327, 72, 327, 96, "#566381")}
+    ${win(236, 100, 182, 120, "vyhľadávač", 1)}${[0, 1, 2].map(i => `${T(246, 148 + i * 22, ["Žriebä – Wikipédia", "Mláďatá zvierat", "Kôň – encyklopédia"][i], { fs: 11, c: "#2F5BEA", b: 1 })}<rect x="246" y="${152 + i * 22}" width="${120 - i * 20}" height="4" rx="2" fill="#DDE2EA"/>`).join("")}${T(246, 214, "zoznam výsledkov hľadania", { fs: 11, c: "#B4570B", b: 1 })}`, "Adresa alebo hľadanie"),
+    "Keď napíšeš <b>adresu</b>, otvorí sa priamo stránka. Keď napíšeš <b>slová</b>, vyhľadávač ti ukáže zoznam stránok, z ktorých si vyberieš."),
+  /* karty, záložky, história */
+  karty: fig(SV(440, 250, `
+    <rect x="10" y="10" width="420" height="104" rx="10" fill="#E9EDF3"/>
+    ${["Moja škola", "Zvieratká", "Hry pre deti"].map((n, i) => `<rect x="${20 + i * 112}" y="18" width="106" height="26" rx="6" fill="${i === 1 ? "#fff" : "#DDE2EA"}"/>${T(28 + i * 112, 35, n, { fs: 11, b: i === 1 })}${T(118 + i * 112, 35, "✕", { fs: 10, a: "end", c: "#C0392B", b: 1 })}`).join("")}
+    <rect x="358" y="18" width="26" height="26" rx="6" fill="#2F5BEA"/>${T(371, 36, "＋", { a: "middle", fs: 15, b: 1, c: "#fff" })}
+    <rect x="20" y="52" width="400" height="24" rx="12" fill="#fff"/>${T(30, 69, "← →  ⟳   www.zvieratka.sk", { fs: 11.5 })}${T(398, 70, "★", { fs: 15, c: "#F0B429", a: "end" })}
+    ${T(22, 102, "⭐ Záložky:", { fs: 11, b: 1 })}${["Moja škola", "Hry pre deti", "Wikipédia"].map((n, i) => `<rect x="${90 + i * 92}" y="88" width="86" height="20" rx="10" fill="#fff" stroke="#F0B429"/>${T(133 + i * 92, 102, n, { a: "middle", fs: 10.5 })}`).join("")}
+    ${[["🗂️ karty", "viac stránok v jednom okne, ＋ otvorí, ✕ zavrie", "#2F5BEA"], ["⭐ záložka", "hviezdička uloží stránku medzi obľúbené", "#B4570B"], ["🕘 história", "zoznam navštívených stránok (Ctrl + H)", "#566381"], ["← Späť", "vráti ťa na predchádzajúcu stránku v karte", "#12805A"]].map(([a, b, c], i) => `<rect x="${10 + (i % 2) * 214}" y="${124 + Math.floor(i / 2) * 62}" width="206" height="54" rx="10" fill="#fff" stroke="${c}"/>${T(22 + (i % 2) * 214, 144 + Math.floor(i / 2) * 62, a, { fs: 12.5, b: 1, c })}${T(22 + (i % 2) * 214, 162 + Math.floor(i / 2) * 62, b.length > 30 ? b.slice(0, b.lastIndexOf(" ", 30)) : b, { fs: 10.5 })}${b.length > 30 ? T(22 + (i % 2) * 214, 174 + Math.floor(i / 2) * 62, b.slice(b.lastIndexOf(" ", 30) + 1), { fs: 10.5 }) : ""}`).join("")}`, "Karty, záložky a história"),
+    "Hore sú <b>karty</b> (＋ pridá, ✕ zavrie), hviezdička ☆ uloží <b>záložku</b> a v <b>histórii</b> nájdeš stránky, ktoré si už navštívil."),
+  /* dôveryhodná stránka */
+  doveryhodna: fig(SV(440, 230, `
+    ${[["👤", "Kto to napísal?", "autor, škola, múzeum, úrad"], ["📅", "Kedy?", "dátum, či nie je zastarané"], ["🌐", "Kde som?", "adresa známej stránky"], ["🔁", "Píšu to aj inde?", "porovnaj aspoň 2 stránky"]].map(([e, a, b], i) => { const x = 12 + (i % 2) * 214, y = 12 + Math.floor(i / 2) * 106; return `<rect x="${x}" y="${y}" width="202" height="96" rx="12" fill="#DDF3EA" stroke="#12805A"/><text x="${x + 30}" y="${y + 58}" text-anchor="middle" font-size="28">${e}</text>${T(x + 56, y + 42, a, { fs: 13, b: 1, c: "#12805A" })}${T(x + 56, y + 62, b, { fs: 11 })}`; }).join("")}`, "Ako overiť stránku"),
+    "Webový detektív si pri každej stránke overí: <b>kto</b> to napísal, <b>kedy</b>, <b>kde</b> je a či to isté píšu aj <b>inde</b>."),
+  /* zámok */
+  zamok: fig(SV(440, 170, DEFS + `
+    <rect x="12" y="16" width="416" height="32" rx="16" fill="#F5F7FA" stroke="#C9D1DF"/>${T(30, 37, "🔒", { fs: 13 })}${T(52, 37, "https://", { fs: 12, c: "#566381" })}${T(104, 37, "mojaskola.edupage.org/login", { fs: 12, b: 1 })}
+    <circle cx="31" cy="32" r="16" fill="none" stroke="#12805A" stroke-width="2.5"/>${ar(60, 76, 40, 52, "#12805A", 2)}${T(64, 80, "zámok + správna adresa = heslo môžeš zadať", { fs: 12, b: 1, c: "#12805A" })}
+    <rect x="12" y="104" width="416" height="32" rx="16" fill="#FBE3E0" stroke="#C0392B"/>${T(30, 125, "⚠️", { fs: 12 })}${T(52, 125, "Nezabezpečené  http://edupage-login.xyz", { fs: 12, b: 1, c: "#C0392B" })}
+    ${T(220, 160, "bez zámku alebo s čudnou adresou heslo nezadávaj", { a: "middle", fs: 11.5, c: "#C0392B" })}`, "Zámok v adresnom riadku"),
+    "<b>Zámok</b> a <b>správna adresa</b> = bezpečné spojenie. Pri nápise <b>Nezabezpečené</b> alebo pri čudnej adrese heslo nezadávaj."),
+  /* vyskakovacie okno a falošné tlačidlá */
+  popup: fig(SV(440, 250, `
+    ${win(10, 10, 420, 230, "www.stiahni-hry-zadarmo.xyz", 0)}
+    ${T(22, 62, "Hra Kocky 2", { fs: 14, b: 1 })}${T(22, 80, "Verzia 1.2 · 15 MB", { fs: 10.5, c: "#566381" })}<rect x="22" y="88" width="92" height="22" rx="4" fill="#E9EDF3"/>${T(68, 103, "stiahnuť", { a: "middle", fs: 10.5 })}
+    <rect x="200" y="46" width="216" height="56" rx="6" fill="#12805A"/>${T(308, 72, "⬇ STIAHNUŤ TERAZ", { a: "middle", fs: 15, b: 1, c: "#fff" })}${T(308, 90, "rýchlo a zadarmo!!!", { a: "middle", fs: 10.5, c: "#fff" })}${T(412, 58, "reklama", { a: "end", fs: 8.5, c: "#E6F4EE" })}
+    <rect x="110" y="120" width="240" height="108" rx="10" fill="#fff" stroke="#C0392B" stroke-width="2.5"/><rect x="110" y="120" width="240" height="26" rx="10" fill="#C0392B"/><rect x="110" y="136" width="240" height="10" fill="#C0392B"/>${T(120, 138, "🎉 GRATULUJEME!", { fs: 12, b: 1, c: "#fff" })}${T(340, 139, "✕", { a: "end", fs: 13, b: 1, c: "#fff" })}
+    ${T(230, 170, "Vyhral si iPhone!", { a: "middle", fs: 14, b: 1 })}${T(230, 188, "Zadaj meno, adresu a heslo.", { a: "middle", fs: 11 })}<rect x="170" y="196" width="120" height="24" rx="6" fill="#F0B429"/>${T(230, 213, "VYZDVIHNÚŤ", { a: "middle", fs: 11.5, b: 1 })}`, "Vyskakovacie okno a falošné tlačidlo"),
+    "Veľké farebné tlačidlo „STIAHNUŤ TERAZ“ býva <b>reklama</b>, skutočné sťahovanie je často nenápadné. Okno „Vyhral si!“ je <b>podvod</b>: zavri ho krížikom ✕ a nič nevypĺňaj.")
+};
+})();
+
 const VIEWS = {
   co() {
     return head() + `<h2>Čo je prehliadač?</h2>
@@ -386,6 +482,7 @@ const VIEWS = {
     <p>Najznámejšie prehliadače:</p>
     <div class="cards">${BROWSERS.map((n, i) => `<div class="pc">${WINICON(["#2F5BEA", "#D9480F", "#0B7A75", "#6A3FD0", "#C0392B"][i])}<h4>${n}</h4></div>`).join("")}</div>
     <div class="box v"><p>Všetky prehliadače robia to isté: zobrazia stránku. Líšia sa vzhľadom a doplnkami. Stránka <b>google.sk</b> sa dá otvoriť v ktoromkoľvek z nich.</p></div>
+    ${tfigs(TFIG.kod)}
     <h3>Úloha 1: je to prehliadač?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("jeto")}</div>
     <h3>Úloha 2: pravda, alebo nepravda?</h3><div class="task">${taskHTML("tf")}</div>` + nextBar();
   },
@@ -399,7 +496,7 @@ const VIEWS = {
     <h3>Prieskum: klikaj na časti prehliadača</h3>
     <div class="lab"><div>${mockHTML("explore")}</div><div class="side">${e ? `<span class="tag">Preskúmané ${n} z ${PKEYS.length}</span><h4>${e[0]}</h4><p style="font-size:15.5px;margin:0">${e[1]}</p>` : `<h4>Klikni na časť prehliadača</h4><p class="muted" style="font-size:15px;margin:0">Tlačidlá, adresný riadok, karty… Preskúmané časti sa orámujú.</p>`}<div class="meter"><i style="width:${Math.round(n / PKEYS.length * 100)}%"></i></div></div></div>
     <h3>Úloha: nájdi v prehliadači</h3>
-    <div class="lab"><div>${mockHTML("find")}</div>${fs}</div>
+    <div class="lab"><div>${mockHTML("find")}</div>${fs}</div>${done ? tfigs(TFIG.casti) : ""}
     <h3>Užitočné skratky</h3>
     <div class="keys"><div class="key"><kbd>Ctrl</kbd><kbd>T</kbd> nová karta</div><div class="key"><kbd>Ctrl</kbd><kbd>W</kbd> zavrieť kartu</div><div class="key"><kbd>Ctrl</kbd><kbd>D</kbd> pridať záložku</div><div class="key"><kbd>Ctrl</kbd><kbd>H</kbd> história</div><div class="key"><kbd>F5</kbd> obnoviť stránku</div><div class="key"><kbd>Ctrl</kbd><kbd>+</kbd> / <kbd>−</kbd> zväčšiť / zmenšiť</div></div>
     <h3>Úloha: poznáš skratky?</h3><p>Skús si ich aj naozaj v prehliadači na svojom počítači.</p><div class="task">${taskHTML("skratky")}</div>` + nextBar();
@@ -409,6 +506,7 @@ const VIEWS = {
     <p>Do adresného riadka môžeš napísať dve rôzne veci:</p>
     <div class="two"><div class="box v" style="margin:0"><p><b>🏠 Adresu stránky</b>, napríklad <b>www.zvieratka.sk</b>. Prehliadač otvorí priamo túto stránku, akoby si išiel na presnú adresu domu.</p></div>
       <div class="box" style="margin:0"><p><b>🔎 Hľadané slová</b>, napríklad <b>ako sa volá mláďa koňa</b>. Prehliadač ich pošle do vyhľadávača a ukáže ti zoznam stránok.</p></div></div>
+    ${tfigs(TFIG.adresa)}
     <h3>Úloha 1: adresa, alebo hľadanie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("adrsort")}</div>
     <h3>Úloha 2: vyskúšaj si to</h3>
     <div class="task">${goalsHTML([["url", "Napíš do adresného riadka <b>www.zvieratka.sk</b> a stlač Enter."], ["search", "Napíš do adresného riadka <b>ako sa volá mláďa koňa</b> a stlač Enter."]])}
@@ -423,6 +521,7 @@ const VIEWS = {
       <div class="pc"><div style="font-size:34px">⭐</div><h4>Záložky</h4><p>Obľúbené stránky si uložíš a nabudúce ich otvoríš jedným klikom.</p></div>
       <div class="pc"><div style="font-size:34px">🕘</div><h4>História</h4><p>Zoznam stránok, ktoré si navštívil. Ctrl + H.</p></div>
       <div class="pc"><div style="font-size:34px">←</div><h4>Späť a dopredu</h4><p>Pohyb po stránkach, ktoré si otvoril v tejto karte.</p></div></div>
+    ${tfigs(TFIG.karty)}
     <h3>Vyskúšaj si to</h3>
     <div class="task">${goalsHTML([["tabs", "Otvor tlačidlom ＋ ďalšie karty, aby si mal spolu <b>aspoň 3</b>."], ["close", "Jednu kartu <b>zavri</b> krížikom ✕."], ["bm", "Otvor stránku <b>Hry pre deti</b> a pridaj ju hviezdičkou ☆ do <b>záložiek</b>."], ["back", "Klikni na odkaz na stránke a potom sa vráť tlačidlom <b>← Späť</b>."]])}
       ${browserHTML()}
@@ -433,6 +532,7 @@ const VIEWS = {
     return head() + `<h2>Webový detektív</h2>
     <p>Teraz použiješ všetko, čo si sa naučil: odkazy, karty, záložky aj vyhľadávanie. Nájdi v prehliadači odpovede na otázky. Každá odpoveď je na niektorej stránke.</p>
     <div class="box v"><p>💡 Tip: tlačidlom ⌂ sa dostaneš na stránku Moja škola. Odtiaľ vedú odkazy na Zvieratká aj Hry. Otvor si viac kariet, aby si sa nemusel stále vracať.</p></div>
+    ${tfigs(TFIG.doveryhodna)}
     <div class="task">${browserHTML()}</div>
     <div class="task">${taskHTML("det")}</div>` + nextBar();
   },
@@ -443,6 +543,7 @@ const VIEWS = {
       <div class="pc"><div style="font-size:34px">🚫</div><h4>Vyskakovacie okná</h4><p>„Vyhral si!“ je takmer vždy podvod. Zavri ho.</p></div>
       <div class="pc"><div style="font-size:34px">⬇️</div><h4>Sťahovanie</h4><p>Sťahuj iba to, čo poznáš, a z dôveryhodných stránok.</p></div>
       <div class="pc"><div style="font-size:34px">🚪</div><h4>Odhlás sa</h4><p>Na cudzom alebo školskom počítači sa vždy odhlás.</p></div></div>
+    ${tfigs(TFIG.zamok, TFIG.popup)}
     <h3>Úloha 1: bezpečné, alebo nebezpečné?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("bezsort")}</div>
     <h3>Úloha 2: čo urobíš?</h3><div class="task">${taskHTML("bezq")}</div>` + nextBar();
   },
