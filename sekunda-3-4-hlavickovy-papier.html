@@ -218,6 +218,11 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .a4 .body{position:absolute;left:8%;right:8%;top:24%;font-size:10px;line-height:1.6;color:#555}
 .a4 .dash{border:1px dashed #BBB;height:9px;border-radius:2px;margin:6px 0;background:repeating-linear-gradient(90deg,#EEE 0 40px,transparent 40px 46px)}
 .brief{background:#FFFDF3;border:1px solid #E6D38A;border-radius:12px;padding:10px 14px;font-size:14.5px}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
 </style>
 </head>
@@ -225,7 +230,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Hlavička a päta sa opakujú na každej strane. Iná prvá strana = iná hlavička na 1. strane.", "IČO 8 číslic, PSČ 979 01, e-mail so @. Šablóna .dotx vytvára nové listy."], "co": ["Hlavičkový papier = jednotný vzhľad listov: logo, názov, adresa, kontakty, IČO, DIČ, bankové spojenie.", "Norma STN 01 6910; firemné farby, najviac 2 písma."], "word": ["Vložiť › Hlavička/Päta, logo cez Vložiť › Obrázky, Iná prvá strana, uložiť ako šablónu .dotx."], "navrh": ["Hlavička: logo a názov; päta: kontakty a IČO; firemná farba, čitateľné písmo, oddeľovacia čiara."]};
+const THEORY = {"co": ["Hlavičkový papier = jednotný vzhľad listov: logo, názov, adresa, kontakty, IČO, DIČ, bankové spojenie.", "Norma STN 01 6910; firemné farby, najviac 2 písma."], "word": ["Vložiť › Hlavička/Päta, logo cez Vložiť › Obrázky, Iná prvá strana, uložiť ako šablónu .dotx."], "navrh": ["Hlavička: logo a názov; päta: kontakty a IČO; firemná farba, čitateľné písmo, oddeľovacia čiara."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -253,6 +258,66 @@ document.addEventListener("keydown", e => { const z = e.target.closest && e.targ
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Sekunda 3.4 Hlavičkový papier */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#C2560C", AS = "#FBE3D2", G = "#00796B";
+const tag = (x, y, t, x2, y2) => `${ar(x, y, x2, y2, A, 1.5)}`;
+return {
+  casti: fig(SV(440, 300, `
+    <rect x="96" y="8" width="210" height="284" fill="#fff" stroke="${C.mut}"/>
+    <circle cx="122" cy="34" r="13" fill="${G}"/><path d="M116 38 l6 -12 l6 12z" fill="#fff"/>${T(142, 32, "KAMIENOK s.r.o.", { fs: 11, b: 1, c: G })}${T(142, 44, "stavebniny a záhrada", { fs: 8, i: 1, c: C.mut })}
+    <line x1="106" y1="56" x2="296" y2="56" stroke="${G}" stroke-width="2"/>
+    ${T(114, 76, "Vážená pani…", { fs: 8.5 })}${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => `<rect x="114" y="${86 + i * 14}" width="${i === 8 ? 90 : 176 - (i % 3) * 10}" height="4" rx="2" fill="${C.line}"/>`).join("")}
+    ${T(114, 230, "S pozdravom", { fs: 8.5 })}
+    <line x1="106" y1="252" x2="296" y2="252" stroke="${G}" stroke-width="1"/>
+    ${T(201, 266, "Hlavná 12, 979 01 Rimavská Sobota · 047 123 45 67", { a: "middle", fs: 7 })}${T(201, 278, "info@kamienok-priklad.sk · IČO 12 345 678 · IBAN SK00…", { a: "middle", fs: 7 })}
+    ${ar(92, 36, 54, 36, A, 1.5)}${T(8, 30, "HLAVIČKA", { fs: 10, b: 1, c: A })}${T(8, 44, "logo, názov,", { fs: 9 })}${T(8, 56, "slogan", { fs: 9 })}
+    ${ar(310, 140, 350, 140, A, 1.5)}${T(354, 128, "TELO", { fs: 10, b: 1, c: A })}${T(354, 142, "voľné miesto", { fs: 9 })}${T(354, 154, "na text listu", { fs: 9 })}
+    ${ar(92, 270, 54, 270, A, 1.5)}${T(8, 252, "PÄTA", { fs: 10, b: 1, c: A })}${T(8, 266, "adresa,", { fs: 9 })}${T(8, 278, "kontakty,", { fs: 9 })}${T(8, 290, "IČO, banka", { fs: 9 })}
+    ${ar(310, 56, 350, 56, A, 1.5)}${T(354, 52, "firemná farba", { fs: 9.5, b: 1, c: A })}${T(354, 66, "1 až 2 písma", { fs: 9.5, b: 1, c: A })}`, "Časti hlavičkového papiera"),
+    "Hlavičkový papier vymyslenej firmy: <b>hlavička</b> s logom, voľné <b>telo</b> na list a <b>päta</b> s kontaktmi a IČO."),
+  rezim: fig(SV(440, 260, `
+    <rect x="8" y="8" width="424" height="34" rx="6" fill="#EEF2FA"/>${T(18, 30, "Hlavička a päta", { fs: 11, b: 1, c: "#2B579A" })}
+    <rect x="132" y="15" width="12" height="12" rx="2" fill="#fff" stroke="#2B579A"/><path d="M134 21 l3 3 l5 -6" stroke="#2B579A" stroke-width="2" fill="none"/>${T(148, 26, "Iná prvá strana", { fs: 10 })}
+    <rect x="262" y="14" width="160" height="20" rx="4" fill="#fff" stroke="#2B579A"/>${T(342, 28, "Zavrieť hlavičku a pätu ✕", { a: "middle", fs: 9.5, b: 1, c: "#2B579A" })}
+    <rect x="80" y="50" width="280" height="202" fill="#fff" stroke="${C.mut}"/>
+    <rect x="80" y="50" width="280" height="40" fill="#E8F5E9" opacity=".7"/><line x1="80" y1="90" x2="360" y2="90" stroke="#2B579A" stroke-dasharray="4 3"/><rect x="80" y="90" width="48" height="12" fill="#2B579A"/>${T(84, 99, "Hlavička", { fs: 7.5, c: "#fff" })}
+    <circle cx="104" cy="70" r="10" fill="${G}"/>${T(120, 74, "KAMIENOK s.r.o.", { fs: 10, b: 1, c: G })}
+    ${[0, 1, 2, 3, 4].map(i => `<rect x="100" y="${116 + i * 14}" width="${220 - i * 18}" height="4" rx="2" fill="#E2E2E2"/>`).join("")}
+    ${T(220, 200, "text listu je pri úprave hlavičky sivý", { a: "middle", fs: 9, c: C.mut })}
+    <line x1="80" y1="216" x2="360" y2="216" stroke="#2B579A" stroke-dasharray="4 3"/><rect x="80" y="204" width="34" height="12" fill="#2B579A"/>${T(84, 213, "Päta", { fs: 7.5, c: "#fff" })}<rect x="80" y="216" width="280" height="36" fill="#E8F5E9" opacity=".7"/>${T(220, 238, "adresa · telefón · IČO", { a: "middle", fs: 9.5 })}
+    ${T(8, 74, "dvojklik", { fs: 9.5, b: 1, c: A })}${T(8, 86, "na horný", { fs: 9.5, c: A })}${T(8, 98, "okraj", { fs: 9.5, c: A })}${ar(54, 70, 76, 70, A, 1.5)}
+    ${T(368, 120, "opakuje sa", { fs: 9.5, b: 1, c: A })}${T(368, 132, "na každej", { fs: 9.5, c: A })}${T(368, 144, "strane", { fs: 9.5, c: A })}`, "Úprava hlavičky a päty vo Worde"),
+    "V režime <b>hlavičky a päty</b> je text listu sivý. Čo napíšeš do hlavičky, opakuje sa na <b>každej strane</b>."),
+  sablona: fig(SV(440, 200, `
+    ${box(8, 30, 120, 130, AS, A, 12)}<path d="M38 50 h46 l14 14 v66 h-60z" fill="#fff" stroke="${A}" stroke-width="2"/><rect x="38" y="50" width="60" height="16" fill="${G}"/>${T(68, 106, "📐", { a: "middle", fs: 20 })}${T(68, 150, "list.dotx", { a: "middle", fs: 11, b: 1, mono: 1 })}${T(68, 22, "ŠABLÓNA", { a: "middle", fs: 11, b: 1, c: A })}
+    ${ar(134, 80, 190, 50, A)}${ar(134, 95, 190, 95, A)}${ar(134, 110, 190, 140, A)}${T(162, 166, "dvojklik", { a: "middle", fs: 10, c: C.mut })}
+    ${[["ponuka_Novak.docx", 18], ["objednavka_12.docx", 68], ["reklamacia.docx", 118]].map(([n, y]) => `<path d="M196 ${y + 6} h30 l8 8 v34 h-38z" fill="#fff" stroke="#2B579A" stroke-width="1.5"/><rect x="196" y="${y + 6}" width="38" height="9" fill="${G}"/>${T(242, y + 32, n, { fs: 10.5, mono: 1 })}`).join("")}
+    ${T(326, 186, "šablóna ostane nezmenená", { a: "middle", fs: 10.5, b: 1, c: A })}`, "Šablóna a nové listy"),
+    "Z <b>šablóny .dotx</b> vznikne dvojklikom vždy nový dokument. Šablóna sa neprepíše.")
+}; })();
+
 const KEY = "hlavicka-s34-v1";
 const LESSON = "3.4 Tvorba firemného hlavičkového papiera";
 const BRAND = "3.4 Hlavičkový papier";
@@ -263,14 +328,13 @@ const STEPS = [
   { id: "co", title: "Čo je hlavičkový papier", min: 7 },
   { id: "word", title: "Hlavička a päta vo Worde", min: 8 },
   { id: "navrh", title: "Navrhni hlavičkový papier", min: 18 },
-  { id: "precvic", title: "Precvičovanie: hlavička a päta v praxi", min: 9 },
   { id: "test", title: "Záverečný test", min: 5 },
   { id: "vysledok", title: "Výsledok", min: 0 }
 ];
-const STEP_TASKS = { co: ["csort", "cq", "zsort"], word: ["wq", "word_ord"], navrh: ["g_lh"], precvic: ["g_sit"], test: ["test"] };
+const STEP_TASKS = { co: ["csort", "cq"], word: ["wq"], navrh: ["g_lh"], test: ["test"] };
 const START = {
   kicker: "Informatika, Sekunda",
-  lead: "Každý oficiálny list firmy alebo školy má hore logo a názov a dole kontakty. To je hlavičkový papier. Zistíš, čo naň patrí a čo nie, ako sa robí hlavička a päta vo Worde a ako ho uložiť ako šablónu. Potom ako grafik navrhneš hlavičkový papier pre firmu, ktorej logo si robil na minulých hodinách. 4 zastávky, body a na konci výsledok.",
+  lead: "Každý oficiálny list firmy alebo školy má hore logo a názov a dole kontakty. To je hlavičkový papier. Zistíš, čo naň patrí a čo nie, ako sa robí hlavička a päta vo Worde a ako ho uložiť ako šablónu. Potom ako grafik navrhneš hlavičkový papier pre firmu, ktorej logo si robil na minulých hodinách. 3 zastávky, body a na konci výsledok.",
   guessQ: "Kde vo Worde vytvoríš časť, ktorá sa zobrazí hore na každej strane?",
   guessNote: "Tip sa neboduje. Na zastávke Hlavička a päta vo Worde zistíš, či si mal pravdu.",
   guesses: ["Napíšem ju na začiatok každej strany", "Vložiť › Hlavička", "Domov › Nadpis 1", "Súbor › Tlačiť"],
@@ -303,8 +367,6 @@ function lhHTML() { const F = S.f, fm = FIRMS[F.firm], G = lhGoals();
     <label style="display:flex;gap:6px;font-weight:400"><input type="checkbox" data-lf="line" ${F.line ? "checked" : ""}> oddeľovacia čiara</label><label style="display:flex;gap:6px;font-weight:400"><input type="checkbox" data-lf="foot" ${F.foot ? "checked" : ""}> päta s kontaktmi</label></div>
   <div><div id="lhpage">${lhPage()}</div><div id="lhgoals"><ul class="goals" style="list-style:none;padding:0">${LL.map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul></div></div></div>`; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
-const PX_I = [["Názov firmy má byť hore na každej strane listu.", "hl", ""], ["Kontakty a IČO majú byť dole na každej strane.", "pata", ""], ["Na prvej strane chceš veľké logo, na ďalších stranách iba malý názov.", "prva", ""], ["Z hotového návrhu chceš otvárať nové listy bez toho, aby si prepísal originál.", "dotx", "šablóna vytvorí vždy nový dokument"], ["Do hlavičky chceš pridať logo firmy zo súboru.", "obr", ""], ["Hlavička je hotová a chceš sa vrátiť k písaniu textu listu.", "esc", ""]];
-const PX_O = [["", "— vyber —"], ["hl", "Vložiť › Hlavička"], ["pata", "Vložiť › Päta"], ["prva", "Iná prvá strana"], ["dotx", "Uložiť ako šablónu .dotx"], ["obr", "Vložiť › Obrázky (v hlavičke)"], ["esc", "Zavrieť hlavičku a pätu (Esc)"]];
 const TASKS = {
   csort: { id: "csort", type: "sort", buckets: [{ id: "y", label: "✅ Patrí na hlavičkový papier" }, { id: "n", label: "❌ Nepatrí" }],
     items: [{ id: "1", t: "Logo a názov firmy", b: "y" }, { id: "2", t: "Adresa sídla", b: "y" }, { id: "3", t: "Telefón, e-mail, web", b: "y" }, { id: "4", t: "IČO, DIČ, bankové spojenie", b: "y" }, { id: "5", t: "Fotka z firemného večierka", b: "n" }, { id: "6", t: "Päť rôznych písem a dúhové pozadie", b: "n" }, { id: "7", t: "Súkromné číslo mobilu riaditeľovej mamy", b: "n" }, { id: "8", t: "Text celého listu", b: "n" }] },
@@ -320,9 +382,6 @@ const TASKS = {
     { id: "4", ...Q("Kam vo Worde vložíš logo do hlavičky?", ["v režime úpravy hlavičky cez Vložiť › Obrázky", "do tela listu na každú stranu", "do názvu súboru", "do vlastností súboru"], 0) }
   ]},
   g_lh: { id: "g_lh", type: "custom", max: 7 },
-  g_sit: { id: "g_sit", type: "custom", max: 6 },
-  zsort: {"id": "zsort", "type": "sort", "buckets": [{"id": "y", "label": "✅ Správny zápis"}, {"id": "n", "label": "❌ Chybný zápis"}], "items": [{"id": "1", "t": "IČO: 36512487", "b": "y"}, {"id": "2", "t": "979 01 Rimavská Sobota", "b": "y"}, {"id": "3", "t": "info@kvaskovo.sk", "b": "y"}, {"id": "4", "t": "+421 900 123 456", "b": "y"}, {"id": "5", "t": "IČO: 3651", "b": "n"}, {"id": "6", "t": "PSČ: 9790", "b": "n"}, {"id": "7", "t": "info.kvaskovo.sk (e-mail)", "b": "n"}, {"id": "8", "t": "0900 12", "b": "n"}]},
-  word_ord: {"id": "word_ord", "type": "order", "items": [{"id": "a", "t": "Vložiť › Hlavička › Upraviť hlavičku"}, {"id": "b", "t": "Vložiť logo a napísať názov firmy"}, {"id": "c", "t": "Prejsť na pätu"}, {"id": "d", "t": "Doplniť kontakty a IČO"}, {"id": "e", "t": "Zavrieť hlavičku a pätu"}, {"id": "f", "t": "Uložiť ako šablónu .dotx"}]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", ...Q("Hlavička dokumentu sa zobrazí:", ["hore na každej strane", "iba na prvej strane", "iba pri tlači", "na konci dokumentu"], 0) },
     { id: "2", ...Q("Prípona šablóny Wordu:", [".dotx", ".docx", ".pdf", ".xlsx"], 0) },
@@ -334,31 +393,21 @@ const TASKS = {
 const VIEWS = {
   co: () => head() + `<h2>Čo je hlavičkový papier</h2>
     <div class="theory"><p><b>Hlavičkový papier</b> je predtlačená alebo pripravená strana, na ktorú firma, škola či úrad píše oficiálne listy. Vytvára jednotný, profesionálny dojem. V <b>hlavičke</b> býva logo, názov (obchodné meno), prípadne slogan. V <b>päte</b> alebo v hlavičke sú adresa sídla, telefón, e-mail, web, <b>IČO</b>, DIČ a bankové spojenie. Úpravu obchodných písomností na Slovensku odporúča norma <b>STN 01 6910</b>. Dizajn má byť striedmy: firemné farby, najviac 2 písma, dostatok voľného miesta na text listu.</p></div>
+    ${tfigs(TFIG.casti)}
     <h3>Úloha 1: patrí, alebo nepatrí?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("csort")}</div>
-    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("cq")}</div>
-    <div class="theory"><p><b>Údaje na hlavičkovom papieri musia byť zapísané presne.</b> <b>IČO</b> (identifikačné číslo organizácie) má 8 číslic. <b>PSČ</b> má 5 číslic a píše sa s medzerou po tretej číslici, napr. <i>979 01</i>. <b>E-mail</b> vždy obsahuje zavináč @. <b>Telefón</b> sa v obchodnom styku často píše s predvoľbou Slovenska +421. Chyba v kontakte znamená, že sa zákazník firme nedovolá ani nenapíše.</p></div><h3>Úloha 3: správny, alebo chybný zápis?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("zsort")}</div>` + nextBar(),
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("cq")}</div>` + nextBar(),
   word: () => head() + `<h2>Hlavička a päta vo Worde</h2>${guessBox()}
     <div class="theory"><ol><li><b>Vložiť › Hlavička › Upraviť hlavičku</b> (alebo dvojklik do horného okraja strany).</li><li>Do hlavičky vlož logo (<b>Vložiť › Obrázky</b>), nastav obtekanie a napíš názov firmy.</li><li>Prepni sa do päty (<b>Prejsť na pätu</b>) a doplň kontakty, IČO, prípadne čiaru nad pätou (orámovanie odseku).</li><li>Zatvor hlavičku a pätu (<b>Zavrieť hlavičku a pätu</b> alebo Esc).</li><li>Ulož ako <b>šablónu</b>: Súbor › Uložiť ako › Šablóna Wordu <b>.dotx</b>. Nový list z nej otvoríš dvojklikom a pôvodná šablóna ostane nezmenená.</li></ol><p>Voľba <b>Iná prvá strana</b> umožní mať plnú hlavičku len na prvej strane viacstranového listu.</p></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("wq")}</div>
-    <h3>Úloha 2: zoraď postup vo Worde</h3><div class="task"><div class="ins">Klikaj na kartičky v správnom poradí.</div>${taskHTML("word_ord")}</div>` + nextBar(),
+    ${tfigs(TFIG.rezim, TFIG.sablona)}
+    <h3>Otázky</h3><div class="task">${taskHTML("wq")}</div>` + nextBar(),
   navrh: () => head() + `<h2>Navrhni hlavičkový papier</h2>
     <div class="theory"><p>Vyber si firmu zo zadania. Doplň údaje (vymysli si reálne vyzerajúcu adresu v Rimavskej Sobote a kontakty), vyber rozloženie, firemnú farbu a písmo. Náhľad strany A4 sa mení priebežne.</p></div>
     ${S.t.g_lh ? `<div class="checkbar"><span class="score ${S.t.g_lh.score < 7 ? "part" : ""}">Splnené: ${S.t.g_lh.score} zo 7</span></div>` : ""}<div class="tool" id="lhbox">${lhHTML()}</div>` + nextBar(),
-  precvic: () => head() + `<h2>Precvičovanie: hlavička a päta v praxi</h2>
-    <div class="theory"><p>Hlavička a päta sú <b>samostatné časti strany</b>: čo do nich napíšeš, zopakuje sa automaticky na každej strane. Text listu do nich nepatrí. Keď je hlavička otvorená, text listu je sivý. Keď píšeš list, hlavička je sivá. Hotový návrh ulož ako <b>šablónu .dotx</b>. Keď ju otvoríš, Word vytvorí <b>nový dokument</b> a originál zostane nedotknutý.</p><p>Pri každej situácii vyber, ktorú funkciu Wordu použiješ.</p></div>
-    <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function lhUpd() { const n = Object.values(lhGoals()).filter(Boolean).length; if (n && (!S.t.g_lh || S.t.g_lh.score < n)) award("g_lh", n); document.getElementById("lhpage").innerHTML = lhPage(); const G = lhGoals(); document.getElementById("lhgoals").innerHTML = `<ul class="goals" style="list-style:none;padding:0">${LL.map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`; }
-function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; const el = e.target.closest("button"); if (el && el.dataset.firm) { S.f.firm = el.dataset.firm; S.f.col = FIRMS[el.dataset.firm].c; save(); render(false); return true; } return false; }
-function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; const t = e.target, k = t.dataset && t.dataset.lf; if (!k) return false; S.f[k] = t.type === "checkbox" ? t.checked : t.value; save(); lhUpd(); return true; }
-
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
-function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
-function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
+function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (el && el.dataset.firm) { S.f.firm = el.dataset.firm; S.f.col = FIRMS[el.dataset.firm].c; save(); render(false); return true; } return false; }
+function CUSTOM_INPUT(e) { const t = e.target, k = t.dataset && t.dataset.lf; if (!k) return false; S.f[k] = t.type === "checkbox" ? t.checked : t.value; save(); lhUpd(); return true; }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
