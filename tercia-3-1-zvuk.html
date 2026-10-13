@@ -182,6 +182,8 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
 
 </style>
 </head>
@@ -197,7 +199,7 @@ const PF = (() => {
   const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
   const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
   let uid = 0;
-  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
   const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
   const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
   /* zalomenie textu na riadky podľa počtu znakov */
@@ -209,7 +211,14 @@ const PF = (() => {
   const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
   const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
   const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
-  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
 })();
 
 /* Ilustrácie – Tercia 3.1 Zvuk */
@@ -284,8 +293,8 @@ function live() {
   draw();
 }
 async function setBlob(b, ext, dur) {
-  if (BLOBURL) URL.revokeObjectURL(BLOBURL); BLOBURL = URL.createObjectURL(b); S.recExt = ext; S.recDur = dur;
-  if (dur >= 3) S.rg.rec3 = true; scoreRec(); save(); render(false);
+  if (BLOBURL) URL.revokeObjectURL(BLOBURL); BLOBURL = URL.createObjectURL(b); S.recExt = ext; S.recDur = dur; S.recN = (S.recN || 0) + 1;
+  if (dur >= 3) S.rg.rec3 = true; if (dur >= 10) S.rg.rec10 = true; if (S.recN >= 2) S.rg.rec2 = true; scoreRec(); save(); render(false);
   try { const buf = await ac().decodeAudioData(await b.arrayBuffer()); drawBuf(buf); } catch (e) {}
 }
 function drawBuf(buf) {
@@ -293,36 +302,46 @@ function drawBuf(buf) {
   x.fillStyle = "#141124"; x.fillRect(0, 0, W, H); x.fillStyle = "#A98BFF";
   for (let i = 0; i < W; i++) { let mn = 1, mx = -1; for (let j = 0; j < step; j++) { const v = d[i * step + j] || 0; if (v < mn) mn = v; if (v > mx) mx = v; } x.fillRect(i, (1 + mn) * H / 2, 1, Math.max(1, (mx - mn) * H / 2)); }
 }
-function demoWav() {
-  const sr = 22050, secs = 4, n = sr * secs, data = new Float32Array(n), notes = [262, 294, 330, 349, 392, 440, 392, 330];
+function demoWav(secs) {
+  secs = secs || 4; const sr = 22050, n = sr * secs, data = new Float32Array(n), notes = [262, 294, 330, 349, 392, 440, 392, 330];
   for (let i = 0; i < n; i++) { const k = Math.floor(i / (n / notes.length)), t = i / sr, env = Math.min(1, (i % (n / notes.length)) / 800) * Math.exp(-((i % (n / notes.length)) / sr) * 2.5); data[i] = 0.5 * env * Math.sin(2 * Math.PI * notes[k] * t); }
   const buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf), w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
   w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
   for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, data[i])) * 32767, true);
   return new Blob([buf], { type: "audio/wav" });
 }
-function recGoals() { const G = S.rg; return `<b>Tvoje úlohy:</b><ul class="goals"><li>${G.rec3 ? "✅" : "⬜"} Nahraj aspoň 3 sekundy (alebo použi ukážku)</li><li>${G.play ? "✅" : "⬜"} Prehraj si nahrávku</li><li>${G.speed ? "✅" : "⬜"} Prehraj ju rýchlosťou 0.5× alebo 2×. Čo sa stalo s hlasom?</li></ul>${S.t.rec ? `<div class="checkbar"><span class="score ${S.t.rec.score < 3 ? "part" : ""}">Splnené: ${S.t.rec.score} z 3</span></div>` : ""}`; }
+const RECG = [["rec3", "Nahraj aspoň 3 sekundy (alebo použi ukážku)"], ["play", "Prehraj si nahrávku"], ["speed", "Prehraj ju rýchlosťou 0.5× alebo 2×. Čo sa stalo s hlasom?"],
+  ["rec10", "Nahraj dlhšiu nahrávku: aspoň <b>10 sekúnd</b> (alebo použi dlhú ukážku)"], ["rec2", "Urob <b>druhú</b> nahrávku (alebo znova použi ukážku)"], ["both", "Prehraj nahrávku <b>aj</b> rýchlosťou 0.5×, <b>aj</b> 2× a porovnaj"],
+  ["r15", "Prehraj ju rýchlosťou <b>1.5×</b>"], ["r1", "Vráť sa na normálnu rýchlosť <b>1×</b>"], ["end", "Prehraj nahrávku <b>až do konca</b>"],
+  ["seek", "Posuň sa v prehrávači na iné miesto nahrávky"], ["dl", "Stiahni nahrávku do počítača tlačidlom <b>⬇ Stiahnuť súbor</b>"]];
+function recGoals() { const G = S.rg; return `<b>Tvoje úlohy:</b><ul class="goals g2">${RECG.map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t.rec ? `<div class="checkbar"><span class="score ${S.t.rec.score < RECG.length ? "part" : ""}">Splnené: ${S.t.rec.score} z ${RECG.length}</span></div>` : ""}`; }
 function recRefresh() { const el = document.getElementById("recgoals"); if (el) el.innerHTML = recGoals(); }
-function scoreRec() { const n = ["rec3", "play", "speed"].filter(k => S.rg[k]).length; if (n) award("rec", n); }
+function scoreRec() { const n = RECG.filter(([k]) => S.rg[k]).length; if (n) award("rec", n); }
+function recMark(...ks) { ks.forEach(k => S.rg[k] = true); scoreRec(); save(); renderTop(); recRefresh(); }
+let NOSEEK = false;
 
 /* ---------- audacity mock ---------- */
-const SEG0 = [{ n: "ticho", a: 0.03 }, { n: "Ahoj,", a: 0.7 }, { n: "volám sa", a: 0.75 }, { n: "Jana.", a: 0.65 }, { n: "*kašeľ*", a: 1 }, { n: "Rada", a: 0.7 }, { n: "spievam", a: 0.72 }, { n: "a tancujem.", a: 0.18 }];
-function segBars(seg, i) { const out = []; for (let k = 0; k < 14; k++) { const r = Math.abs(Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453) % 1; out.push(seg.a * (seg.n === "*kašeľ*" ? (k > 3 && k < 10 ? 1 : 0.3) : 0.45 + 0.55 * r)); } return out; }
+const SEG0 = [{ k: "ticho", n: "ticho", a: 0.03 }, { k: "ahoj", n: "Ahoj,", a: 0.7 }, { k: "volam", n: "volám sa", a: 0.75 }, { k: "jana", n: "Jana.", a: 0.65 }, { k: "ehm", n: "ehm…", a: 0.45 }, { k: "kasel", n: "*kašeľ*", a: 1 }, { k: "rada", n: "Rada", a: 0.7 }, { k: "klop", n: "*klop klop*", a: 1 }, { k: "spievam", n: "spievam", a: 0.72 }, { k: "tanc", n: "a tancujem.", a: 0.18 }, { k: "koniec", n: "ticho", a: 0.03 }];
+const NOISE = { kasel: 1, klop: 1 };
+function segBars(seg, i) { const out = []; for (let k = 0; k < 14; k++) { const r = Math.abs(Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453) % 1; out.push(seg.a * (seg.k === "kasel" ? (k > 3 && k < 10 ? 1 : 0.3) : seg.k === "klop" ? (k % 4 < 2 ? 1 : 0.15) : 0.45 + 0.55 * r)); } return out; }
+const AUG = [["ticho", "Vystrihni <b>ticho</b> na začiatku nahrávky."], ["kasel", "Vystrihni <b>kašeľ</b> uprostred."], ["amp", "Zosilni tichú časť <b>„a tancujem.“</b>"], ["exp", "Exportuj nahrávku ako <b>MP3</b>."],
+  ["ehm", "Vystrihni zbytočné <b>„ehm…“</b>."], ["klop", "Stíš rušivé <b>klopanie</b> (nevystrihuj ho, je pod ním hlas)."], ["koniec", "Vystrihni <b>ticho na konci</b> nahrávky."],
+  ["play", "Po úprave si nahrávku <b>prehraj</b> a skontroluj."], ["undo", "Vyskúšaj tlačidlo <b>↶ Späť</b>: vráť niektorú úpravu."], ["name", "Pred exportom premenuj súbor na <b>rozhovor_upraveny</b>."]];
 function audSVG() {
-  const U = S.au; if (!U.segs) U.segs = SEG0.map(s => Object.assign({}, s));
-  const w = 600 / U.segs.length; let s = `<svg viewBox="0 0 600 170" role="group" aria-label="Zvuková stopa"><rect width="600" height="170" fill="#1E1E1E"/><line x1="0" y1="80" x2="600" y2="80" stroke="#333"/>`;
-  U.segs.forEach((sg, i) => { const bars = segBars(sg, SEG0.findIndex(o => o.n === sg.n)); s += `<g class="seg ${U.sel === i ? "sel" : ""}" data-sg="${i}"><rect class="bg" x="${i * w}" y="0" width="${w}" height="170"/>`;
-    bars.forEach((b, k) => { const h = b * 70; s += `<rect x="${(i * w + 4 + k * (w - 8) / 14).toFixed(1)}" y="${(80 - h).toFixed(1)}" width="${((w - 8) / 14 - 1.2).toFixed(1)}" height="${(2 * h).toFixed(1)}" fill="${sg.n === "*kašeľ*" ? "#FF8A65" : "#4FA3F7"}" pointer-events="none"/>`; });
+  const U = S.au; if (!U.segs || U.segs.some(s => !s.k)) { U.segs = SEG0.map(s => Object.assign({}, s)); U.done = {}; U.hist = []; U.sel = null; }
+  const VW = 820, w = VW / U.segs.length; let s = `<svg viewBox="0 0 ${VW} 170" role="group" aria-label="Zvuková stopa"><rect width="${VW}" height="170" fill="#1E1E1E"/><line x1="0" y1="80" x2="${VW}" y2="80" stroke="#333"/>`;
+  U.segs.forEach((sg, i) => { const bars = segBars(sg, SEG0.findIndex(o => o.k === sg.k)); s += `<g class="seg ${U.sel === i ? "sel" : ""}" data-sg="${i}"><rect class="bg" x="${i * w}" y="0" width="${w}" height="170"/>`;
+    bars.forEach((b, k) => { const h = b * 70; s += `<rect x="${(i * w + 4 + k * (w - 8) / 14).toFixed(1)}" y="${(80 - h).toFixed(1)}" width="${((w - 8) / 14 - 1.2).toFixed(1)}" height="${(2 * h).toFixed(1)}" fill="${NOISE[sg.k] ? "#FF8A65" : "#4FA3F7"}" pointer-events="none"/>`; });
     s += `<text x="${i * w + w / 2}" y="164" text-anchor="middle" font-family="Rubik,sans-serif" font-size="11" fill="#BBB" pointer-events="none">${sg.n}</text><line x1="${(i + 1) * w}" y1="0" x2="${(i + 1) * w}" y2="150" stroke="#2A2A2A"/></g>`; });
   return s + `</svg>`;
 }
 function audHTML() {
-  const U = S.au, sel = U.sel !== null ? U.segs[U.sel] : null, G = U.done;
+  const track = audSVG(), U = S.au, sel = U.sel !== null ? U.segs[U.sel] : null, G = U.done;
   return `<div class="aud"><div class="tb"><button data-au="play">▶ Prehrať</button><button data-au="del" ${sel ? "" : "disabled"}>✂ Vystrihnúť (Delete)</button><button data-au="amp" ${sel ? "" : "disabled"}>🔊 Zosilniť</button><button data-au="fade" ${sel ? "" : "disabled"}>📉 Stíšiť</button><button data-au="undo">↶ Späť (Ctrl + Z)</button><button data-au="export">💾 Exportovať…</button><span style="margin-left:auto;font-size:12.5px;color:#AAA">${sel ? "Vybrané: " + esc(sel.n) : "Klikni na časť stopy"}</span></div>
-    <div class="track">${audSVG()}</div>
+    <div class="track">${track}</div>
     ${U.dlg ? `<div class="dlg"><b>Exportovať zvuk</b><div style="margin:8px 0">Názov: <input id="aname" value="${esc(U.name)}"> Formát: <select id="afmt">${["MP3", "WAV", "OGG", "FLAC"].map(f => `<option ${U.fmt === f ? "selected" : ""}>${f}</option>`).join("")}</select></div><div class="row" style="margin-top:4px"><button class="primary" data-au="doexp" style="padding:6px 14px;font-size:14px">Uložiť</button><button class="ghost" data-au="cancel" style="padding:6px 14px">Zrušiť</button></div></div>` : ""}</div>
     ${U.msg ? `<div class="fb ${U.msg.k}">${U.msg.t}</div>` : ""}
-    <ul class="goals">${[["ticho", "Vystrihni <b>ticho</b> na začiatku nahrávky."], ["kasel", "Vystrihni <b>kašeľ</b> uprostred."], ["amp", "Zosilni tichú časť <b>„a tancujem.“</b>"], ["exp", "Exportuj nahrávku ako <b>MP3</b>."]].map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`;
+    <ul class="goals g2">${AUG.map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`;
 }
 
 /* ---------- search ---------- */
@@ -334,7 +353,7 @@ const SRCH = [
 ];
 
 const TASKS = {
-  gen: { id: "gen", type: "custom", max: 2 },
+  gen: { id: "gen", type: "custom", max: 11 },
   zvq: { id: "zvq", type: "mc", qs: [
     { id: "1", q: "Čo sa stane s tónom, keď zvýšiš frekvenciu (Hz)?", opts: ["Tón bude vyšší", "Tón bude hlasnejší", "Tón bude dlhší", "Nič sa nezmení"], a: 0 },
     { id: "2", q: "Čo sa zmení na vlne, keď zvýšiš hlasitosť?", opts: ["Vlna bude vyššia (väčšia amplitúda)", "Vlna bude hustejšia", "Vlna zmizne", "Vlna sa otočí"], a: 0 },
@@ -345,10 +364,14 @@ const TASKS = {
   progq: { id: "progq", type: "mc", keep: true, qs: [
     { id: "1", q: "Chceš rýchlo nahrať hlasovú poznámku vo Windows.", opts: ["Zvukový záznamník", "Audacity", "VLC media player", "Microsoft Word"], a: 0 },
     { id: "2", q: "Chceš z nahrávky vystrihnúť chybu a zosilniť hlas.", opts: ["Zvukový záznamník", "Audacity", "VLC media player", "Microsoft Word"], a: 1 },
-    { id: "3", q: "Chceš prehrať skoro akýkoľvek zvukový aj video súbor.", opts: ["Zvukový záznamník", "Audacity", "VLC media player", "Microsoft Word"], a: 2 }
+    { id: "3", q: "Chceš prehrať skoro akýkoľvek zvukový aj video súbor.", opts: ["Zvukový záznamník", "Audacity", "VLC media player", "Microsoft Word"], a: 2 },
+    { id: "4", q: "Si na výlete bez počítača a chceš nahrať, čo hovorí sprievodca.", opts: ["Diktafón v mobile", "Audacity", "VLC media player", "Microsoft Word"], a: 0 },
+    { id: "5", q: "Chceš si vo Windows vypočuť album bez inštalovania ďalšieho programu.", opts: ["Zvukový záznamník", "Audacity", "Media Player", "Diktafón v mobile"], a: 2 },
+    { id: "6", q: "Chceš spojiť dve nahrávky do jednej a pod hlas pridať tichú hudbu.", opts: ["Zvukový záznamník", "Audacity", "VLC media player", "Media Player"], a: 1 },
+    { id: "7", q: "Kamarát ti poslal zvuk v zvláštnom formáte a Media Player ho neotvorí.", opts: ["Zvukový záznamník", "Microsoft Word", "VLC media player", "Diktafón v mobile"], a: 2 }
   ]},
-  rec: { id: "rec", type: "custom", max: 3 },
-  aud: { id: "aud", type: "custom", max: 4 },
+  rec: { id: "rec", type: "custom", max: 11 },
+  aud: { id: "aud", type: "custom", max: 10 },
   audq: { id: "audq", type: "mc", qs: [
     { id: "1", q: "Ktorou skratkou vrátiš poslednú úpravu, keď vystrihneš niečo omylom?", opts: ["Ctrl + Z", "Ctrl + X", "Ctrl + S", "Delete"], a: 0 },
     { id: "2", q: "Aký je rozdiel medzi Uložiť projekt a Exportovať v Audacity?", opts: ["Export vytvorí zvukový súbor (MP3, WAV), projekt sa dá ďalej upravovať iba v Audacity", "Nie je medzi nimi rozdiel", "Projekt je vždy MP3", "Export zmaže nahrávku"], a: 0 },
@@ -369,11 +392,13 @@ const TASKS = {
     { id: "2", q: "Tón A má 440 Hz. Aká je frekvencia tónu A o oktávu vyššie (dvojnásobok)?", ok: v => parseNum(v) === 880, show: "880", ph: "?" },
     { id: "3", q: "Zvuk prejde vzduchom asi 343 m za sekundu. Koľko metrov prejde za 3 sekundy?", ok: v => parseNum(String(v).replace(/\s/g, "")) === 1029, show: "1029", ph: "?" }
   ]},
-  g_zd: { id: "g_zd", type: "custom", max: 6 },
+  g_zd: { id: "g_zd", type: "custom", max: 10 },
   kq: { id: "kq", type: "mc", qs: [
     { id: "1", q: "Čo udáva dátový tok (bitrate) MP3, napr. 128 kbit/s alebo 320 kbit/s?", opts: ["koľko dát pripadá na sekundu zvuku; vyšší = lepšia kvalita a väčší súbor", "hlasitosť", "dĺžku skladby", "počet nástrojov"], a: 0 },
     { id: "2", q: "Prečo pri úpravách pracovať so súborom WAV a až na konci exportovať do MP3?", opts: ["WAV je bezstratový, opakované ukladanie do MP3 kvalitu postupne zhoršuje", "WAV je menší", "MP3 sa nedá prehrať", "nie je dôvod"], a: 0 },
-    { id: "3", q: "Čo je mono a stereo?", opts: ["mono má jeden zvukový kanál, stereo dva (ľavý a pravý)", "mono je hlasnejšie", "stereo je iba v kine", "nie je rozdiel"], a: 0 }
+    { id: "3", q: "Čo je mono a stereo?", opts: ["mono má jeden zvukový kanál, stereo dva (ľavý a pravý)", "mono je hlasnejšie", "stereo je iba v kine", "nie je rozdiel"], a: 0 },
+    { id: "4", q: "Čo znamená vzorkovacia frekvencia 44,1 kHz (napr. pri hudobnom CD)?", opts: ["zvuk sa zmeria 44 100-krát za sekundu", "skladba trvá 44,1 minúty", "hlasitosť je 44,1 dB", "súbor má 44,1 MB"], a: 0, why: "Čím viac vzoriek za sekundu, tým vernejšie počítač zachytí zvuk, ale súbor je väčší." },
+    { id: "5", q: "Kde nahráš hlas najčistejšie?", opts: ["v tichej miestnosti, kúsok od mikrofónu", "na chodbe cez prestávku", "pri otvorenom okne do ulice", "čo najďalej od mikrofónu"], a: 0 }
   ]},
   test: { id: "test", type: "mc", qs: [
     { id: "1", q: "Ktorý program je bezplatný editor zvuku?", opts: ["Audacity", "Microsoft Word", "Malovanie", "Excel"], a: 0 },
@@ -399,8 +424,7 @@ const VIEWS = {
       <div class="sl"><span>Výška (Hz)</span><input type="range" min="100" max="2000" step="10" value="${G.f}" data-gf aria-label="Frekvencia"><b id="gfv">${G.f}</b></div>
       <div class="sl"><span>Hlasitosť</span><input type="range" min="0" max="100" value="${G.v}" data-gv aria-label="Hlasitosť"><b id="gvv">${G.v} %</b></div>
       <div class="row"><button class="primary" data-tone="on">▶ Zapnúť tón</button><button class="ghost" data-tone="off">⏹ Vypnúť</button></div></div></div>
-      <ul class="goals"><li>${G.heard.low ? "✅" : "⬜"} Vypočuj si hlboký tón (pod 200 Hz)</li><li>${G.heard.high ? "✅" : "⬜"} Vypočuj si vysoký tón (nad 1500 Hz)</li></ul>
-      ${S.t.gen ? `<div class="checkbar"><span class="score ${S.t.gen.score < 2 ? "part" : ""}">Splnené: ${S.t.gen.score} z 2</span></div>` : ""}</div>
+      <div id="gengoals">${genGoals()}</div></div>
     <h3>Otázky</h3><div class="task">${taskHTML("zvq")}</div>
     <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("zin")}</div>` + nextBar();
   },
@@ -426,7 +450,7 @@ const VIEWS = {
     <div class="box"><p>🎤 Povedz napríklad: <i>„Ahoj, volám sa … a chodím do Tercie. Moja obľúbená pesnička je …“</i></p></div>
     <div class="rec"><div style="display:flex;justify-content:space-between;align-items:center"><b>🎙️ Záznamník</b><span>${S.recOn ? `<span class="rdot"></span><span id="rtime">0.0 s</span>` : S.recDur ? `Nahrávka: ${S.recDur.toFixed(1)} s` : ""}</span></div>
       <canvas id="rcv" width="800" height="160" style="margin-top:10px" aria-label="Zvuková vlna nahrávky"></canvas>
-      <div class="btns"><button class="rbtn red" data-rc="start" ${S.recOn ? "disabled" : ""}>● Nahrávať</button><button class="rbtn gray" data-rc="stop" ${S.recOn ? "" : "disabled"}>■ Zastaviť</button><button class="rbtn gray" data-rc="demo" ${S.recOn ? "disabled" : ""}>🎵 Nemám mikrofón, použiť ukážku</button></div>
+      <div class="btns"><button class="rbtn red" data-rc="start" ${S.recOn ? "disabled" : ""}>● Nahrávať</button><button class="rbtn gray" data-rc="stop" ${S.recOn ? "" : "disabled"}>■ Zastaviť</button><button class="rbtn gray" data-rc="demo" ${S.recOn ? "disabled" : ""}>🎵 Nemám mikrofón, použiť ukážku</button><button class="rbtn gray" data-rc="demo12" ${S.recOn ? "disabled" : ""}>🎵 Dlhá ukážka (12 s)</button></div>
       ${BLOBURL ? `<audio id="rau" controls src="${BLOBURL}"></audio>
         <div class="btns"><span style="align-self:center">Rýchlosť prehrávania:</span>${[0.5, 1, 1.5, 2].map(r => `<button class="rbtn gray" data-rate="${r}">${r}×</button>`).join("")}<a class="rbtn gray" style="text-decoration:none" href="${BLOBURL}" download="moja_nahravka.${S.recExt || "webm"}" data-dl>⬇ Stiahnuť súbor</a></div>` : ""}
       ${S.recErr ? `<div class="fb bad" style="color:#1B1B1F">${S.recErr}</div>` : ""}</div>
@@ -437,7 +461,7 @@ const VIEWS = {
     return head() + `<h2>Úprava zvuku v Audacity</h2>
     <p>V Audacity vidíš zvuk ako <b>vlnu</b>: kde je vlna vysoká, je zvuk hlasný, kde je plochá, je ticho. Označíš časť nahrávky a potom ju vystrihneš, zosilníš alebo stíšiš. Nakoniec nahrávku <b>exportuješ</b> do zvukového súboru.</p>
     <h3>Úloha 1: uprav rozhovor</h3><p>Klikni na časť stopy, aby si ju označil, a potom použi tlačidlo hore.</p>
-    <div class="task">${audHTML()}${S.t.aud ? `<div class="checkbar"><span class="score ${S.t.aud.score < 4 ? "part" : ""}">Splnené: ${S.t.aud.score} zo 4</span></div>` : ""}</div>
+    <div class="task">${audHTML()}${S.t.aud ? `<div class="checkbar"><span class="score ${S.t.aud.score < AUG.length ? "part" : ""}">Splnené: ${S.t.aud.score} z ${AUG.length}</span></div>` : ""}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("audq")}</div>` + nextBar();
   },
   formaty() {
@@ -452,21 +476,29 @@ const VIEWS = {
   },
   precvic() { return head() + `<h2>Precvičovanie: zvukový poradca</h2>
     <div class="theory"><p>Spolužiaci riešia zvuk. Pri každej situácii vyber najlepší program, formát alebo postup a potom odpovedz na otázky o kvalite zvuku.</p></div>
-    ${S.t.g_zd ? `<div class="checkbar"><span class="score ${S.t.g_zd.score < 6 ? "part" : ""}">Správne: ${S.t.g_zd.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("zd", ZDI, ZDO)}</div>
+    ${S.t.g_zd ? `<div class="checkbar"><span class="score ${S.t.g_zd.score < ZDI.length ? "part" : ""}">Správne: ${S.t.g_zd.score} z ${ZDI.length}</span></div>` : ""}<div class="tool">${selBlock("zd", ZDI, ZDO)}</div>
     <h3>Kvalita zvuku</h3><div class="task">${taskHTML("kq")}</div>` + nextBar(); },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
 
 /* ---------- events ---------- */
-function markHeard() { const G = S.gen; if (!OSC) return; if (G.f < 200) G.heard.low = true; if (G.f > 1500) G.heard.high = true; const n = Object.keys(G.heard).length; if (n) award("gen", n); save(); }
+const GENG = [["low", "Vypočuj si hlboký tón (pod 200 Hz)", g => g.f < 200], ["high", "Vypočuj si vysoký tón (nad 1500 Hz)", g => g.f > 1500],
+  ["a440", "Nastav tón <b>440 Hz</b> (komorné A, podľa neho sa ladia nástroje)", g => g.f === 440], ["a880", "Nastav tón o oktávu vyšší: <b>880 Hz</b>", g => g.f === 880],
+  ["k1", "Nastav presne <b>1 kHz</b>", g => g.f === 1000], ["min", "Nastav najnižší tón generátora: <b>100 Hz</b>", g => g.f === 100],
+  ["max", "Nastav najvyšší tón generátora: <b>2000 Hz</b>", g => g.f === 2000], ["quiet", "Pusti <b>tichý</b> tón (hlasitosť pod 20 %, ale nie 0)", g => g.v > 0 && g.v < 20],
+  ["loud", "Pusti <b>hlasný</b> tón (hlasitosť nad 80 %)", g => g.v > 80], ["loudlow", "Pusti <b>hlasný hlboký</b> tón (nad 80 % a pod 200 Hz)", g => g.v > 80 && g.f < 200],
+  ["quiethigh", "Pusti <b>tichý vysoký</b> tón (pod 20 % a nad 1500 Hz)", g => g.v > 0 && g.v < 20 && g.f > 1500]];
+function genGoals() { const G = S.gen, sc = S.t.gen; return `<p style="margin:10px 0 0"><b>Tvoje úlohy</b> (tón musí byť zapnutý; posuvník jemne doladíš šípkami ← →):</p><ul class="goals g2">${GENG.map(([k, t]) => `<li>${G.heard[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>
+      ${sc ? `<div class="checkbar"><span class="score ${sc.score < GENG.length ? "part" : ""}">Splnené: ${sc.score} z ${GENG.length}</span></div>` : ""}`; }
+function markHeard() { const G = S.gen; if (!OSC) return; let ch = false; GENG.forEach(([k, , f]) => { if (!G.heard[k] && f(G)) { G.heard[k] = true; ch = true; } }); const n = GENG.filter(([k]) => G.heard[k]).length; if (n) award("gen", n); save(); if (ch) { const el = document.getElementById("gengoals"); if (el) el.innerHTML = genGoals(); renderTop(); } }
 
 function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key]; return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k];
   if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
 function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k][i] = t.value; save(); return true; } return false; }
 
-const ZDI = [["Nahrávaš podcast a chceš vystrihnúť chyby a pridať hudbu.", "aud", "Audacity je bezplatný zvukový editor."], ["Chceš rýchlo nahrať hlasovú poznámku na mobile.", "dikt", "Stačí vstavaný diktafón."], ["Posielaš nahrávku kamarátovi cez chat a má byť malá.", "mp3", "Komprimovaný formát so stratou."], ["Archivuješ kvalitnú nahrávku na ďalšie úpravy.", "wav", "Bezstratový formát bez straty kvality."], ["Na nahrávke je počuť šum a chrčanie, lebo si bol ďaleko od mikrofónu.", "znova", "Najlepšie je nahrať znova bližšie k mikrofónu v tichu."], ["Chceš si iba vypočuť hudbu vo Windows.", "prehr", "Prehrávač (Media Player) stačí."]];
-const ZDO = [["", "— vyber —"], ["aud", "Audacity (zvukový editor)"], ["dikt", "Diktafón v mobile"], ["prehr", "Prehrávač médií"], ["mp3", "Uložiť ako MP3"], ["wav", "Uložiť ako WAV"], ["znova", "Nahrať znova bližšie k mikrofónu"]];
+const ZDI = [["Nahrávaš podcast a chceš vystrihnúť chyby a pridať hudbu.", "aud", "Audacity je bezplatný zvukový editor."], ["Chceš rýchlo nahrať hlasovú poznámku na mobile.", "dikt", "Stačí vstavaný diktafón."], ["Posielaš nahrávku kamarátovi cez chat a má byť malá.", "mp3", "Komprimovaný formát so stratou."], ["Archivuješ kvalitnú nahrávku na ďalšie úpravy.", "wav", "Bezstratový formát bez straty kvality."], ["Na nahrávke je počuť šum a chrčanie, lebo si bol ďaleko od mikrofónu.", "znova", "Najlepšie je nahrať znova bližšie k mikrofónu v tichu."], ["Chceš si iba vypočuť hudbu vo Windows bez inštalovania ďalšieho programu.", "prehr", "Prehrávač (Media Player) stačí."], ["Nahrávka má na začiatku dlhé ticho a chceš ho odstrániť.", "aud", "Ticho vystrihneš v zvukovom editore."], ["Kamarát ti poslal zvuk v zvláštnom formáte a Media Player ho neotvorí.", "vlc", "VLC prehrá takmer každý formát."], ["Na hodine chceš na notebooku s Windows nahrať krátku odpoveď bez inštalovania programov.", "zazn", "Zvukový záznamník je súčasťou Windows."], ["Hlas na nahrávke je skreslený a chrčí, lebo si kričal priamo do mikrofónu.", "znova", "Skreslenie sa dodatočne neopraví, treba nahrať znova primerane nahlas."]];
+const ZDO = [["", "— vyber —"], ["aud", "Audacity (zvukový editor)"], ["dikt", "Diktafón v mobile"], ["zazn", "Zvukový záznamník (Windows)"], ["prehr", "Prehrávač médií"], ["vlc", "VLC media player"], ["mp3", "Uložiť ako MP3"], ["wav", "Uložiť ako WAV"], ["znova", "Nahrať znova bližšie k mikrofónu"]];
 
 function CUSTOM_CLICK(e) {
   if (selClick(e, { zd: [ZDI, "g_zd"] })) return true;
@@ -475,22 +507,30 @@ function CUSTOM_CLICK(e) {
   const el = e.target.closest("button,a[data-dl]"); if (!el) return false; const ds = el.dataset;
   if (ds.tone) { if (ds.tone === "on") { toneOn(); markHeard(); render(false); } else toneOff(); return true; }
   if (ds.sr) { if (!S.t.search) award("search", ds.sr === "off" ? 1 : 0); S.sr = ds.sr; save(); render(false); return true; }
-  if (ds.rc) { if (ds.rc === "start") startRec(); if (ds.rc === "stop") stopRec(); if (ds.rc === "demo") { setBlob(demoWav(), "wav", 4); S.recErr = null; } return true; }
-  if (ds.rate) { const a = document.getElementById("rau"); if (a) { a.preservesPitch = false; a.mozPreservesPitch = false; a.webkitPreservesPitch = false; a.playbackRate = +ds.rate; a.currentTime = 0; a.play(); if (+ds.rate !== 1) { S.rg.speed = true; S.rg.play = true; scoreRec(); save(); renderTop(); recRefresh(); } } return true; }
+  if (ds.rc) { if (ds.rc === "start") startRec(); if (ds.rc === "stop") stopRec(); if (ds.rc === "demo") { setBlob(demoWav(), "wav", 4); S.recErr = null; } if (ds.rc === "demo12") { setBlob(demoWav(12), "wav", 12); S.recErr = null; } return true; }
+  if (ds.rate) { const a = document.getElementById("rau"); if (a) { a.preservesPitch = false; a.mozPreservesPitch = false; a.webkitPreservesPitch = false; const r = +ds.rate; a.playbackRate = r; NOSEEK = true; a.currentTime = 0; setTimeout(() => NOSEEK = false, 400); a.play();
+    if (r === 0.5) S.rg.r05 = true; if (r === 2) S.rg.r2 = true; const k = ["play"]; if (r === 0.5 || r === 2) k.push("speed"); if (S.rg.r05 && S.rg.r2) k.push("both"); if (r === 1.5) k.push("r15"); if (r !== 1) S.rg.odd = true; else if (S.rg.odd) k.push("r1"); recMark(...k); } return true; }
+  if (ds.dl !== undefined) { recMark("dl"); return false; }
   if (ds.au) {
     const U = S.au, a = ds.au; U.msg = null;
     if (!U.hist) U.hist = [];
-    if (a === "del" && U.sel !== null) { U.hist.push(JSON.stringify(U.segs)); const n = U.segs[U.sel].n; U.segs.splice(U.sel, 1); U.sel = null;
-      if (n === "ticho") U.done.ticho = true; else if (n === "*kašeľ*") U.done.kasel = true; else U.msg = { k: "bad", t: `Vystrihol si „${esc(n)}“, to je však časť rozhovoru. Vráť to späť tlačidlom ↶ Späť (Ctrl + Z).` }; }
-    if (a === "amp" && U.sel !== null) { U.hist.push(JSON.stringify(U.segs)); const sgm = U.segs[U.sel]; if (sgm.n === "a tancujem.") { sgm.a = 0.7; U.done.amp = true; } else { sgm.a = Math.min(1, sgm.a * 1.4); U.msg = { k: "info", t: "Táto časť už bola dosť hlasná. Príliš silný zvuk by chrčal. Hľadaj tú tichú časť." }; } }
-    if (a === "fade" && U.sel !== null) { U.hist.push(JSON.stringify(U.segs)); U.segs[U.sel].a *= 0.4; }
-    if (a === "undo" && U.hist.length) { U.segs = JSON.parse(U.hist.pop()); U.sel = null; U.done.ticho = U.segs.every(s => s.n !== "ticho") && U.done.ticho; U.done.kasel = U.segs.every(s => s.n !== "*kašeľ*") && U.done.kasel; }
-    if (a === "play") U.msg = { k: "info", t: "▶ " + U.segs.map(s => s.n).join(" ") };
+    const has = k => U.segs.some(s => s.k === k), seg = k => U.segs.find(s => s.k === k);
+    if (a === "del" && U.sel !== null) { U.hist.push(JSON.stringify(U.segs)); const sg = U.segs[U.sel]; U.segs.splice(U.sel, 1); U.sel = null;
+      if (["ticho", "kasel", "ehm", "koniec"].includes(sg.k)) U.done[sg.k] = true;
+      else if (sg.k === "klop") U.msg = { k: "bad", t: "Klopanie máš <b>stíšiť</b>, nie vystrihnúť, lebo je pod ním hlas. Vráť to späť tlačidlom ↶ Späť (Ctrl + Z)." };
+      else U.msg = { k: "bad", t: `Vystrihol si „${esc(sg.n)}“, to je však časť rozhovoru. Vráť to späť tlačidlom ↶ Späť (Ctrl + Z).` }; }
+    if (a === "amp" && U.sel !== null) { U.hist.push(JSON.stringify(U.segs)); const sgm = U.segs[U.sel]; if (sgm.k === "tanc") { sgm.a = 0.7; U.done.amp = true; } else { sgm.a = Math.min(1, sgm.a * 1.4); U.msg = { k: "info", t: "Táto časť už bola dosť hlasná. Príliš silný zvuk by chrčal. Hľadaj tú tichú časť." }; } }
+    if (a === "fade" && U.sel !== null) { U.hist.push(JSON.stringify(U.segs)); const sgm = U.segs[U.sel]; sgm.a *= 0.4; if (sgm.k === "klop") U.done.klop = true; }
+    if (a === "undo" && U.hist.length) { U.segs = JSON.parse(U.hist.pop()); U.sel = null; U.done.undo = true;
+      ["ticho", "kasel", "ehm", "koniec"].forEach(k => { if (has(k)) U.done[k] = false; });
+      if (has("klop") && seg("klop").a > 0.5) U.done.klop = false; if (has("tanc") && seg("tanc").a < 0.5) U.done.amp = false; }
+    if (a === "play") { U.msg = { k: "info", t: "▶ " + U.segs.map(s => s.n).join(" ") }; if (U.hist.length) U.done.play = true; else U.msg.t += "<br><small>Najprv nahrávku uprav, potom si ju prehraj.</small>"; }
     if (a === "export") U.dlg = true;
     if (a === "cancel") U.dlg = false;
     if (a === "doexp") { const f = document.getElementById("afmt"), nm = document.getElementById("aname"); U.fmt = f ? f.value : U.fmt; U.name = nm ? nm.value : U.name; U.dlg = false;
+      if (/^rozhovor_upraven[yý]$/i.test(U.name.trim())) U.done.name = true;
       if (U.fmt === "MP3") { U.done.exp = true; U.msg = { k: "ok", t: `💾 Uložené ako <b>${esc(U.name)}.mp3</b>. Tento súbor si vypočuješ v každom prehrávači.` }; } else U.msg = { k: "info", t: `Uložené ako ${esc(U.name)}.${U.fmt.toLowerCase()}. Úloha však chce MP3.` }; }
-    const n = ["ticho", "kasel", "amp", "exp"].filter(k => U.done[k]).length; if (n) award("aud", n);
+    const n = AUG.filter(([k]) => U.done[k]).length; if (n) award("aud", n);
     save(); render(false); return true;
   }
   return false;
@@ -499,11 +539,13 @@ function CUSTOM_INPUT(e) {
   if (selInput(e)) return true;
   const t = e.target;
   if (t.dataset.gf !== undefined) { S.gen.f = +t.value; if (OSC) OSC.frequency.value = S.gen.f; document.getElementById("gfv").textContent = S.gen.f; const w = document.querySelector(".gen svg"); if (w) w.outerHTML = waveSVG(); markHeard(); return true; }
-  if (t.dataset.gv !== undefined) { S.gen.v = +t.value; if (GN) GN.gain.value = S.gen.v / 100 * 0.3; document.getElementById("gvv").textContent = S.gen.v + " %"; const w = document.querySelector(".gen svg"); if (w) w.outerHTML = waveSVG(); return true; }
+  if (t.dataset.gv !== undefined) { S.gen.v = +t.value; if (GN) GN.gain.value = S.gen.v / 100 * 0.3; document.getElementById("gvv").textContent = S.gen.v + " %"; const w = document.querySelector(".gen svg"); if (w) w.outerHTML = waveSVG(); markHeard(); return true; }
   return false;
 }
 document.addEventListener("change", e => { if (e.target.dataset && (e.target.dataset.gf !== undefined)) render(false); });
-document.addEventListener("play", e => { if (e.target.id === "rau") { S.rg.play = true; scoreRec(); save(); renderTop(); recRefresh(); } }, true);
+document.addEventListener("play", e => { if (e.target.id === "rau") recMark("play"); }, true);
+document.addEventListener("ended", e => { if (e.target.id === "rau") recMark("end"); }, true);
+document.addEventListener("seeked", e => { if (e.target.id === "rau" && !NOSEEK && e.target.currentTime > 0.05 && !e.target.ended) recMark("seek"); }, true);
 function AFTER_RENDER(id) { if (id !== "zvuk") toneOff(); if (id === "nahraj" && BLOBURL && !S.recOn) { fetch(BLOBURL).then(r => r.arrayBuffer()).then(b => ac().decodeAudioData(b)).then(drawBuf).catch(() => {}); } if (id === "nahraj" && S.recOn) live(); }
 
 /* ===== shared lesson engine ===== */
