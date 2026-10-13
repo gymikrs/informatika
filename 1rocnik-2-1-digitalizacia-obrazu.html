@@ -216,7 +216,7 @@ const PF = (() => {
   const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
   const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
   let uid = 0;
-  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
   const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
   const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
   /* zalomenie textu na riadky podľa počtu znakov */
@@ -228,7 +228,14 @@ const PF = (() => {
   const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
   const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
   const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
-  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
 })();
 
 /* Ilustrácie – 1. ročník 2.1 Digitalizácia obrazu */
@@ -312,12 +319,15 @@ function pxHTML() { const P = S.px, rows = Array.from({ length: 8 }, (_, r) => P
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, tol, why) => ({ id, q, ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - ans) <= (tol || 0), show: ans.toLocaleString("sk"), ph: "?", why });
 const TASKS = {
-  g_dig: { id: "g_dig", type: "custom", max: 3 },
+  g_dig: { id: "g_dig", type: "custom", max: 6 },
   dq: { id: "dq", type: "mc", qs: [
     { id: "1", ...Q("Čo je digitalizácia obrazu?", ["prevod obrazu na čísla: rozdelenie na pixely a zápis ich farby", "tlač obrázka", "kreslenie myšou", "zmenšenie fotky"], 0) },
     { id: "2", ...Q("Čo sa stane pri malom rozlíšení?", ["obraz sa skladá z mála veľkých štvorcov, strácajú sa detaily", "obraz je ostrejší", "zmenia sa farby na čiernobiele", "nič"], 0) },
     { id: "3", ...Q("Čo sa stane pri malej farebnej hĺbke?", ["farby sa zlejú do niekoľkých odtieňov, prechody sú schodovité", "obraz je rozmazaný", "obraz je väčší", "pixely sú väčšie"], 0) },
-    { id: "4", ...Q("Ktoré zariadenia digitalizujú obraz?", ["fotoaparát, skener, webkamera", "tlačiareň, monitor", "reproduktor", "klávesnica"], 0) }
+    { id: "4", ...Q("Ktoré zariadenia digitalizujú obraz?", ["fotoaparát, skener, webkamera", "tlačiareň, monitor", "reproduktor", "klávesnica"], 0) },
+    { id: "5", ...Q("Čo je pixel?", ["najmenší bod obrázka, ktorý má jednu farbu", "jednotka veľkosti súboru", "typ obrazového súboru", "časť monitora, ktorá vydáva zvuk"], 0) },
+    { id: "6", ...Q("Ako sa volajú dva kroky digitalizácie obrazu?", ["vzorkovanie (rozdelenie na pixely) a kvantovanie (zaokrúhlenie farby)", "tlač a skenovanie", "kompresia a dekompresia", "kreslenie a vyfarbovanie"], 0) },
+    { id: "7", ...Q("Čím je daný bitmapový (rastrový) obrázok?", ["mriežkou pixelov, kde má každý pixel zapísanú svoju farbu", "zoznamom čiar a kriviek so súradnicami", "iba názvom a veľkosťou súboru", "počtom použitých farieb"], 0) }
   ]},
   rin: { id: "rin", type: "input", qs: [
     inq("1", "Koľko pixelov má obrázok 1920 × 1080?", 2073600), inq("2", "Koľko megapixelov má fotka 4000 × 3000?", 12),
@@ -326,7 +336,7 @@ const TASKS = {
     inq("5", "Displej má šírku 3 palce a 1080 pixelov. Koľko PPI (pixelov na palec) má?", 360)
   ]},
   hin: { id: "hin", type: "input", qs: [
-    inq("1", "Koľko farieb vie zobraziť 1 bit na pixel?", 2), inq("2", "Koľko odtieňov vie zobraziť 8 bitov na pixel?", 256),
+    inq("2", "Koľko odtieňov vie zobraziť 8 bitov na pixel?", 256),
     inq("3", "Koľko farieb má 24-bitová farebná hĺbka (8 bitov pre R, G aj B)?", 16777216, 0, "2²⁴ = 16 777 216, bežne sa hovorí 16,7 milióna farieb."),
     inq("4", "Koľko bitov treba na 16 farieb?", 4)
   ]},
@@ -345,12 +355,9 @@ const TASKS = {
   dsort: { id: "dsort", type: "sort", buckets: [{ id: "a", label: "🎨 Analógový obraz" }, { id: "d", label: "💾 Digitálny obraz" }],
     items: [{ id: "1", t: "Olejomaľba na plátne", b: "a" }, { id: "2", t: "Fotka vyvolaná z filmu", b: "a" }, { id: "3", t: "Kresba ceruzkou", b: "a" }, { id: "4", t: "Fotka z mobilu", b: "d" }, { id: "5", t: "Naskenovaný dokument", b: "d" }, { id: "6", t: "Obrázok nakreslený v Skicári", b: "d" }] },
   fin: { id: "fin", type: "input", qs: [
-    { id: "1", q: "Fotoaparát má rozlíšenie 4000 × 3000 pixelov. Koľko megapixelov (Mpx) to je?", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 12) <= 0.0, show: "12", ph: "?" },
-    { id: "2", q: "Koľko pixelov má obrazovka Full HD 1920 × 1080?", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 2073600) <= 0, show: "2073600", ph: "?" },
     { id: "3", q: "Koľko bajtov zaberie nekomprimovaný čiernobiely obrázok 100 × 100 pixelov s 8-bitovou hĺbkou (1 B na pixel)?", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 10000) <= 0, show: "10000", ph: "?" },
     { id: "4", q: "Farebná fotka 1920 × 1080 s 24-bitovou hĺbkou (3 B na pixel) nekomprimovaná: koľko MB? (1 MB = 1 000 000 B, na 1 desatinné)", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 6.2) <= 0.05, show: "6,2", ph: "?" },
-    { id: "5", q: "Obrázok 800 × 600 zmenšíš na polovičnú šírku aj výšku. Koľkokrát menej pixelov má?", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 4) <= 0.0, show: "4", ph: "?" },
-    { id: "6", q: "Koľko rôznych farieb dovolí 24-bitová farebná hĺbka? (2 na 24)", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 16777216) <= 0, show: "16777216", ph: "?" }
+    { id: "5", q: "Obrázok 800 × 600 zmenšíš na polovičnú šírku aj výšku. Koľkokrát menej pixelov má?", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 4) <= 0.0, show: "4", ph: "?" }
   ]},
   fq: { id: "fq", type: "mc", qs: [
     { id: "1", q: "Čo sa stane, keď malú bitmapu veľmi zväčšíš?", opts: ["Uvidíš kockaté pixely a rozmazané hrany", "Obraz bude ostrejší", "Pribudnú nové detaily", "Nič sa nezmení"], a: 0 },
@@ -372,7 +379,7 @@ const VIEWS = {
     <div class="theory"><p>Skutočný obraz okolo nás je <b>analógový</b>: farby a jas sa menia plynule. Počítač vie uložiť iba čísla, preto obraz treba <b>digitalizovať</b>. Robia to fotoaparáty, skenery a webkamery v dvoch krokoch:</p>
       <ul><li><b>vzorkovanie</b> (rastrovanie): obraz sa rozdelí na mriežku malých štvorčekov, <b>pixelov</b>,</li><li><b>kvantovanie</b>: farba každého pixelu sa zaokrúhli na jednu z konečného počtu farieb a zapíše číslom.</li></ul>
       <p>Takto vzniká <b>bitmapová (rastrová) grafika</b>. Kvalitu určuje <b>rozlíšenie</b> (koľko pixelov) a <b>farebná hĺbka</b> (koľko bitov na farbu).</p></div>
-    <h3>Vyskúšaj digitalizáciu</h3><div class="task"><ul class="goals"><li>${G.low ? "✅" : "⬜"} nastav rozlíšenie 32 pixelov na šírku alebo menej</li><li>${G.bw ? "✅" : "⬜"} nastav farebnú hĺbku 1 bit</li><li>${G.hi ? "✅" : "⬜"} nastav plné rozlíšenie 320 a 24 bitov</li></ul>${S.t.g_dig ? `<div class="checkbar"><span class="score ${S.t.g_dig.score < 3 ? "part" : ""}">Splnené: ${S.t.g_dig.score} z 3</span></div>` : ""}</div>
+    <h3>Vyskúšaj digitalizáciu</h3><div class="task" id="diggoals">${digGoals()}</div>
     <div class="tool" id="digbox">${digHTML()}</div>
     <h3>Otázky</h3><div class="task">${taskHTML("dq")}</div>` + nextBar(); },
   rozlisenie: () => head() + `<h2>Pixel a rozlíšenie</h2>${guessBox()}
@@ -403,7 +410,12 @@ const VIEWS = {
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("fq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function digScore() { const G = S.dg; if (S.res <= 32) G.low = true; if (S.lv === 2) G.bw = true; if (S.res === 320 && S.lv === 256 && (G.low || G.bw)) G.hi = true; const n = Object.keys(G).length; if (n) award("g_dig", n); }
+const DIGG = [["low", "nastav rozlíšenie 32 pixelov na šírku alebo menej"], ["bw", "nastav farebnú hĺbku 1 bit"], ["hi", "nastav plné rozlíšenie 320 a 24 bitov"],
+  ["min", "nastav najmenšie rozlíšenie: 8 pixelov na šírku"], ["lv4", "nastav farebnú hĺbku 2 bity na farbu"], ["mid", "nastav polovičné rozlíšenie 160 a 3 bity na farbu"]];
+function digGoals() { const G = S.dg; return `<ul class="goals">${DIGG.map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t.g_dig ? `<div class="checkbar"><span class="score ${S.t.g_dig.score < DIGG.length ? "part" : ""}">Splnené: ${S.t.g_dig.score} z ${DIGG.length}</span></div>` : ""}`; }
+function digScore() { const G = S.dg; if (S.res <= 32) G.low = true; if (S.lv === 2) G.bw = true; if (S.res === 320 && S.lv === 256 && (G.low || G.bw)) G.hi = true;
+  if (S.res === 8) G.min = true; if (S.lv === 4) G.lv4 = true; if (S.res === 160 && S.lv === 8) G.mid = true;
+  const n = DIGG.filter(([k]) => G[k]).length; if (n) award("g_dig", n); const el = document.getElementById("diggoals"); if (el) el.innerHTML = digGoals(); }
 function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
   if (ds.px !== undefined) { S.px[+ds.px] ^= 1; const ok = Array.from({ length: 8 }, (_, r) => S.px.slice(r * 8, r * 8 + 8).join("")).join() === TGT.join(); if (ok) award("g_pix", 1); save(); document.getElementById("pxbox").innerHTML = pxHTML(); return true; }
   if (ds.pxclr !== undefined) { S.px = Array(64).fill(0); save(); document.getElementById("pxbox").innerHTML = pxHTML(); return true; }
