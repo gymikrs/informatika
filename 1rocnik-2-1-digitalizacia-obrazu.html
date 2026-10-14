@@ -316,6 +316,20 @@ function pxHTML() { const P = S.px, rows = Array.from({ length: 8 }, (_, r) => P
     <div class="rows">${rows.map((r, i) => `${r} = ${parseInt(r, 2).toString(16).toUpperCase().padStart(2, "0")}<sub>16</sub>`).join("<br>")}</div></div>
     <div class="row"><button class="ghost" data-pxclr>Vymazať</button><button class="ghost" data-pxinv>Invertovať</button></div>${ok ? `<div class="fb ok">✅ Presne podľa zadania! Obrázok 8 × 8 pri 1 bite na pixel zaberá 64 bitov = 8 bajtov.</div>` : ""}`; }
 
+/* ---------- náhodné čísla pre každého žiaka ---------- */
+function seed() { if (!S.seed) { S.seed = 1 + Math.floor(Math.random() * 2147483646); save(); } return S.seed; }
+function rng(salt) { let x = (seed() ^ Math.imul(salt, 2654435761)) >>> 0 || 1; return () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 4294967296; }; }
+const pick = (r, a) => a[Math.floor(r() * a.length)];
+const fmt = n => Number(n).toLocaleString("sk");
+const VCACHE = {};
+// rq: id, salt, gen(r) -> { q, ans, tol?, show?, why?, txt? (textová odpoveď) }
+function rq(id, salt, gen) { const V = () => { const k = salt + ":" + id + ":" + seed(); return VCACHE[k] || (VCACHE[k] = gen(rng(salt))); };
+  return { id, get q() { return V().q; }, get show() { const v = V(); return v.show || fmt(v.ans); }, get why() { return V().why; }, ph: "?",
+    ok: v => { const o = V(); if (o.txt) return String(v).replace(/\s/g, "").toUpperCase().replace(/^0X/, "") === o.txt; return Math.abs(parseNum(String(v).replace(/\s/g, "")) - o.ans) <= (o.tol || 0); } }; }
+const RES = [[800, 600], [1024, 768], [1280, 720], [1366, 768], [1600, 900], [1920, 1080], [2560, 1440], [3840, 2160]];
+const CAM = [[2000, 1500], [3000, 2000], [4000, 2500], [4000, 3000], [5000, 4000], [6000, 4000], [8000, 6000]];
+function twoCams(r) { const i = Math.floor(r() * CAM.length), j = (i + 1 + Math.floor(r() * (CAM.length - 1))) % CAM.length; return [CAM[i], CAM[j]]; }
+function runs(r, n) { const out = []; let c = r() < 0.5 ? "B" : "W"; for (let i = 0; i < n; i++) { out.push([1 + Math.floor(r() * 5), c]); c = c === "B" ? "W" : "B"; } return out; }
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, tol, why) => ({ id, q, ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - ans) <= (tol || 0), show: ans.toLocaleString("sk"), ph: "?", why });
 const TASKS = {
@@ -330,34 +344,35 @@ const TASKS = {
     { id: "7", ...Q("Čím je daný bitmapový (rastrový) obrázok?", ["mriežkou pixelov, kde má každý pixel zapísanú svoju farbu", "zoznamom čiar a kriviek so súradnicami", "iba názvom a veľkosťou súboru", "počtom použitých farieb"], 0) }
   ]},
   rin: { id: "rin", type: "input", qs: [
-    inq("1", "Koľko pixelov má obrázok 1920 × 1080?", 2073600), inq("2", "Koľko megapixelov má fotka 4000 × 3000?", 12),
-    inq("3", "Fotka má 6000 × 4000 pixelov. Koľko megapixelov?", 24),
-    inq("4", "Na tlač sa odporúča 300 DPI (bodov na palec). Koľko pixelov na šírku treba na fotku širokú 6 palcov (≈ 15 cm)?", 1800),
-    inq("5", "Displej má šírku 3 palce a 1080 pixelov. Koľko PPI (pixelov na palec) má?", 360)
+    rq("1", 11, r => { const [w, h] = pick(r, RES); return { q: `Koľko pixelov má obrázok ${w} × ${h}?`, ans: w * h }; }),
+    rq("2", 12, r => { const [w, h] = twoCams(r)[0]; return { q: `Koľko megapixelov má fotka ${fmt(w)} × ${fmt(h)}?`, ans: w * h / 1e6 }; }),
+    rq("3", 12, r => { const [w, h] = twoCams(r)[1]; return { q: `Fotka má ${fmt(w)} × ${fmt(h)} pixelov. Koľko megapixelov?`, ans: w * h / 1e6 }; }),
+    rq("4", 14, r => { const d = pick(r, [150, 200, 300, 600]), i = pick(r, [4, 5, 6, 8, 10]); return { q: `Na tlač chceš ${d} DPI (bodov na palec). Koľko pixelov na šírku treba na fotku širokú ${i} palcov (≈ ${fmt(Math.round(i * 2.54))} cm)?`, ans: d * i }; }),
+    rq("5", 15, r => { const ppi = pick(r, [200, 250, 300, 360, 400, 450]), i = pick(r, [2, 3, 4, 5]); return { q: `Displej má šírku ${i} palce a ${fmt(ppi * i)} pixelov. Koľko PPI (pixelov na palec) má?`.replace(" 5 palce", " 5 palcov"), ans: ppi }; })
   ]},
   hin: { id: "hin", type: "input", qs: [
-    inq("2", "Koľko odtieňov vie zobraziť 8 bitov na pixel?", 256),
+    rq("2", 22, r => { const n = pick(r, [2, 3, 4, 5, 6, 7, 8]); return { q: `Koľko odtieňov vie zobraziť ${n} ${n < 5 ? "bity" : "bitov"} na pixel?`, ans: 2 ** n, why: `2<sup>${n}</sup> = ${2 ** n}` }; }),
     inq("3", "Koľko farieb má 24-bitová farebná hĺbka (8 bitov pre R, G aj B)?", 16777216, 0, "2²⁴ = 16 777 216, bežne sa hovorí 16,7 milióna farieb."),
-    inq("4", "Koľko bitov treba na 16 farieb?", 4)
+    rq("4", 24, r => { const n = pick(r, [2, 3, 4, 5, 6, 7]); return { q: `Koľko bitov treba na ${2 ** n} farieb?`, ans: n, why: `2<sup>${n}</sup> = ${2 ** n}` }; })
   ]},
   g_pix: { id: "g_pix", type: "custom", max: 1 },
   enc: { id: "enc", type: "input", qs: [
-    { id: "1", q: "V 1-bitovej bitmape je riadok ■□■■□□□■ (■ = 1, □ = 0). Zapíš ho ako 8 bitov.", ok: v => String(v).replace(/\s/g, "") === "10110001", show: "10110001", ph: "?" },
-    { id: "2", q: "Aké šestnástkové číslo zodpovedá riadku 11110000?", ok: v => String(v).trim().toUpperCase().replace(/^0X/, "") === "F0", show: "F0", ph: "?" },
-    { id: "3", q: "Koľko bajtov zaberá 1-bitový obrázok 8 × 8?", ok: v => parseNum(v) === 8, show: "8", ph: "?" }
+    rq("1", 31, r => { let b = ""; for (let i = 0; i < 8; i++) b += r() < 0.5 ? "1" : "0"; if (/^(0+|1+)$/.test(b)) b = "10110001"; return { q: `V 1-bitovej bitmape je riadok ${[...b].map(c => c === "1" ? "■" : "□").join("")} (■ = 1, □ = 0). Zapíš ho ako 8 bitov.`, txt: b, show: b }; }),
+    rq("2", 32, r => { const v = 16 + Math.floor(r() * 240), b = v.toString(2).padStart(8, "0"), h = v.toString(16).toUpperCase(); return { q: `Aké šestnástkové číslo zodpovedá riadku ${b}?`, txt: h, show: h, why: `${b.slice(0, 4)} = ${parseInt(b.slice(0, 4), 2).toString(16).toUpperCase()}, ${b.slice(4)} = ${parseInt(b.slice(4), 2).toString(16).toUpperCase()}` }; }),
+    rq("3", 33, r => { const w = pick(r, [8, 16, 32]), h = pick(r, [8, 16, 32]); return { q: `Koľko bajtov zaberá 1-bitový obrázok ${w} × ${h}?`, ans: w * h / 8, why: `${w} · ${h} = ${w * h} bitov, : 8 = ${w * h / 8} B` }; })
   ]},
   vin: { id: "vin", type: "input", qs: [
-    inq("1", "Koľko bajtov zaberá nekomprimovaný obrázok 100 × 100 pri 24 bitoch na pixel?", 30000),
-    inq("2", "Koľko MB zaberá nekomprimovaná fotka 4000 × 3000 pri 24 bitoch? (1 MB = 1 000 000 B)", 36),
-    inq("3", "Zakóduj metódou RLE riadok <code>BBBBBWWWBB</code> (B čierna, W biela). Koľko dvojíc „počet + farba“ vznikne?", 3, 0, "5B 3W 2B = 3 dvojice namiesto 10 znakov."),
-    { id: "4", q: "Napíš RLE zápis riadku <code>WWWWWWBBWW</code> (napr. 4W2B…).", ok: v => String(v).replace(/\s/g, "").toUpperCase() === "6W2B2W", show: "6W2B2W", ph: "?" }
+    rq("1", 41, r => { const w = pick(r, [50, 200, 300, 400, 500]), h = pick(r, [50, 100, 200, 300]); return { q: `Koľko bajtov zaberá nekomprimovaný obrázok ${w} × ${h} pri 24 bitoch na pixel?`, ans: w * h * 3, why: `${w} · ${h} · 3 B = ${fmt(w * h * 3)} B` }; }),
+    rq("2", 42, r => { const [w, h] = pick(r, CAM); return { q: `Koľko MB zaberá nekomprimovaná fotka ${fmt(w)} × ${fmt(h)} pri 24 bitoch? (1 MB = 1 000 000 B)`, ans: w * h * 3 / 1e6 }; }),
+    rq("3", 43, r => { const R = runs(r, 3 + Math.floor(r() * 3)); return { q: `Zakóduj metódou RLE riadok <code>${R.map(([n, c]) => c.repeat(n)).join("")}</code> (B čierna, W biela). Koľko dvojíc „počet + farba“ vznikne?`, ans: R.length, why: `${R.map(([n, c]) => n + c).join(" ")} = ${R.length} ${R.length < 5 ? "dvojice" : "dvojíc"}` }; }),
+    rq("4", 44, r => { const R = runs(r, 3 + Math.floor(r() * 2)), t = R.map(([n, c]) => n + c).join(""); return { q: `Napíš RLE zápis riadku <code>${R.map(([n, c]) => c.repeat(n)).join("")}</code> (napr. 4W2B…).`, txt: t, show: t }; })
   ]},
   dsort: { id: "dsort", type: "sort", buckets: [{ id: "a", label: "🎨 Analógový obraz" }, { id: "d", label: "💾 Digitálny obraz" }],
     items: [{ id: "1", t: "Olejomaľba na plátne", b: "a" }, { id: "2", t: "Fotka vyvolaná z filmu", b: "a" }, { id: "3", t: "Kresba ceruzkou", b: "a" }, { id: "4", t: "Fotka z mobilu", b: "d" }, { id: "5", t: "Naskenovaný dokument", b: "d" }, { id: "6", t: "Obrázok nakreslený v Skicári", b: "d" }] },
   fin: { id: "fin", type: "input", qs: [
-    { id: "3", q: "Koľko bajtov zaberie nekomprimovaný čiernobiely obrázok 100 × 100 pixelov s 8-bitovou hĺbkou (1 B na pixel)?", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 10000) <= 0, show: "10000", ph: "?" },
-    { id: "4", q: "Farebná fotka 1920 × 1080 s 24-bitovou hĺbkou (3 B na pixel) nekomprimovaná: koľko MB? (1 MB = 1 000 000 B, na 1 desatinné)", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 6.2) <= 0.05, show: "6,2", ph: "?" },
-    { id: "5", q: "Obrázok 800 × 600 zmenšíš na polovičnú šírku aj výšku. Koľkokrát menej pixelov má?", ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - 4) <= 0.0, show: "4", ph: "?" }
+    rq("3", 53, r => { const w = pick(r, [100, 150, 250, 400, 500]), h = pick(r, [100, 200, 300]); return { q: `Koľko bajtov zaberie nekomprimovaný čiernobiely obrázok ${w} × ${h} pixelov s 8-bitovou hĺbkou (1 B na pixel)?`, ans: w * h }; }),
+    rq("4", 54, r => { const [w, h] = pick(r, RES.slice(2)), mb = Math.round(w * h * 3 / 1e5) / 10; return { q: `Farebná fotka ${w} × ${h} s 24-bitovou hĺbkou (3 B na pixel) nekomprimovaná: koľko MB? (1 MB = 1 000 000 B, na 1 desatinné)`, ans: mb, tol: 0.05, show: String(mb).replace(".", ","), why: `${w} · ${h} · 3 = ${fmt(w * h * 3)} B ≈ ${String(mb).replace(".", ",")} MB` }; }),
+    rq("5", 55, r => { const [w, h] = pick(r, [[800, 600], [1200, 900], [1600, 1200], [2400, 1800]]), k = pick(r, [2, 3, 4]), nm = { 2: "polovičnú", 3: "tretinovú", 4: "štvrtinovú" }[k]; return { q: `Obrázok ${fmt(w)} × ${fmt(h)} zmenšíš na ${nm} šírku aj výšku. Koľkokrát menej pixelov má?`, ans: k * k, why: `${k} · ${k} = ${k * k}` }; })
   ]},
   fq: { id: "fq", type: "mc", qs: [
     { id: "1", q: "Čo sa stane, keď malú bitmapu veľmi zväčšíš?", opts: ["Uvidíš kockaté pixely a rozmazané hrany", "Obraz bude ostrejší", "Pribudnú nové detaily", "Nič sa nezmení"], a: 0 },
