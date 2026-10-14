@@ -321,9 +321,16 @@ function CUSTOM_INPUT(e) { return selInput(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
+  const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
+  T.qs.forEach((q, i) => { if (G.includes(i + 1) && groups.length) groups[groups.length - 1].push(q); else groups.push([q]); });
+  if (groups.length < 2) return T.qs;
+  const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
+  if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
+  return o.flatMap(id => groups.find(g => g[0].id === id)); }
 function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
   const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
-  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, `${detail} | dokončené ${when}`);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
   const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
   const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
   if (S.sentKey !== key && !S.sending) { S.sending = true;
@@ -367,7 +374,7 @@ function checkBar(T, ready, hint) {
 }
 function mcHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
       let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
@@ -403,7 +410,7 @@ function orderHTML(T) {
 }
 function inputHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const v = d[q.id] || "", ok = done ? q.ok(v) : null;
     return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
   }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
