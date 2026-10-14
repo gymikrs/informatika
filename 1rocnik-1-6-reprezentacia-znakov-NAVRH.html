@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1.6 Reprezentácia znakov v počítači</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F0EEF6;--surface:#FFFFFF;--surface2:#F6F5FA;--ink:#1A1530;--muted:#5E5877;
+  --acc:#6A3FD0;--accSoft:#E9E2FB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#D3CEE2;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#DAD6E6;
+  --head:"Rubik","Segoe UI",system-ui,sans-serif;--font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}}
+:root[data-theme="dark"]{--bg:#13101F;--surface:#1D1830;--surface2:#241E3A;--ink:#ECE8F7;--muted:#A69FC0;--acc:#A98BFF;--accSoft:#2E2550;--amber:#F7B84B;--amberSoft:#3A2F17;--track:#3A3355;--ok:#3CCB8E;--okSoft:#163A30;--bad:#FF7A6B;--badSoft:#46221F;--border:#342D4C}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+h1,h2,h3,.brand{font-family:var(--head)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:10px}
+.brand .lg{width:18px;height:18px;border-radius:5px;background:var(--acc);position:relative}
+.brand .lg::after{content:"";position:absolute;inset:5px 7px;border-radius:2px;background:var(--surface)}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 100px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:13px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:31px;height:31px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:13px;font-weight:700;color:transparent;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.22);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13.5px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+main.wide{max-width:1060px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+h1{font-size:clamp(32px,5vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(27px,4vw,36px);line-height:1.12;margin:0 0 12px;letter-spacing:-.015em}
+h3{font-size:21px;margin:36px 0 8px}
+p{margin:0 0 14px;max-width:70ch}
+.lead{font-size:19px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.box{border-left:5px solid var(--amber);background:var(--amberSoft);border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0}
+.box.v{border-color:var(--acc);background:var(--accSoft)}
+.box.g{border-color:var(--ok);background:var(--okSoft)}
+.box p:last-child,.box ul:last-child{margin-bottom:0}
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin:16px 0}
+.fig svg{display:block;width:100%;height:auto}
+.fig figcaption,.cap{font-size:14.5px;color:var(--muted);margin-top:8px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.two{grid-template-columns:1fr}}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:36px;padding-top:22px;border-top:1px dashed var(--border);display:flex;justify-content:flex-end;gap:12px;align-items:center}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{font:inherit;width:100%;max-width:420px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.in.good{border-color:var(--ok);background:var(--okSoft)}
+.in.badin{border-color:var(--bad);background:var(--badSoft)}
+.muted{color:var(--muted)}
+.pool{display:flex;flex-wrap:wrap;gap:10px;padding:14px;border-radius:12px;background:var(--surface2);min-height:60px}
+.pool .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chipb{background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:8px 16px;cursor:pointer;font-weight:500}
+.chipb:hover:not(:disabled){border-color:var(--acc)}
+.chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
+.chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
+.chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipb:disabled{cursor:default}
+.buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
+.bucket.over{background:var(--accSoft)}
+.bh{font-weight:700;margin-bottom:2px}
+.bs{font-size:13.5px;color:var(--muted);margin-bottom:8px}
+.bc{display:flex;flex-wrap:wrap;gap:8px}
+.seq{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px}
+.slot{display:flex;align-items:center;gap:12px}
+.slot .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot.empty span:last-child{color:var(--muted);flex:1;border:1.5px dashed var(--border);border-radius:10px;padding:9px 14px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer}
+.slot.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}
+.slot.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.q{border:0;padding:0;margin:0 0 20px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 27px;height:27px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px;max-width:none}
+.why.good{background:var(--okSoft)}
+.why.miss{background:var(--badSoft)}
+.iq{margin-bottom:18px}
+.iqq{display:flex;gap:10px;font-weight:600;margin-bottom:8px}
+.iqa{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-left:37px}
+.iqa .in{max-width:220px;font-family:var(--mono)}
+.unit{font-weight:600;color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.guesses{display:grid;gap:8px;max-width:600px}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px}
+.big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.big .n{font-family:var(--head);font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.big .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}
+.grade span{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15.5px}
+td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+.result td:last-child,.result th:last-child{text-align:right;white-space:nowrap}
+textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--ink);resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.fb{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.goals{list-style:none;padding:0;margin:10px 0 0}
+.goals li{padding:3px 0}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:14px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-family:var(--head);font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+:root{--bg:#F6EEF1;--acc:#B4235A;--accSoft:#FADCE6;--track:#E5CFD8;--border:#E8D6DE;--surface2:#FBF5F7;--ink:#24121A;--muted:#6B4F5B}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#170D12;--surface:#22141B;--surface2:#2A1922;--acc:#F07AA6;--accSoft:#3E1A29;--track:#3B2530;--border:#3A2530;--ink:#F5E8ED;--muted:#C3A2AF}}
+:root[data-theme="dark"]{--bg:#170D12;--surface:#22141B;--surface2:#2A1922;--acc:#F07AA6;--accSoft:#3E1A29;--track:#3B2530;--border:#3A2530;--ink:#F5E8ED;--muted:#C3A2AF}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+sub{font-size:.7em}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:14px 0}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px}
+.pc h4{margin:6px 0 4px;font-family:var(--head);font-size:17px}.pc p{font-size:14.5px;margin:0;color:var(--muted)}
+.pc .big{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--acc)}
+.pv{overflow-x:auto}
+.pv table{border-collapse:separate;border-spacing:6px 4px;margin:6px 0}
+.pv td{text-align:center;font-family:var(--mono);min-width:54px}
+.pv .d{font-size:26px;font-weight:700;background:var(--surface);border:2px solid var(--acc);border-radius:10px;padding:6px 0}
+.pv .w{font-size:13px;color:var(--muted)}
+.pv .pr{font-size:14px;color:var(--acc);font-weight:700}
+.bits{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.bit{width:78px;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;padding:10px 4px;text-align:center;font-family:var(--mono)}
+.bit .v{font-size:20px;font-weight:800}.bit .b{font-size:26px;font-weight:800;color:var(--muted)}
+.bit.on{background:var(--acc);border-color:var(--acc);color:#fff}.bit.on .b{color:#fff}
+.bit .dots{height:22px;display:flex;flex-wrap:wrap;justify-content:center;gap:1px;margin:4px 0}
+.bit .dots i{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6}
+.big2{font-family:var(--mono);font-size:30px;font-weight:800}
+.dv{font-family:var(--mono);font-size:17px;border-collapse:collapse;margin:8px 0}
+.dv td{padding:5px 12px;border-bottom:1px dashed var(--border)}
+.dv td.r{color:var(--acc);font-weight:800;text-align:center;background:var(--accSoft)}
+.grp{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.grp .g{border:2px solid var(--acc);border-radius:10px;padding:6px 10px;text-align:center;font-family:var(--mono)}
+.grp .g b{display:block;font-size:20px}.grp .g span{font-size:20px;color:var(--acc);font-weight:800}
+.grp .g small{display:block;color:var(--muted);font-size:12px}
+.nib{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;margin:10px 0;font-family:var(--mono);font-size:14.5px}
+.nib div{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 8px;display:flex;justify-content:space-between}
+.nib b{color:var(--acc)}
+.sw{width:120px;height:120px;border-radius:16px;border:2px solid var(--border)}
+.colrow{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.ctl .in{max-width:180px;font-family:var(--mono)}
+.ctl select{border:1.5px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface2);color:var(--ink);font:inherit}
+.err{color:#C0392B;font-weight:600}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}.theory ul{margin:6px 0;padding-left:22px}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
+.tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
+.tool input[type=text],.tool textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font:inherit;font-family:var(--mono);font-size:16px;background:var(--surface2);color:var(--ink)}
+.ctab{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14px;margin-top:10px}
+.ctab th,.ctab td{border:1px solid var(--border);padding:4px 8px;text-align:center}.ctab th{background:var(--surface2);font-family:var(--font)}
+.ctab td.ch{font-size:20px;font-weight:700;color:var(--acc)}
+.b1{background:#E3F2FD}.b2{background:#FFF3E0}.b3{background:#F3E5F5}.b4{background:#E8F5E9}
+.asc{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;font-family:var(--mono);font-size:13px;margin:10px 0;overflow-x:auto}
+.asc button{border:1px solid var(--border);background:var(--surface);border-radius:4px;padding:4px 0;cursor:pointer;color:var(--ink);min-width:26px}
+.asc button.ctl{color:var(--muted);font-size:9px}.asc button.on{background:var(--acc);color:#fff}
+.big{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--acc)}
+.moj{font-family:var(--mono);font-size:20px;background:#fff;color:#111;border:1px solid var(--border);border-radius:10px;padding:12px;min-height:50px}
+.cp{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}.cp select{border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font:inherit;background:var(--surface2);color:var(--ink)}
+.bits{font-family:var(--mono);font-size:18px;letter-spacing:1px}.bits .h{color:#C0392B;font-weight:800}.bits .d{color:#1766C2;font-weight:800}
+.goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+/* LENKA: prehľadná teória na celú šírku */
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit .tfig{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}.rtab td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.acard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.acard>div{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.acard small{font-size:12px;color:var(--muted)}.acard .ach{font-family:var(--mono);font-size:26px;font-weight:800;color:var(--acc)}
+@media (max-width:600px){.acard{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bulbs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;max-width:620px}
+.bulb{border:2px solid var(--border);background:var(--surface2);border-radius:12px;padding:8px 0 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--ink);font:inherit}
+.bulb .g{font-size:26px;filter:grayscale(1) opacity(.35)}.bulb b{font-family:var(--mono);font-size:18px}.bulb small{font-size:12px;color:var(--muted)}
+.bulb.on{border-color:#E0A800;background:#FFF4C2}.bulb.on .g{filter:none}
+.bres{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+.goals.g3{display:flex;gap:6px 24px;flex-wrap:wrap}
+.mrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.mch{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;min-width:64px}
+.mch b{font-size:22px;color:var(--acc)}.mch span{font-family:var(--mono);font-weight:700}.mch small{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.mch.bad{background:#FDECEA;border-color:#E6A9A2}.mch.bad b{color:#C0392B}.mch.bad small{font-family:var(--font)}
+.cheat{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.cheat span{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-family:var(--mono);font-size:14px}
+.rtab td:first-child{font-family:var(--font);font-size:15px}.rtab.num td:first-child{font-family:var(--mono);font-size:14.5px}
+.big{display:inline-block}.acard .big{display:block}
+.bres>span{display:flex;gap:8px;align-items:baseline}
+
+</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main id="main" tabindex="-1"></main>
+<script>
+const THEORY = {"ascii": ["Počítač ukladá znaky ako čísla. Dohoda, ktoré číslo znamená ktorý znak, je <b>kódovanie</b> (kódová tabuľka).", "<b>ASCII</b> (1963): 7 bitov → 2<sup>7</sup> = 128 znakov, bez diakritiky.", "<b>0 – 31</b> a <b>127</b>: riadiace znaky (tabulátor 9, nový riadok 10, Enter 13).", "<b>32</b>: medzera · <b>48 – 57</b>: číslice 0 – 9.", "<b>65 – 90</b>: veľké písmená A – Z · <b>97 – 122</b>: malé písmená a – z.", "Malé písmeno = veľké + <b>32</b> (líšia sa jediným bitom, 2<sup>5</sup> = 32).", "Znak cifry nie je cifra: znak „7“ má kód 55."], "stranky": ["Rozšírené ASCII: <b>8 bitov</b> → 256 znakov, kódy 0 – 127 sú rovnaké ako v ASCII.", "Kódy 128 – 255 závisia od <b>kódovej stránky</b>.", "Stredná Európa: <b>Windows-1250</b>, ISO-8859-2 (Latin-2) · západná Európa: Windows-1252 · azbuka: Windows-1251.", "Ten istý bajt znamená v rôznych stránkach iný znak (E8: č / è / и).", "<b>Rozsypaný čaj</b> (mojibake) = text otvorený v inom kódovaní, než v akom bol uložený.", "Oprava: otvoriť súbor so správnym kódovaním (dnes najčastejšie UTF-8)."], "unicode": ["<b>Unicode</b> = jeden spoločný zoznam znakov všetkých písiem sveta (vyše 150 000 znakov).", "Každý znak má <b>kódový bod</b>: U+ a šestnástkové číslo (A = U+0041, č = U+010D, € = U+20AC, 😀 = U+1F600).", "Obsahuje latinku, azbuku, čínske znaky, matematické symboly aj emoji.", "Unicode určuje <b>číslo</b> znaku, kódovanie (UTF-8, UTF-16, UTF-32) určuje jeho <b>zápis do bajtov</b>.", "Prvých 128 kódových bodov Unicode = ASCII."], "utf8": ["<b>UTF-8</b>: znak má 1 až 4 bajty, najrozšírenejšie kódovanie na webe.", "1 bajt: znaky ASCII (0xxxxxxx).", "2 bajty: diakritika, azbuka (110xxxxx 10xxxxxx).", "3 bajty: €, čínske znaky · 4 bajty: emoji.", "Pokračovacie bajty vždy začínajú bitmi <b>10</b>.", "UTF-8 je spätne kompatibilné s ASCII: anglický text má rovnaké bajty."], "koder": ["<b>Zakódovať</b> = text → čísla (bajty) · <b>dekódovať</b> = bajty → text.", "Obe strany musia použiť <b>to isté kódovanie</b>, inak vznikne rozsypaný čaj.", "Bajty sa zapisujú šestnástkovo: 1 bajt = 2 cifry (00 – FF).", "Postup dekódovania: šestnástkovo → desiatkovo → znak z tabuľky (4B = 4 · 16 + 11 = 75 = K)."], "precvic": ["A – Z = 65 – 90 · a – z = 97 – 122 · 0 – 9 = 48 – 57 · medzera = 32.", "Malé písmeno = veľké + 32.", "UTF-8: ASCII 1 bajt, slovenské písmená 2 bajty, € 3 bajty, emoji 4 bajty.", "Rozsypaný čaj opravíš otvorením súboru v správnom kódovaní."]};
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – 1. ročník 1.6 Reprezentácia znakov */
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#B4235A", AS = "#FBE4EC";
+const bitRow = (x, y, bits, w, hl) => [...bits].map((b, i) => `${box(x + i * w, y, w - 4, 30, hl && hl.includes(i) ? "#FFE08A" : b === "1" ? A : "#fff", A, 5)}${T(x + i * w + (w - 4) / 2, y + 21, b, { a: "middle", fs: 15, b: 1, c: b === "1" && !(hl && hl.includes(i)) ? "#fff" : C.ink, mono: 1 })}`).join("");
+return {
+  znak: fig(SV(440, 250, `
+    ${T(220, 22, "Ako počítač uloží písmeno A", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(20, 44, 96, 84, "#fff", A, 12)}${T(68, 102, "A", { a: "middle", fs: 46, b: 1 })}${T(68, 146, "znak", { a: "middle", fs: 11.5, c: C.mut })}
+    ${ar(122, 86, 168, 86, A, 3)}${T(145, 76, "tabuľka", { a: "middle", fs: 10, c: C.mut })}
+    ${box(174, 44, 96, 84, AS, A, 12)}${T(222, 100, "65", { a: "middle", fs: 34, b: 1, c: A })}${T(222, 146, "číslo (kód)", { a: "middle", fs: 11.5, c: C.mut })}
+    ${ar(276, 86, 316, 86, A, 3)}${T(296, 76, "2", { a: "middle", fs: 10, c: C.mut })}
+    ${box(322, 44, 104, 84, "#fff", A, 12)}${T(374, 92, "1000001", { a: "middle", fs: 16, b: 1, mono: 1 })}${T(374, 112, "7 bitov", { a: "middle", fs: 11, c: C.mut })}${T(374, 146, "bity v pamäti", { a: "middle", fs: 11.5, c: C.mut })}
+    ${box(20, 170, 406, 66, C.bg, null, 10)}${T(32, 192, "Počítač si nepamätá tvar písmena, iba jeho číslo.", { fs: 12, b: 1 })}
+    ${T(32, 212, "Obrázok písmena nakreslí až písmo (font) pri zobrazení.", { fs: 11.5, c: C.mut })}${T(32, 228, "To isté číslo 65 sa tak zobrazí ako A, A alebo 𝔸.", { fs: 11.5, c: C.mut })}`, "Znak, číslo, bity"),
+    "Znak sa uloží ako <b>číslo</b> z kódovej tabuľky a číslo ako <b>bity</b>."),
+  mapa: fig(SV(440, 210, `
+    ${T(220, 22, "Mapa tabuľky ASCII (128 znakov)", { a: "middle", fs: 13, b: 1, c: A })}
+    ${(() => { const R = [[0, 31, "#E7E4EF", "riadiace"], [32, 47, "#FFF3E0", ""], [48, 57, "#DCEFE4", "0 – 9"], [58, 64, "#FFF3E0", ""], [65, 90, "#E3EEFC", "A – Z"], [91, 96, "#FFF3E0", ""], [97, 122, "#FBE4EC", "a – z"], [123, 127, "#FFF3E0", ""]], W = 400 / 128;
+      return R.map(([a, b, f, n]) => `<rect x="${20 + a * W}" y="44" width="${(b - a + 1) * W}" height="56" fill="${f}" stroke="#fff"/>${n ? T(20 + (a + b + 1) / 2 * W, 77, n, { a: "middle", fs: 11.5, b: 1 }) : ""}`).join("") + [0, 32, 48, 65, 97, 127].map(v => `<line x1="${20 + v * W}" y1="100" x2="${20 + v * W}" y2="108" stroke="${C.mut}"/>${T(20 + v * W, 121, String(v), { a: "middle", fs: 10, c: C.mut, mono: 1 })}`).join(""); })()}
+    ${box(20, 136, 12, 12, "#FFF3E0", C.line, 2)}${T(38, 147, "interpunkcia a symboly (! ? @ # …)", { fs: 11 })}
+    ${box(20, 158, 12, 12, "#E7E4EF", C.line, 2)}${T(38, 169, "riadiace znaky: 9 TAB, 10 nový riadok, 13 Enter, 127 DEL", { fs: 11 })}
+    ${box(20, 180, 12, 12, "#fff", C.line, 2)}${T(38, 191, "32 = medzera (aj medzera je znak!)", { fs: 11 })}`, "Mapa ASCII"),
+    "Číslice, veľké a malé písmená ležia v tabuľke <b>za sebou</b>, preto sa kódy ľahko počítajú."),
+  bit32: fig(SV(440, 210, `
+    ${T(220, 22, "Veľké a malé písmeno sa líši jediným bitom", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[64, 32, 16, 8, 4, 2, 1].map((v, i) => T(118 + i * 40 + 18, 50, String(v), { a: "middle", fs: 10.5, c: i === 1 ? A : C.mut, b: i === 1, mono: 1 })).join("")}
+    ${T(30, 80, "B = 66", { fs: 14, b: 1 })}${bitRow(118, 60, "1000010", 40, [1])}
+    ${T(30, 124, "b = 98", { fs: 14, b: 1 })}${bitRow(118, 104, "1100010", 40, [1])}
+    <rect x="156" y="54" width="44" height="86" rx="8" fill="none" stroke="${C.amb}" stroke-width="2.5" stroke-dasharray="5 3"/>
+    ${box(20, 156, 406, 44, C.ambS, null, 8)}${T(223, 176, "Bit s hodnotou 32 prepína veľké ↔ malé písmeno:", { a: "middle", fs: 12, b: 1, c: "#7A5200" })}${T(223, 193, "malé = veľké + 32 (to robí aj Caps Lock)", { a: "middle", fs: 12, c: "#7A5200" })}`, "Bit 32"),
+    "Kód malého písmena je o <b>32</b> väčší. Stačí zmeniť jediný bit."),
+  stranka: fig(SV(440, 250, `
+    ${T(220, 22, "Ten istý bajt v rôznych kódových stránkach", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(170, 40, 100, 50, AS, A, 10)}${T(220, 64, "E8", { a: "middle", fs: 22, b: 1, c: A, mono: 1 })}${T(220, 82, "bajt = 232", { a: "middle", fs: 10.5, c: C.mut })}
+    ${[["Windows-1250", "stredná Európa", "č", 70], ["Windows-1252", "západná Európa", "è", 220], ["Windows-1251", "azbuka", "и", 370]].map(([n, d, ch, x]) => `${ar(220, 92, x, 124, C.mut, 1.8)}${box(x - 66, 128, 132, 100, "#fff", C.line, 10)}${T(x, 150, n, { a: "middle", fs: 11.5, b: 1 })}${T(x, 166, d, { a: "middle", fs: 10, c: C.mut })}${T(x, 210, ch, { a: "middle", fs: 34, b: 1, c: A })}`).join("")}`, "Kódové stránky"),
+    "Kódy <b>0 – 127</b> sú všade rovnaké (ASCII). Horné kódy <b>128 – 255</b> znamenajú v každej kódovej stránke niečo iné."),
+  caj: fig(SV(440, 250, `
+    ${T(220, 22, "Ako vzniká rozsypaný čaj", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(20, 42, 110, 70, "#fff", A, 10)}${T(75, 86, "ľad", { a: "middle", fs: 26, b: 1 })}${T(75, 128, "napísané", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(134, 77, 170, 77, C.ok, 2.5)}${T(152, 66, "uloží", { a: "middle", fs: 10, c: C.ok, b: 1 })}${T(152, 98, "UTF-8", { a: "middle", fs: 10, c: C.ok, b: 1 })}
+    ${box(174, 42, 120, 70, C.bg, C.line, 10)}${[["C4", 0], ["BE", 1], ["61", 2], ["64", 3]].map(([h, i]) => `${box(182 + i * 27, 64, 24, 26, i < 2 ? AS : "#fff", A, 5)}${T(194 + i * 27, 82, h, { a: "middle", fs: 11, b: 1, mono: 1 })}`).join("")}${T(234, 128, "bajty v súbore", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(298, 77, 334, 77, C.bad, 2.5)}${T(316, 66, "otvorí", { a: "middle", fs: 10, c: C.bad, b: 1 })}${T(316, 98, "1250", { a: "middle", fs: 10, c: C.bad, b: 1 })}
+    ${box(338, 42, 88, 70, C.badS, C.bad, 10)}${T(382, 86, "Äľad", { a: "middle", fs: 22, b: 1, c: C.bad })}${T(382, 128, "zobrazené", { a: "middle", fs: 11, c: C.mut })}
+    ${box(20, 150, 406, 84, C.okS, null, 10)}${T(32, 172, "Znak ľ má v UTF-8 dva bajty C4 BE.", { fs: 12, b: 1 })}${T(32, 192, "Windows-1250 číta každý bajt ako samostatný znak: C4 = Ä, BE = ľ.", { fs: 11.5 })}
+    ${T(32, 214, "✅ Oprava: otvoriť súbor znova v kódovaní UTF-8.", { fs: 12, b: 1, c: C.ok })}`, "Rozsypaný čaj"),
+    "Rozsypaný čaj vznikne, keď sa súbor <b>otvorí v inom kódovaní</b>, než v akom bol <b>uložený</b>."),
+  unicode: fig(SV(440, 260, `
+    ${T(14, 24, "Unicode: jeden zoznam pre všetky písma sveta", { fs: 13, b: 1, c: A })}
+    ${[["A", "U+0041", "latinka"], ["č", "U+010D", "diakritika"], ["Ж", "U+0416", "azbuka"], ["Ω", "U+03A9", "grécke"], ["中", "U+4E2D", "čínske"], ["€", "U+20AC", "symbol"], ["😀", "U+1F600", "emoji"], ["∑", "U+2211", "matematika"]].map(([c, u, n], i) => { const x = 14 + (i % 4) * 104, y = 40 + Math.floor(i / 4) * 90; return `${box(x, y, 96, 80, "#fff", C.line, 10)}${T(x + 48, y + 36, c, { a: "middle", fs: 26, b: 1 })}${T(x + 48, y + 56, u, { a: "middle", fs: 11, b: 1, c: A, mono: 1 })}${T(x + 48, y + 71, n, { a: "middle", fs: 10, c: C.mut })}`; }).join("")}
+    ${box(14, 222, 412, 32, AS, null, 8)}${T(220, 243, "Unicode dá znaku číslo · UTF-8 povie, ako ho zapísať do bajtov", { a: "middle", fs: 11.5, b: 1 })}`, "Znaky v Unicode"),
+    "Každý znak sveta má v Unicode svoje číslo, <b>kódový bod</b> (U+ a šestnástkové číslo)."),
+  lad: fig(SV(440, 230, `
+    ${T(220, 22, "Slovo „ľad“ v UTF-8", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["ľ", ["11000100", "10111110"], "#FFF3E0", "2 bajty"], ["a", ["01100001"], "#E3F2FD", "1 bajt"], ["d", ["01100100"], "#E3F2FD", "1 bajt"]].map(([c, bs, f, n], i) => { const x = [20, 232, 334][i], w = bs.length === 2 ? 208 : 100; return `${box(x, 40, w - 8, 120, f, C.line, 10)}${T(x + (w - 8) / 2, 76, c, { a: "middle", fs: 30, b: 1 })}${bs.map((b, k) => `<text x="${x + 8 + k * 104}" y="112" font-size="13.5" font-family="Consolas,monospace" font-weight="700"><tspan fill="${C.bad}">${b.slice(0, k ? 2 : (bs.length === 1 ? 1 : 3))}</tspan><tspan fill="${C.blue}">${b.slice(k ? 2 : (bs.length === 1 ? 1 : 3))}</tspan></text>`).join("")}${T(x + (w - 8) / 2, 144, n, { a: "middle", fs: 11.5, b: 1, c: C.mut })}`; }).join("")}
+    ${box(20, 176, 406, 44, C.bg, null, 8)}${T(32, 195, "Spolu 4 bajty za 3 znaky. Červené bity hovoria, koľko bajtov má znak,", { fs: 11.5 })}${T(32, 211, "modré bity nesú samotné číslo znaku.", { fs: 11.5 })}`, "ľad v UTF-8"),
+    "Písmená s diakritikou majú v UTF-8 <b>2 bajty</b>, písmená bez diakritiky <b>1 bajt</b>."),
+  koder: fig(SV(440, 250, `
+    ${box(14, 20, 100, 60, "#fff", A, 10)}${T(64, 58, "Pes", { a: "middle", fs: 22, b: 1 })}${T(64, 98, "text", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(120, 42, 210, 42, A, 3)}${T(165, 34, "zakóduj", { a: "middle", fs: 11, b: 1, c: A })}
+    ${box(216, 20, 210, 60, AS, A, 10)}${[["50", "P"], ["65", "e"], ["73", "s"]].map(([h, z], i) => `${box(230 + i * 64, 30, 56, 40, "#fff", null, 6)}${T(258 + i * 64, 56, h, { a: "middle", fs: 15, b: 1, mono: 1 })}`).join("")}${T(321, 98, "bajty (šestnástkovo)", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(210, 64, 120, 64, A, 3)}${T(165, 76, "dekóduj", { a: "middle", fs: 11, b: 1, c: A })}
+    ${box(14, 124, 412, 116, C.badS, C.bad, 10)}${T(26, 146, "⚠️ Dekóduješ iným kódovaním, než bolo zakódované:", { fs: 12, b: 1, c: C.bad })}
+    ${T(26, 174, "uložené v UTF-8:", { fs: 11.5 })}${T(170, 174, "Ľubica", { fs: 14, b: 1 })}
+    ${T(26, 204, "otvorené ako Windows-1250:", { fs: 11.5 })}${T(210, 204, "Ä˝ubica", { fs: 14, b: 1, c: C.bad })}
+    ${T(26, 228, "= „rozsypaný čaj“. Pomôže otvoriť súbor so správnym kódovaním.", { fs: 11, c: C.mut })}`, "Kódovanie a dekódovanie"),
+    "Text sa <b>zakóduje</b> na bajty a <b>dekóduje</b> späť. Funguje to iba vtedy, keď obe strany použijú <b>to isté kódovanie</b>."),
+  hex: fig(SV(440, 200, `
+    ${T(220, 22, "Dekódovanie krok za krokom", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["4B", "šestnástkovo", "#fff"], ["4·16 + 11", "prepočet", C.bg], ["75", "desiatkovo", AS], ["K", "znak z tabuľky", "#fff"]].map(([v, n, f], i) => `${box(14 + i * 106, 44, 92, 74, f, A, 10)}${T(60 + i * 106, 88, v, { a: "middle", fs: i === 1 ? 14 : 24, b: 1, mono: i < 3, c: i === 3 ? A : C.ink })}${T(60 + i * 106, 136, n, { a: "middle", fs: 10.5, c: C.mut })}${i < 3 ? ar(108 + i * 106, 81, 118 + i * 106, 81, A, 2.5) : ""}`).join("")}
+    ${box(14, 152, 412, 38, C.bg, null, 8)}${T(220, 176, "1 bajt = 2 šestnástkové cifry · B = 11, C = 12, D = 13, E = 14, F = 15", { a: "middle", fs: 11.5 })}`, "Dekódovanie"),
+    "Šestnástkový kód najprv prepočítaj na desiatkový a potom nájdi znak v tabuľke ASCII.")
+}; })();
+
+const KEY = "znaky-n16-v1";
+const LESSON = "1.6 Reprezentácia znakov v počítači";
+const BRAND = "1.6 Znaky v počítači";
+const CLASS_DEFAULT = "I.";
+const WIDE = { ascii: 1, koder: 1, stranky: 1, utf8: 1 };
+const STEPS = [
+  { id: "start", title: "Štart", min: 3 },
+  { id: "ascii", title: "Kód ASCII", min: 9 },
+  { id: "stranky", title: "Kódové stránky a rozsypaný čaj", min: 9 },
+  { id: "unicode", title: "Unicode", min: 6 },
+  { id: "utf8", title: "UTF-8 bajt po bajte", min: 10 },
+  { id: "koder", title: "Kóder a dekóder", min: 7 },
+  { id: "precvic", title: "Precvičovanie: tajné správy", min: 12 },
+  { id: "test", title: "Záverečný test", min: 6 },
+  { id: "vysledok", title: "Výsledok", min: 0 }
+];
+const STEP_TASKS = { ascii: ["ain", "g_bit"], stranky: ["g_moj", "mq"], unicode: ["uq"], utf8: ["u8in"], koder: ["dein"], precvic: ["spr", "pq"], test: ["test"] };
+const START = {
+  kicker: "Informatika, 1. ročník",
+  lead: "Počítač pozná iba čísla, a predsa zobrazuje písmená, diakritiku, čínske znaky aj emoji. Ako? Každý znak má svoje číslo a kódovanie určuje, ako sa toto číslo zapíše do bajtov. Spoznáš ASCII, kódové stránky, Unicode a UTF-8, zistíš, prečo niekedy vidíš „rozsypaný čaj“ namiesto slovenských písmen, a naučíš sa text zakódovať aj dekódovať. 6 zastávok, body a na konci výsledok.",
+  guessQ: "Koľko bajtov zaberá v kódovaní UTF-8 slovo „čaj“?",
+  guessNote: "Tip sa neboduje. Na zastávke UTF-8 bajt po bajte zistíš, či si mal pravdu.",
+  guesses: ["3", "4", "6", "12"],
+  ok: 1, yes: "Presne tak! „a“ a „j“ majú po 1 bajte, „č“ potrebuje 2 bajty.", no: "Sú to 4 bajty: „a“ a „j“ po 1 bajte, „č“ potrebuje v UTF-8 2 bajty."
+};
+function EXTRA_STATE() { return { bits: 0, bg: {}, meno: "Jana", asel: 65, mt: "Čo sa stane s textom? Žlté kôň úpäl ďaleko.", enc: "utf-8", dec: "windows-1250", mg: {}, kt: "Ahoj Čau 😀" }; }
+const enc8 = new TextEncoder();
+const hex = n => n.toString(16).toUpperCase().padStart(2, "0");
+const bin8 = n => n.toString(2).padStart(8, "0");
+const cls = n => "b" + n;
+
+/* ---------- ASCII table ---------- */
+const CTL = ["NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL", "BS", "TAB", "LF", "VT", "FF", "CR", "SO", "SI", "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US"];
+function ascHTML() { const a = S.asel; let s = `<div class="asc">`; for (let i = 0; i < 128; i++) { const ch = i < 32 ? CTL[i] : i === 32 ? "␠" : i === 127 ? "DEL" : String.fromCharCode(i); s += `<button class="${i < 32 || i === 127 ? "ctl" : ""} ${i === a ? "on" : ""}" data-as="${i}" title="${i}">${esc(ch)}</button>`; } s += `</div>`;
+  const ch = a < 32 ? CTL[a] : a === 32 ? "␠" : a === 127 ? "DEL" : String.fromCharCode(a), nm = a < 32 || a === 127 ? "riadiaci znak" : a === 32 ? "medzera" : a >= 48 && a <= 57 ? "číslica" : a >= 65 && a <= 90 ? "veľké písmeno" : a >= 97 && a <= 122 ? "malé písmeno" : "symbol";
+  return s + `<div class="acard"><div class="ach">${esc(ch)}<small>${nm}</small></div><div><small>desiatkovo</small><b class="big">${a}</b></div><div><small>šestnástkovo</small><b class="big">${hex(a)}</b></div><div><small>dvojkovo (7 bitov)</small><b class="big">${bin8(a).slice(1)}</b></div></div>`; }
+
+/* ---------- 7 žiaroviek ---------- */
+const BITG = [["K", 75], ["z", 122], ["5", 53]];
+function bitHTML() { const v = S.bits, ch = v < 32 ? CTL[v] : v === 32 ? "medzera" : v === 127 ? "DEL" : String.fromCharCode(v);
+  return `<div class="bulbs">${[64, 32, 16, 8, 4, 2, 1].map(w => `<button class="bulb ${v & w ? "on" : ""}" data-bit="${w}" aria-pressed="${!!(v & w)}" aria-label="bit ${w}"><span class="g">💡</span><b>${v & w ? 1 : 0}</b><small>${w}</small></button>`).join("")}</div>
+    <div class="bres"><span>Súčet: <b class="big">${v}</b></span><span>Znak: <b class="big">${esc(ch)}</b></span><button class="ghost" data-bit="0">Zhasnúť všetko</button></div>
+    <ul class="goals g3">${BITG.map(([c, n]) => `<li>${S.bg[c] ? "✅" : "⬜"} rozsviet znak <b>${c}</b></li>`).join("")}</ul>
+    ${S.t.g_bit ? `<div class="checkbar"><span class="score ${S.t.g_bit.score < 3 ? "part" : ""}">Splnené: ${S.t.g_bit.score} z 3</span></div>` : ""}`; }
+
+/* ---------- moje meno v ASCII ---------- */
+function menoHTML() { const t = S.meno; return `<input type="text" id="menox" value="${esc(t)}" maxlength="20" aria-label="Tvoje meno" placeholder="napíš svoje meno">
+  <div class="mrow">${[...t].map(c => { const n = c.codePointAt(0), ok = n < 128; return `<div class="mch ${ok ? "" : "bad"}"><b>${esc(c === " " ? "␠" : c)}</b><span>${ok ? n : "?"}</span><small>${ok ? bin8(n).slice(1) : "nie je v ASCII"}</small></div>`; }).join("")}</div>
+  ${/[^\x00-\x7F]/.test(t) ? `<p class="muted" style="font-size:14px;margin:8px 0 0">Písmená s diakritikou ASCII nepozná. Na ne treba Unicode, o tom je ďalšia časť hodiny.</p>` : ""}`; }
+
+/* ---------- code pages / mojibake ---------- */
+function dec1250(bytes, name) { try { return new TextDecoder(name).decode(new Uint8Array(bytes)); } catch (e) { return "?"; } }
+let R1250 = null, R88592 = null;
+function revMap(name) { const m = {}; for (let b = 0; b < 256; b++) { const c = new TextDecoder(name).decode(new Uint8Array([b])); if (c !== "\uFFFD" && !(c in m)) m[c] = b; } return m; }
+function encodeAs(t, name) { if (name === "utf-8") return Array.from(enc8.encode(t)); const M = name === "windows-1250" ? (R1250 = R1250 || revMap("windows-1250")) : (R88592 = R88592 || revMap("iso-8859-2")); return [...t].map(c => c in M ? M[c] : 63); }
+function mojHTML() { const bytes = encodeAs(S.mt, S.enc), out = dec1250(bytes, S.dec), ok = S.enc === S.dec;
+  const opt = (id, v) => `<select id="${id}">${[["utf-8", "UTF-8"], ["windows-1250", "Windows-1250 (stredná Európa)"], ["iso-8859-2", "ISO-8859-2 (Latin-2)"]].map(([k, l]) => `<option value="${k}" ${v === k ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  return `<label>Pôvodný text</label><input type="text" id="mtx" value="${esc(S.mt)}">
+    <div class="cp"><span>Uložené v kódovaní</span>${opt("menc", S.enc)}<span>→ otvorené ako</span>${opt("mdec", S.dec)}</div>
+    <p class="muted" style="font-size:13.5px">Bajty v súbore (${bytes.length}): <span style="font-family:var(--mono)">${bytes.slice(0, 40).map(hex).join(" ")}${bytes.length > 40 ? " …" : ""}</span></p>
+    <div class="moj">${esc(out)}</div><p style="margin:6px 0 0">${ok ? "✅ Kódovania sa zhodujú, text je správny." : "⚠️ Kódovania sa nezhodujú: vzniká „rozsypaný čaj“ (mojibake)."}</p>`; }
+
+/* ---------- encoder / decoder ---------- */
+function charRows(t) { return [...t].map(c => { const cp = c.codePointAt(0), b = Array.from(enc8.encode(c)); return `<tr><td class="ch">${esc(c === " " ? "␠" : c)}</td><td>U+${cp.toString(16).toUpperCase().padStart(4, "0")}</td><td>${cp}</td><td class="${cls(b.length)}">${b.map(hex).join(" ")}</td><td class="${cls(b.length)}">${b.length}</td></tr>`; }).join(""); }
+function koderHTML() { const t = S.kt, n = enc8.encode(t).length; return `<input type="text" id="ktx" value="${esc(t)}" aria-label="Text na zakódovanie"><p>Znakov: <b>${[...t].length}</b> · bajtov v UTF-8: <span class="big">${n}</span></p><div style="overflow-x:auto"><table class="ctab"><thead><tr><th>Znak</th><th>Unicode</th><th>Desiatkovo</th><th>UTF-8 bajty (hex)</th><th>Bajtov</th></tr></thead><tbody id="krows">${charRows(t)}</tbody></table></div>`; }
+
+/* ---------- utf-8 bit layout ---------- */
+function u8Layout(c) { const cp = c.codePointAt(0), b = Array.from(enc8.encode(c)); const pre = [["0"], ["110", "10"], ["1110", "10", "10"], ["11110", "10", "10", "10"]][b.length - 1];
+  return `<div class="bits">${b.map((x, i) => { const s = bin8(x), p = pre[i].length; return `<span class="h">${s.slice(0, p)}</span><span class="d">${s.slice(p)}</span>`; }).join("&nbsp;&nbsp;")}</div><p class="muted" style="font-size:13.5px">Znak „${esc(c)}“ = U+${cp.toString(16).toUpperCase().padStart(4, "0")} = ${cp} = <span class="d" style="font-family:var(--mono);color:#1766C2;font-weight:800">${cp.toString(2)}</span>₂. Červené bity sú značky UTF-8, modré sú bity čísla znaku.</p>`; }
+
+const Q = (q, opts, a, why) => ({ q, opts, a, why });
+const inq = (id, q, ok, show, why) => ({ id, q, ok, show, ph: "?", why });
+const num = n => v => parseNum(String(v).replace(/\s/g, "")) === n;
+const TASKS = {
+  ain: { id: "ain", type: "input", qs: [
+    inq("1", "Aký kód ASCII má znak <b>0</b> (nula)?", num(48), "48"), inq("2", "Aký kód má <b>medzera</b>?", num(32), "32"),
+    inq("3", "Aký kód má <b>Z</b>?", num(90), "90"), inq("4", "O koľko je kód malého písmena väčší ako kód veľkého (napr. a − A)?", num(32), "32", "97 − 65 = 32, teda jeden bit (32 = 2⁵)."),
+    inq("5", "Koľko rôznych znakov pozná 7-bitový ASCII?", num(128), "128"), inq("6", "Napíš 8-bitový dvojkový kód znaku <b>a</b> (97).", v => String(v).replace(/\s/g, "") === "01100001", "01100001")
+  ]},
+  g_bit: { id: "g_bit", type: "custom", max: 3 },
+  g_moj: { id: "g_moj", type: "custom", max: 2 },
+  mq: { id: "mq", type: "mc", qs: [
+    { id: "1", ...Q("Prečo vzniká „rozsypaný čaj“?", ["text sa otvorí v inom kódovaní, než v akom bol uložený", "súbor má vírus", "chýba písmo", "počítač nevie po slovensky"], 0) },
+    { id: "2", ...Q("Ktorá kódová stránka sa používala vo Windows pre slovenčinu?", ["Windows-1250", "Windows-1252 (západná Európa)", "ASCII", "Big5"], 0) },
+    { id: "3", ...Q("Koľko znakov sa zmestí do jednobajtovej kódovej stránky?", ["256", "128", "65 536", "neobmedzene"], 0) },
+    { id: "4", ...Q("Ako „rozsypaný čaj“ opravíš napríklad v Poznámkovom bloku alebo prehliadači?", ["súbor otvorím so správnym kódovaním (dnes najčastejšie UTF-8)", "zmením písmo", "zmením jazyk Windows", "súbor vymažem"], 0) }
+  ]},
+  uq: { id: "uq", type: "mc", qs: [
+    { id: "1", ...Q("Čo je Unicode?", ["jednotný zoznam znakov všetkých písiem sveta, každý znak má svoje číslo (kódový bod)", "program na písanie", "šifra", "typ písma"], 0) },
+    { id: "2", ...Q("Ako sa zapisuje kódový bod v Unicode?", ["U+ a šestnástkové číslo, napr. U+010D", "iba desiatkovo", "iba dvojkovo", "&010D"], 0) },
+    { id: "3", ...Q("Sú emoji súčasťou Unicode?", ["áno, napr. 😀 je U+1F600", "nie, sú to obrázky", "iba na iPhone", "iba v Messengeri"], 0) },
+    { id: "4", ...Q("Aký je vzťah medzi Unicode a UTF-8?", ["Unicode určuje čísla znakov, UTF-8 spôsob, ako ich zapísať do bajtov", "je to to isté", "UTF-8 je starší ako ASCII", "Unicode je iba pre čínštinu"], 0) }
+  ]},
+  u8in: { id: "u8in", type: "input", qs: [
+    inq("1", "Koľko bajtov má v UTF-8 znak <b>A</b>?", num(1), "1"), inq("2", "Koľko bajtov má <b>č</b> (U+010D)?", num(2), "2"),
+    inq("3", "Koľko bajtov má znak eura <b>€</b> (U+20AC)?", num(3), "3"), inq("4", "Koľko bajtov má <b>😀</b> (U+1F600)?", num(4), "4"),
+    inq("5", "Koľko bajtov má slovo <b>Žilina</b> v UTF-8?", num(7), "7", "Ž má 2 bajty, ostatných 5 písmen po 1 bajte."),
+    inq("6", "Akými bitmi začína v UTF-8 prvý bajt dvojbajtového znaku?", v => String(v).replace(/\s/g, "") === "110", "110")
+  ]},
+  dein: { id: "dein", type: "input", qs: [
+    inq("1", "Dekóduj bajty ASCII (hex): <code>48 65 6C 6C 6F</code>", v => String(v).trim() === "Hello", "Hello"),
+    inq("2", "Dekóduj (desiatkovo): <code>73 78 70 79</code>", v => String(v).trim().toUpperCase() === "INFO", "INFO"),
+    inq("3", "Dekóduj UTF-8 (hex): <code>C4 8C 61 75</code>", v => String(v).trim() === "Čau", "Čau", "C4 8C je dvojbajtový znak Č, 61 = a, 75 = u."),
+    inq("4", "Zakóduj slovo <b>OK</b> do ASCII (desiatkovo, oddeľ medzerou).", v => String(v).trim().replace(/\s+/g, " ") === "79 75", "79 75")
+  ]},
+  spr: { id: "spr", type: "input", qs: [
+    { id: "1", q: "Dekóduj desiatkové kódy ASCII: <code>72 105 33</code>", ok: v => String(v).trim() === "Hi!", show: "Hi!", ph: "?" },
+    { id: "2", q: "Dekóduj: <code>73 84</code>", ok: v => String(v).trim() === "IT", show: "IT", ph: "?" },
+    { id: "3", q: "Dekóduj dvojkové kódy: <code>01001111 01001011</code>", ok: v => String(v).trim() === "OK", show: "OK", ph: "?" },
+    { id: "4", q: "Dekóduj šestnástkové kódy: <code>41 48 4F 4A</code>", ok: v => String(v).trim() === "AHOJ", show: "AHOJ", ph: "?" },
+    { id: "5", q: "Koľko bajtov má v UTF-8 slovo <b>kôň</b>?", ok: v => parseNum(v) === 5, show: "5", ph: "?", why: "k = 1 bajt, ô = 2 bajty, ň = 2 bajty." }
+  ]},
+  pq: { id: "pq", type: "mc", qs: [
+    { id: "1", q: "Koľko bajtov zaberá väčšina emoji v UTF-8?", opts: ["4", "1", "2", "8"], a: 0 },
+    { id: "2", q: "Prečo dnes web používa takmer výlučne UTF-8?", opts: ["zobrazí znaky všetkých jazykov a anglický text zaberá stále iba 1 bajt na znak", "je najstaršie", "nepozná diakritiku", "zaberá vždy 4 bajty"], a: 0 },
+    { id: "3", q: "Kamarát ti pošle textový súbor a namiesto „ľ“ vidíš „Ä¾“. Čo s tým?", opts: ["otvoriť súbor so správnym kódovaním (UTF-8)", "vymazať diakritiku všade", "preinštalovať Windows", "zmeniť písmo na Arial"], a: 0 },
+    { id: "4", q: "Koľko rôznych znakov zakóduje 7-bitový ASCII?", opts: ["128", "256", "65 536", "1 000"], a: 0 }
+  ]},
+  test: { id: "test", type: "mc", qs: [
+    { id: "1", ...Q("Ako počítač ukladá znak?", ["ako číslo podľa kódovacej tabuľky", "ako obrázok písmena", "ako zvuk", "nijako"], 0) },
+    { id: "2", ...Q("ASCII používa:", ["7 bitov, 128 znakov bez diakritiky", "16 bitov, všetky jazyky", "1 bit", "32 bitov"], 0) },
+    { id: "3", ...Q("Znaky s kódmi 0 – 31 v ASCII sú:", ["riadiace (napr. nový riadok, tabulátor)", "číslice", "veľké písmená", "emoji"], 0) },
+    { id: "4", ...Q("Dnes najrozšírenejšie kódovanie na webe je:", ["UTF-8", "Windows-1250", "ASCII", "EBCDIC"], 0) },
+    { id: "5", ...Q("V UTF-8 má znak dĺžku:", ["1 až 4 bajty", "vždy 1 bajt", "vždy 2 bajty", "vždy 4 bajty"], 0) },
+    { id: "6", ...Q("Prečo je UTF-8 kompatibilné s ASCII?", ["znaky ASCII majú v UTF-8 rovnaký jeden bajt", "UTF-8 je starší", "nie je kompatibilné", "ASCII má 4 bajty"], 0) },
+    { id: "7", ...Q("Text „Å¾ltÃ½“ namiesto „žltý“ vznikol, lebo:", ["text v UTF-8 sa otvoril ako jednobajtová kódová stránka", "chýba písmo", "je to šifra", "je to chyba klávesnice"], 0) },
+    { id: "8", ...Q("Kódový bod písmena „á“ je U+00E1. Koľko je E1 desiatkovo?", ["225", "161", "241", "14"], 0) }
+  ]}
+};
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const VIEWS = {
+  ascii: () => head() + `<h2>Kód ASCII</h2>
+    <div class="theory tsplit"><div>
+      <p>Počítač uchováva iba čísla. Preto sa ľudia dohodli, ktoré číslo znamená ktorý znak. Takej dohode hovoríme <b>kódovanie</b> (kódová tabuľka).</p>
+      <p>Najstaršie rozšírené kódovanie je <b>ASCII</b> z roku 1963. Používa <b>7 bitov</b>, teda 2<sup>7</sup> = <b>128 znakov</b>.</p>
+      <table class="rtab num"><thead><tr><th>Kódy</th><th>Znaky</th></tr></thead><tbody>
+        <tr><td>0 – 31, 127</td><td><b>riadiace znaky</b>: tabulátor 9, nový riadok 10, Enter 13</td></tr>
+        <tr><td>32</td><td>medzera</td></tr>
+        <tr><td>48 – 57</td><td>číslice 0 – 9</td></tr>
+        <tr><td>65 – 90</td><td>veľké písmená A – Z</td></tr>
+        <tr><td>97 – 122</td><td>malé písmená a – z</td></tr>
+        <tr><td>ostatné</td><td>interpunkcia a symboly</td></tr></tbody></table>
+      <p>ASCII <b>nepozná diakritiku</b> ani iné písma. Malé písmeno má kód o <b>32</b> väčší ako veľké.</p>
+    </div><div>${TFIG.znak}</div></div>
+    ${tfigs(TFIG.mapa, TFIG.bit32)}
+    ${VEDEL("Kód 7 (BEL) kedysi naozaj zazvonil zvončekom na ďalekopise. A keď vo Windows stlačíš Enter, uložia sa dva znaky: 13 (návrat vozíka) a 10 (nový riadok), presne ako na starom písacom stroji.")}
+    <h3>Tabuľka ASCII</h3><p>Klikni na znak a uvidíš jeho kód.</p><div class="tool" id="ascbox">${ascHTML()}</div>
+    <h3>Tvoje meno v ASCII</h3><p>Napíš svoje meno a uvidíš, ako ho uloží počítač. Skús ho poslať spolužiakovi ako čísla.</p><div class="tool" id="menobox">${menoHTML()}</div>
+    <h3>Úloha 1: 7 žiaroviek</h3><p>Každá žiarovka je jeden bit. Rozsvietená žiarovka pripočíta svoju hodnotu. Rozsvieť žiarovky tak, aby vznikol zadaný znak.</p><div class="tool" id="bitbox">${bitHTML()}</div>
+    <h3>Úloha 2: kódy ASCII</h3><div class="task">${taskHTML("ain")}</div>` + nextBar(),
+  stranky: () => { const G = S.mg; return head() + `<h2>Kódové stránky a „rozsypaný čaj“</h2>
+    <div class="theory tsplit"><div>
+      <p>Na národné znaky sa ASCII rozšírilo na <b>8 bitov</b>, teda <b>256 znakov</b>. Kódy 0 – 127 ostali rovnaké, horných 128 miest sa však v každej krajine obsadilo inak. Tak vznikli <b>kódové stránky</b>:</p>
+      <table class="rtab"><thead><tr><th>Kódová stránka</th><th>Pre koho</th></tr></thead><tbody>
+        <tr><td><b>Windows-1250</b>, ISO-8859-2 (Latin-2)</td><td>stredná Európa, aj slovenčina</td></tr>
+        <tr><td>Windows-1252</td><td>západná Európa</td></tr>
+        <tr><td>Windows-1251</td><td>azbuka</td></tr></tbody></table>
+      <p>Keď sa text otvorí v inom kódovaní, než v akom bol uložený, namiesto slovenských písmen vidíme nezmysly. Hovoríme tomu <b>„rozsypaný čaj“</b> (anglicky mojibake).</p>
+    </div><div>${TFIG.stranka}</div></div>
+    ${tfigs(TFIG.caj)}
+    ${VEDEL("Slovo mojibake je japonské a znamená „zmena znakov“. Japonci mali so zlým kódovaním toľko trápenia, že pre to vymysleli vlastné slovo.")}
+    <h3>Úloha 1: vyskúšaj</h3><div class="task"><ul class="goals"><li>${G.bad ? "✅" : "⬜"} vytvor rozsypaný čaj: ulož v UTF-8 a otvor ako Windows-1250</li><li>${G.fix ? "✅" : "⬜"} potom ho oprav nastavením správneho kódovania</li></ul></div>
+    <div class="tool" id="mojbox">${mojHTML()}</div>
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("mq")}</div>` + nextBar(); },
+  unicode: () => head() + `<h2>Unicode</h2>
+    <div class="theory tsplit"><div>
+      <p>Riešením chaosu kódových stránok je <b>Unicode</b>: jeden spoločný zoznam znakov <b>všetkých písiem sveta</b>. Obsahuje latinku s diakritikou, azbuku, grécke, arabské, čínske či japonské znaky, matematické symboly aj <b>emoji</b>, spolu vyše 150 000 znakov.</p>
+      <p>Každý znak má svoje číslo, <b>kódový bod</b>. Zapisuje sa ako <code>U+</code> a šestnástkové číslo:</p>
+      <table class="rtab"><tbody><tr><td><b>A</b></td><td><code>U+0041</code></td><td><b>€</b></td><td><code>U+20AC</code></td></tr><tr><td><b>č</b></td><td><code>U+010D</code></td><td><b>😀</b></td><td><code>U+1F600</code></td></tr></tbody></table>
+      <p>Unicode hovorí iba to, <b>aké číslo</b> znak má. Ako sa toto číslo zapíše do bajtov, určuje <b>kódovanie</b>: UTF-8, UTF-16 alebo UTF-32.</p>
+    </div><div>${TFIG.unicode}</div></div>
+    ${VEDEL("Prvých 128 kódových bodov Unicode je presne tabuľka ASCII. Nové emoji schvaľuje organizácia Unicode Consortium a každý rok ich pribudne niekoľko desiatok.")}
+    <h3>Otázky</h3><div class="task">${taskHTML("uq")}</div>` + nextBar(),
+  utf8: () => head() + `<h2>UTF-8 bajt po bajte</h2>${guessBox()}
+    <div class="theory tsplit"><div>
+      <p><b>UTF-8</b> je dnes najrozšírenejšie kódovanie, používa ho drvivá väčšina webových stránok. Znak zaberá <b>1 až 4 bajty</b> podľa veľkosti kódového bodu:</p>
+      <table class="ctab"><thead><tr><th>Znaky</th><th>Bajtov</th><th>Vzor bitov</th></tr></thead><tbody><tr class="b1"><td>ASCII (U+0000 – U+007F)</td><td>1</td><td>0xxxxxxx</td></tr><tr class="b2"><td>diakritika, azbuka</td><td>2</td><td>110xxxxx 10xxxxxx</td></tr><tr class="b3"><td>€, čínština</td><td>3</td><td>1110xxxx 10xx… 10xx…</td></tr><tr class="b4"><td>emoji</td><td>4</td><td>11110xxx 10xx… ×3</td></tr></tbody></table>
+      <p>Znaky ASCII majú v UTF-8 rovnaký jeden bajt, preto je UTF-8 s ASCII <b>spätne kompatibilné</b>.</p>
+    </div><div>${TFIG.lad}</div></div>
+    ${VEDEL("SMS bez diakritiky môže mať 160 znakov. Stačí jediné „č“ a telefón prepne na iné kódovanie, takže do jednej SMS sa zmestí iba 70 znakov.")}
+    <h3>Ako vyzerá „č“ v UTF-8</h3><div class="tool">${u8Layout("č")}</div>
+    <h3>Kóder</h3><p>Napíš ľubovoľný text a uvidíš bajty každého znaku. Farba ukazuje počet bajtov.</p><div class="tool" id="kbox">${koderHTML()}</div>
+    <h3>Úloha: koľko bajtov?</h3><div class="task">${taskHTML("u8in")}</div>` + nextBar(),
+  koder: () => head() + `<h2>Kóder a dekóder</h2>
+    <div class="theory tsplit"><div>
+      <p><b>Zakódovať</b> znamená previesť text na čísla (bajty).</p>
+      <p><b>Dekódovať</b> znamená previesť čísla späť na text, a to vždy podľa <b>toho istého kódovania</b>.</p>
+      <p>Bajty sa často zapisujú <b>šestnástkovo</b>: každý bajt sú 2 šestnástkové cifry, od 00 po FF.</p>
+    </div><div>${TFIG.koder}</div></div>
+    ${tfigs(TFIG.hex)}
+    <h3>Úloha: dekóduj a zakóduj</h3><p>Pomôž si tabuľkou ASCII z prvej zastávky alebo kóderom.</p><div class="task">${taskHTML("dein")}</div>` + nextBar(),
+  precvic: () => head() + `<h2>Precvičovanie: tajné správy</h2>
+    <div class="theory"><p>Počítače posielajú text ako čísla. Rozlúšti tajné správy zapísané kódmi ASCII v desiatkovej, dvojkovej aj šestnástkovej sústave. Pomôže ti tabuľka ASCII z prvej zastávky aj kóder.</p>
+      <div class="cheat"><span><b>A – Z</b> 65 – 90</span><span><b>a – z</b> 97 – 122</span><span><b>0 – 9</b> 48 – 57</span><span><b>medzera</b> 32</span><span><b>!</b> 33</span></div></div>
+    <h3>Úloha 1: rozlúšti</h3><div class="task">${taskHTML("spr")}</div>
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
+  test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
+};
+function mojScore() { const n = Object.keys(S.mg).length; if (n) award("g_moj", n); }
+function CUSTOM_CLICK(e) { const el = e.target.closest("button"); if (!el) return false;
+  if (el.dataset.bit !== undefined) { const w = +el.dataset.bit; S.bits = w ? S.bits ^ w : 0; BITG.forEach(([c, n]) => { if (S.bits === n) S.bg[c] = true; }); const k = Object.keys(S.bg).length; if (k) award("g_bit", k); save(); renderTop(); document.getElementById("bitbox").innerHTML = bitHTML(); typo(document.getElementById("bitbox")); return true; }
+  if (el.dataset.as !== undefined) { S.asel = +el.dataset.as; save(); document.getElementById("ascbox").innerHTML = ascHTML(); return true; } return false; }
+function CUSTOM_INPUT(e) { const t = e.target;
+  if (t.id === "mtx" || t.id === "menc" || t.id === "mdec") { S.mt = document.getElementById("mtx").value; S.enc = document.getElementById("menc").value; S.dec = document.getElementById("mdec").value;
+    if (S.enc === "utf-8" && S.dec === "windows-1250" && /[^\x00-\x7F]/.test(S.mt)) S.mg.bad = true; if (S.mg.bad && S.enc === S.dec) S.mg.fix = true; mojScore(); save(); const id = t.id, pos = t.selectionStart; document.getElementById("mojbox").innerHTML = mojHTML(); const n = document.getElementById(id); if (n) { n.focus(); if (id === "mtx" && pos != null) n.setSelectionRange(pos, pos); } render(false); const n2 = document.getElementById(id); if (n2) { n2.focus(); if (id === "mtx" && pos != null) n2.setSelectionRange(pos, pos); } return true; }
+  if (t.id === "menox") { S.meno = t.value; save(); const r = document.getElementById("menobox"); const pos = t.selectionStart; r.innerHTML = menoHTML(); const n = document.getElementById("menox"); n.focus(); n.setSelectionRange(pos, pos); return true; }
+  if (t.id === "ktx") { S.kt = t.value; save(); const k = document.getElementById("krows"); if (k) k.innerHTML = charRows(S.kt); const box = document.getElementById("kbox"); if (box) { const p = box.querySelector("p"); p.innerHTML = `Znakov: <b>${[...S.kt].length}</b> · bajtov v UTF-8: <span class="big">${enc8.encode(S.kt).length}</span>`; } return true; }
+  return false; }
+
+/* ---------- typografia: nezalamovať číslo + slovo, jednopísmenkové predložky, rozsahy ---------- */
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1\u2011").replace(/(\d) (?=[\p{L}%°€])/gu, "$1\u00A0").replace(/(\d) ([–-]) (?=\d)/g, "$1\u00A0$2\u00A0");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s\u00A0(„])([vkszaiouVKSZAIOU]) /g, "$1$2\u00A0");
+    if (t !== o) n.nodeValue = t; }); }
+function AFTER_RENDER() { typo(document.getElementById("main")); }
+
+/* ===== shared lesson engine ===== */
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
+  const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
+  T.qs.forEach((q, i) => { if (G.includes(i + 1) && groups.length) groups[groups.length - 1].push(q); else groups.push([q]); });
+  if (groups.length < 2) return T.qs;
+  const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
+  if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
+  return o.flatMap(id => groups.find(g => g[0].id === id)); }
+function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none;padding:8px 14px;border-radius:10px" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+let SEL = null;
+function ord(key, ids, keep) {
+  if (!S.ord[key]) { let o = ids.slice(); if (!keep) { let n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); } S.ord[key] = o; save(); }
+  return S.ord[key];
+}
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+const NSTOP = STEPS.length - 2;
+const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
+function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { return memoHTML() + nextBar0(); }
+function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
+function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `
+  <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    <button class="reset" data-reset>↺ Začať odznova</button></div>
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function checkBar(T, ready, hint) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+}
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return qOrder(T).map((q, qi) => {
+    const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
+      let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
+      return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
+    }).join("") + `</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`;
+  }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
+    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+  const pool = ids.filter(id => !d[id]);
+  return (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
+    `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && T.after ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+}
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [];
+  const ids = ord(T.id, T.items.map(x => x.id));
+  const by = Object.fromEntries(T.items.map(x => [x.id, x]));
+  const pool = ids.filter(id => !seq.includes(id));
+  let h = `<ol class="seq">` + T.items.map((_, i) => {
+    const id = seq[i];
+    if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
+    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
+  }).join("") + `</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
+  if (done && S.t[T.id].score < T.items.length) h += `<div class="box v"><p><b>Správne poradie:</b></p><ol>${T.items.map(x => `<li>${x.t}</li>`).join("")}</ol></div>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky kartičky.");
+}
+function inputHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return qOrder(T).map((q, qi) => {
+    const v = d[q.id] || "", ok = done ? q.ok(v) : null;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+  }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
+}
+function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
+function taskHTML(id) { const T = TASKS[id]; return T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
+function check(id) {
+  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  let s = 0;
+  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  award(id, s);
+  if (id === "test") S.finished = Date.now();
+  save(); render(false);
+}
+function guessBox() {
+  if (S.guess === null) return "";
+  const ok = S.guess === START.ok;
+  return `<div class="box ${ok ? "g" : ""}"><p>Na začiatku si tipoval: <b>„${START.guesses[S.guess]}“</b>. ${ok ? START.yes : START.no}</p></div>`;
+}
+if (!VIEWS.start) VIEWS.start = function () {
+  return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
+  <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
+  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
+  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+};
+if (!VIEWS.vysledok) VIEWS.vysledok = function () {
+  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  const pct = Math.round(total() / MAX * 100);
+  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+  const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const rows = STEPS.filter(s => STEP_TASKS[s.id] && STEP_TASKS[s.id].length).map(s => { const ts = STEP_TASKS[s.id]; return { title: s.title, sc: ts.reduce((a, t) => a + (S.t[t] ? S.t[t].score : 0), 0), mx: ts.reduce((a, t) => a + maxOf(TASKS[t]), 0), done: ts.every(t => S.t[t]) }; });
+  const detail = rows.map(r => `${r.title} ${r.done ? r.sc + "/" + r.mx : "nedokončené"}`).join("; ");
+  const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
+  let formBtn = "";
+  if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
+    formBtn = sendResults(detail); }
+  return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
+    <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
+  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
+  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
+  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+};
+
+const main = document.getElementById("main");
+function render(toTop) {
+  const y = window.scrollY;
+  renderTop();
+  const id = STEPS[S.cur].id;
+  main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
+  main.innerHTML = VIEWS[id]();
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
+  else window.scrollTo(0, y);
+}
+function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
+
+let resetArmed = null;
+document.addEventListener("click", e => {
+  if (typeof CUSTOM_CLICK === "function" && CUSTOM_CLICK(e) === true) return;
+  const el = e.target.closest("button,[data-bucket]"); if (!el) return;
+  const ds = el.dataset;
+  if (ds.go !== undefined) return go(+ds.go);
+  if (ds.reset !== undefined) {
+    if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+  }
+  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.guess !== undefined) { S.guess = +ds.guess; save(); return render(false); }
+  if (ds.check) return check(ds.check);
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; (S.d[t] = S.d[t] || {})[q] = +i; save(); return render(false); }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); return render(false); }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); return render(false); }
+  if (ds.pick) { const [t, id] = ds.pick.split("|"); if (S.t[t]) return; SEL = SEL && SEL.t === t && SEL.i === id ? null : { t, i: id }; return render(false); }
+  if (ds.bucket !== undefined) { const [t, b] = ds.bucket.split("|"); return placeSel(t, b); }
+  if (ds.copy !== undefined) {
+    const ta = document.getElementById("restxt"), out = document.getElementById("copied");
+    const ok = () => { out.textContent = "Skopírované ✓"; };
+    const fallback = () => { ta.focus(); ta.select(); try { document.execCommand("copy") ? ok() : (out.textContent = "Označ text a stlač Ctrl+C."); } catch (err) { out.textContent = "Označ text a stlač Ctrl+C."; } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(ok, fallback); else fallback();
+  }
+});
+document.addEventListener("input", e => {
+  if (typeof CUSTOM_INPUT === "function" && CUSTOM_INPUT(e) === true) return;
+  const t = e.target;
+  if (t.dataset.inp) {
+    const [tid, qid] = t.dataset.inp.split("|"); (S.d[tid] = S.d[tid] || {})[qid] = t.value; save();
+    const b = document.querySelector(`[data-check="${tid}"]`), h = document.querySelector(`[data-hint="${tid}"]`), r = inputReady(TASKS[tid]);
+    if (b) b.disabled = !r; if (h) h.textContent = r ? "" : "Vyplň všetky odpovede."; return;
+  }
+  const f = t.dataset.field; if (!f) return;
+  S[f] = t.value; save();
+  if (STEPS[S.cur].id === "start") {
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    if (btn) btn.disabled = !ok || S.guess === null;
+    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+  }
+});
+document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t]) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
+document.addEventListener("dragover", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && SEL) { e.preventDefault(); b.classList.add("over"); } });
+document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
+document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
+document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+if (!S.started) S.cur = 0;
+render(true);
+
+</script>
+</body>
+</html>
