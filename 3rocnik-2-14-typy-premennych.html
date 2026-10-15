@@ -263,13 +263,44 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .toc div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-weight:600}
 .toc span{color:var(--acc);font-family:var(--mono);margin-right:6px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"typy": ["int = celé číslo, float = desatinné, str = reťazec (aj jeden znak), bool = True/False; type()."], "logicke": ["Porovnania == != < > <= >= vracajú bool; = priraďuje, == porovnáva.", "and (obe), or (aspoň jedna), not (negácia); priorita not > and > or."], "prevody": ["int(), float(), str(), bool(); input vracia str; '5' + 3 → TypeError, int('ab') → ValueError."], "programy": ["Logickú hodnotu môžeš priamo vypísať: print(vek >= 18)."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"typy": ["<b>int</b> = celé číslo (napr. 16, -3), <b>float</b> = desatinné číslo s <b>bodkou</b> (21.5).", "<b>str</b> = reťazec – text v apostrofoch alebo úvodzovkách ('Ema').", "<b>bool</b> = logická hodnota <code>True</code> alebo <code>False</code>.", "Python nemá samostatný typ pre znak: aj jeden znak je <b>reťazec</b> (dĺžky 1).", "Typ hodnoty zistíš funkciou <b>type()</b>.", "Premenná môže neskôr dostať hodnotu <b>iného typu</b>."], "logicke": ["Porovnania <code>==  !=  &lt;  &gt;  &lt;=  &gt;=</code> vracajú <b>bool</b> (True/False).", "<code>=</code> <b>priraďuje</b>, <code>==</code> <b>porovnáva</b>.", "<b>and</b> – pravda, ak sú pravdivé obe strany; <b>or</b> – stačí jedna; <b>not</b> – obráti hodnotu.", "Priorita: najprv <b>not</b>, potom <b>and</b>, nakoniec <b>or</b>.", "Reťazce sa porovnávajú abecedne podľa <b>kódov znakov</b>; veľké písmená sú pred malými."], "prevody": ["<b>int(x)</b> – celé číslo (desatinnú časť <b>odsekne</b>), <b>float(x)</b> – desatinné číslo.", "<b>str(x)</b> – reťazec, <b>bool(x)</b> – logická hodnota.", "<code>bool</code>: 0, 0.0 a prázdny reťazec <code>''</code> sú <b>False</b>, všetko ostatné <b>True</b>.", "<b>input()</b> vracia vždy <b>reťazec</b>; na počítanie treba <code>int(input())</code> alebo <code>float(input())</code>.", "Reťazec s písmenami na číslo neprevedieš → <b>ValueError</b>.", "Číslo a reťazec nespojíš pomocou + → <b>TypeError</b>; pomôže <code>str()</code>."], "programy": ["Postup: <b>vstup</b> → <b>prevod</b> (int, float) → <b>výpočet</b> → <b>výstup</b>.", "Výsledok porovnania môžeš priamo vypísať: <code>print(body &gt;= 50)</code>.", "Interval overíš cez <b>and</b>: <code>z &gt;= 1 and z &lt;= 5</code>, skrátene <code>1 &lt;= z &lt;= 5</code>.", "Dodrž <b>tvar výstupu</b> z ukážky – program sa kontroluje viacerými vstupmi."]};
 /* ===================== mini Python interpreter (subset) ===================== */
 const PY = (() => {
 class PyErr { constructor(type, msg, line) { this.type = type; this.msg = msg; this.line = line; } }
@@ -623,13 +654,127 @@ document.addEventListener("keydown", e => { const t = e.target;
   if (t.dataset && t.dataset.pe) { if (e.key === "F5") { e.preventDefault(); const b = document.querySelector(`[data-prun="${t.dataset.pe}"]`); if (b) b.click(); } if (e.key === "Tab") { e.preventDefault(); const s = t.selectionStart; t.value = t.value.slice(0, s) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 4; S.code[t.dataset.pe] = t.value; save(); } } });
 function pyInput(e) { const t = e.target; if (t.dataset && t.dataset.pe) { S.code[t.dataset.pe] = t.value; save(); return true; } return false; }
 
+/* ---------- LENKA: obrázky k teórii ---------- */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#0E7A5C", accS: "#D5EEE5", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, C.ink].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-Fa-f]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  return { C, fig, SV, ar, T, box, num };
+})();
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = C.acc, AS = C.accS;
+const M = (x, y, s, o = {}) => T(x, y, s, Object.assign({ mono: 1 }, o));
+const dark = (x, y, w, h) => box(x, y, w, h, "#0F1A2E", null, 6);
+const H = (s) => T(220, 20, s, { a: "middle", fs: 13.5, b: 1, c: A });
+const cp = (x, y, s, c, fs) => `<text x="${x}" y="${y}" font-size="${fs || 11.5}" font-family="Consolas,monospace" fill="${c || "#DCE7FF"}" style="white-space:pre" xml:space="preserve">${s}</text>`;
+const VB = (x, y, n, v, c, w) => { w = w || 96; c = c || A; return `${box(x, y, w, 58, "#fff", c, 8)}${box(x, y, w, 20, c, null, 8)}<rect x="${x}" y="${y + 12}" width="${w}" height="8" fill="${c}"/>${M(x + w / 2, y + 15, n, { a: "middle", fs: 12, b: 1, c: "#fff" })}${M(x + w / 2, y + 46, v, { a: "middle", fs: 16, b: 1 })}`; };
+const sw = (x, y) => `<circle cx="${x}" cy="${y}" r="3.5" fill="#fff" stroke="${C.ink}" stroke-width="2"/><circle cx="${x + 30}" cy="${y}" r="3.5" fill="#fff" stroke="${C.ink}" stroke-width="2"/><line x1="${x + 3}" y1="${y - 2}" x2="${x + 28}" y2="${y - 4}" stroke="${C.ink}" stroke-width="2.5"/>`;
+const bulb = (x, y) => `<circle cx="${x}" cy="${y}" r="13" fill="#FFE27A" stroke="${C.amb}" stroke-width="2"/><path d="M${x - 5} ${y + 3} L${x - 2} ${y - 4} L${x + 2} ${y + 3} L${x + 5} ${y - 4}" fill="none" stroke="${C.amb}" stroke-width="1.5"/>`;
+const W = (pts) => `<polyline points="${pts}" fill="none" stroke="${C.ink}" stroke-width="2"/>`;
+return {
+  typy: fig(SV(440, 252, `
+    ${H("Štyri základné typy hodnôt")}
+    ${[["int", ["16", "-3", "2026"], "celé číslo", C.acc], ["float", ["21.5", "-0.25"], "desatinné (s bodkou)", C.blue], ["str", ["'Ema'", "\"A\""], "text v úvodzovkách", C.amb], ["bool", ["True", "False"], "pravda / nepravda", C.ok]].map(([t, v, d, c], i) => { const y = 34 + i * 50; return `${box(14, y, 412, 44, i % 2 ? C.bg : "#fff", C.line, 8)}${box(22, y + 8, 64, 28, c, null, 6)}${M(54, y + 27, t, { a: "middle", fs: 13.5, b: 1, c: "#fff" })}${v.map((w, k) => M(100 + k * 60, y + 27, w, { fs: 13.5, b: 1 })).join("")}${T(416, y + 27, d, { a: "end", fs: 11.5, c: C.mut })}`; }).join("")}
+    ${T(220, 245, "Typ určuje, čo sa s hodnotou dá robiť.", { a: "middle", fs: 11.5 })}`, "Základné typy"),
+    "<b>int</b>, <b>float</b>, <b>str</b> a <b>bool</b> – štyri typy, s ktorými budeš pracovať najčastejšie."),
+  typefn: fig(SV(440, 222, `
+    ${H("Typ zistíš funkciou type()")}
+    ${dark(14, 34, 412, 150)}
+    ${[["&gt;&gt;&gt; type(21.5)", "#DCE7FF"], ["&lt;class 'float'&gt;", "#8FE3C0"], ["&gt;&gt;&gt; type('16')", "#DCE7FF"], ["&lt;class 'str'&gt;", "#8FE3C0"], ["&gt;&gt;&gt; type(True)", "#DCE7FF"], ["&lt;class 'bool'&gt;", "#8FE3C0"]].map(([s, c], i) => cp(28, 58 + i * 22, s, c, 13)).join("")}
+    ${T(220, 208, "Číslo v úvodzovkách je text, nie číslo!", { a: "middle", fs: 12, b: 1, c: C.amb })}`, "Funkcia type"),
+    "Funkcia <b>type()</b> prezradí typ hodnoty alebo premennej."),
+  dyn: fig(SV(440, 206, `
+    ${H("Premenná môže zmeniť typ")}
+    ${dark(14, 48, 180, 32)}${cp(28, 69, "x = 7", "#DCE7FF", 13)}${ar(198, 64, 236, 64, A, 2)}
+    ${VB(244, 36, "x", "7", A, 110)}${T(368, 70, "int", { fs: 13, b: 1, c: A })}
+    ${dark(14, 122, 180, 32)}${cp(28, 143, "x = 'sedem'", "#DCE7FF", 13)}${ar(198, 138, 236, 138, C.amb, 2)}
+    ${VB(244, 110, "x", "'sedem'", C.amb, 110)}${T(368, 144, "str", { fs: 13, b: 1, c: C.amb })}
+    ${T(220, 194, "Typ patrí hodnote, nie menu premennej.", { a: "middle", fs: 11.5 })}`, "Zmena typu"),
+    "Po novom priradení môže mať premenná hodnotu <b>iného typu</b>."),
+  rovna: fig(SV(440, 236, `
+    ${H("= ukladá, == sa pýta")}
+    ${box(14, 32, 204, 172, C.ambS, null, 8)}${T(116, 54, "=  priradenie", { a: "middle", fs: 12.5, b: 1, c: C.amb })}
+    ${dark(26, 66, 180, 30)}${cp(40, 86, "body = 8", "#DCE7FF", 13)}
+    ${T(116, 118, "ulož 8 do premennej body", { a: "middle", fs: 11 })}
+    ${VB(66, 132, "body", "8", C.amb, 100)}
+    ${box(222, 32, 204, 172, AS, null, 8)}${T(324, 54, "==  porovnanie", { a: "middle", fs: 12.5, b: 1, c: A })}
+    ${dark(234, 66, 180, 30)}${cp(248, 86, "body == 10", "#DCE7FF", 13)}
+    ${T(324, 118, "je body rovné 10?", { a: "middle", fs: 11 })}
+    ${box(270, 132, 108, 58, "#fff", A, 8)}${M(324, 168, "False", { a: "middle", fs: 18, b: 1, c: C.blue })}
+    ${T(220, 226, "Jeden znak = mení premennú, dva znaky == sa iba pýtajú.", { a: "middle", fs: 11.5 })}`, "Priradenie a porovnanie"),
+    "<b>=</b> do premennej ukladá, <b>==</b> porovnáva a vráti <b>True</b> alebo <b>False</b>."),
+  obvod: fig(SV(440, 210, `
+    ${H("and ako sériový, or ako paralelný obvod")}
+    ${box(14, 32, 204, 170, C.bg, null, 8)}${M(116, 54, "A and B", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${W("28,110 56,110")}${sw(60, 110)}${W("94,110 120,110")}${sw(124, 110)}${W("158,110 176,110")}${bulb(190, 110)}
+    ${T(75, 92, "A", { a: "middle", fs: 12, b: 1 })}${T(139, 92, "B", { a: "middle", fs: 12, b: 1 })}
+    ${T(116, 166, "svieti, iba ak sú zapnuté", { a: "middle", fs: 11.5 })}${T(116, 184, "oba spínače", { a: "middle", fs: 11.5, b: 1 })}
+    ${box(222, 32, 204, 170, C.bg, null, 8)}${M(324, 54, "A or B", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${W("236,110 262,110")}${W("262,84 262,136")}${W("262,84 290,84")}${sw(294, 84)}${W("328,84 360,84")}${W("262,136 290,136")}${sw(294, 136)}${W("328,136 360,136")}${W("360,84 360,136")}${W("360,110 384,110")}${bulb(398, 110)}
+    ${T(309, 72, "A", { a: "middle", fs: 12, b: 1 })}${T(309, 124, "B", { a: "middle", fs: 12, b: 1 })}
+    ${T(324, 166, "svieti, ak je zapnutý", { a: "middle", fs: 11.5 })}${T(324, 184, "aspoň jeden spínač", { a: "middle", fs: 11.5, b: 1 })}`, "Obvody and a or"),
+    "<b>and</b> potrebuje obe podmienky pravdivé, pri <b>or</b> stačí jedna."),
+  retaz: fig(SV(440, 218, `
+    ${H("Porovnanie reťazcov podľa kódov znakov")}
+    ${box(14, 34, 412, 72, C.bg, null, 8)}${M(26, 60, "'Zebra' &lt; 'auto'", { fs: 14, b: 1 })}${T(26, 88, "prvé znaky: Z (kód 90) &lt; a (kód 97)", { fs: 11.5 })}${M(412, 74, "True", { a: "end", fs: 17, b: 1, c: C.blue })}
+    ${box(14, 114, 412, 72, C.bg, null, 8)}${M(26, 140, "'kos' &lt; 'koza'", { fs: 14, b: 1 })}${T(26, 168, "rovnaké „ko“, potom s (115) &lt; z (122)", { fs: 11.5 })}${M(412, 154, "True", { a: "end", fs: 17, b: 1, c: C.blue })}
+    ${T(220, 208, "Veľké písmená majú menšie kódy ako malé.", { a: "middle", fs: 11.5, b: 1, c: C.amb })}`, "Porovnanie reťazcov"),
+    "Reťazce sa porovnávajú <b>znak po znaku</b> podľa ich kódov."),
+  vstup: fig(SV(440, 214, `
+    ${H("input() vracia vždy reťazec")}
+    ${[["napíšeš", "17", "", C.mut], ["input()", "'17'", "str", C.amb], ["int(...)", "17", "int", A], ["vek + 1", "18", "int", C.blue]].map(([t, v, ty, c], i) => { const x = 14 + i * 106; return `${box(x, 36, 92, 76, i ? "#fff" : C.bg, c, 8)}${T(x + 46, 56, t, { a: "middle", fs: 11.5, b: 1, c, mono: i > 0 })}${M(x + 46, 86, v, { a: "middle", fs: 17, b: 1 })}${ty ? T(x + 46, 104, ty, { a: "middle", fs: 11, c: C.mut }) : ""}` + (i < 3 ? ar(x + 93, 74, x + 105, 74, C.mut, 2) : ""); }).join("")}
+    ${dark(14, 128, 412, 34)}${cp(28, 150, "vek = int(input('Vek: '))", "#DCE7FF", 13.5)}
+    ${T(220, 190, "Bez int() by Python s textom '17' nepočítal.", { a: "middle", fs: 11.5 })}`, "input a int"),
+    "Text z <b>input()</b> preveď na číslo funkciou <b>int()</b> alebo <b>float()</b>."),
+  mapa: fig(SV(440, 224, `
+    ${H("Prevodné funkcie")}
+    ${[["int(-3.7)", "-3", "odsekne desatinnú časť"], ["int('-8')", "-8", "text na celé číslo"], ["float(4)", "4.0", "celé na desatinné"], ["str(2.5)", "'2.5'", "číslo na text"], ["bool(-1)", "True", "nenulové číslo je True"]].map(([c, r, n], i) => { const y = 32 + i * 37; return `${box(14, y, 412, 31, i % 2 ? C.bg : "#fff", C.line, 6)}${M(26, y + 21, c, { fs: 13, b: 1 })}${ar(132, y + 16, 160, y + 16, A, 2)}${M(170, y + 21, r, { fs: 13, b: 1, c: C.blue })}${T(416, y + 21, n, { a: "end", fs: 11.5, c: C.mut })}`; }).join("")}`, "Prevody"),
+    "<b>int()</b>, <b>float()</b>, <b>str()</b> a <b>bool()</b> vytvoria hodnotu iného typu."),
+  chyby: fig(SV(440, 212, `
+    ${H("Dve časté chyby pri typoch")}
+    ${box(14, 32, 412, 38, C.badS, null, 6)}${M(26, 56, "'vek: ' + 17", { fs: 13, b: 1 })}${M(414, 56, "TypeError", { a: "end", fs: 13, b: 1, c: C.bad })}
+    ${box(14, 76, 412, 38, C.okS, null, 6)}${M(26, 100, "'vek: ' + str(17)", { fs: 13, b: 1 })}${M(414, 100, "'vek: 17'", { a: "end", fs: 13, b: 1, c: C.ok })}
+    ${box(14, 128, 412, 38, C.badS, null, 6)}${M(26, 152, "int('dva')", { fs: 13, b: 1 })}${M(414, 152, "ValueError", { a: "end", fs: 13, b: 1, c: C.bad })}
+    ${T(220, 196, "TypeError = nevhodný typ, ValueError = nevhodná hodnota.", { a: "middle", fs: 11.5 })}`, "TypeError a ValueError"),
+    "Text a číslo nespojíš (<b>TypeError</b>), slovo na číslo neprevedieš (<b>ValueError</b>)."),
+  postup: fig(SV(440, 200, `
+    ${H("Typický program s typmi")}
+    ${[["1. vstup", "input()"], ["2. prevod", "int, float"], ["3. výpočet", "+  %  &gt;="], ["4. výstup", "print()"]].map(([t, s], i) => { const x = 14 + i * 104; return `${box(x, 34, 96, 58, i % 2 ? AS : C.bg, null, 8)}${T(x + 48, 56, t, { a: "middle", fs: 12, b: 1, c: A })}${M(x + 48, 78, s, { a: "middle", fs: 11.5 })}` + (i < 3 ? ar(x + 97, 63, x + 103, 63, A, 2) : ""); }).join("")}
+    ${dark(14, 106, 412, 56)}${cp(28, 129, "cena = float(input('Cena: '))", "#DCE7FF", 13)}${cp(28, 151, "print('drahé:', cena &gt; 100)", "#DCE7FF", 13)}
+    ${T(220, 188, "Porovnanie vráti True/False – môžeš ho rovno vypísať.", { a: "middle", fs: 11.5 })}`, "Postup programu"),
+    "Vstup → <b>prevod</b> → výpočet → výstup."),
+  interval: fig(SV(440, 206, `
+    ${H("Interval: známka od 1 do 5")}
+    ${box(14, 32, 412, 36, C.bg, null, 6)}${M(26, 55, "z &gt;= 1 and z &lt;= 5", { fs: 13, b: 1 })}${T(232, 55, "=", { a: "middle", fs: 14, b: 1, c: A })}${M(414, 55, "1 &lt;= z &lt;= 5", { a: "end", fs: 13, b: 1 })}
+    <line x1="24" y1="130" x2="416" y2="130" stroke="${C.mut}" stroke-width="2"/>
+    <line x1="100" y1="130" x2="340" y2="130" stroke="${A}" stroke-width="7" stroke-linecap="round"/>
+    ${[0, 1, 2, 3, 4, 5, 6].map(v => { const x = 40 + v * 60; return `<line x1="${x}" y1="124" x2="${x}" y2="136" stroke="${C.mut}" stroke-width="1.5"/>${T(x, 154, v, { a: "middle", fs: 12 })}`; }).join("")}
+    <circle cx="100" cy="130" r="7" fill="${A}"/><circle cx="340" cy="130" r="7" fill="${A}"/>
+    ${M(220, 112, "True", { a: "middle", fs: 13, b: 1, c: A })}${M(56, 112, "False", { a: "middle", fs: 12, c: C.bad })}${M(386, 112, "False", { a: "middle", fs: 12, c: C.bad })}
+    ${T(220, 190, "Plný krúžok: hranica do intervalu patrí (&lt;=).", { a: "middle", fs: 11.5 })}`, "Interval"),
+    "Interval overíš dvoma porovnaniami spojenými <b>and</b>.")
+};
+})();
+const LAB = (() => {
+  const OPS = [["x", "input() vráti"], ["int(x)", "celé číslo"], ["float(x)", "desatinné číslo"], ["bool(x)", "logická hodnota"], ["len(x)", "počet znakov"]];
+  const rows = v => OPS.map(([op, d]) => { const r = PY.execute("x = input()\nprint(repr(" + op + "))", { inputs: [v], quiet: true }); const ok = !r.err; const o = ok ? r.out.trim() : (r.err.type || "Error");
+     return `<tr><td>${op}</td><td><code style="color:${ok ? "var(--acc)" : "#C0392B"};font-weight:700">${esc(o)}</code></td></tr>`; }).join("");
+  const html = () => { const v = S.lab214 != null ? S.lab214 : "3.5"; return `<h3>🧪 Skúšobňa prevodov</h3><p class="muted" style="font-size:14px">Napíš ľubovoľný vstup (napr. 12, -4, 3.5, ahoj, 0 alebo nič) a sleduj, čo s ním spravia prevodné funkcie. Táto časť sa neboduje.</p><div class="task"><label style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><span>Vstup <code>x = input()</code>:</span><input data-lab="1" value="${esc(v)}" autocomplete="off" spellcheck="false" style="flex:0 1 220px;min-width:0;font-family:var(--mono);font-size:16px;padding:6px 10px;border:2px solid var(--border);border-radius:10px"></label><table class="rtab num" id="labout"><thead><tr><th>Výraz</th><th>Výsledok</th></tr></thead><tbody>${rows(v)}</tbody></table></div>`; };
+  const input = e => { const t = e.target; if (!t.dataset || !t.dataset.lab) return false; S.lab214 = t.value; save(); const b = document.querySelector("#labout tbody"); if (b) b.innerHTML = rows(t.value); return true; };
+  return { html, input };
+})();
 const DEF = { key: "typy-r214-v1", lesson: "2.14 Číselné, znakové a logické premenné", brand: "2.14 Typy premenných",
  start: { kicker: "Informatika, 3. ročník", lead: "Premenná môže obsahovať číslo, text alebo pravdivostnú hodnotu. Spoznáš typy int, float, str a bool, porovnávania a logické operátory and, or, not, naučíš sa prevádzať hodnoty medzi typmi a zistíš, prečo '5' + 3 nefunguje. 4 zastávky, body a na konci výsledok.", guessQ: "Čo vypíše print('5' + '3')?", guessNote: "Tip sa neboduje. Na zastávke Prevody medzi typmi zistíš, či si mal pravdu.", guesses: ["8", "53", "chybu", "5 3"], ok: 1, yes: "Presne tak! '5' a '3' sú reťazce a + ich spojí.", no: "Vypíše 53. '5' a '3' sú reťazce (text) a + ich spojí za seba." },
  st: [
-  { id: "typy", title: "Typy premenných", min: 8, th: `<table class="cmdt"><thead><tr><th>Typ</th><th>Čo uchováva</th><th>Príklad</th></tr></thead><tbody><tr><td><code>int</code></td><td>celé číslo</td><td><code>vek = 16</code></td></tr><tr><td><code>float</code></td><td>desatinné číslo</td><td><code>teplota = 21.5</code></td></tr><tr><td><code>str</code></td><td>reťazec (text, znaky) v úvodzovkách</td><td><code>meno = 'Ema'</code>, <code>znak = 'A'</code></td></tr><tr><td><code>bool</code></td><td>logická hodnota <code>True</code> alebo <code>False</code></td><td><code>hotovo = True</code></td></tr></tbody></table><p>Python nemá samostatný typ pre jeden znak: znak je reťazec dĺžky 1. Typ zistíš funkciou <code>type()</code>. Premenná môže neskôr dostať hodnotu iného typu.</p>`, repl: "Vyskúšaj: type(16), type(21.5), type('Ema'), type(True), type('16'), vek = 16, vek > 15", mc: [["Aký typ má hodnota <code>'42'</code>?", ["str", "int", "float", "bool"]], ["Aký typ má hodnota <code>False</code>?", ["bool", "str", "int", "None"]], ["Aký typ má <code>3.0</code>?", ["float", "int", "str", "bool"]], ["Ako v Pythone zapíšeš znak A?", ["'A' (reťazec dĺžky 1)", "char A", "A bez úvodzoviek", "#A"]]] },
-  { id: "logicke", title: "Logické hodnoty a porovnania", min: 10, guess: false, th: `<p>Porovnanie vráti <code>True</code> alebo <code>False</code>: <code>==</code> (rovná sa), <code>!=</code> (nerovná sa), <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>. Pozor: <code>=</code> priraďuje, <code>==</code> porovnáva. Logické operátory: <code>and</code> (a zároveň: pravda, ak sú pravdivé obe strany), <code>or</code> (alebo: stačí jedna), <code>not</code> (negácia). Priorita: <code>not</code>, potom <code>and</code>, potom <code>or</code>.</p><table class="cmdt"><thead><tr><th>A</th><th>B</th><th>A and B</th><th>A or B</th></tr></thead><tbody><tr><td>True</td><td>True</td><td>True</td><td>True</td></tr><tr><td>True</td><td>False</td><td>False</td><td>True</td></tr><tr><td>False</td><td>False</td><td>False</td><td>False</td></tr></tbody></table><p>Reťazce sa porovnávajú abecedne podľa kódov znakov (veľké písmená sú pred malými).</p>`, px: ["print(5 > 3)", "print(3 == 3.0)", "print(7 != 7)", "print(5 > 3 and 2 > 4)", "print(5 > 3 or 2 > 4)", "print(not (1 < 2))", "x = 15\nprint(10 <= x <= 20)", "print('Ana' < 'Boris')"] },
-  { id: "prevody", title: "Prevody medzi typmi", min: 8, guess: true, th: `<p><code>int(x)</code> prevedie na celé číslo (desatinnú časť odsekne), <code>float(x)</code> na desatinné, <code>str(x)</code> na reťazec, <code>bool(x)</code> na logickú hodnotu (<code>0</code>, <code>0.0</code>, prázdny reťazec <code>''</code> sú <code>False</code>, všetko ostatné <code>True</code>). <code>input()</code> vracia <b>vždy reťazec</b>, preto s číslami treba <code>int(input())</code>. Reťazec s písmenami na číslo neprevedieš: <code>ValueError</code>. Číslo a reťazec nespojíš: <code>TypeError</code>.</p>`, px: ["print('5' + '3')", "print(int('5') + 3)", "print(str(5) + '3')", "print('5' * 3)", "print(int(7.9))", "print(float('2.5') * 2)", "print(bool(0), bool('ahoj'))", "print('5' + 3)"] },
-  { id: "programy", title: "Programy", min: 12, ex: [
+  { id: "typy", title: "Typy premenných", min: 8, fig: "typy", figs: ["typefn", "dyn"], ved: "Celé čísla (<b>int</b>) v Pythone nemajú horný limit. Skús v Shelli <code>2 ** 1000</code> – Python vypíše presný výsledok s 302 ciframi.", th: `<p>Každá hodnota v Pythone má <b>typ</b>. Typ určuje, čo s hodnotou môžeš robiť: čísla sčítavať, texty spájať.</p><table class="rtab num"><thead><tr><th>Typ</th><th>Čo uchováva</th><th>Príklad</th></tr></thead><tbody><tr><td><code>int</code></td><td>celé číslo</td><td><code>vek = 16</code></td></tr><tr><td><code>float</code></td><td>desatinné číslo</td><td><code>teplota = 21.5</code></td></tr><tr><td><code>str</code></td><td>reťazec (text, znaky) v úvodzovkách</td><td><code>meno = 'Ema'</code>, <code>znak = 'A'</code></td></tr><tr><td><code>bool</code></td><td>logická hodnota <code>True</code> alebo <code>False</code></td><td><code>hotovo = True</code></td></tr></tbody></table><p>Python nemá samostatný typ pre jeden znak: znak je <b>reťazec dĺžky 1</b>. Typ zistíš funkciou <code>type()</code>.</p><p>Premenná môže neskôr dostať hodnotu <b>iného typu</b>.</p>`, repl: "Vyskúšaj: type(16), type(21.5), type('Ema'), type(True), type('16'), vek = 16, vek > 15", mc: [["Aký typ má hodnota <code>'42'</code>?", ["str", "int", "float", "bool"]], ["Aký typ má hodnota <code>False</code>?", ["bool", "str", "int", "None"]], ["Aký typ má <code>3.0</code>?", ["float", "int", "str", "bool"]], ["Ako v Pythone zapíšeš znak A?", ["'A' (reťazec dĺžky 1)", "char A", "A bez úvodzoviek", "#A"]]] },
+  { id: "logicke", title: "Logické hodnoty a porovnania", min: 10, guess: false, fig: "rovna", figs: ["obvod", "retaz"], ved: "Typ <b>bool</b> je pomenovaný po anglickom matematikovi <b>Georgeovi Booleovi</b> (1815 – 1864). Jeho logická algebra s dvoma hodnotami je dnes základom každého počítača.", th: `<p>Porovnanie vráti <code>True</code> alebo <code>False</code>. Pozor: <code>=</code> <b>priraďuje</b>, <code>==</code> <b>porovnáva</b>.</p><table class="rtab num"><thead><tr><th>Operátor</th><th>Význam</th></tr></thead><tbody><tr><td>==</td><td>rovná sa</td></tr><tr><td>!=</td><td>nerovná sa</td></tr><tr><td>&lt;  &gt;</td><td>menší, väčší</td></tr><tr><td>&lt;=  &gt;=</td><td>menší alebo rovný, väčší alebo rovný</td></tr></tbody></table><p>Logické operátory: <b>and</b> (a zároveň: pravda, ak sú pravdivé obe strany), <b>or</b> (alebo: stačí jedna), <b>not</b> (negácia). Priorita: <code>not</code>, potom <code>and</code>, potom <code>or</code>.</p><table class="rtab"><thead><tr><th>A</th><th>B</th><th>A and B</th><th>A or B</th></tr></thead><tbody><tr><td>True</td><td>True</td><td>True</td><td>True</td></tr><tr><td>True</td><td>False</td><td>False</td><td>True</td></tr><tr><td>False</td><td>False</td><td>False</td><td>False</td></tr></tbody></table><p>Reťazce sa porovnávajú <b>abecedne podľa kódov znakov</b> (veľké písmená sú pred malými).</p>`, px: ["print(5 > 3)", "print(3 == 3.0)", "print(7 != 7)", "print(5 > 3 and 2 > 4)", "print(5 > 3 or 2 > 4)", "print(not (1 < 2))", "x = 15\nprint(10 <= x <= 20)", "print('Ana' < 'Boris')"] },
+  { id: "prevody", title: "Prevody medzi typmi", min: 8, guess: true, fig: "vstup", figs: ["mapa", "chyby"], inter: () => LAB.html(), ved: "Desatinné čísla sa v počítači ukladajú v dvojkovej sústave, a preto nie vždy presne: <code>0.1 + 0.2</code> v Pythone vypíše <code>0.30000000000000004</code>.", th: `<p>Hodnotu jedného typu prevedieš na iný typ <b>prevodnou funkciou</b>:</p><table class="rtab num"><thead><tr><th>Funkcia</th><th>Výsledok</th></tr></thead><tbody><tr><td>int(x)</td><td>celé číslo (desatinnú časť <b>odsekne</b>)</td></tr><tr><td>float(x)</td><td>desatinné číslo</td></tr><tr><td>str(x)</td><td>reťazec</td></tr><tr><td>bool(x)</td><td>logická hodnota: <code>0</code>, <code>0.0</code>, prázdny reťazec <code>''</code> sú <code>False</code>, všetko ostatné <code>True</code></td></tr></tbody></table><p><code>input()</code> vracia <b>vždy reťazec</b>, preto s číslami treba <code>int(input())</code>.</p><p>Reťazec s písmenami na číslo neprevedieš: <b>ValueError</b>. Číslo a reťazec nespojíš: <b>TypeError</b>.</p>`, px: ["print('5' + '3')", "print(int('5') + 3)", "print(str(5) + '3')", "print('5' * 3)", "print(int(7.9))", "print(float('2.5') * 2)", "print(bool(0), bool('ahoj'))", "print('5' + 3)"] },
+  { id: "programy", title: "Programy", min: 12, fig: "postup", figs: ["interval"], ved: "Hodnoty <code>True</code> a <code>False</code> sa pri počítaní správajú ako <b>1</b> a <b>0</b>: <code>True + True</code> je 2. Preto <code>sum()</code> zoznamu logických hodnôt spočíta, koľko z nich je pravdivých.", th: `<p>Programy skontrolujem viacerými vstupmi. Dodrž <b>tvar výstupu</b> z ukážky.</p><p>Výsledok porovnania je typu <b>bool</b>, takže ho môžeš vypísať priamo, bez príkazu if: <code>print(body &gt;= 50)</code> vypíše True alebo False.</p><p>Interval overíš dvoma porovnaniami spojenými <b>and</b> alebo <b>zreťazeným porovnaním</b>.</p>`, ex: [
    { title: "Plnoletý", text: "Program prečíta vek a vypíše <code>True</code>, ak má človek aspoň 18 rokov, inak <code>False</code> (bez if, iba porovnaním).", sample: "Vek: 17\nFalse", start: "vek = int(input('Vek: '))\n", ref: "vek = int(input('Vek: '))\nprint(vek >= 18)", tests: [["17"], ["18"], ["40"]] },
    { title: "Párne a kladné", text: "Program prečíta celé číslo a vypíše dva riadky: <code>parne: True/False</code> a <code>kladne: True/False</code>.", sample: "Číslo: -4\nparne: True\nkladne: False", start: "n = int(input('Číslo: '))\n", ref: "n = int(input('Číslo: '))\nprint('parne:', n % 2 == 0)\nprint('kladne:', n > 0)", tests: [["-4"], ["7"], ["0"]] },
    { title: "Súčet a spojenie", text: "Program prečíta dve čísla ako text a vypíše ich <b>spojenie</b> (ako reťazce) a <b>súčet</b> (ako čísla): <code>spojenie: …</code> a <code>sucet: …</code>.", sample: "a: 12\nb: 30\nspojenie: 1230\nsucet: 42", start: "a = input('a: ')\nb = input('b: ')\n", ref: "a = input('a: ')\nb = input('b: ')\nprint('spojenie:', a + b)\nprint('sucet:', int(a) + int(b))", tests: [["12", "30"], ["5", "5"]] },
@@ -655,14 +800,14 @@ DEF.st.forEach(s => {
   if (s.ex) TASKS["ex_" + s.id] = { id: "ex_" + s.id, type: "custom", max: s.ex.length };
 });
 const VIEWS = { test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar() };
-DEF.st.forEach(s => { VIEWS[s.id] = () => head() + `<h2>${s.title}</h2>${s.guess ? guessBox() : ""}<div class="theory">${s.th}</div>`
+DEF.st.forEach(s => { VIEWS[s.id] = () => head() + `<h2>${s.title}</h2>${s.guess ? guessBox() : ""}<div class="theory tsplit"><div>${s.th || ""}</div><div>${s.fig ? TFIG[s.fig] : ""}</div></div>${s.figs ? ltfigs(...s.figs.map(k => TFIG[k])) : ""}${s.ved ? VEDEL(s.ved) : ""}${s.inter ? s.inter() : ""}`
   + (s.repl ? `<h3>Vyskúšaj v Shelli</h3><p class="muted" style="font-size:14px">${s.repl}</p>${replHTML()}` : "")
   + (s.mc ? `<h3>Otázky</h3><div class="task">${taskHTML("mc_" + s.id)}</div>` : "")
   + (s.px ? `<h3>Čo vypíše program?</h3><p class="muted" style="font-size:14px">Napíš presne to, čo by vypísal Python (viac riadkov oddeľ medzerou). Pri chybe napíš jej typ, napr. IndexError.</p><div class="task">${taskHTML("px_" + s.id)}</div>` : "")
   + (s.ex ? `<h3>Programy</h3>${s.ex.map((e, i) => exHTML(s.id + "_" + i, i + 1)).join("")}${S.t["ex_" + s.id] ? `<div class="checkbar"><span class="score ${S.t["ex_" + s.id].score < s.ex.length ? "part" : ""}">Úlohy: ${S.t["ex_" + s.id].score} z ${s.ex.length}</span></div>` : ""}` : "")
   + nextBar(); });
 function CUSTOM_CLICK(e) { return pyClick(e); }
-function CUSTOM_INPUT(e) { return pyInput(e); }
+function CUSTOM_INPUT(e) { return LAB.input(e) || pyInput(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
@@ -814,7 +959,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

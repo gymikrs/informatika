@@ -202,13 +202,44 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 @media (max-width:600px){.sl{grid-template-columns:1fr !important;gap:2px}.fld{grid-template-columns:1fr}.tb button{padding:6px 8px;font-size:14px}}
 .wave{width:100%;max-width:720px;display:block;border:1px solid var(--border);border-radius:10px;background:#fff;margin:8px 0}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"zvuk": ["Zvuk = mechanické vlnenie. Frekvencia (Hz) = výška tónu, amplitúda = hlasitosť. Človek počuje asi 20 Hz až 20 kHz.", "Analógový signál je spojitý, digitálny sú čísla. A/D prevodník digitalizuje, D/A prevodník prehráva."], "vzorkovanie": ["Vzorkovanie = meranie signálu v pravidelných okamihoch. Vzorkovacia frekvencia = počet vzoriek za sekundu.", "Nyquist: vzorkuj aspoň 2× rýchlejšie ako najvyššia frekvencia, inak aliasing. CD 44,1 kHz, video 48 kHz, telefón 8 kHz."], "kvantovanie": ["Kvantovanie = zaokrúhlenie vzorky na úroveň. n bitov = 2ⁿ úrovní (16 b = 65 536).", "PCM = každá vzorka sa uloží ako binárne číslo úrovne (WAV, CD)."], "velkost": ["Veľkosť [bit] = frekvencia × bitová hĺbka × kanály × čas; ÷ 8 = bajty.", "CD: 1 411,2 kbit/s, asi 10,6 MB za minútu."], "precvic": ["Reč 8 kHz mono, CD 44,1 kHz / 16 b, video 48 kHz, štúdio a Hi-Res 96 kHz / 24 b."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"zvuk": ["<b>Zvuk</b> = mechanické vlnenie, ktoré sa šíri vzduchom, vodou aj kovom.", "<b>Frekvencia</b> (hertz, Hz) = počet kmitov za sekundu, určuje <b>výšku tónu</b>. Tón A má 440 Hz.", "<b>Amplitúda</b> (rozkmit) určuje <b>hlasitosť</b>, hlasitosť meriame v decibeloch (dB).", "Človek počuje asi od <b>20 Hz do 20 kHz</b>.", "<b>Analógový</b> signál sa mení spojito, <b>digitálny</b> záznam tvoria čísla.", "<b>A/D prevodník</b> mení analógový signál na čísla, <b>D/A prevodník</b> čísla späť na signál."], "vzorkovanie": ["Digitalizácia zvuku má dva kroky: <b>vzorkovanie</b> a <b>kvantovanie</b>.", "<b>Vzorkovanie</b> = meranie hodnoty signálu v pravidelných časových okamihoch. Jedno meranie je <b>vzorka</b>.", "<b>Vzorkovacia frekvencia</b> = počet vzoriek za sekundu (Hz, kHz).", "<b>Nyquistova–Shannonova veta</b>: vzorkovacia frekvencia musí byť aspoň 2-krát vyššia ako najvyššia frekvencia v zvuku.", "Pri pomalšom vzorkovaní vznikne <b>aliasing</b>, falošný tón.", "CD 44,1 kHz, video 48 kHz, telefón 8 kHz."], "kvantovanie": ["<b>Kvantovanie</b> = zaokrúhlenie vzorky na najbližšiu z pevných <b>úrovní</b>.", "<b>Bitová hĺbka</b> <i>n</i> bitov = <b>2<sup>n</sup> úrovní</b>.", "8 bitov = 256 úrovní, 16 bitov (CD) = 65 536, 24 bitov (štúdio) = 16 777 216.", "Chyba zaokrúhlenia sa prejaví ako <b>kvantizačný šum</b>.", "<b>PCM</b> (pulzne kódová modulácia): každá vzorka sa uloží ako binárne číslo svojej úrovne.", "Nekomprimovaný PCM záznam obsahujú súbory <b>WAV</b>, <b>AIFF</b> a hudobné CD."], "velkost": ["<b>Veľkosť [bit] = vzorkovacia frekvencia × bitová hĺbka × počet kanálov × čas [s]</b>.", "Bity ÷ 8 = bajty.", "<b>Mono</b> = 1 kanál, <b>stereo</b> = 2 kanály (ľavý a pravý).", "<b>Dátový tok</b> (bitrate) v bit/s = vzorkovacia frekvencia × bitová hĺbka × počet kanálov.", "Nekomprimovaný zvuk je veľký, preto sa <b>komprimuje</b> (MP3, AAC, FLAC)."], "precvic": ["Vyššia vzorkovacia frekvencia, bitová hĺbka a stereo = lepšia kvalita, ale <b>väčší súbor</b>.", "Vzorkovacia frekvencia sa volí podľa <b>najvyššej frekvencie</b>, ktorú treba zachytiť (aspoň 2-krát viac).", "Pre zrozumiteľnú <b>reč</b> stačia frekvencie asi do 3,4 kHz, <b>hudba</b> siaha až k 20 kHz.", "Nastavenie vyberaj podľa toho, na čo sa nahrávka použije."]};
 /* spoločné pomocné funkcie pre 1. ročník (n34+) */
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const inq = (id, q, ans, tol, why, unit) => ({ id, q, ok: v => Math.abs(parseNum(String(v).replace(/\s/g, "")) - ans) <= tol, show: String(ans).replace(".", ","), ph: "?", why, unit });
@@ -220,11 +251,145 @@ function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { con
 function goalsHTML(list, gid) { const n = list.filter(g => g[0]).length, T = TASKS[gid]; return `<ul class="goals">${list.map(([ok, t]) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t[gid] ? `<div class="checkbar"><span class="score ${S.t[gid].score < T.max ? "part" : ""}">Splnené: ${S.t[gid].score} z ${T.max}</span></div>` : ""}`; }
 function goalAward(gid, list) { const n = list.filter(g => g[0]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) { award(gid, n); save(); return true; } return false; }
 
+/* Spoločné pomôcky na ilustrácie k teórii */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  /* myšlienková mapa: vetvy [text, farba, strana (1 vpravo, -1 vľavo), vonkajší koniec x, y, [podvetvy]] */
+  const mm = (cx, cy, top, br, o = {}) => { const fs = o.fs || 11, sfs = o.sfs || 9.5, cw = fs * 0.62, scw = sfs * 0.56; let out = "";
+    br.forEach(([t, c, side, ex, ey, subs = []]) => { const w = t.length * cw + 6, sx = side > 0 ? ex - w : ex + w;
+      out += `<path d="M${cx} ${cy} C${(cx + sx) / 2} ${cy} ${(cx + sx) / 2} ${ey} ${sx} ${ey}" fill="none" stroke="${c}" stroke-width="${o.bw || 6}" stroke-linecap="round"/><line x1="${sx}" y1="${ey}" x2="${ex}" y2="${ey}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>` + T((side > 0 ? sx : ex) + 3, ey - 5, t, { fs, b: 1, c });
+      subs.forEach((s2, k) => { const sy = ey + (k - (subs.length - 1) / 2) * (o.sg || 20), ws = s2.length * scw + 6, bx = ex + side * 12, bx2 = bx + side * ws;
+        out += `<path d="M${ex} ${ey} C${ex + side * 7} ${ey} ${ex + side * 5} ${sy} ${bx} ${sy}" fill="none" stroke="${c}" stroke-width="1.6"/><line x1="${bx}" y1="${sy}" x2="${bx2}" y2="${sy}" stroke="${c}" stroke-width="1.2"/>` + T(Math.min(bx, bx2) + 3, sy - 3, s2, { fs: sfs }); }); });
+    return out + `<ellipse cx="${cx}" cy="${cy}" rx="${o.rx || 42}" ry="${o.ry || 21}" fill="#fff" stroke="${C.ink}" stroke-width="2"/>${T(cx, cy + 5, top, { a: "middle", fs: o.tfs || 12.5, b: 1 })}`; };
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win, mm };
+})();
+
+/* Ilustrácie – 1. ročník 4.1 Digitalizácia zvuku */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num } = PF; const A = "#B4235A", AS = "#FBE4EC", R = "#E53935";
+const path = (f, x0, x1, st = 2) => { let d = ""; for (let x = x0; x <= x1; x += st) d += (x === x0 ? "M" : "L") + x + " " + f(x).toFixed(1); return d; };
+const sine = (x0, x1, cy, amp, cyc, ph = 0) => x => cy - amp * Math.sin(2 * Math.PI * cyc * (x - x0) / (x1 - x0) + ph);
+const lv = i => Math.max(0, Math.min(3, Math.round(1.5 + 1.6 * Math.sin(2 * Math.PI * i / 8 + 0.5))));
+const LV = [0, 1, 2, 3, 4, 5, 6, 7].map(lv), cod = v => v.toString(2).padStart(2, "0");
+return {
+  vlna: fig(SV(440, 240, `
+    ${T(220, 18, "Zvuk je vlnenie vzduchu", { a: "middle", fs: 12.5, b: 1 })}
+    <rect x="16" y="86" width="22" height="52" rx="3" fill="${C.ink}"/><path d="M38 92 L64 66 V158 L38 132Z" fill="${C.mut}"/>
+    ${[...Array(44)].map((_, i) => { const x = 80 + i * 6 + 5 * Math.sin(2 * Math.PI * i * 6 / 86); return [...Array(9)].map((_, r) => `<circle cx="${x.toFixed(1)}" cy="${68 + r * 11 + (i % 2) * 3}" r="2" fill="${C.blue}"/>`).join(""); }).join("")}
+    ${T(123, 56, "zhustenie", { a: "middle", fs: 11, b: 1, c: C.blue })}${T(252, 56, "zriedenie", { a: "middle", fs: 11, b: 1, c: C.blue })}
+    ${T(390, 128, "👂", { a: "middle", fs: 40 })}
+    <path d="${path(x => 200 - 16 * -Math.cos(2 * Math.PI * (x - 80) / 86), 80, 340)}" fill="none" stroke="${A}" stroke-width="2.5"/>
+    ${ar(123, 222, 209, 222, C.mut, 1.5, 1)}${T(166, 236, "vlnová dĺžka", { a: "middle", fs: 11, c: C.mut })}
+    ${T(390, 200, "tlak vzduchu", { a: "middle", fs: 11, b: 1, c: A })}`, "Zvuková vlna"),
+    "Reproduktor kmitá a strieda <b>zhustenia</b> a <b>zriedenia</b> vzduchu. Tie dorazia až k uchu."),
+  frekv: fig(SV(440, 240, `
+    ${T(220, 18, "Frekvencia a amplitúda", { a: "middle", fs: 12.5, b: 1 })}
+    ${[[8, 28, "nízka frekvencia = hlboký tón", 2, 24], [226, 28, "vysoká frekvencia = vysoký tón", 6, 24], [8, 134, "malá amplitúda = tichý zvuk", 3, 8], [226, 134, "veľká amplitúda = hlasný zvuk", 3, 28]].map(([x, y, t, c, a]) => `${box(x, y, 206, 100, "#fff", C.line, 8)}${T(x + 103, y + 18, t, { a: "middle", fs: 11, b: 1 })}<line x1="${x + 10}" y1="${y + 64}" x2="${x + 196}" y2="${y + 64}" stroke="${C.line}"/><path d="${path(sine(x + 10, x + 196, y + 64, a, c), x + 10, x + 196, 1)}" fill="none" stroke="${A}" stroke-width="2.2"/>`).join("")}`, "Frekvencia a amplitúda"),
+    "<b>Frekvencia</b> (Hz) určuje výšku tónu, <b>amplitúda</b> hlasitosť."),
+  ad: fig(SV(440, 200, `
+    ${T(220, 18, "Cesta zvuku cez počítač", { a: "middle", fs: 12.5, b: 1 })}
+    ${[["🎤", "mikrofón", ""], ["A/D", "A/D prevodník", ""], ["0110", "počítač:", "čísla"], ["D/A", "D/A prevodník", ""], ["🔊", "reproduktor", ""]].map(([i, a, b], k) => { const c = 40 + k * 90; return `${box(c - 38, 64, 76, 52, k === 2 ? AS : "#fff", k % 2 ? A : C.line, 10)}${T(c, 98, i, { a: "middle", fs: i.length > 2 ? 15 : 22, b: 1, c: k % 2 ? A : C.ink, mono: k === 2 })}${T(c, 136, a, { a: "middle", fs: 11, b: 1 })}${b ? T(c, 151, b, { a: "middle", fs: 11, b: 1 }) : ""}${k < 4 ? ar(c + 39, 90, c + 51, 90, C.mut, 2) : ""}`; }).join("")}
+    ${T(85, 52, "analógový", { a: "middle", fs: 11, c: C.blue, b: 1 })}${T(220, 52, "digitálny", { a: "middle", fs: 11, c: A, b: 1 })}${T(355, 52, "analógový", { a: "middle", fs: 11, c: C.blue, b: 1 })}
+    ${T(220, 184, "Spojitý signál sa zmení na čísla a pri prehrávaní späť.", { a: "middle", fs: 11, c: C.mut })}`, "A/D a D/A prevodník"),
+    "<b>A/D prevodník</b> zmení spojitý signál na čísla, <b>D/A prevodník</b> čísla späť na signál."),
+  vzorky: fig(SV(440, 240, `
+    ${T(220, 18, "Vzorkovanie: meranie v pravidelných okamihoch", { a: "middle", fs: 12.5, b: 1 })}
+    <line x1="30" y1="120" x2="420" y2="120" stroke="${C.line}"/><path d="${path(sine(30, 420, 120, 70, 1.5, 0.4), 30, 420, 2)}" fill="none" stroke="#9E9E9E" stroke-width="2.5"/>
+    ${[...Array(14)].map((_, i) => { const x = 30 + i * 30, y = sine(30, 420, 120, 70, 1.5, 0.4)(x); return `<line x1="${x}" y1="120" x2="${x}" y2="${y.toFixed(1)}" stroke="${R}" stroke-dasharray="3 3"/><circle cx="${x}" cy="${y.toFixed(1)}" r="5" fill="${R}"/>`; }).join("")}
+    ${T(150, 44, "vzorka", { fs: 11.5, b: 1, c: R })}${ar(148, 46, 126, 54, R, 1.5)}
+    ${ar(270, 206, 300, 206, C.mut, 1.5, 1)}${T(285, 224, "Δt", { a: "middle", fs: 12, b: 1 })}
+    ${T(30, 224, "Δt = 1 ÷ vzorkovacia frekvencia", { fs: 11, c: C.mut })}${T(420, 224, "čas →", { a: "end", fs: 11, c: C.mut })}`, "Vzorkovanie"),
+    "Pri <b>vzorkovaní</b> sa hodnota signálu zmeria vždy po rovnakom čase. Jedno meranie je <b>vzorka</b>."),
+  hustota: fig(SV(440, 236, `
+    ${[[28, 6, "málo vzoriek: hrubý tvar"], [132, 26, "veľa vzoriek: presný tvar"]].map(([y, n, t]) => { const f = sine(20, 420, y + 56, 32, 1.5); let st = ""; for (let i = 0; i < n; i++) { const x0 = 20 + i * 400 / n, x1 = x0 + 400 / n; st += (i ? "L" : "M") + x0.toFixed(1) + " " + f(x0).toFixed(1) + "L" + x1.toFixed(1) + " " + f(x0).toFixed(1); }
+      return `${box(10, y, 420, 96, "#fff", C.line, 8)}${T(20, y + 17, t, { fs: 11.5, b: 1 })}<path d="${path(f, 20, 420, 2)}" fill="none" stroke="#9E9E9E" stroke-width="2"/><path d="${st}" fill="none" stroke="${R}" stroke-width="2"/>`; }).join("")}`, "Hustota vzoriek"),
+    "Čím vyššia <b>vzorkovacia frekvencia</b>, tým presnejšie digitálny záznam (červený) kopíruje pôvodný zvuk (sivý)."),
+  alias: fig(SV(440, 236, `
+    ${T(220, 18, "Aliasing: vzorkuješ príliš pomaly", { a: "middle", fs: 12.5, b: 1 })}
+    <line x1="20" y1="112" x2="420" y2="112" stroke="${C.line}"/>
+    <path d="${path(sine(20, 420, 112, 66, 9), 20, 420, 1)}" fill="none" stroke="#9E9E9E" stroke-width="1.6"/>
+    <path d="${path(sine(20, 420, 112, 66, 1, Math.PI), 20, 420, 2)}" fill="none" stroke="${R}" stroke-width="2.5" stroke-dasharray="7 4"/>
+    ${[...Array(11)].map((_, i) => { const x = 20 + i * 40; return `<circle cx="${x}" cy="${sine(20, 420, 112, 66, 9)(x).toFixed(1)}" r="5" fill="${R}"/>`; }).join("")}
+    <line x1="24" y1="200" x2="52" y2="200" stroke="#9E9E9E" stroke-width="2"/>${T(60, 204, "skutočný vysoký tón", { fs: 11.5 })}
+    <line x1="220" y1="200" x2="248" y2="200" stroke="${R}" stroke-width="2.5" stroke-dasharray="7 4"/>${T(256, 204, "falošný hlboký tón", { fs: 11.5, b: 1, c: R })}
+    ${T(220, 226, "Vzoriek je menej ako 2 na jeden kmit, tón sa zachytí zle.", { a: "middle", fs: 11, c: C.mut })}`, "Aliasing"),
+    "Pri príliš pomalom vzorkovaní vznikne <b>aliasing</b>: body sa spoja do tónu, ktorý v zvuku nebol."),
+  kvant: fig(SV(440, 250, `
+    ${T(220, 18, "Kvantovanie: 2 bity = 4 úrovne", { a: "middle", fs: 12.5, b: 1 })}
+    ${[0, 1, 2, 3].map(k => `<line x1="70" y1="${190 - k * 42}" x2="420" y2="${190 - k * 42}" stroke="${C.line}"/>${T(60, 194 - k * 42, k + " = " + cod(k), { a: "end", fs: 11.5, b: 1, mono: 1, c: A })}`).join("")}
+    <path d="${path(x => 190 - 42 * (1.5 + 1.6 * Math.sin(2 * Math.PI * (x - 90) / 44 / 8 + 0.5)), 76, 412, 2).replace(/ (-?\d+\.\d)/g, (m, v) => " " + Math.min(196, Math.max(48, +v)).toFixed(1))}" fill="none" stroke="#9E9E9E" stroke-width="2"/>
+    ${LV.map((v, i) => { const x = 90 + i * 44; return `<circle cx="${x}" cy="${190 - v * 42}" r="5.5" fill="${R}"/>${T(x, 220, cod(v), { a: "middle", fs: 12, b: 1, mono: 1 })}`; }).join("")}
+    ${T(14, 220, "kód:", { fs: 11.5, b: 1, c: C.mut })}${T(220, 242, "Každá vzorka sa zaokrúhli na najbližšiu úroveň.", { a: "middle", fs: 11, c: C.mut })}`, "Kvantovanie na 4 úrovne"),
+    "Pri <b>kvantovaní</b> sa každá vzorka zaokrúhli na najbližšiu <b>úroveň</b>. Úroveň sa zapíše binárne."),
+  bity: fig(SV(440, 214, `
+    ${[1, 2, 3].map((n, k) => { const x0 = 8 + k * 144, L = 2 ** n, f = x => Math.sin(2 * Math.PI * (x - x0 - 8) / 120); let st = ""; for (let x = x0 + 8; x <= x0 + 128; x += 2) { const v = (Math.min(L - 1, Math.floor((f(x) + 1) / 2 * L)) + 0.5) / L * 2 - 1; st += (x === x0 + 8 ? "M" : "L") + x + " " + (110 - v * 56).toFixed(1); }
+      return `${box(x0, 10, 136, 150, "#fff", C.line, 8)}${T(x0 + 68, 30, n + (n === 1 ? " bit" : " bity"), { a: "middle", fs: 12, b: 1, c: A })}<path d="${path(x => 110 - f(x) * 56, x0 + 8, x0 + 128, 2)}" fill="none" stroke="#9E9E9E" stroke-width="2"/><path d="${st}" fill="none" stroke="${R}" stroke-width="2.2"/>${T(x0 + 68, 182, L + " úrovne".replace("úrovne", L > 4 ? "úrovní" : "úrovne"), { a: "middle", fs: 11.5, b: 1 })}`; }).join("")}
+    ${T(220, 204, "Viac bitov = menšia chyba zaokrúhlenia (kvantizačný šum).", { a: "middle", fs: 11, c: C.mut })}`, "Bitová hĺbka"),
+    "Čím väčšia <b>bitová hĺbka</b>, tým viac úrovní a tým menší <b>kvantizačný šum</b>."),
+  pcmstream: fig(SV(440, 200, `
+    ${T(220, 18, "PCM: zo vzoriek postupnosť bitov", { a: "middle", fs: 12.5, b: 1 })}
+    ${LV.map((v, i) => `${box(14 + i * 52, 34, 44, 32, AS, A, 6)}${T(36 + i * 52, 55, cod(v), { a: "middle", fs: 13, b: 1, mono: 1 })}`).join("")}
+    ${ar(220, 72, 220, 98, A, 2)}
+    ${box(14, 104, 412, 36, "#fff", C.line, 8)}${T(220, 127, LV.map(cod).join(""), { a: "middle", fs: 14, b: 1, mono: 1 })}
+    ${T(220, 162, "Kódy vzoriek sa uložia za sebou, napríklad do súboru WAV.", { a: "middle", fs: 11.5 })}
+    ${T(220, 184, "2 bity na vzorku × 8 vzoriek = 16 bitov", { a: "middle", fs: 11, c: C.mut })}`, "PCM"),
+    "<b>PCM</b>: binárne kódy úrovní všetkých vzoriek idú za sebou ako jeden dlhý rad bitov."),
+  vzorec: fig(SV(440, 236, `
+    ${T(220, 18, "Príklad: 10 s záznamu, 22 050 Hz, 8 bitov, mono", { a: "middle", fs: 12, b: 1 })}
+    ${[["22 050", "frekvencia (Hz)"], ["8", "bitová hĺbka"], ["1", "kanály"], ["10", "čas (s)"]].map(([v, l], i) => { const x = 12 + i * 106; return `${box(x, 32, 92, 56, AS, A, 8)}${T(x + 46, 58, v, { a: "middle", fs: 16, b: 1 })}${T(x + 46, 78, l, { a: "middle", fs: 10.5, c: C.mut })}${i < 3 ? T(x + 99, 66, "×", { a: "middle", fs: 15, b: 1, c: A }) : ""}`; }).join("")}
+    ${T(220, 124, "= 1 764 000 bitov", { a: "middle", fs: 16, b: 1 })}
+    ${T(220, 154, "÷ 8 = 220 500 B", { a: "middle", fs: 16, b: 1, c: A })}
+    ${T(220, 182, "≈ 220,5 kB", { a: "middle", fs: 14, b: 1, c: C.mut })}
+    ${T(220, 220, "bity ÷ 8 = bajty (B)", { a: "middle", fs: 11, c: C.mut })}`, "Výpočet veľkosti zvuku"),
+    "Veľkosť = <b>frekvencia × bitová hĺbka × kanály × čas</b>. Bity vydelíš 8 a máš bajty."),
+  stereo: fig(SV(440, 210, `
+    ${box(8, 10, 206, 160, "#fff", C.line, 10)}${box(226, 10, 206, 160, "#fff", C.line, 10)}
+    ${T(111, 32, "mono = 1 kanál", { a: "middle", fs: 12, b: 1, c: A })}${T(329, 32, "stereo = 2 kanály", { a: "middle", fs: 12, b: 1, c: A })}
+    ${T(111, 110, "🔊", { a: "middle", fs: 36 })}<path d="${path(sine(30, 192, 140, 10, 3), 30, 192, 2)}" fill="none" stroke="${C.blue}" stroke-width="2"/>
+    ${T(272, 92, "🔈", { a: "middle", fs: 30 })}${T(386, 92, "🔈", { a: "middle", fs: 30 })}${T(272, 116, "ľavý", { a: "middle", fs: 11, b: 1 })}${T(386, 116, "pravý", { a: "middle", fs: 11, b: 1 })}
+    <path d="${path(sine(236, 320, 145, 10, 2), 236, 320, 2)}" fill="none" stroke="${C.blue}" stroke-width="2"/><path d="${path(sine(340, 424, 145, 10, 2.5), 340, 424, 2)}" fill="none" stroke="${C.ok}" stroke-width="2"/>
+    ${T(220, 196, "Stereo má dve stopy, preto zaberá dvakrát viac miesta.", { a: "middle", fs: 11, c: C.mut })}`, "Mono a stereo"),
+    "<b>Stereo</b> má samostatný ľavý a pravý kanál, <b>mono</b> iba jeden."),
+  kompresia: fig(SV(440, 200, `
+    ${T(220, 18, "Tá istá pieseň v rôznych formátoch", { a: "middle", fs: 12.5, b: 1 })}
+    ${[["WAV (PCM)", 100, "100 %", "nekomprimovaný", C.ink], ["FLAC", 55, "asi 50 – 60 %", "bezstratový", C.blue], ["MP3 128 kbit/s", 9, "asi 9 %", "stratový", A]].map(([n, p, t, d, c], i) => { const y = 36 + i * 48; return `${T(14, y + 17, n, { fs: 11.5, b: 1 })}${T(14, y + 32, d, { fs: 10.5, c: C.mut })}<rect x="120" y="${y + 4}" width="${p * 3}" height="24" rx="4" fill="${c}" fill-opacity=".85"/>${T(i ? 126 + p * 3 : 128, y + 21, t, { fs: 11, b: 1, c: i ? C.ink : "#fff" })}`; }).join("")}
+    ${T(220, 192, "O kompresii zvuku bude nasledujúca hodina.", { a: "middle", fs: 11, c: C.mut })}`, "Kompresia zvuku"),
+    "Nekomprimovaný <b>PCM</b> zvuk je veľký, preto sa často <b>komprimuje</b>."),
+  kompromis: fig(SV(440, 236, `
+    ${T(220, 18, "Kvalita alebo veľkosť súboru?", { a: "middle", fs: 12.5, b: 1 })}
+    ${[["vyššia vzorkovacia frekvencia", "zachytí aj vyššie tóny"], ["väčšia bitová hĺbka", "menej šumu, viac odtieňov hlasitosti"], ["stereo namiesto mono", "priestorový zvuk"]].map(([a, b], i) => { const y = 32 + i * 52; return `${box(10, y, 290, 44, AS, A, 8)}${T(22, y + 19, a, { fs: 12, b: 1 })}${T(22, y + 35, b, { fs: 11, c: C.mut })}${ar(304, y + 22, 330, y + 22, A, 2)}${T(338, y + 26, "väčší súbor", { fs: 11.5, b: 1, c: C.bad })}`; }).join("")}
+    ${T(220, 212, "Vyberaj iba takú kvalitu, akú nahrávka naozaj potrebuje.", { a: "middle", fs: 11.5, b: 1 })}`, "Kompromis kvalita a veľkosť"),
+    "Vyššia kvalita = <b>väčší súbor</b>. Nastavenie sa volí podľa toho, čo nahrávaš."),
+  rozsah: fig(SV(440, 220, `
+    ${T(220, 18, "Aké frekvencie obsahuje zvuk?", { a: "middle", fs: 12.5, b: 1 })}
+    ${(() => { const X = f => 30 + 380 * (Math.log10(f) - Math.log10(20)) / 3; return [["ľudský sluch", 20, 20000, C.ink], ["reč (zrozumiteľnosť)", 300, 3400, C.blue], ["klavír (základné tóny)", 27.5, 4186, C.ok], ["hudba (aj vyššie alikvotné tóny)", 20, 20000, A]].map(([n, a, b, c], i) => { const y = 40 + i * 34; return `<rect x="${X(a).toFixed(1)}" y="${y}" width="${(X(b) - X(a)).toFixed(1)}" height="20" rx="4" fill="${c}" fill-opacity=".8"/>${T((X(a) + X(b)) / 2, y + 14, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`; }).join("") + `<line x1="30" y1="184" x2="410" y2="184" stroke="${C.mut}"/>` + [[20, "20 Hz"], [100, "100 Hz"], [1000, "1 kHz"], [20000, "20 kHz"]].map(([f, t], k) => `<line x1="${X(f).toFixed(1)}" y1="180" x2="${X(f).toFixed(1)}" y2="188" stroke="${C.mut}"/>${T(X(f), 204, t, { a: k === 0 ? "start" : k === 3 ? "end" : "middle", fs: 11, c: C.mut })}`).join(""); })()}`, "Frekvenčné rozsahy"),
+    "Reč potrebuje oveľa užšie <b>frekvenčné pásmo</b> ako hudba. Najvyššia frekvencia určuje potrebné vzorkovanie."),
+  nastavenia: fig(SV(440, 214, `
+    ${T(220, 18, "Bežné nastavenia digitálneho zvuku", { a: "middle", fs: 12.5, b: 1 })}
+    ${[["", "frekvencia", "bity", "kanály", "tok (kbit/s)"], ["telefón", "8 kHz", "8", "mono", "64"], ["CD", "44,1 kHz", "16", "stereo", "1 411,2"], ["video", "48 kHz", "16", "stereo", "1 536"], ["štúdio, Hi-Res", "96 kHz", "24", "stereo", "4 608"]].map((r, i) => { const y = 30 + i * 34; return (i ? box(8, y, 424, 30, i % 2 ? AS : "#fff", null, 6) : "") + r.map((c, k) => T([16, 160, 240, 290, 424][k], y + 20, c, { a: k === 4 ? "end" : "start", fs: i ? 11.5 : 11, b: !i || !k, c: i ? C.ink : C.mut })).join(""); }).join("")}`, "Bežné nastavenia"),
+    "Bežné <b>nastavenia</b> digitálneho zvuku a ich dátový tok.")
+}; })();
+
 const KEY = "zvuk-n41-v1";
 const LESSON = "4.1 Digitalizácia zvuku, princíp kódovania PCM";
 const BRAND = "4.1 Digitalizácia zvuku";
 const CLASS_DEFAULT = "I.";
-const WIDE = { zvuk: 1, vzorkovanie: 1, kvantovanie: 1 };
+const WIDE = { zvuk: 1, vzorkovanie: 1, kvantovanie: 1, velkost: 1, precvic: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 2 },
   { id: "zvuk", title: "Čo je zvuk", min: 7 },
@@ -338,37 +503,82 @@ const TASKS = {
 
 const VIEWS = {
   zvuk: () => head() + `<h2>Čo je zvuk</h2>
-    <div class="theory"><p><b>Zvuk</b> je mechanické vlnenie, ktoré sa šíri vzduchom (alebo vodou, kovom). Zdroj zvuku kmitá a rozkmitá okolité častice. Zvuková vlna má dve hlavné vlastnosti:</p><ul><li><b>frekvencia</b> (kmitočet) = koľko kmitov urobí za sekundu, jednotka <b>hertz (Hz)</b>. Určuje <b>výšku tónu</b>: tón A má 440 Hz. Človek počuje asi od <b>20 Hz do 20 kHz</b>.</li><li><b>amplitúda</b> (rozkmit) určuje <b>hlasitosť</b>. Hlasitosť meriame v decibeloch (dB).</li></ul>
-    <p>Zvuk v prírode je <b>analógový</b>: mení sa <b>spojito</b>, v každom okamihu má nejakú hodnotu. Mikrofón ho premení na elektrický signál, ktorý je tiež analógový. Počítač však ukladá iba čísla, preto treba signál <b>digitalizovať</b>. Robí to <b>A/D prevodník</b> (analógovo-digitálny) vo zvukovej karte. Pri prehrávaní <b>D/A prevodník</b> premení čísla späť na signál pre reproduktor.</p></div>
+    <div class="theory tsplit"><div>
+      <p><b>Zvuk</b> je mechanické vlnenie, ktoré sa šíri vzduchom (alebo vodou, kovom). Zdroj zvuku kmitá a rozkmitá okolité častice. Zvuková vlna má dve hlavné vlastnosti:</p>
+      <table class="rtab"><thead><tr><th>Vlastnosť</th><th>Čo znamená a čo určuje</th></tr></thead><tbody>
+        <tr><td><b>frekvencia</b> (kmitočet)</td><td>koľko kmitov urobí za sekundu, jednotka <b>hertz (Hz)</b>. Určuje <b>výšku tónu</b>: tón A má 440 Hz.</td></tr>
+        <tr><td><b>amplitúda</b> (rozkmit)</td><td>ako veľmi častice kmitajú. Určuje <b>hlasitosť</b>, meriame ju v decibeloch (dB).</td></tr></tbody></table>
+      <p>Človek počuje asi od <b>20 Hz do 20 kHz</b>.</p>
+      <p>Zvuk v prírode je <b>analógový</b>: mení sa <b>spojito</b>, v každom okamihu má nejakú hodnotu. Mikrofón ho premení na elektrický signál, ktorý je tiež analógový. Počítač však ukladá iba čísla, preto treba signál <b>digitalizovať</b>.</p>
+      <p>Robí to <b>A/D prevodník</b> (analógovo-digitálny) vo zvukovej karte. Pri prehrávaní <b>D/A prevodník</b> premení čísla späť na signál pre reproduktor.</p>
+    </div><div>${TFIG.vlna}</div></div>
+    ${ltfigs(TFIG.frekv, TFIG.ad)}
+    ${VEDEL("Zvuk sa vo vzduchu šíri rýchlosťou asi 343 m/s, vo vode asi 1&nbsp;500 m/s. Vo vákuu, napríklad vo vesmíre, sa nešíri vôbec, lebo tam nie sú častice, ktoré by kmitali.")}
     <div class="tool"><b>Generátor tónu</b> – zmeň frekvenciu a hlasitosť a vypočuj si rozdiel.<canvas id="tcv" width="720" height="140" class="wave"></canvas>
     <div class="sl"><span>Frekvencia</span><input type="range" min="100" max="2000" step="10" value="${S.tf}" data-tf><b id="tfv">${S.tf} Hz</b></div>
     <div class="sl"><span>Amplitúda</span><input type="range" min="10" max="100" value="${S.ta}" data-ta><b id="tav">${S.ta} %</b></div>
     <div class="row"><button class="primary" data-tone>▶ Prehrať tón (1 s)</button></div></div>
+    <h3>Vyskúšaj: test sluchu</h3><div class="tool">${hearHTML()}</div>
     <h3>Úloha 1: otázky</h3><div class="task">${taskHTML("zq")}</div>
     <h3>Úloha 2: analógový, alebo digitálny?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("asort")}</div>` + nextBar(),
   vzorkovanie: () => head() + `<h2>Vzorkovanie</h2>${guessBox()}
-    <div class="theory"><p>Digitalizácia zvuku má dva kroky. Prvý je <b>vzorkovanie</b>: hodnota signálu sa meria v pravidelných časových okamihoch. Jedno meranie je <b>vzorka</b>. Počet vzoriek za sekundu je <b>vzorkovacia frekvencia</b> (Hz, kHz).</p>
-    <p>Čím viac vzoriek, tým presnejšie zachytíme vlnu. <b>Nyquistova–Shannonova veta</b> hovorí: vzorkovacia frekvencia musí byť <b>aspoň 2-krát vyššia</b> ako najvyššia frekvencia v zvuku. Inak vznikne <b>aliasing</b>, falošný tón, ktorý v pôvodnom zvuku nebol. Človek počuje do 20 kHz, preto <b>CD používa 44,1 kHz</b>, video 48 kHz, telefón iba 8 kHz (stačí na reč).</p></div>
+    <div class="theory tsplit"><div>
+      <p>Digitalizácia zvuku má dva kroky. Prvý je <b>vzorkovanie</b>: hodnota signálu sa meria v pravidelných časových okamihoch. Jedno meranie je <b>vzorka</b>. Počet vzoriek za sekundu je <b>vzorkovacia frekvencia</b> (Hz, kHz).</p>
+      <p>Čím viac vzoriek, tým presnejšie zachytíme vlnu. <b>Nyquistova–Shannonova veta</b> hovorí: vzorkovacia frekvencia musí byť <b>aspoň 2-krát vyššia</b> ako najvyššia frekvencia v zvuku. Inak vznikne <b>aliasing</b>, falošný tón, ktorý v pôvodnom zvuku nebol.</p>
+      <table class="rtab"><thead><tr><th>Použitie</th><th>Vzorkovacia frekvencia</th></tr></thead><tbody>
+        <tr><td>hudobné <b>CD</b> (človek počuje do 20 kHz)</td><td>44,1 kHz</td></tr>
+        <tr><td>zvuk vo <b>videu</b></td><td>48 kHz</td></tr>
+        <tr><td><b>telefón</b> (stačí na reč)</td><td>8 kHz</td></tr></tbody></table>
+    </div><div>${TFIG.vzorky}</div></div>
+    ${ltfigs(TFIG.hustota, TFIG.alias)}
+    ${VEDEL("Aliasing poznáš aj z filmov: koleso idúceho auta sa niekedy zdá, akoby sa točilo pomaly alebo dozadu. Kamera sníma iba 24 až 30 snímok za sekundu, teda „vzorkuje“ rýchlo sa točiace koleso príliš pomaly.")}
     <div class="task">${goalsHTML(smGoals(), "g_sm")}</div>
     <div class="tool">${smHTML()}<p class="muted" style="font-size:13px">Signál má dve zložky: 400 Hz a 1 200 Hz. Pri nízkej frekvencii vzorkovania sa vysoká zložka stratí alebo zmení na iný tón.</p></div>
     <h3>Otázky</h3><div class="task">${taskHTML("vq")}</div>` + nextBar(),
   kvantovanie: () => head() + `<h2>Kvantovanie a PCM</h2>
-    <div class="theory"><p>Druhý krok je <b>kvantovanie</b>: nameraná hodnota vzorky sa zaokrúhli na najbližšiu z pevných <b>úrovní</b>. Počet úrovní určuje <b>bitová hĺbka</b> (rozlíšenie): pri <i>n</i> bitoch je úrovní <b>2<sup>n</sup></b>. 8 bitov = 256 úrovní, <b>16 bitov (CD) = 65 536 úrovní</b>, 24 bitov (štúdio) = 16 777 216 úrovní. Zaokrúhľovanie spôsobuje chybu, ktorú počuť ako <b>kvantizačný šum</b>.</p>
-    <p>Nakoniec sa každá vzorka zapíše ako <b>binárne číslo</b> svojej úrovne. Tento spôsob sa volá <b>PCM</b> (pulzne kódová modulácia). Súbory <b>WAV</b> a <b>AIFF</b> a hudobné CD obsahujú práve nekomprimovaný PCM záznam.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Druhý krok je <b>kvantovanie</b>: nameraná hodnota vzorky sa zaokrúhli na najbližšiu z pevných <b>úrovní</b>. Počet úrovní určuje <b>bitová hĺbka</b> (rozlíšenie): pri <i>n</i> bitoch je úrovní <b>2<sup>n</sup></b>.</p>
+      <table class="rtab"><thead><tr><th>Bitová hĺbka</th><th>Počet úrovní</th></tr></thead><tbody>
+        <tr><td>8 bitov</td><td>256</td></tr>
+        <tr><td><b>16 bitov</b> (CD)</td><td><b>65 536</b></td></tr>
+        <tr><td>24 bitov (štúdio)</td><td>16 777 216</td></tr></tbody></table>
+      <p>Zaokrúhľovanie spôsobuje chybu, ktorú počuť ako <b>kvantizačný šum</b>.</p>
+      <p>Nakoniec sa každá vzorka zapíše ako <b>binárne číslo</b> svojej úrovne. Tento spôsob sa volá <b>PCM</b> (pulzne kódová modulácia). Súbory <b>WAV</b> a <b>AIFF</b> a hudobné CD obsahujú práve nekomprimovaný PCM záznam.</p>
+    </div><div>${TFIG.kvant}</div></div>
+    ${ltfigs(TFIG.bity, TFIG.pcmstream)}
+    ${VEDEL("Záznam s 24 bitmi dokáže zachytiť rozdiel medzi najtichším a najhlasnejším zvukom asi 144 dB. To je viac, ako zvládne ľudské ucho.")}
     <div class="tool">${pcmSVG()}<p class="muted" style="font-size:13px">Signál je vzorkovaný 8-krát a kvantovaný do 8 úrovní (0 až 7), teda 3 bity na vzorku. Prvá vzorka má úroveň 3, kód <code>011</code>. Celý záznam je postupnosť bitov za sebou.</p></div>
     <h3>Úloha 1: zakóduj vzorky (PCM)</h3><div class="task">${taskHTML("pcm")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("kq")}</div>` + nextBar(),
   velkost: () => head() + `<h2>Veľkosť zvukového súboru</h2>
-    <div class="theory"><p>Veľkosť nekomprimovaného (PCM) zvuku vypočítame:</p><p class="big" style="font-size:18px;text-align:center">veľkosť [bit] = vzorkovacia frekvencia × bitová hĺbka × počet kanálov × čas [s]</p><p>Výsledok vydelíme 8 a dostaneme bajty. <b>Mono</b> má 1 kanál, <b>stereo</b> 2 kanály (ľavý a pravý). Súčin frekvencie, bitovej hĺbky a kanálov je <b>dátový tok</b> (bitrate) v bit/s. Pre CD: 44 100 × 16 × 2 = 1 411 200 bit/s. Preto sa zvuk často <b>komprimuje</b> (MP3, AAC, FLAC), o tom bude nasledujúca hodina.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Veľkosť nekomprimovaného (PCM) zvuku vypočítame:</p>
+      <p class="big" style="font-size:18px;text-align:center">veľkosť [bit] = vzorkovacia frekvencia × bitová hĺbka × počet kanálov × čas [s]</p>
+      <p>Výsledok vydelíme 8 a dostaneme bajty. <b>Mono</b> má 1 kanál, <b>stereo</b> 2 kanály (ľavý a pravý).</p>
+      <p>Súčin frekvencie, bitovej hĺbky a kanálov je <b>dátový tok</b> (bitrate) v bit/s. Pre CD: 44&nbsp;100 × 16 × 2 = 1&nbsp;411&nbsp;200 bit/s. Preto sa zvuk často <b>komprimuje</b> (MP3, AAC, FLAC), o tom bude nasledujúca hodina.</p>
+    </div><div>${TFIG.vzorec}</div></div>
+    ${ltfigs(TFIG.stereo, TFIG.kompresia)}
+    ${VEDEL("Na hudobné CD sa zmestí asi 74 až 80 minút zvuku. Podľa známeho príbehu zvolili dĺžku 74 minút preto, aby sa na jeden disk zmestila celá Beethovenova 9. symfónia.")}
     <h3>Úloha: počítaj</h3><div class="task">${taskHTML("vin")}</div>` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: aké nastavenie?</h2>
-    <div class="theory"><p>Pri každej situácii vyber vhodnú vzorkovaciu frekvenciu, bitovú hĺbku a počet kanálov.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Pri každej situácii vyber vhodnú vzorkovaciu frekvenciu, bitovú hĺbku a počet kanálov.</p>
+      <p>Vyššia kvalita znamená aj <b>väčší súbor</b>. Preto sa nastavenie volí podľa toho, <b>čo nahrávaš</b> a na čo sa nahrávka použije.</p>
+      <p>Pomôže ti <b>najvyššia frekvencia</b>, ktorú treba zachytiť: vzorkovacia frekvencia musí byť aspoň 2-krát vyššia. Pre zrozumiteľnú reč stačia frekvencie asi do 3,4 kHz, hudba siaha až k 20 kHz.</p>
+    </div><div>${TFIG.kompromis}</div></div>
+    ${S.t.px ? ltfigs(TFIG.rozsah, TFIG.nastavenia) : ltfigs(TFIG.rozsah)}
+    ${VEDEL("Najstarší známy záznam ľudského hlasu urobil Francúz Édouard-Léon Scott de Martinville v roku 1860. Jeho fonautograf ho zapísal iba ako čiaru na papier a prehrať ho dokázali až vedci v roku 2008 pomocou počítača.")}
     <div class="task">${selBlock("pxs", PX, PXO)}${S.t.px ? `<div class="checkbar"><span class="score ${S.t.px.score < 6 ? "part" : ""}">Správne: ${S.t.px.score} zo 6</span></div>` : ""}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function smUpd() { if (S.fs < 2400) S.sg.alias = true; if (S.bits === 1) S.sg.b1 = true; if (S.fs === 44100 && S.bits === 16) S.sg.cd = true; save(); smDraw(); const i = document.getElementById("sminfo"); if (i) i.innerHTML = smInfo(); if (goalAward("g_sm", smGoals())) render(false); }
+/* interaktívne: test sluchu (bez bodov) */
+const HZ = [8000, 12000, 15000, 17000, 19000];
+function hearHTML() { return `<p style="margin:0 0 8px">Najprv si stíš zvuk. Potom prehrávaj čoraz vyššie tóny. Ktorý ešte počuješ? Mladí ľudia zvyčajne počujú asi do 17 – 19 kHz, s vekom sa horná hranica znižuje. Niektoré reproduktory a slúchadlá veľmi vysoké tóny ani neprehrajú.</p>
+  <div class="row">${HZ.map(f => `<button class="ghost" data-hear="${f}">▶ ${(f / 1000).toLocaleString("sk-SK")} kHz</button>`).join("")}</div>`; }
 function CUSTOM_CLICK(e) { if (selClick(e, { pxs: [PX, "px"] })) return true;
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset;
+  if (ds.hear !== undefined) { const R = 44100, f = +ds.hear, a = new Float32Array(R * 1.5); for (let i = 0; i < a.length; i++) a[i] = Math.sin(2 * Math.PI * f * i / R) * 0.2; fade(a); playArr(a, R); return true; }
   if (ds.tone !== undefined) { const R = 44100, a = new Float32Array(R); for (let i = 0; i < R; i++) a[i] = Math.sin(2 * Math.PI * S.tf * i / R) * S.ta / 100 * 0.5; fade(a); playArr(a, R); return true; }
   if (ds.porig !== undefined) { const R = 44100, a = new Float32Array(R * 1.5); for (let i = 0; i < a.length; i++) a[i] = sig(i / R) * 0.5; fade(a); playArr(a, R); return true; }
   if (ds.pdig !== undefined) { playArr(digArr(S.fs, S.bits, 1.5), 44100); S.played[S.fs + "/" + S.bits] = 1; smUpd(); return true; }
@@ -533,7 +743,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

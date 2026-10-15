@@ -187,7 +187,8 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px;font-size:.92em}
 .theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
 .theory p{margin:8px 0}.theory h4{margin:12px 0 4px;font-family:var(--head)}
-.pcode{font-family:var(--mono);background:#0F1A2E;color:#DCE7FF;border-radius:12px;padding:12px 16px;font-size:15px;white-space:pre;overflow-x:auto;margin:10px 0;line-height:1.55}
+.pcode{font-family:var(--mono);background:#0F1A2E;color:#DCE7FF;border-radius:12px;padding:12px 16px;font-size:15px;white-space:pre;overflow-x:auto;margin:10px 0;line-height:1.55;max-width:100%}
+.iqq>span:not(.qn){min-width:0}
 .pcode .k{color:#FF9E64}.pcode .s{color:#9ECE6A}.pcode .c{color:#6B7B99}.pcode .n{color:#E0AF68}
 .ide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
 @media (max-width:900px){.ide{grid-template-columns:1fr}}
@@ -263,13 +264,44 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .toc div{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-weight:600}
 .toc span{color:var(--acc);font-family:var(--mono);margin-right:6px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"zaklad": ["Reťazec v '…' alebo \"…\"; \\\\n nový riadok; + spojenie, * opakovanie, len(), in."], "indexy": ["Indexy od 0, záporné od konca; rez s[od:do] (do sa nezahŕňa), s[::-1] obrátene; reťazec je nemenný."], "metody": ["upper, lower, strip, replace, count, find, split, join, isdigit, capitalize; metódy vracajú nový reťazec.", "f-reťazec: f'{meno} má {vek} rokov'."], "programy": ["Kombinuj indexy, rezy a metódy; porovnanie s == s[::-1] na palindróm."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"zaklad": ["<b>Reťazec</b> je postupnosť znakov v apostrofoch <code>'…'</code> alebo úvodzovkách <code>\"…\"</code>; viacriadkový v <code>'''…'''</code>.", "Špeciálne znaky: <code>\\n</code> nový riadok, <code>\\t</code> tabulátor, <code>\\'</code> apostrof.", "<b>+</b> reťazce <b>spojí</b>, <b>*</b> reťazec <b>zopakuje</b> (reťazec * celé číslo).", "<b>len(s)</b> vráti dĺžku – počet znakov vrátane medzier.", "<b>'a' in s</b> zistí, či reťazec obsahuje daný znak alebo časť (True/False)."], "indexy": ["Každý znak má <b>index</b>; prvý znak má index <b>0</b>.", "<b>Záporný index</b> počíta od konca: <code>s[-1]</code> je posledný znak.", "<b>Rez</b> <code>s[od:do]</code> vyberie znaky od indexu od po do − 1 – <b>do sa nezahŕňa</b>.", "<code>s[:3]</code> – prvé tri znaky, <code>s[3:]</code> – od indexu 3 do konca.", "Tretie číslo je <b>krok</b>: <code>s[::2]</code> každý druhý znak, <code>s[::-1]</code> obrátene.", "Reťazec je <b>nemenný</b>: priradenie do jedného znaku skončí chybou <b>TypeError</b>."], "metody": ["Metódu voláš cez bodku: <code>s.upper()</code>; metóda reťazec <b>nemení</b>, vracia <b>nový</b>.", "<b>upper()</b> / <b>lower()</b> – veľké / malé písmená, <b>capitalize()</b> – prvé písmeno veľké.", "<b>strip()</b> odstráni medzery na okrajoch, <b>replace(a, b)</b> nahradí a za b.", "<b>count(x)</b> – počet výskytov, <b>find(x)</b> – index prvého výskytu (−1, ak nie je).", "<b>split()</b> rozdelí text na zoznam slov, <b>'-'.join(zoznam)</b> spojí zoznam do reťazca.", "<b>isdigit()</b> – True, ak sú to iba číslice; <b>f-reťazec</b>: <code>f'{mesto} má {n} obyvateľov'</code>."], "programy": ["Kombinuj <b>indexy, rezy a metódy</b>.", "Metódy možno <b>reťaziť</b>: <code>s.strip().lower()</code> – každá pracuje s výsledkom predchádzajúcej.", "Pred porovnávaním textov zjednoť veľkosť písmen (<b>lower()</b>).", "Palindróm zistíš porovnaním reťazca s jeho <b>obrátenou</b> verziou.", "Dodrž <b>tvar výstupu</b> z ukážky – program sa kontroluje viacerými vstupmi."]};
 /* ===================== mini Python interpreter (subset) ===================== */
 const PY = (() => {
 class PyErr { constructor(type, msg, line) { this.type = type; this.msg = msg; this.line = line; } }
@@ -623,16 +655,123 @@ document.addEventListener("keydown", e => { const t = e.target;
   if (t.dataset && t.dataset.pe) { if (e.key === "F5") { e.preventDefault(); const b = document.querySelector(`[data-prun="${t.dataset.pe}"]`); if (b) b.click(); } if (e.key === "Tab") { e.preventDefault(); const s = t.selectionStart; t.value = t.value.slice(0, s) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 4; S.code[t.dataset.pe] = t.value; save(); } } });
 function pyInput(e) { const t = e.target; if (t.dataset && t.dataset.pe) { S.code[t.dataset.pe] = t.value; save(); return true; } return false; }
 
+/* ---------- LENKA: obrázky k teórii ---------- */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#0E7A5C", accS: "#D5EEE5", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, C.ink].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-Fa-f]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  return { C, fig, SV, ar, T, box, num };
+})();
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = C.acc, AS = C.accS;
+const M = (x, y, s, o = {}) => T(x, y, s, Object.assign({ mono: 1 }, o));
+const dark = (x, y, w, h) => box(x, y, w, h, "#0F1A2E", null, 6);
+const H = (s) => T(220, 20, s, { a: "middle", fs: 13.5, b: 1, c: A });
+const cp = (x, y, s, c, fs) => `<text x="${x}" y="${y}" font-size="${fs || 11.5}" font-family="Consolas,monospace" fill="${c || "#DCE7FF"}" style="white-space:pre" xml:space="preserve">${s}</text>`;
+const cells = (x, y, w, chars, hl, fs) => chars.map((ch, i) => `<rect x="${x + i * w}" y="${y}" width="${w - 4}" height="40" rx="6" fill="${hl && hl.includes(i) ? AS : "#fff"}" stroke="${hl && hl.includes(i) ? A : C.line}" stroke-width="${hl && hl.includes(i) ? 2 : 1.5}"/>${M(x + i * w + (w - 4) / 2, y + 27, ch, { a: "middle", fs: fs || 17, b: 1 })}`).join("");
+const SOB = ["S", "o", "b", "o", "t", "a"];
+const flow = (rows, notes) => rows.map((r, i) => { const y = 34 + i * 58; return `${box(14, y, 412, 36, i % 2 ? AS : C.bg, null, 8)}${M(28, y + 23, r, { fs: 13, b: 1 })}` + (i < rows.length - 1 ? `${ar(60, y + 38, 60, y + 56, A, 2)}${M(76, y + 51, notes[i], { fs: 12, b: 1, c: A })}` : ""); }).join("");
+return {
+  korale: fig(SV(440, 206, `
+    ${H("Reťazec = rad znakov")}
+    ${cells(28, 44, 48, ["H", "e", "j", ",", "␣", "t", "y", "!"])}
+    ${M(220, 122, "len('Hej, ty!')  →  8", { a: "middle", fs: 14, b: 1, c: C.blue })}
+    ${T(220, 156, "Medzera (␣) aj interpunkcia sú tiež znaky.", { a: "middle", fs: 12 })}
+    ${T(220, 184, "Apostrofy ' ' alebo úvodzovky \" \" reťazec iba ohraničujú.", { a: "middle", fs: 11.5, c: C.mut })}`, "Reťazec ako rad znakov"),
+    "Reťazec je <b>postupnosť znakov</b>; <b>len()</b> ich spočíta."),
+  oper: fig(SV(440, 214, `
+    ${H("Spájanie, opakovanie, hľadanie")}
+    ${[["'Rimavská' + ' ' + 'Sobota'", "'Rimavská Sobota'", "spojenie +"], ["'=' * 12", "'============'", "opakovanie *"], ["'bot' in 'Sobota'", "True", "obsahuje? in"]].map(([c, r, n], i) => { const y = 32 + i * 60; return `${box(14, y, 412, 54, i % 2 ? AS : C.bg, null, 8)}${M(26, y + 21, c, { fs: 13, b: 1 })}${T(414, y + 21, n, { a: "end", fs: 11.5, c: C.mut })}${M(26, y + 44, "→ " + r, { fs: 13, b: 1, c: C.blue })}`; }).join("")}`, "Operácie s reťazcami"),
+    "<b>+</b> reťazce spojí, <b>*</b> zopakuje, <b>in</b> zistí, či časť obsahujú."),
+  escape: fig(SV(440, 196, `
+    ${H("Špeciálne znaky s \\")}
+    ${dark(14, 32, 412, 32)}${cp(26, 53, "print('Meno:\\tEva\\nVek:\\t17')", "#DCE7FF", 13)}
+    ${T(26, 90, "výstup", { fs: 11.5, c: C.mut })}
+    ${box(14, 98, 196, 62, "#fff", C.line, 8)}${cp(26, 122, "Meno:   Eva", C.ink, 13)}${cp(26, 146, "Vek:    17", C.ink, 13)}
+    ${[["\\n", "nový riadok"], ["\\t", "tabulátor"], ["\\'", "apostrof v '…'"]].map(([k, v], i) => `${M(236, 112 + i * 22, k, { fs: 13, b: 1, c: A })}${T(268, 112 + i * 22, v, { fs: 12 })}`).join("")}
+    ${T(220, 186, "Spätná lomka \\ s písmenom tvorí jeden špeciálny znak.", { a: "middle", fs: 11.5 })}`, "Špeciálne znaky"),
+    "<b>\\n</b> zalomí riadok, <b>\\t</b> vloží tabulátor."),
+  ruler: fig(SV(440, 210, `
+    ${H("Indexy znakov v reťazci s = 'Sobota'")}
+    ${T(14, 56, "index", { fs: 11.5, b: 1, c: A })}${T(14, 140, "od konca", { fs: 11.5, b: 1, c: C.blue })}
+    ${SOB.map((_, i) => M(100 + i * 54, 56, i, { a: "middle", fs: 14, b: 1, c: A })).join("")}
+    ${cells(75, 66, 54, SOB)}
+    ${SOB.map((_, i) => M(100 + i * 54, 140, i - 6, { a: "middle", fs: 14, b: 1, c: C.blue })).join("")}
+    ${M(220, 174, "s[0] → 'S'      s[-1] → 'a'", { a: "middle", fs: 13.5, b: 1 })}
+    ${T(220, 200, "Prvý znak má index 0, posledný -1.", { a: "middle", fs: 11.5 })}`, "Indexy"),
+    "Indexy začínajú <b>nulou</b>, záporné počítajú <b>od konca</b>."),
+  rez: fig(SV(440, 226, `
+    ${H("Rez s[1:4] – koniec sa nezahŕňa")}
+    ${SOB.map((_, i) => M(100 + i * 54, 52, i, { a: "middle", fs: 13, b: 1, c: i >= 1 && i < 4 ? A : C.mut })).join("")}
+    ${cells(75, 60, 54, SOB, [1, 2, 3])}
+    <line x1="${75 + 4 * 54 + 4}" y1="62" x2="${75 + 5 * 54 - 8}" y2="98" stroke="${C.bad}" stroke-width="2.5"/>
+    ${T(154, 122, "od = 1", { a: "middle", fs: 12, b: 1, c: A })}${T(316, 122, "do = 4 (už nie)", { a: "middle", fs: 12, b: 1, c: C.bad })}
+    ${[["s[1:4]", "'obo'"], ["s[:2]", "'So'"], ["s[3:]", "'ota'"]].map(([c, r], i) => `${box(14, 134 + i * 30, 412, 26, i % 2 ? C.bg : "#fff", C.line, 6)}${M(120, 152 + i * 30, c, { a: "end", fs: 13, b: 1 })}${M(140, 152 + i * 30, "→ " + r, { fs: 13, b: 1, c: C.blue })}`).join("")}`, "Rez"),
+    "<b>Rez</b> s[od:do] vyberie znaky od indexu <i>od</i> po <i>do − 1</i>."),
+  krok: fig(SV(440, 214, `
+    ${H("Krok rezu: tretie číslo")}
+    ${cells(20, 38, 40, SOB, [0, 2, 4], 15)}${ar(262, 58, 290, 58, A, 2)}${M(298, 63, "s[::2]", { fs: 13, b: 1 })}${M(298, 84, "'Sbt'", { fs: 13, b: 1, c: C.blue })}
+    ${cells(20, 118, 40, SOB, null, 15)}${ar(250, 172, 26, 172, C.amb, 2.5)}${T(138, 192, "odzadu", { a: "middle", fs: 11.5, b: 1, c: C.amb })}
+    ${ar(262, 138, 290, 138, C.amb, 2)}${M(298, 143, "s[::-1]", { fs: 13, b: 1 })}${M(298, 164, "'atoboS'", { fs: 13, b: 1, c: C.blue })}`, "Krok rezu"),
+    "Krok <b>2</b> berie každý druhý znak, krok <b>-1</b> ide <b>odzadu</b>."),
+  novy: fig(SV(440, 222, `
+    ${H("Metóda vracia nový reťazec")}
+    ${dark(14, 32, 412, 54)}${cp(28, 54, "s = 'Leto'", "#DCE7FF", 13)}${cp(28, 75, "t = s.upper()", "#DCE7FF", 13)}
+    ${[["s", "'Leto'", C.mut, "pôvodný, nezmenený"], ["t", "'LETO'", A, "nový reťazec"]].map(([n, v, c, d], i) => { const x = 60 + i * 200; return `${box(x, 102, 120, 58, "#fff", c, 8)}${box(x, 102, 120, 20, c, null, 8)}<rect x="${x}" y="114" width="120" height="8" fill="${c}"/>${M(x + 60, 117, n, { a: "middle", fs: 12, b: 1, c: "#fff" })}${M(x + 60, 148, v, { a: "middle", fs: 16, b: 1 })}${T(x + 60, 180, d, { a: "middle", fs: 11.5, c })}`; }).join("")}
+    ${T(220, 210, "Reťazec je nemenný – metóda vytvorí kópiu.", { a: "middle", fs: 11.5 })}`, "Nový reťazec"),
+    "Metóda pôvodný reťazec <b>nemení</b>, výsledok si ulož do premennej."),
+  splitjoin: fig(SV(440, 214, `
+    ${H("split() a join()")}
+    ${flow(["'jablko hruška slivka'", "['jablko', 'hruška', 'slivka']", "'jablko, hruška, slivka'"], [".split()", "', '.join(...)"])}
+    ${T(220, 206, "split rozdelí reťazec na zoznam, join ho spojí späť.", { a: "middle", fs: 11.5 })}`, "split a join"),
+    "<b>split()</b> rozdelí text na zoznam slov, <b>join()</b> ich spojí."),
+  hladaj: fig(SV(440, 214, `
+    ${H("Hľadanie v reťazci s = 'kakao'")}
+    ${["k", "a", "k", "a", "o"].map((_, i) => M(132 + i * 46, 50, i, { a: "middle", fs: 12.5, b: 1, c: C.mut })).join("")}
+    ${cells(110, 58, 46, ["k", "a", "k", "a", "o"], [1, 3])}
+    ${[["s.count('a')", "2", "počet výskytov"], ["s.find('a')", "1", "index prvého výskytu"], ["s.find('x')", "-1", "nenašiel"]].map(([c, r, n], i) => `${box(14, 112 + i * 32, 412, 28, i % 2 ? C.bg : "#fff", C.line, 6)}${M(26, 131 + i * 32, c, { fs: 13, b: 1 })}${M(170, 131 + i * 32, "→ " + r, { fs: 13, b: 1, c: C.blue })}${T(414, 131 + i * 32, n, { a: "end", fs: 11.5, c: C.mut })}`).join("")}`, "count a find"),
+    "<b>count()</b> spočíta výskyty, <b>find()</b> vráti index prvého (alebo -1)."),
+  retazenie: fig(SV(440, 214, `
+    ${H("Reťazenie metód")}
+    ${flow(["'  dobrý DEŇ '", "'dobrý DEŇ'", "'dobrý deň'"], [".strip()", ".lower()"])}
+    ${M(220, 206, "'  dobrý DEŇ '.strip().lower()", { a: "middle", fs: 12.5, b: 1, c: A })}`, "Reťazenie metód"),
+    "Každá ďalšia metóda pracuje s <b>výsledkom</b> predchádzajúcej."),
+  nastroje: fig(SV(440, 232, `
+    ${H("Čo na čo použiť")}
+    ${[["prvý znak", "s[0]"], ["posledný znak", "s[-1]"], ["obrátený reťazec", "s[::-1]"], ["malé písmená", "s.lower()"], ["počet výskytov", "s.count('e')"], ["bez okrajových medzier", "s.strip()"]].map(([t, c], i) => { const y = 32 + i * 32; return `${box(14, y, 412, 28, i % 2 ? C.bg : "#fff", C.line, 6)}${T(26, y + 19, t, { fs: 12 })}${M(414, y + 19, c, { a: "end", fs: 13, b: 1, c: A })}`; }).join("")}`, "Nástroje"),
+    "Programy poskladáš z <b>indexov</b>, <b>rezov</b> a <b>metód</b>.")
+};
+})();
+const REZ = (() => {
+  const st = () => S.rez || (S.rez = { s: "Gymnázium", a: "2", b: "6", c: "" });
+  const pint = v => { v = String(v).trim(); return /^-?\d+$/.test(v) ? parseInt(v, 10) : null; };
+  const pick = (len, a, b, c) => { const k = c == null ? 1 : c; if (k === 0) return null; const n = (x, d) => { if (x == null) return d; if (x < 0) x += len; return k > 0 ? Math.min(Math.max(x, 0), len) : Math.min(Math.max(x, -1), len - 1); }; const s = n(a, k > 0 ? 0 : len - 1), e = n(b, k > 0 ? len : -1), o = []; if (k > 0) for (let i = s; i < e; i += k) o.push(i); else for (let i = s; i > e; i += k) o.push(i); return o; };
+  const out = () => { const R = st(), ch = [...R.s].slice(0, 20), L = ch.length, f = x => String(x).trim(); const bad = [R.a, R.b, R.c].some(x => f(x) !== "" && pint(x) == null);
+    const a = pint(R.a), b = pint(R.b), c = pint(R.c), ix = bad ? null : pick(L, a, b, c);
+    const cellsH = ch.map((x, i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:30px"><span style="font:700 12px var(--mono);color:var(--acc)">${i}</span><span style="display:block;width:30px;height:34px;line-height:34px;text-align:center;font:700 17px var(--mono);border-radius:6px;border:2px solid ${ix && ix.includes(i) ? "var(--acc)" : "var(--border)"};background:${ix && ix.includes(i) ? "var(--accSoft)" : "var(--surface)"}">${x === " " ? "␣" : esc(x)}</span><span style="font:700 12px var(--mono);color:#1E6FD9">${i - L}</span></div>`).join("");
+    const expr = `s[${f(R.a)}:${f(R.b)}${f(R.c) !== "" ? ":" + f(R.c) : ""}]`;
+    const res = bad ? `<span style="color:#C0392B">zadaj celé čísla alebo nechaj políčko prázdne</span>` : ix === null ? `<span style="color:#C0392B">ValueError: krok nesmie byť 0</span>` : `<b style="color:var(--acc)">'${esc(ix.map(i => ch[i]).join(""))}'</b>`;
+    return `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:10px 0">${cellsH}</div><p style="font-family:var(--mono);font-size:16px;margin:6px 0">${esc(expr)} → ${res}</p>`; };
+  const inp = (k, w, ph) => `<label style="display:inline-flex;align-items:center;gap:6px"><span>${ph}</span><input data-rez="${k}" value="${esc(st()[k])}" autocomplete="off" spellcheck="false" style="width:${w}px;max-width:100%;font-family:var(--mono);font-size:16px;padding:5px 8px;border:2px solid var(--border);border-radius:10px"></label>`;
+  const html = () => `<h3>✂️ Rezačka reťazcov</h3><p class="muted" style="font-size:14px">Napíš slovo (najviac 20 znakov) a hodnoty od, do, krok. Prázdne políčko znamená „od začiatku“, „po koniec“ alebo krok 1. Táto časť sa neboduje.</p><div class="task"><div style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center">${inp("s", 190, "s =")}${inp("a", 60, "od")}${inp("b", 60, "do")}${inp("c", 60, "krok")}</div><div id="rezout">${out()}</div></div>`;
+  const input = e => { const t = e.target; if (!t.dataset || !t.dataset.rez) return false; st()[t.dataset.rez] = t.value; save(); const o = document.getElementById("rezout"); if (o) o.innerHTML = out(); return true; };
+  return { html, input };
+})();
 const DEF = { key: "retazce-r215-v1", lesson: "2.15 Reťazce (stringy)", brand: "2.15 Reťazce",
  start: { kicker: "Informatika, 3. ročník", lead: "Mená, správy, heslá, vety: to všetko sú reťazce. Naučíš sa ich zapisovať, spájať a opakovať, vyberať z nich znaky indexom a časti rezom, používať metódy ako upper, replace, split a f-reťazce. Nakoniec napíšeš programy na iniciály, palindróm a počítanie samohlások. 4 zastávky, body a na konci výsledok.", guessQ: "Čo vypíše print('Python'[0])?", guessNote: "Tip sa neboduje. Na zastávke Indexy a rezy zistíš, či si mal pravdu.", guesses: ["y", "P", "Python", "chybu"], ok: 1, yes: "Presne tak! Indexy začínajú nulou, znak na indexe 0 je P.", no: "Vypíše P. Indexy v Pythone začínajú nulou." },
  st: [
-  { id: "zaklad", title: "Zápis a operácie", min: 8, th: `<p>Reťazec je postupnosť znakov v <b>apostrofoch</b> <code>'ahoj'</code> alebo <b>úvodzovkách</b> <code>"ahoj"</code>; viacriadkový v troch <code>'''…'''</code>. Špeciálne znaky: <code>\\n</code> nový riadok, <code>\\t</code> tabulátor, <code>\\'</code> apostrof. Operácie: <code>+</code> spojenie, <code>*</code> opakovanie, <code>len(s)</code> dĺžka, <code>'a' in s</code> obsahuje?</p>`, repl: "Vyskúšaj: s = 'Gymnázium', len(s), s + '!', '-' * 20, 'm' in s, print('A\\nB')", px: ["print(len('ahoj svet'))", "print('ha' * 3)", "print('ab' + 'cd' * 2)", "print('x' in 'Python')", "print(len(''))"] },
-  { id: "indexy", title: "Indexy a rezy", min: 10, guess: true, th: `<p>Každý znak má <b>index</b> od <b>0</b>. Záporný index počíta od konca: <code>s[-1]</code> je posledný znak. <b>Rez</b> <code>s[od:do]</code> vyberie znaky od indexu <i>od</i> po index <i>do − 1</i>; <code>s[:3]</code> prvé tri, <code>s[3:]</code> od štvrtého, <code>s[::-1]</code> obrátene, <code>s[::2]</code> každý druhý. Reťazec je <b>nemenný</b>: <code>s[0] = 'X'</code> skončí chybou TypeError.</p><div class="pcode">s = 'Python'
+  { id: "zaklad", title: "Zápis a operácie", min: 8, fig: "korale", figs: ["oper", "escape"], ved: "Python ukladá reťazce v <b>Unicode</b>, preto <code>len('čaj')</code> je 3, hoci v kódovaní UTF-8 zaberá slovo 4 bajty – písmeno č potrebuje 2 bajty.", th: `<p><b>Reťazec</b> je postupnosť znakov v <b>apostrofoch</b> <code>'ahoj'</code> alebo <b>úvodzovkách</b> <code>"ahoj"</code>; viacriadkový v troch <code>'''…'''</code>.</p><table class="rtab num"><thead><tr><th>Zápis</th><th>Význam</th></tr></thead><tbody><tr><td>\\n</td><td>nový riadok</td></tr><tr><td>\\t</td><td>tabulátor</td></tr><tr><td>\\'</td><td>apostrof vnútri reťazca</td></tr><tr><td>+</td><td><b>spojenie</b> reťazcov</td></tr><tr><td>*</td><td><b>opakovanie</b> reťazca</td></tr><tr><td>len(s)</td><td><b>dĺžka</b> – počet znakov</td></tr><tr><td>'a' in s</td><td>obsahuje s znak alebo časť 'a'?</td></tr></tbody></table>`, repl: "Vyskúšaj: s = 'Gymnázium', len(s), s + '!', '-' * 20, 'm' in s, print('A\\nB')", px: ["print(len('ahoj svet'))", "print('ha' * 3)", "print('ab' + 'cd' * 2)", "print('x' in 'Python')", "print(len(''))"] },
+  { id: "indexy", title: "Indexy a rezy", min: 10, guess: true, fig: "ruler", figs: ["rez", "krok"], inter: () => REZ.html(), ved: "Názov jazyka <b>Python</b> nepochádza od hada. Jeho autor Guido van Rossum ho pomenoval podľa britskej komediálnej skupiny <b>Monty Python</b>.", th: `<p>Každý znak má <b>index</b> od <b>0</b>. Záporný index počíta od konca: <code>s[-1]</code> je posledný znak.</p><table class="rtab num"><thead><tr><th>Rez</th><th>Čo vyberie</th></tr></thead><tbody><tr><td>s[od:do]</td><td>znaky od indexu <i>od</i> po index <i>do − 1</i></td></tr><tr><td>s[:3]</td><td>prvé tri znaky</td></tr><tr><td>s[3:]</td><td>od štvrtého znaku do konca</td></tr><tr><td>s[::-1]</td><td>celý reťazec obrátene</td></tr><tr><td>s[::2]</td><td>každý druhý znak</td></tr></tbody></table><p>Reťazec je <b>nemenný</b>: <code>s[0] = 'X'</code> skončí chybou TypeError.</p><div class="pcode">s = 'Python'
 #    P  y  t  h  o  n
 #    0  1  2  3  4  5
 #   -6 -5 -4 -3 -2 -1</div>`, px: ["s = 'Python'\nprint(s[0], s[-1])", "s = 'Python'\nprint(s[1:4])", "s = 'Python'\nprint(s[:2] + s[4:])", "print('rotor'[::-1])", "s = 'informatika'\nprint(s[::2])", "s = 'abc'\nprint(s[5])"] },
-  { id: "metody", title: "Metódy a f-reťazce", min: 10, th: `<table class="cmdt"><thead><tr><th>Metóda</th><th>Výsledok pre s = ' Ahoj Svet '</th></tr></thead><tbody><tr><td><code>s.upper()</code> / <code>s.lower()</code></td><td>veľké / malé písmená</td></tr><tr><td><code>s.strip()</code></td><td>'Ahoj Svet' (bez medzier na okrajoch)</td></tr><tr><td><code>s.replace('o', '0')</code></td><td>nahradenie</td></tr><tr><td><code>s.count('o')</code>, <code>s.find('S')</code></td><td>počet výskytov, index prvého výskytu (−1 ak nie je)</td></tr><tr><td><code>s.split()</code></td><td>zoznam slov ['Ahoj', 'Svet']</td></tr><tr><td><code>'-'.join(zoznam)</code></td><td>spojenie zoznamu</td></tr><tr><td><code>s.isdigit()</code></td><td>True, ak sú to iba číslice</td></tr></tbody></table><p>Metódy reťazec nemenia, vracajú nový. <b>f-reťazec</b> vloží hodnoty: <code>f'{meno} má {vek} rokov'</code>.</p>`, px: ["print('Ahoj'.upper())", "print('banan'.count('a'))", "print('mama'.replace('m', 'p'))", "print('Kde je Waldo'.find('W'))", "print('a b c'.split())", "print('-'.join(['2026', '09', '28']))", "meno = 'Ema'\nvek = 16\nprint(f'{meno} ({vek})')", "print('  ok  '.strip() + '!')"] },
-  { id: "programy", title: "Programy", min: 14, ex: [
+  { id: "metody", title: "Metódy a f-reťazce", min: 10, fig: "novy", figs: ["splitjoin", "hladaj"], ved: "Reťazce majú v Pythone vyše 40 metód. Celý zoznam vypíše v Shelli príkaz <code>dir(str)</code>, popis jednej metódy napr. <code>help(str.title)</code>.", th: `<p>Metódu zavoláš cez <b>bodku</b> za reťazcom. Príklady pre <code>s = ' Ahoj Svet '</code>:</p><table class="rtab num"><thead><tr><th>Metóda</th><th>Výsledok</th></tr></thead><tbody><tr><td>s.upper()</td><td>veľké písmená</td></tr><tr><td>s.lower()</td><td>malé písmená</td></tr><tr><td>s.strip()</td><td>'Ahoj Svet' (bez medzier na okrajoch)</td></tr><tr><td>s.replace('o', '0')</td><td>nahradenie</td></tr><tr><td>s.count('o')</td><td>počet výskytov</td></tr><tr><td>s.find('S')</td><td>index prvého výskytu (−1, ak nie je)</td></tr><tr><td>s.split()</td><td>zoznam slov ['Ahoj', 'Svet']</td></tr><tr><td>'-'.join(zoznam)</td><td>spojenie zoznamu</td></tr><tr><td>s.isdigit()</td><td>True, ak sú to iba číslice</td></tr></tbody></table><p>Metódy reťazec <b>nemenia</b>, vracajú nový. <b>f-reťazec</b> vloží hodnoty: <code>f'{meno} má {vek} rokov'</code>.</p>`, px: ["print('Ahoj'.upper())", "print('banan'.count('a'))", "print('mama'.replace('m', 'p'))", "print('Kde je Waldo'.find('W'))", "print('a b c'.split())", "print('-'.join(['2026', '09', '28']))", "meno = 'Ema'\nvek = 16\nprint(f'{meno} ({vek})')", "print('  ok  '.strip() + '!')"] },
+  { id: "programy", title: "Programy", min: 14, fig: "retazenie", figs: ["nastroje"], ved: "Palindrómom môže byť aj celá veta, ak vynecháš medzery: <b>Jelenovi pivo nelej</b> sa odzadu číta rovnako.", th: `<p>Programy skontrolujem viacerými vstupmi. Dodrž <b>tvar výstupu</b> z ukážky.</p><p>Kombinuj <b>indexy, rezy a metódy</b>. Metódy môžeš <b>reťaziť</b>: každá ďalšia pracuje s výsledkom predchádzajúcej.</p><p>Pri porovnávaní textov často najprv zjednotíš veľkosť písmen metódou <code>lower()</code>.</p>`, ex: [
    { title: "Iniciály", text: "Program prečíta meno a priezvisko (dva vstupy) a vypíše iniciály v tvare <code>J. N.</code>", sample: "Meno: jana\nPriezvisko: nováková\nJ. N.", start: "meno = input('Meno: ')\npriezvisko = input('Priezvisko: ')\n", ref: "meno = input('Meno: ')\npriezvisko = input('Priezvisko: ')\nprint(meno[0].upper() + '. ' + priezvisko[0].upper() + '.')", tests: [["jana", "nováková"], ["Peter", "Kováč"]] },
    { title: "Palindróm", text: "Program prečíta slovo a vypíše <code>True</code>, ak sa číta rovnako odpredu aj odzadu (bez ohľadu na veľké písmená), inak <code>False</code>.", sample: "Slovo: Oko\nTrue", start: "s = input('Slovo: ')\n", ref: "s = input('Slovo: ')\ns = s.lower()\nprint(s == s[::-1])", tests: [["Oko"], ["rotor"], ["Python"], ["Anna"]] },
    { title: "Samohlásky", text: "Program prečíta vetu a vypíše počet samohlások <b>a, e, i, o, u, y</b> (malé aj veľké, bez diakritiky).", sample: "Veta: Ahoj svet\n3", start: "veta = input('Veta: ')\n", ref: "veta = input('Veta: ')\nv = veta.lower()\nprint(v.count('a') + v.count('e') + v.count('i') + v.count('o') + v.count('u') + v.count('y'))", tests: [["Ahoj svet"], ["Gymnazium Ivana Kraska"], ["xyz"]] },
@@ -658,14 +797,14 @@ DEF.st.forEach(s => {
   if (s.ex) TASKS["ex_" + s.id] = { id: "ex_" + s.id, type: "custom", max: s.ex.length };
 });
 const VIEWS = { test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar() };
-DEF.st.forEach(s => { VIEWS[s.id] = () => head() + `<h2>${s.title}</h2>${s.guess ? guessBox() : ""}<div class="theory">${s.th}</div>`
+DEF.st.forEach(s => { VIEWS[s.id] = () => head() + `<h2>${s.title}</h2>${s.guess ? guessBox() : ""}<div class="theory tsplit"><div>${s.th || ""}</div><div>${s.fig ? TFIG[s.fig] : ""}</div></div>${s.figs ? ltfigs(...s.figs.map(k => TFIG[k])) : ""}${s.ved ? VEDEL(s.ved) : ""}${s.inter ? s.inter() : ""}`
   + (s.repl ? `<h3>Vyskúšaj v Shelli</h3><p class="muted" style="font-size:14px">${s.repl}</p>${replHTML()}` : "")
   + (s.mc ? `<h3>Otázky</h3><div class="task">${taskHTML("mc_" + s.id)}</div>` : "")
   + (s.px ? `<h3>Čo vypíše program?</h3><p class="muted" style="font-size:14px">Napíš presne to, čo by vypísal Python (viac riadkov oddeľ medzerou). Pri chybe napíš jej typ, napr. IndexError.</p><div class="task">${taskHTML("px_" + s.id)}</div>` : "")
   + (s.ex ? `<h3>Programy</h3>${s.ex.map((e, i) => exHTML(s.id + "_" + i, i + 1)).join("")}${S.t["ex_" + s.id] ? `<div class="checkbar"><span class="score ${S.t["ex_" + s.id].score < s.ex.length ? "part" : ""}">Úlohy: ${S.t["ex_" + s.id].score} z ${s.ex.length}</span></div>` : ""}` : "")
   + nextBar(); });
 function CUSTOM_CLICK(e) { return pyClick(e); }
-function CUSTOM_INPUT(e) { return pyInput(e); }
+function CUSTOM_INPUT(e) { return REZ.input(e) || pyInput(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
@@ -817,7 +956,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

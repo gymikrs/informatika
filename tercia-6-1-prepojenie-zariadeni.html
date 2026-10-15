@@ -173,13 +173,166 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Čo prenášam a na akú vzdialenosť? Stabilita a rýchlosť = kábel.", "NFC pár cm, Bluetooth do 10 m, Wi-Fi budova, mobilné dáta všade, hotspot zdieľa mobilné dáta."], "kable": ["Kábel: stabilný, rýchly, často aj napájanie. USB údaje, HDMI obraz, RJ-45 sieť, jack zvuk.", "Rýchlosť v bitoch za sekundu, 1 bajt = 8 bitov."], "bezdrot": ["Wi-Fi = sieť a internet, Bluetooth = dve zariadenia do 10 m (párovanie), NFC = pár cm (platby), mobilné dáta = internet od operátora.", "Hotspot: mobil zdieľa svoje mobilné dáta cez Wi-Fi."], "siete": ["PAN = okolo človeka, LAN = budova, WAN = mestá a štáty. Internet je najväčšia WAN."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {
+  kable: ["Zariadenia prepájame <b>káblom</b> alebo <b>bezdrôtovo</b>.", "Kábel je <b>stabilnejší a rýchlejší</b>, okolie ho neruší a často zariadenie aj <b>napája</b>.", "<b>USB-A, USB-C</b>: údaje a napájanie. USB-C je obojstranný a prenesie aj obraz.", "<b>HDMI, DisplayPort</b>: obraz a zvuk do monitora, projektora, televízora.", "<b>RJ-45 (Ethernet)</b>: pripojenie do počítačovej siete. <b>3,5 mm jack</b>: analógový zvuk.", "Rýchlosť prenosu v <b>bitoch za sekundu</b> (Mb/s, Gb/s), veľkosť súborov v <b>bajtoch</b>. <b>1 B = 8 b</b>."],
+  bezdrot: ["<b>Wi-Fi</b>: pripojenie do siete a na internet, dosah desiatky metrov.", "<b>Bluetooth</b>: spojí dve zariadenia na krátku vzdialenosť, pri prvom spojení ich <b>spárujeme</b>.", "<b>NFC</b>: funguje iba na pár centimetrov, zariadenie treba priložiť.", "<b>Mobilné dáta</b> (4G, 5G): internet od mobilného operátora všade, kde je signál.", "<b>Hotspot</b>: mobil zdieľa svoje mobilné dáta cez Wi-Fi iným zariadeniam."],
+  siete: ["Prepojené zariadenia tvoria <b>počítačovú sieť</b>.", "<b>PAN</b> (osobná sieť): zariadenia okolo jedného človeka.", "<b>LAN</b> (lokálna sieť): zariadenia v jednej budove.", "<b>WAN</b> (rozľahlá sieť): spája siete cez mestá a štáty.", "<b>Internet</b> je najväčšia WAN, <b>sieť sietí</b>."],
+  precvic: ["Pri výbere spojenia sa pýtam: <b>Čo prenášam?</b> (obraz, zvuk, údaje, sieť)", "<b>Na akú vzdialenosť?</b> Pár cm NFC, do 10 m Bluetooth, budova Wi-Fi, všade mobilné dáta.", "<b>Potrebujem stabilitu a rýchlosť?</b> Ak áno, použijem kábel.", "Bezdrôtové spojenia sú pohodlné, ale citlivejšie na <b>rušenie a vzdialenosť</b>.", "Nepotrebné bezdrôtové spojenia <b>vypínam</b>.", "<b>Čas prenosu</b> = veľkosť v bitoch : rýchlosť v bitoch za sekundu."]
+};
+/* ---------- LENKA: obrázky k teórii ---------- */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  /* zariadenia */
+  const pc = (x, y) => `<rect x="${x}" y="${y}" width="52" height="36" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="44" height="28" rx="2" fill="#E8F0FE"/><rect x="${x + 22}" y="${y + 36}" width="8" height="6" fill="${C.mut}"/><rect x="${x + 13}" y="${y + 42}" width="26" height="4" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y) => `<rect x="${x}" y="${y}" width="24" height="42" rx="5" fill="${C.ink}"/><rect x="${x + 2.5}" y="${y + 5}" width="19" height="31" rx="2" fill="#E8F0FE"/>`;
+  const tablet = (x, y) => `<rect x="${x}" y="${y}" width="46" height="34" rx="5" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="38" height="26" rx="2" fill="#E8F0FE"/>`;
+  const router = (x, y) => `<line x1="${x + 10}" y1="${y}" x2="${x + 6}" y2="${y - 16}" stroke="${C.ink}" stroke-width="3" stroke-linecap="round"/><line x1="${x + 46}" y1="${y}" x2="${x + 50}" y2="${y - 16}" stroke="${C.ink}" stroke-width="3" stroke-linecap="round"/><rect x="${x}" y="${y}" width="56" height="20" rx="5" fill="${C.ink}"/>${[0, 1, 2, 3].map(i => `<circle cx="${x + 12 + i * 9}" cy="${y + 10}" r="2.2" fill="#3CCB8E"/>`).join("")}`;
+  const waves = (cx, cy, c, n = 3) => Array.from({ length: n }, (_, i) => `<path d="M${cx - 9 - i * 7} ${cy - 6 - i * 6} A${12 + i * 9} ${12 + i * 9} 0 0 1 ${cx + 9 + i * 7} ${cy - 6 - i * 6}" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/>`).join("");
+  return { C, fig, SV, ar, T, box, num, pc, phone, tablet, router, waves };
+})();
+
+/* Ilustrácie – Tercia 6.1 Prepojenie zariadení */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num, pc, phone, tablet, router, waves } = PF; const A = C.acc, AS = C.accS, MET = "#C9CDD6", MS = "#8A90A0", GOLD = "#C9A227";
+const cable = (cx, y1, y2) => `<line x1="${cx}" y1="${y1}" x2="${cx}" y2="${y2}" stroke="#55506A" stroke-width="7" stroke-linecap="round"/>`;
+const hous = (cx, w) => `<rect x="${cx - w / 2}" y="78" width="${w}" height="26" rx="5" fill="#3A3355"/>`;
+const plugs = [
+  ["USB-A", "obdĺžnik", cx => `${cable(cx, 44, 80)}${hous(cx, 38)}<rect x="${cx - 16}" y="104" width="32" height="34" rx="1.5" fill="${MET}" stroke="${MS}"/><rect x="${cx - 11}" y="110" width="22" height="9" fill="#fff" stroke="${MS}" stroke-width=".8"/>`],
+  ["USB-C", "malý ovál", cx => `${cable(cx, 44, 80)}${hous(cx, 28)}<rect x="${cx - 9}" y="104" width="18" height="26" rx="5" fill="${MET}" stroke="${MS}"/><rect x="${cx - 4}" y="110" width="8" height="14" rx="3" fill="#fff" stroke="${MS}" stroke-width=".8"/>`],
+  ["HDMI", "lichobežník", cx => `${cable(cx, 44, 80)}${hous(cx, 40)}<path d="M${cx - 18} 104 h36 v22 l-5 8 h-26 l-5 -8z" fill="${MET}" stroke="${MS}"/><rect x="${cx - 12}" y="110" width="24" height="6" fill="#fff" stroke="${MS}" stroke-width=".8"/>`],
+  ["RJ-45", "so západkou", cx => `${cable(cx, 44, 80)}<rect x="${cx - 12}" y="78" width="24" height="18" rx="4" fill="#5E5877"/><path d="M${cx - 14} 96 h28 v40 h-28z" fill="#DCEBFF" stroke="${MS}"/>${Array.from({ length: 8 }, (_, i) => `<line x1="${cx - 10.5 + i * 3}" y1="122" x2="${cx - 10.5 + i * 3}" y2="134" stroke="${GOLD}" stroke-width="1.6"/>`).join("")}<path d="M${cx + 14} 102 l7 4 v18 l-7 -2" fill="none" stroke="${MS}" stroke-width="2"/>`],
+  ["jack", "kolík 3,5 mm", cx => `${cable(cx, 44, 80)}${hous(cx, 20)}<rect x="${cx - 4}" y="104" width="8" height="30" fill="${MET}" stroke="${MS}"/><path d="M${cx - 4} 134 h8 l-1 6 q-3 4 -6 0z" fill="${MET}" stroke="${MS}"/><line x1="${cx - 4}" y1="116" x2="${cx + 4}" y2="116" stroke="#3A3355" stroke-width="2"/><line x1="${cx - 4}" y1="126" x2="${cx + 4}" y2="126" stroke="#3A3355" stroke-width="2"/>`]];
+const devRow = (y, lbl, d) => `${T(30, y, lbl, { fs: 12.5, b: 1 })}${T(150, y, d, { fs: 12 })}`;
+return {
+  konektory: fig(SV(440, 250, `
+    ${T(220, 22, "Konektory káblov", { a: "middle", fs: 14, b: 1, c: A })}
+    ${plugs.map(([n, d, draw], i) => { const cx = 48 + i * 86; return `${draw(cx)}${T(cx, 172, n, { a: "middle", fs: 13.5, b: 1, c: A })}${T(cx, 190, d, { a: "middle", fs: 11, c: C.mut })}`; }).join("")}
+    ${box(40, 208, 360, 30, AS, null, 8)}${T(220, 228, "Tvar konektora nedovolí zapojiť ho do zlej zásuvky.", { a: "middle", fs: 11.5 })}`, "Konektory USB-A, USB-C, HDMI, RJ-45 a jack"),
+    "Každý <b>konektor</b> má iný tvar, aby si ho nezapojil do nesprávnej zásuvky."),
+  kabvsbez: fig(SV(440, 250, `
+    ${T(220, 22, "Kábel alebo bezdrôtovo?", { a: "middle", fs: 14, b: 1, c: A })}
+    ${box(14, 34, 200, 206, C.bg, C.line, 12)}${box(226, 34, 200, 206, C.bg, C.line, 12)}
+    ${T(114, 56, "Kábel", { a: "middle", fs: 14, b: 1 })}${T(326, 56, "Bezdrôtovo", { a: "middle", fs: 14, b: 1 })}
+    ${pc(42, 64)}<path d="M94 92 C120 92 120 106 150 106" fill="none" stroke="#55506A" stroke-width="4"/><rect x="150" y="98" width="30" height="16" rx="3" fill="${C.ink}"/>
+    ${phone(256, 66)}${waves(330, 100, A)}${phone(372, 66)}
+    ${[["+ stabilné spojenie", 1], ["+ vyššia rýchlosť", 1], ["+ okolie ho neruší", 1], ["+ často aj napája", 1], ["− viaže ťa na miesto", 0]].map(([t, g], i) => T(30, 136 + i * 21, t, { fs: 12, c: g ? C.ok : C.bad, b: 1 })).join("")}
+    ${[["+ voľný pohyb", 1], ["+ žiadne káble", 1], ["− rušenie, steny", 0], ["− slabne so vzdialenosťou", 0], ["− míňa batériu", 0]].map(([t, g], i) => T(242, 136 + i * 21, t, { fs: 12, c: g ? C.ok : C.bad, b: 1 })).join("")}`, "Porovnanie káblového a bezdrôtového spojenia"),
+    "<b>Kábel</b> vyhráva v stabilite a rýchlosti, <b>bezdrôtové spojenie</b> v pohodlí."),
+  bity: fig(SV(440, 250, `
+    ${T(220, 22, "Bit a bajt", { a: "middle", fs: 14, b: 1, c: A })}
+    ${"01001011".split("").map((b, i) => `${box(68 + i * 38, 36, 34, 34, b === "1" ? AS : "#fff", A, 6)}${T(85 + i * 38, 59, b, { a: "middle", fs: 15, b: 1, mono: 1 })}`).join("")}
+    <path d="M70 78 v6 h300 v-6" fill="none" stroke="${A}" stroke-width="1.8"/>
+    ${T(220, 102, "8 bitov (b) = 1 bajt (B)", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(24, 116, 392, 52, C.bg, C.line, 10)}${T(40, 138, "Rýchlosť", { fs: 12.5, b: 1 })}${T(40, 156, "bity za sekundu", { fs: 11, c: C.mut })}${T(400, 148, "160 Mb/s : 8 = 20 MB/s", { a: "end", fs: 14, b: 1, mono: 1 })}
+    ${box(24, 178, 392, 52, C.bg, C.line, 10)}${T(40, 200, "Čas prenosu", { fs: 12.5, b: 1 })}${T(40, 218, "veľkosť : rýchlosť", { fs: 11, c: C.mut })}${T(400, 210, "100 MB : 20 MB/s = 5 s", { a: "end", fs: 14, b: 1, mono: 1 })}`, "Prepočet bitov na bajty a čas prenosu"),
+    "Malé <b>b</b> je bit, veľké <b>B</b> je bajt. Rýchlosť v Mb/s vydelíš 8 a máš MB/s."),
+  wifi: fig(SV(440, 250, `
+    ${T(220, 22, "Wi-Fi v byte", { a: "middle", fs: 14, b: 1, c: A })}
+    <path d="M30 60 q0 -20 22 -20 q8 -14 26 -6 q18 -4 22 12 q14 2 12 16 h-80 q-10 0 -2 -2z" fill="${C.blueS}" stroke="${C.blue}" stroke-width="1.5"/>${T(70, 58, "internet", { a: "middle", fs: 11.5, b: 1, c: C.blue })}
+    <line x1="80" y1="70" x2="186" y2="120" stroke="${C.mut}" stroke-width="2" stroke-dasharray="5 4"/>
+    ${router(192, 122)}${waves(220, 112, A, 3)}${T(220, 160, "router", { a: "middle", fs: 12, b: 1 })}
+    ${[[44, 158, "tablet", tablet], [336, 54, "mobil", phone], [350, 150, "tlačiareň", null], [138, 196, "herná konzola", null]].map(([x, y, n, d]) => {
+      const dev = d === tablet ? tablet(x, y) : d === phone ? phone(x, y) : n === "tlačiareň" ? `<rect x="${x}" y="${y + 8}" width="50" height="24" rx="4" fill="${C.ink}"/><rect x="${x + 9}" y="${y}" width="32" height="10" fill="#fff" stroke="${C.mut}"/><rect x="${x + 9}" y="${y + 28}" width="32" height="10" fill="#fff" stroke="${C.mut}"/>` : `<rect x="${x}" y="${y}" width="44" height="22" rx="5" fill="${C.ink}"/><circle cx="${x + 34}" cy="${y + 11}" r="3" fill="#3CCB8E"/>`;
+      return dev; }).join("")}
+    ${T(67, 210, "tablet", { a: "middle", fs: 11.5 })}${T(348, 116, "mobil", { a: "middle", fs: 11.5 })}${T(375, 204, "tlačiareň", { a: "middle", fs: 11.5 })}${T(160, 236, "herná konzola", { a: "middle", fs: 11.5 })}
+    ${[[100, 170, 180, 140], [330, 84, 258, 118], [344, 166, 262, 140], [172, 192, 200, 150]].map(([a, b, c, d]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="${A}" stroke-width="1.6" stroke-dasharray="3 4"/>`).join("")}`, "Router rozdeľuje internet cez Wi-Fi zariadeniam v byte"),
+    "<b>Router</b> pošle internet cez <b>Wi-Fi</b> všetkým zariadeniam v byte."),
+  btnfc: fig(SV(440, 250, `
+    ${box(10, 10, 206, 230, C.blueS, null, 12)}${box(224, 10, 206, 230, AS, null, 12)}
+    ${T(113, 34, "Bluetooth", { a: "middle", fs: 14, b: 1, c: C.blue })}${T(327, 34, "NFC", { a: "middle", fs: 14, b: 1, c: A })}
+    ${phone(36, 70)}<rect x="138" y="66" width="44" height="54" rx="10" fill="${C.ink}"/><circle cx="160" cy="84" r="8" fill="#55506A"/><circle cx="160" cy="105" r="11" fill="#55506A"/><circle cx="160" cy="105" r="4" fill="${C.ink}"/>
+    ${ar(70, 92, 132, 92, C.blue, 2, 1)}${T(101, 82, "spárované", { a: "middle", fs: 11, c: C.blue, b: 1 })}
+    ${T(113, 150, "mobil a reproduktor", { a: "middle", fs: 12 })}
+    ${T(26, 182, "• spája dve zariadenia", { fs: 11.5 })}${T(26, 202, "• myš, klávesnica, reproduktor", { fs: 11.5 })}${T(26, 222, "• zapni ho, len keď ho treba", { fs: 11.5 })}
+    <rect x="252" y="96" width="60" height="40" rx="6" fill="#fff" stroke="${A}" stroke-width="1.5"/>${T(282, 121, "NFC", { a: "middle", fs: 12, b: 1, c: A })}
+    <g transform="rotate(-18 340 90)">${phone(328, 62)}</g>${T(345, 148, "pár cm", { a: "middle", fs: 12, b: 1, c: A })}
+    ${T(327, 170, "mobil pri NFC nálepke", { a: "middle", fs: 12 })}
+    ${T(240, 202, "• treba ho priložiť", { fs: 11.5 })}${T(240, 222, "• nálepka otvorí web či appku", { fs: 11.5 })}`, "Bluetooth spája mobil s reproduktorom, NFC funguje po priložení"),
+    "<b>Bluetooth</b> spojí napríklad mobil s reproduktorom, <b>NFC</b> zareaguje až po priložení."),
+  dosah: fig(SV(440, 250, `
+    ${T(220, 22, "Dosah bezdrôtových spojení", { a: "middle", fs: 14, b: 1, c: A })}
+    ${[["NFC", "pár cm", 18, A], ["Bluetooth", "asi 10 m", 80, C.blue], ["Wi-Fi", "desiatky metrov", 150, C.ok], ["mobilné dáta", "kilometre", 220, C.amb]].map(([n, d, w, c], i) => { const y = 52 + i * 46; return `${T(14, y + 16, n, { fs: 12.5, b: 1 })}<rect x="112" y="${y}" width="${w}" height="24" rx="6" fill="${c}"/>${T(w + 120, y + 17, d, { fs: 12, c: C.ink })}`; }).join("")}
+    ${T(220, 240, "Pri mobilných dátach ide o dosah k vysielaču. Pásiky nie sú v mierke.", { a: "middle", fs: 11, c: C.mut })}`, "Porovnanie dosahu NFC, Bluetooth, Wi-Fi a mobilných dát"),
+    "Čím väčší <b>dosah</b>, tým ďalej môžu byť zariadenia od seba."),
+  siete: fig(SV(440, 250, `
+    ${T(220, 22, "Siete podľa veľkosti", { a: "middle", fs: 14, b: 1, c: A })}
+    ${[["PAN", "osobná", "okolo človeka", C.blue, C.blueS], ["LAN", "lokálna", "jedna budova", A, AS], ["WAN", "rozľahlá", "mestá a štáty", C.ok, C.okS]].map(([n, f, d, c, s], i) => { const x = 12 + i * 142; return `${box(x, 34, 132, 206, s, null, 12)}${T(x + 66, 58, n, { a: "middle", fs: 17, b: 1, c })}${T(x + 66, 76, f + " sieť", { a: "middle", fs: 11.5 })}${T(x + 66, 228, d, { a: "middle", fs: 12, b: 1, c })}`; }).join("")}
+    <circle cx="78" cy="132" r="13" fill="${C.ink}"/><rect x="62" y="148" width="32" height="44" rx="10" fill="${C.ink}"/>${phone(98, 150)}<path d="M64 128 a14 14 0 0 1 28 0" fill="none" stroke="${C.blue}" stroke-width="4"/><rect x="60" y="126" width="7" height="12" rx="3" fill="${C.blue}"/><rect x="89" y="126" width="7" height="12" rx="3" fill="${C.blue}"/>
+    <path d="M168 120 l52 -26 l52 26 v76 h-104z" fill="#fff" stroke="${A}" stroke-width="1.8"/>${[0, 1, 2].map(i => `<rect x="${182 + i * 28}" y="138" width="20" height="14" rx="2" fill="${C.ink}"/><line x1="${192 + i * 28}" y1="152" x2="${192 + i * 28}" y2="170" stroke="${A}" stroke-width="1.5"/>`).join("")}<line x1="192" y1="170" x2="248" y2="170" stroke="${A}" stroke-width="1.5"/><rect x="206" y="174" width="28" height="12" rx="3" fill="${A}"/>
+    ${[[318, 112], [398, 128], [340, 186], [404, 196]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7" fill="${C.ok}"/>`).join("")}<path d="M318 112 L398 128 L404 196 L340 186 Z M318 112 L404 196" fill="none" stroke="${C.ok}" stroke-width="1.8"/>`, "Siete PAN, LAN a WAN podľa veľkosti"),
+    "<b>PAN</b> je okolo človeka, <b>LAN</b> v jednej budove a <b>WAN</b> spája mestá a štáty."),
+  internet: fig(SV(440, 250, `
+    ${T(220, 22, "Internet = sieť sietí", { a: "middle", fs: 14, b: 1, c: A })}
+    <ellipse cx="220" cy="134" rx="74" ry="42" fill="${C.okS}" stroke="${C.ok}" stroke-width="1.8"/>${T(220, 130, "internet", { a: "middle", fs: 14, b: 1, c: C.ok })}${T(220, 148, "(najväčšia WAN)", { a: "middle", fs: 11, c: C.ok })}
+    ${[[14, 40, "domácnosť"], [298, 40, "firma"], [14, 180, "nemocnica"], [298, 180, "kaviareň"]].map(([x, y, n]) => `${box(x, y, 128, 52, AS, A, 10)}${T(x + 64, y + 22, n, { a: "middle", fs: 12.5, b: 1 })}${T(x + 64, y + 40, "LAN", { a: "middle", fs: 11.5, c: A, b: 1 })}`).join("")}
+    ${[[142, 80, 170, 108], [298, 80, 270, 108], [142, 196, 170, 162], [298, 196, 270, 162]].map(([a, b, c, d]) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="${C.mut}" stroke-width="2.5"/>`).join("")}`, "Lokálne siete sú cez internet prepojené"),
+    "<b>Internet</b> prepája milióny lokálnych sietí na celom svete."),
+  vyber: fig(SV(440, 250, `
+    ${T(220, 22, "Ako vybrať spojenie", { a: "middle", fs: 14, b: 1, c: A })}
+    ${[["Čo prenášam?", "obraz, zvuk, údaje, sieť"], ["Na akú vzdialenosť?", "pár cm … celý svet"], ["Treba stabilitu a rýchlosť?", "áno: kábel, nie: bezdrôt"]].map(([q, d], i) => { const y = 38 + i * 68; return `${box(30, y, 380, 54, i === 2 ? AS : C.bg, i === 2 ? A : C.line, 10)}${num(54, y + 27, i + 1)}${T(74, y + 23, q, { fs: 13.5, b: 1 })}${T(74, y + 42, d, { fs: 12, c: C.mut })}${i < 2 ? ar(220, y + 55, 220, y + 66, C.mut, 2) : ""}`; }).join("")}`, "Tri otázky pri výbere spojenia"),
+    "Pri výbere spojenia si polož <b>tri otázky</b>."),
+  rychlost: fig(SV(440, 250, `
+    ${T(220, 22, "Bežné rýchlosti spojení", { a: "middle", fs: 14, b: 1, c: A })}
+    ${[["NFC", 0.4, "0,4 Mb/s"], ["Bluetooth", 2, "2 Mb/s"], ["mobilné 4G", 50, "50 Mb/s"], ["Wi-Fi", 400, "400 Mb/s"], ["Ethernet", 1000, "1 Gb/s"], ["USB 3.0", 5000, "5 Gb/s"]].map(([n, v, l], i) => { const y = 38 + i * 30, w = 12 + (Math.log10(v) + 0.4) * 50; return `${T(14, y + 15, n, { fs: 12, b: 1 })}<rect x="104" y="${y}" width="${w.toFixed(0)}" height="20" rx="5" fill="${i > 3 ? A : i > 1 ? "#9B7BE6" : "#C9B8F3"}"/>${T(112 + w, y + 15, l, { fs: 12, mono: 1 })}`; }).join("")}
+    ${T(220, 234, "Pásiky sú skrátené. Skutočná rýchlosť býva nižšia.", { a: "middle", fs: 11, c: C.mut })}`, "Porovnanie rýchlostí spojení"),
+    "<b>USB 3.0</b> je vyše tisíckrát rýchlejšie ako <b>Bluetooth</b>.")
+}; })();
+
+/* Interaktívne: Ako dlho to potrvá? (bez bodov) */
+const CF = [["fotka", 5, "5 MB"], ["pesnička", 8, "8 MB"], ["film", 4000, "4 GB"], ["hra", 50000, "50 GB"]];
+const CS = [["Bluetooth", 2], ["mobilné 4G", 50], ["Wi-Fi", 400], ["Ethernet", 1000], ["USB 3.0", 5000]];
+function fmtT(s) { const r = (x, d) => x.toLocaleString("sk-SK", { maximumFractionDigits: d }); if (s < 60) return r(s, s < 10 ? 1 : 0) + " s"; if (s < 3600) return r(s / 60, 1) + " min"; if (s < 86400) return r(s / 3600, 1) + " h"; return r(s / 86400, 1) + " dňa"; }
+function calcInner() { const c = S.calc || (S.calc = { f: 2, s: 2 }), [fn, mb, fl] = CF[c.f], [sn, mbps] = CS[c.s], t = mb * 8 / mbps;
+  return `<div style="font-weight:600;margin-bottom:6px">Čo kopíruješ?</div><div class="row" style="flex-wrap:wrap;gap:6px">${CF.map(([n, , l], i) => `<button class="ghost ${c.f === i ? "on" : ""}" data-cf="${i}">${n} (${l})</button>`).join("")}</div>
+    <div style="font-weight:600;margin:10px 0 6px">Akým spojením?</div><div class="row" style="flex-wrap:wrap;gap:6px">${CS.map(([n, v], i) => `<button class="ghost ${c.s === i ? "on" : ""}" data-cs="${i}">${n} (${v >= 1000 ? v / 1000 + " Gb/s" : v + " Mb/s"})</button>`).join("")}</div>
+    <div style="margin-top:12px;background:var(--accSoft);border-radius:10px;padding:10px 14px"><code>${mb.toLocaleString("sk-SK")} MB × 8 = ${(mb * 8).toLocaleString("sk-SK")} Mb</code>, <code>${(mb * 8).toLocaleString("sk-SK")} : ${mbps.toLocaleString("sk-SK")} = ${(Math.round(t * 10) / 10).toLocaleString("sk-SK")} s</code><br><b>${fn[0].toUpperCase() + fn.slice(1)} cez ${sn}: asi ${fmtT(t)}</b></div>`; }
+function calcClick(e) { const b = e.target.closest && e.target.closest("button[data-cf],button[data-cs]"); if (!b) return false; const c = S.calc || (S.calc = { f: 2, s: 2 });
+  if (b.dataset.cf !== undefined) c.f = +b.dataset.cf; else c.s = +b.dataset.cs; save(); const el = document.getElementById("calc"); if (el) { el.innerHTML = calcInner(); typo(el); } return true; }
+
 const KEY = "t61-v1";
 const LESSON = "6.1 Spôsoby prepojenia PC a zariadení IKT";
 const BRAND = "6.1 Prepojenie zariadení";
@@ -215,22 +368,68 @@ const TASKS = {
   pxq: {"id": "pxq", "type": "mc", "qs": [{"id": "1", "q": "Kedy je lepší kábel ako Wi-Fi?", "opts": ["keď potrebuješ stabilné a rýchle spojenie, napríklad stolový PC alebo hranie hier", "keď sa chceš voľne pohybovať po dome", "keď nemáš žiadny kábel", "nikdy"], "a": 0}, {"id": "2", "q": "Čo je hotspot?", "opts": ["mobil zdieľa svoje mobilné dáta cez Wi-Fi iným zariadeniam", "druh kábla", "Bluetooth slúchadlá", "školský server"], "a": 0}, {"id": "3", "q": "Prečo vypínať Bluetooth, keď ho nepotrebuješ?", "opts": ["šetrí batériu a zmenšuje riziko neželaného pripojenia", "zrýchli Wi-Fi", "zväčší pamäť", "inak sa vybije router"], "a": 0}, {"id": "4", "q": "Ktorý typ siete je v školskej učebni?", "opts": ["LAN", "PAN", "WAN", "NFC"], "a": 0}]}
 };
 const VIEWS = {
-  kable: () => head() + `<h2>Káblové prepojenia</h2><div class="theory"><p>Zariadenia IKT môžeme prepojiť <b>káblom</b> alebo <b>bezdrôtovo</b>. Kábel je zvyčajne <b>stabilnejší a rýchlejší</b>, nepodlieha rušeniu a často zároveň <b>napája</b> zariadenie. Najčastejšie konektory:</p><table><thead><tr><th>Konektor</th><th>Na čo slúži</th></tr></thead><tbody><tr><td>USB-A, USB-C</td><td>údaje a napájanie (myš, kľúč, mobil, nabíjanie); USB-C je obojstranný a zvládne aj obraz</td></tr><tr><td>HDMI, DisplayPort</td><td>obraz a zvuk do monitora, projektora, televízora</td></tr><tr><td>RJ-45 (Ethernet)</td><td>pripojenie do počítačovej siete</td></tr><tr><td>3,5 mm jack</td><td>analógový zvuk (slúchadlá, reproduktory)</td></tr></tbody></table><p>Rýchlosť prenosu sa udáva v <b>bitoch za sekundu</b> (Mb/s, Gb/s). Veľkosť súborov v <b>bajtoch</b> a 1 bajt = 8 bitov.</p></div><h3>Úloha 1: na čo slúži konektor?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ksort")}</div><h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("kin")}</div>` + nextBar(),
-  bezdrot: () => head() + `<h2>Bezdrôtové prepojenia</h2>${guessBox()}<div class="theory"><p><b>Wi-Fi</b> pripája zariadenia do počítačovej siete a na internet (dosah desiatky metrov). <b>Bluetooth</b> spája dve zariadenia na krátku vzdialenosť, asi 10 m (slúchadlá, hodinky, reproduktor). Pri prvom spojení ich treba <b>spárovať</b>. <b>NFC</b> funguje iba na pár centimetrov (platby mobilom, čipové karty), takže sa nič nespustí omylom z diaľky. <b>Mobilné dáta</b> (4G, 5G) dajú internet cez mobilného operátora všade, kde je signál. Mobil ich vie zdieľať ako <b>hotspot</b>.</p></div><h3>Úloha 1: aké spojenie sa použije?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("bsort")}</div><h3>Úloha 2: otázky</h3><div class="task">${taskHTML("bq")}</div>` + nextBar(),
-  siete: () => head() + `<h2>Typy sietí podľa veľkosti</h2><div class="theory"><p>Prepojené zariadenia tvoria <b>sieť</b>. Podľa veľkosti rozlišujeme: <b>PAN</b> (osobná sieť okolo jedného človeka: mobil, hodinky, slúchadlá), <b>LAN</b> (lokálna sieť v jednej budove: škola, domácnosť, firma) a <b>WAN</b> (rozľahlá sieť cez mestá a štáty). Najväčšou WAN je <b>internet</b>, sieť sietí.</p></div><h3>Úloha: aká je to sieť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>` + nextBar(),
+  kable: () => head() + `<h2>Káblové prepojenia</h2>
+    <div class="theory tsplit"><div>
+      <p>Zariadenia IKT môžeme prepojiť <b>káblom</b> alebo <b>bezdrôtovo</b>. Kábel je zvyčajne <b>stabilnejší a rýchlejší</b>, nepodlieha rušeniu a často zároveň <b>napája</b> zariadenie.</p>
+      <table class="rtab"><thead><tr><th>Konektor</th><th>Na čo slúži</th></tr></thead><tbody>
+        <tr><td><b>USB-A, USB-C</b></td><td>údaje a napájanie (myš, kľúč, mobil, nabíjanie); USB-C je obojstranný a zvládne aj obraz</td></tr>
+        <tr><td><b>HDMI, DisplayPort</b></td><td>obraz a zvuk do monitora, projektora, televízora</td></tr>
+        <tr><td><b>RJ-45</b> (Ethernet)</td><td>pripojenie do počítačovej siete</td></tr>
+        <tr><td><b>3,5 mm jack</b></td><td>analógový zvuk (slúchadlá, reproduktory)</td></tr></tbody></table>
+      <p>Rýchlosť prenosu sa udáva v <b>bitoch za sekundu</b> (Mb/s, Gb/s), veľkosť súborov v <b>bajtoch</b>. Platí 1 bajt = 8 bitov.</p>
+    </div><div>${TFIG.konektory}</div></div>
+    ${ltfigs(TFIG.kabvsbez, TFIG.bity)}
+    ${VEDEL("Ethernet vymyslel Robert Metcalfe vo firme Xerox v roku 1973. V roku 2023 za neho dostal Turingovu cenu, ktorej sa hovorí Nobelova cena informatiky.")}
+    <h3>Úloha 1: na čo slúži konektor?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ksort")}</div><h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("kin")}</div>` + nextBar(),
+  bezdrot: () => head() + `<h2>Bezdrôtové prepojenia</h2>${guessBox()}
+    <div class="theory tsplit"><div>
+      <p>Bezdrôtové spojenia sú pohodlné, lebo nepotrebujú kábel. Líšia sa hlavne <b>dosahom</b> a tým, na čo slúžia.</p>
+      <table class="rtab"><thead><tr><th>Technológia, dosah</th><th>Na čo slúži</th></tr></thead><tbody>
+        <tr><td><b>Wi-Fi</b><br>desiatky metrov</td><td>pripojenie do počítačovej siete a na internet</td></tr>
+        <tr><td><b>Bluetooth</b><br>asi 10 m</td><td>spojenie dvoch zariadení (slúchadlá, hodinky, reproduktor), pri prvom spojení ich treba <b>spárovať</b></td></tr>
+        <tr><td><b>NFC</b><br>pár cm</td><td>platby mobilom, čipové karty; nič sa nespustí omylom z diaľky</td></tr>
+        <tr><td><b>Mobilné dáta</b> (4G, 5G)<br>všade, kde je signál</td><td>internet cez mobilného operátora</td></tr></tbody></table>
+      <p>Mobil vie svoje mobilné dáta zdieľať cez Wi-Fi iným zariadeniam ako <b>hotspot</b>.</p>
+    </div><div>${TFIG.wifi}</div></div>
+    ${ltfigs(TFIG.btnfc, ...(S.t.bq ? [TFIG.dosah] : []))}
+    ${VEDEL("Bluetooth dostal meno podľa dánskeho kráľa Haralda Modrozuba (anglicky Bluetooth) z 10. storočia. Logo Bluetooth tvoria jeho iniciály H a B zapísané runami.")}
+    <h3>Úloha 1: aké spojenie sa použije?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("bsort")}</div><h3>Úloha 2: otázky</h3><div class="task">${taskHTML("bq")}</div>` + nextBar(),
+  siete: () => head() + `<h2>Typy sietí podľa veľkosti</h2>
+    <div class="theory tsplit"><div>
+      <p>Prepojené zariadenia tvoria <b>sieť</b>. Podľa veľkosti rozlišujeme tri typy sietí.</p>
+      <table class="rtab"><thead><tr><th>Sieť</th><th>Kde</th><th>Príklad</th></tr></thead><tbody>
+        <tr><td><b>PAN</b> (osobná)</td><td>okolo jedného človeka</td><td>mobil, hodinky, slúchadlá</td></tr>
+        <tr><td><b>LAN</b> (lokálna)</td><td>v jednej budove</td><td>škola, domácnosť, firma</td></tr>
+        <tr><td><b>WAN</b> (rozľahlá)</td><td>cez mestá a štáty</td><td>spojené pobočky veľkej firmy</td></tr></tbody></table>
+      <p>Najväčšou WAN je <b>internet</b>, sieť sietí.</p>
+    </div><div>${TFIG.siete}</div></div>
+    ${ltfigs(TFIG.internet)}
+    ${VEDEL("Internet vznikol z americkej siete ARPANET. Na konci roka 1969 spájala iba 4 počítače, dnes sú v internete pripojené miliardy zariadení.")}
+    <h3>Úloha: aká je to sieť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>` + nextBar(),
 
   precvic: () => head() + `<h2>Precvičovanie: ako to prepojíš</h2>
-    <div class="theory"><p>Pri výbere spojenia sa pýtaj: <b>Čo prenášam?</b> (obraz, zvuk, údaje, sieť) <b>Na akú vzdialenosť?</b> (pár cm NFC, do 10 m Bluetooth, budova Wi-Fi, všade mobilné dáta) <b>Potrebujem stabilitu a rýchlosť?</b> Ak áno, použi kábel. Bezdrôtové spojenia sú pohodlné, ale citlivejšie na rušenie a vzdialenosť a nepotrebné radšej vypínaj.</p><p>Pri každej situácii vyber spojenie a potom odpovedz na otázky.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Pri výbere spojenia si polož tri otázky:</p>
+      <table class="rtab"><thead><tr><th>Otázka</th><th>Čo zvážiš</th></tr></thead><tbody>
+        <tr><td><b>Čo prenášam?</b></td><td>obraz, zvuk, údaje alebo sieť</td></tr>
+        <tr><td><b>Na akú vzdialenosť?</b></td><td>pár cm NFC, do 10 m Bluetooth, budova Wi-Fi, všade mobilné dáta</td></tr>
+        <tr><td><b>Potrebujem stabilitu a rýchlosť?</b></td><td>ak áno, použi kábel</td></tr></tbody></table>
+      <p>Bezdrôtové spojenia sú pohodlné, ale citlivejšie na rušenie a vzdialenosť a nepotrebné radšej vypínaj.</p>
+      <p>Pri každej situácii vyber spojenie a potom odpovedz na otázky.</p>
+    </div><div>${TFIG.vyber}</div></div>
+    ${ltfigs(TFIG.rychlost)}
+    ${VEDEL("Prvá Wi-Fi norma z roku 1997 mala rýchlosť iba 2 Mb/s. Dnešné Wi-Fi siete sú v praxi aj stokrát rýchlejšie.")}
+    <h3>Vyskúšaj: ako dlho to potrvá?</h3><p>Vyber súbor a spojenie. Uvidíš, ako dlho bude kopírovanie trvať pri ideálnej rýchlosti (neboduje sa).</p><div class="tool" id="calc">${calcInner()}</div>
     <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
     <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 
-function CUSTOM_CLICK(e) { return selClick(e, { px: [PX_I, "g_sit"] }); }
+function CUSTOM_CLICK(e) { if (calcClick(e)) return true; return selClick(e, { px: [PX_I, "g_sit"] }); }
 
 function CUSTOM_INPUT(e) { return selInput(e); }
 
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:minmax(0,1fr) min(250px,48%);gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="width:100%;min-width:0;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
   if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
 function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
@@ -385,7 +584,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
