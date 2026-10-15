@@ -180,18 +180,49 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .calc{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
 .calc .in{max-width:140px}
 
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Čím viac opakovaní a vzorov, tým lepšia komprimácia; náhodné dáta sa takmer nezmenšia.", "Už komprimované súbory (JPG, MP3, MP4, PNG) sa v ZIP takmer nezmenšia."], "preco": ["<b>Komprimácia</b> zmenšuje veľkosť súboru, aby zaberal menej miesta a rýchlejšie sa posielal.", "Komprimovaný súbor treba pred použitím <b>dekomprimovať</b> (rozbaliť)."], "rle": ["Metóda <b>RLE</b> nahrádza opakujúce sa znaky počtom opakovaní: AAAAABB → 5A2B.", "Funguje dobre pri veľkých jednofarebných plochách."], "slovnik": ["<b>Slovníková metóda</b> nahrádza opakujúce sa slová alebo časti textu krátkymi značkami.", "Takto pracuje napríklad formát ZIP."], "strata": ["<b>Bezstratová</b> komprimácia (ZIP, PNG) zachová všetky údaje.", "<b>Stratová</b> komprimácia (JPG, MP3) zahodí časť údajov, ktorú oko či ucho takmer nepostrehne. Súbor je oveľa menší."], "pomer": ["<b>Kompresný pomer</b> = pôvodná veľkosť : komprimovaná veľkosť.", "Napríklad 10 MB → 2 MB je pomer 5 : 1, súbor je 5-krát menší."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"preco": ["<b>Komprimácia</b> = zmenšenie súboru tak, že tie isté údaje zapíšeme úspornejšie.", "Program hľadá, čo sa v údajoch <b>opakuje</b>, a zapíše to kratšie.", "<b>Dekomprimácia</b> (rozbalenie) vráti súbor do pôvodnej podoby.", "<b>Archív</b> (napr. ZIP) spojí veľa súborov do jedného menšieho súboru.", "Využitie: limit prílohy e-mailu, menej miesta na disku, rýchlejšie nahrávanie na internet."], "rle": ["Obrázok je mriežka <b>pixelov</b>, každý pixel má svoju farbu.", "<b>RLE</b> (kódovanie dĺžky behov) zapíše počet rovnakých pixelov a ich farbu.", "Príklad: ZZZZZZMMM → 6Z3M (číslo = koľko, písmeno = farba).", "Rozbalenie: 2K4E1T → KKEEEET, nič sa nestratí.", "RLE sa výborne hodí na veľké <b>jednofarebné plochy</b> (ikony, faxy, jednoduché kresby)."], "slovnik": ["<b>Slovníková metóda</b>: opakujúce sa slová a vety sa zapíšu do slovníka iba raz.", "V texte ich nahradí krátka <b>značka</b> (napr. ①).", "Pri rozbalení sa značky nahradia späť slovami, metóda je <b>bezstratová</b>.", "Aj slovník zaberá miesto: oplatí sa nahrádzať to, čo je <b>dlhé</b> a <b>často sa opakuje</b>.", "Takto pracuje ZIP, gzip aj PNG (metóda Deflate)."], "strata": ["<b>Bezstratová</b> komprimácia: po rozbalení presne pôvodné údaje, bit po bite (ZIP, 7z, RAR, PNG).", "<b>Stratová</b> komprimácia: časť údajov sa navždy zahodí, súbor je oveľa menší (JPG, MP3, MP4).", "Stratové formáty zahadzujú detaily, ktoré <b>oko</b> alebo <b>ucho</b> takmer nepostrehne.", "Čím viac sa zahodí, tým je súbor menší, ale kvalita horšia.", "Zahodené údaje sa už nedajú vrátiť späť."], "pomer": ["<b>Kompresný pomer</b> = pôvodná veľkosť : veľkosť archívu.", "Príklad: 200 MB → 80 MB, 200 : 80 = 2,5 : 1, archív je 2,5-krát menší.", "<b>Úspora v %</b> = (pôvodná − archív) / pôvodná × 100.", "Príklad: (200 − 80) / 200 × 100 = 60 %.", "Čím väčší pomer a úspora, tým lepšia komprimácia.", "Ak je archív väčší ako pôvodný súbor, komprimácia sa neoplatila."], "precvic": ["Čím viac opakovaní a vzorov, tým lepšia komprimácia.", "Náhodné údaje nemajú vzory, preto sa takmer nezmenšia.", "Už komprimované súbory (JPG, MP3, MP4, PNG) sa v ZIP takmer nezmenšia.", "Laboratórium komprimuje metódou <b>gzip</b>, rovnakou, akú používajú webové servery."]};
 const KEY = "komprimacia-21-v1";
 const LESSON = "2.1 Komprimácia údajov";
 const BRAND = "2.1 Komprimácia údajov";
 const CLASS_DEFAULT = "Tercia";
-const WIDE = { rle: 1, strata: 1 };
+const WIDE = { preco: 1, rle: 1, slovnik: 1, strata: 1, pomer: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "preco", title: "Prečo komprimovať", min: 5 },
@@ -388,6 +419,92 @@ const ART = {
   <path d="M30 30 q40 -10 80 6 v100 q-40 -16 -80 -6z" fill="#6A3FD0"/><path d="M190 30 q-40 -10 -80 6 v100 q40 -16 80 -6z" fill="#8A63E6"/>
   <g font-family="JetBrains Mono,monospace" font-size="12" fill="#fff" font-weight="700"><text x="44" y="62">① = zima</text><text x="44" y="84">② = keď</text><text x="122" y="62">①①①</text><text x="122" y="84">②①</text></g></svg>`
 };
+/* ---------- LENKA: ilustrácie k teórii ---------- */
+const TFIG = (() => {
+  const A = "#6A3FD0", AS = "#E9E2FB", TL = "#0B7A75";
+  const C = { ink: "#1A1530", mut: "#5E5877", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", line: "#DAD6E6", bg: "#F6F5FA" };
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`; let uid = 0;
+  const SV = (w, h, body, label) => { const id = "lf" + (++uid); const d = `<defs>${[C.mut, C.ok, A, C.bad, TL, C.amb].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="JetBrains Mono,Consolas,monospace"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  const doc = (x, y, c) => `<path d="M${x} ${y}h16l7 7v21h-23z" fill="#fff" stroke="${c}" stroke-width="1.6"/><path d="M${x + 16} ${y}v7h7" fill="none" stroke="${c}" stroke-width="1.6"/>`;
+  const W = s => ART[s].replace(/<rect width="(\d+)" height="(\d+)" rx="14" fill="#[0-9A-F]{6}"\/>/, `<rect width="$1" height="$2" rx="14" fill="#FFFFFF"/>`);
+  /* čiernobiele písmeno T pre RLE */
+  const TT = ["ČČČČČČČČČČ", "ČČČČČČČČČČ", "BBBBČČBBBB", "BBBBČČBBBB", "BBBBČČBBBB", "BBBBČČBBBB", "BBBBČČBBBB"];
+  const rl = r => { let o = "", i = 0; const a = [...r]; while (i < a.length) { let j = i; while (j < a.length && a[j] === a[i]) j++; o += (j - i) + a[i]; i = j; } return o; };
+  const ttLen = TT.reduce((s, r) => s + [...rl(r)].length, 0);
+  /* slovník: pec nám spadla */
+  const PEC = "pec nám spadla, pec nám spadla, ktože nám ju postaví?", PW = "pec nám spadla", PC = PEC.split(PW).join("①");
+  const pecComp = [...PC].length + PW.length + 1;
+  return {
+    preco: fig(SV(440, 250, `
+      ${T(220, 22, "Archív: viac súborov v jednom menšom balíku", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[["obrazok.bmp", "3 MB"], ["referat.txt", "2 MB"], ["data.csv", "1 MB"]].map(([n, s], i) => `${box(14, 40 + i * 48, 150, 40, C.bg, C.line, 8)}${doc(24, 46 + i * 48, A)}${T(56, 58 + i * 48, n, { fs: 12, b: 1 })}${T(56, 73 + i * 48, s, { fs: 11, c: C.mut })}`).join("")}
+      ${ar(172, 84, 284, 84, A, 3)}${T(228, 74, "komprimácia", { a: "middle", fs: 11.5, b: 1, c: A })}
+      ${ar(284, 122, 172, 122, TL, 3)}${T(228, 142, "dekomprimácia", { a: "middle", fs: 11.5, b: 1, c: TL })}
+      ${box(292, 44, 134, 128, AS, A, 12)}<rect x="336" y="56" width="46" height="56" rx="6" fill="#F2A516"/><rect x="354" y="56" width="10" height="56" fill="#1A1530" opacity=".25"/>${[0, 1, 2, 3].map(i => `<rect x="${i % 2 ? 359 : 354}" y="${60 + i * 9}" width="5" height="5" fill="#fff"/>`).join("")}<rect x="351" y="94" width="16" height="12" rx="2" fill="#fff"/>
+      ${T(359, 134, "projekt.zip", { a: "middle", fs: 12.5, b: 1 })}${T(359, 154, "2 MB", { a: "middle", fs: 12, b: 1, c: A })}
+      ${box(14, 190, 412, 50, C.bg, null, 8)}${T(26, 210, "6 MB → 2 MB: zaberá menej miesta a rýchlejšie sa pošle.", { fs: 11.5, b: 1 })}${T(26, 229, "Po rozbalení dostaneš presne tie isté tri súbory.", { fs: 11.5, c: C.mut })}`, "Archív ZIP"),
+      "<b>Komprimácia</b> zbalí súbory do menšieho <b>archívu</b>, <b>dekomprimácia</b> ich vráti späť."),
+    suitcase: fig(W("suitcase"), "Ako vákuový vak: <b>komprimácia</b> zmenší, <b>dekomprimácia</b> vráti pôvodnú podobu."),
+    email: fig(W("email").replace(/font-size="15"/g, 'font-size="17"'), "Projekt má 60 MB a cez e-mail neprejde. Zabalený do <b>archívu ZIP</b> má 18 MB a prejde."),
+    rle: fig(SV(440, 250, `
+      ${T(220, 22, "Čiernobiele písmeno T riadok po riadku", { a: "middle", fs: 13, b: 1, c: A })}
+      ${TT.map((r, y) => [...r].map((ch, x) => `<rect x="${24 + x * 22}" y="${36 + y * 22}" width="20" height="20" rx="2" fill="${ch === "Č" ? C.ink : "#fff"}" stroke="#C9C4DA"/>`).join("") + T(276, 52 + y * 22, `${y + 1}:`, { fs: 12, c: C.mut, mono: 1 }) + T(300, 52 + y * 22, rl(r), { fs: 15, b: 1, c: A, mono: 1 })).join("")}
+      ${box(14, 196, 412, 46, AS, null, 8)}${T(220, 215, `70 pixelov → iba ${ttLen} znakov zápisu RLE`, { a: "middle", fs: 12.5, b: 1 })}${T(220, 232, "Č = čierna, B = biela", { a: "middle", fs: 11, c: C.mut })}`, "RLE písmena T"),
+      "Veľké <b>jednofarebné plochy</b> zapíše RLE veľmi krátko: číslo a farbu."),
+    rleRow: fig(W("rleRow").replace('font-size="14" fill="#5E5877"', 'font-size="18" fill="#5E5877"'), "<b>Číslo</b> = koľko pixelov za sebou, <b>písmeno</b> = farba."),
+    dekod: fig(SV(440, 210, `
+      ${T(220, 22, "Rozbalenie RLE: z čísel späť na znaky", { a: "middle", fs: 13, b: 1, c: A })}
+      ${(() => { const G = [["2K", 0, 2], ["4E", 2, 4], ["1T", 6, 1]], x0 = 60, w = 46; return G.map(([t, s, n]) => { const cx = x0 + (s + n / 2) * w; return `${box(cx - 26, 38, 52, 34, AS, A, 8)}${T(cx, 61, t, { a: "middle", fs: 16, b: 1, c: A, mono: 1 })}${ar(cx, 74, cx, 104, C.mut, 1.8)}<path d="M${x0 + s * w + 3} 112 v-4 H${x0 + (s + n) * w - 5} v4" fill="none" stroke="${A}" stroke-width="2"/>`; }).join("") + [..."KKEEEET"].map((ch, i) => `${box(x0 + i * w, 116, w - 6, 40, "#fff", C.line, 6)}${T(x0 + i * w + (w - 6) / 2, 143, ch, { a: "middle", fs: 17, b: 1, mono: 1 })}`).join(""); })()}
+      ${box(14, 168, 412, 32, C.okS, null, 8)}${T(220, 189, "2K4E1T → KKEEEET: rozbalený text je presne pôvodný", { a: "middle", fs: 11.5, b: 1, c: C.ok })}`, "Rozbalenie RLE"),
+      "Pri rozbalení sa každé <b>číslo</b> zmení na toľko rovnakých znakov."),
+    pec: fig(SV(440, 250, `
+      ${T(220, 22, "Slovník: opakovanie zapíš iba raz", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(14, 34, 412, 64, C.bg, C.line, 8)}${T(26, 51, "Pôvodný text", { fs: 11, c: C.mut })}${T(26, 71, "pec nám spadla, pec nám spadla,", { fs: 15, b: 1 })}${T(26, 90, "ktože nám ju postaví?", { fs: 15, b: 1 })}
+      ${ar(220, 100, 220, 114, C.mut, 1.8)}
+      ${box(14, 116, 412, 36, AS, A, 8)}${T(26, 139, "Slovník:", { fs: 12, c: C.mut })}${T(90, 140, "① = pec nám spadla", { fs: 15, b: 1, c: A })}
+      ${box(14, 158, 412, 36, "#fff", A, 8)}${T(26, 181, "Text:", { fs: 12, c: C.mut })}${T(90, 182, PC, { fs: 15, b: 1 })}
+      ${box(14, 202, 412, 38, C.okS, null, 8)}${T(220, 226, `${[...PEC].length} znakov → ${pecComp} znakov aj so slovníkom`, { a: "middle", fs: 13.5, b: 1, c: C.ok })}`, "Slovníková metóda"),
+      "Dlhá opakujúca sa časť sa do <b>slovníka</b> zapíše iba raz, v texte ju nahradí krátka <b>značka</b>."),
+    lz: fig(SV(440, 210, `
+      ${T(220, 22, "Odkaz späť: takto hľadá opakovania ZIP", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[..."la la la la la"].map((ch, i) => `${box(38 + i * 26, 84, 23, 32, i < 3 ? AS : "#fff", i < 3 ? A : C.line, 5)}${T(49.5 + i * 26, 106, ch === " " ? "␣" : ch, { a: "middle", fs: 14, b: 1, mono: 1, c: ch === " " ? C.mut : C.ink })}`).join("")}
+      <path d="M64 80 C 80 50, 140 50, 156 78" fill="none" stroke="${TL}" stroke-width="2.2" marker-end="url(#M0B7A75)"/>${T(110, 48, "skopíruj: 3 znaky späť, dĺžka 11", { fs: 12, b: 1, c: TL })}
+      ${T(76, 134, "uložené", { a: "middle", fs: 11, b: 1, c: A })}${T(270, 134, "dopočítané z odkazu", { a: "middle", fs: 11, c: C.mut })}
+      ${box(14, 150, 412, 50, C.bg, null, 8)}${T(26, 170, "Zápis: „la␣“ + odkaz (3, 11)", { fs: 12, b: 1, mono: 0 })}${T(26, 189, "Namiesto 14 znakov stačia 3 znaky a jeden krátky odkaz.", { fs: 11.5, c: C.mut })}`, "Odkaz späť"),
+      "Metóda <b>Deflate</b> (ZIP, gzip, PNG) nahrádza opakovanie <b>odkazom späť</b> na to, čo už v texte bolo."),
+    book: fig(W("book"), "Slovník značiek z úlohy s piesňou."),
+    vnem: fig(SV(440, 250, `
+      ${T(220, 22, "Čo zahadzujú stratové formáty", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(14, 36, 200, 156, C.bg, C.line, 10)}${T(114, 58, "JPG a oko", { a: "middle", fs: 14, b: 1 })}
+      ${["#5DB4EE", "#66BBF0", "#55AEE8", "#62B6EC"].map((c, i) => `<rect x="${34 + (i % 2) * 31}" y="${68 + Math.floor(i / 2) * 31}" width="29" height="29" fill="${c}"/>`).join("")}${ar(100, 98, 128, 98, A, 2.2)}<rect x="134" y="68" width="60" height="60" fill="#5EB4EC"/>
+      ${T(114, 150, "jemné rozdiely farieb", { a: "middle", fs: 12.5 })}${T(114, 166, "oko takmer nevidí,", { a: "middle", fs: 12.5 })}${T(114, 182, "preto ich JPG zlúči", { a: "middle", fs: 12.5 })}
+      ${box(226, 36, 200, 156, C.bg, C.line, 10)}${T(326, 58, "MP3 a ucho", { a: "middle", fs: 14, b: 1 })}
+      ${[[0, 22], [1, 58], [2, 16], [3, 14], [4, 36], [5, 12]].map(([i, h]) => `<rect x="${250 + i * 27}" y="${128 - h}" width="20" height="${h}" rx="2" fill="${h === 58 || h === 36 ? A : "#C9C4DA"}"/>${h === 16 || h === 14 || h === 12 ? `<path d="M${250 + i * 27} ${128 - h - 5} l20 ${h + 5} M${270 + i * 27} ${128 - h - 5} l-20 ${h + 5}" stroke="${C.bad}" stroke-width="2"/>` : ""}`).join("")}<line x1="244" y1="129" x2="408" y2="129" stroke="${C.mut}"/>
+      ${T(326, 150, "tichý tón vedľa hlasného", { a: "middle", fs: 12.5 })}${T(326, 166, "ucho nepočuje,", { a: "middle", fs: 12.5 })}${T(326, 182, "preto ho MP3 vynechá", { a: "middle", fs: 12.5 })}
+      ${box(14, 202, 412, 38, C.badS, null, 8)}${T(220, 226, "Zahodené údaje sa už nedajú vrátiť späť.", { a: "middle", fs: 12.5, b: 1, c: C.bad })}`, "Oko a ucho"),
+      "Stratové formáty využívajú, že <b>oko</b> a <b>ucho</b> nepostrehnú všetky detaily."),
+    lossless: fig(W("lossless"), "<b>Bezstratová:</b> po rozbalení máš presne pôvodné údaje. ZIP, 7z, RAR, PNG."),
+    lossy: fig(W("lossy"), "<b>Stratová:</b> niečo sa zahodí navždy, ale súbor je oveľa menší. JPG, MP3, MP4."),
+    pomer: fig(SV(440, 250, `
+      ${T(220, 22, "Dva spôsoby, ako vyjadriť úspech komprimácie", { a: "middle", fs: 13, b: 1, c: A })}
+      ${T(20, 56, "pôvodne", { fs: 11.5, c: C.mut })}<rect x="80" y="40" width="340" height="26" rx="6" fill="#9A93B5"/>${T(410, 58, "200 MB", { a: "end", fs: 12.5, b: 1, c: "#fff" })}
+      ${T(20, 96, "archív", { fs: 11.5, c: C.mut })}<rect x="80" y="80" width="136" height="26" rx="6" fill="${A}"/>${T(206, 98, "80 MB", { a: "end", fs: 12.5, b: 1, c: "#fff" })}
+      <rect x="216" y="80" width="204" height="26" rx="6" fill="none" stroke="${C.ok}" stroke-width="1.6" stroke-dasharray="5 4"/>${T(318, 98, "ušetrené 120 MB", { a: "middle", fs: 11.5, b: 1, c: C.ok })}
+      ${box(14, 126, 200, 112, AS, null, 10)}${T(114, 148, "Kompresný pomer", { a: "middle", fs: 12.5, b: 1 })}${T(114, 174, "200 : 80", { a: "middle", fs: 14, mono: 1 })}${T(114, 204, "2,5 : 1", { a: "middle", fs: 22, b: 1, c: A })}${T(114, 226, "archív je 2,5-krát menší", { a: "middle", fs: 10.5, c: C.mut })}
+      ${box(226, 126, 200, 112, C.okS, null, 10)}${T(326, 148, "Úspora", { a: "middle", fs: 12.5, b: 1 })}${T(326, 174, "120 / 200 × 100", { a: "middle", fs: 14, mono: 1 })}${T(326, 204, "60 %", { a: "middle", fs: 22, b: 1, c: C.ok })}${T(326, 226, "ušetrené miesto", { a: "middle", fs: 10.5, c: C.mut })}`, "Kompresný pomer"),
+      "<b>Kompresný pomer</b> porovnáva veľkosti, <b>úspora</b> hovorí, koľko percent miesta ušetríme."),
+    ratio: fig(W("ratio").replace(/font-size="16"/g, 'font-size="18"').replace(/font-size="15"/g, 'font-size="17"'), "Príklad z výkladu: 100 MB : 25 MB = <b>4 : 1</b>, úspora <b>75 %</b>."),
+    typy: fig(SV(440, 250, `
+      ${T(220, 22, "Koľko zostane po zbalení do ZIP (približne)", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[["text .txt", 30], ["tabuľka .csv", 20], ["obrázok .bmp", 25], ["fotka .jpg", 98], ["hudba .mp3", 99]].map(([n, p], i) => `${T(18, 58 + i * 32, n, { fs: 12 })}<rect x="128" y="${44 + i * 32}" width="240" height="20" rx="5" fill="${C.bg}" stroke="${C.line}"/><rect x="128" y="${44 + i * 32}" width="${240 * p / 100}" height="20" rx="5" fill="${p > 90 ? "#9A93B5" : A}"/>${T(376, 59 + i * 32, "≈ " + p + " %", { fs: 12, b: 1, c: p > 90 ? C.mut : A })}`).join("")}
+      ${T(220, 228, "% = koľko percent pôvodnej veľkosti zostane", { a: "middle", fs: 11, c: C.mut })}`, "Typy súborov v ZIP"),
+      "Text a tabuľky sa zmenšia veľmi, <b>už skomprimované</b> fotky a hudba takmer vôbec.")
+  };
+})();
 function pixelSVG(rows, hl) {
   const c = 30, ox = 40; let s = `<svg viewBox="0 0 ${ox + 12 * c + 10} ${rows.length * c + 12}" role="img" aria-label="Pixelový obrázok loďky">`;
   rows.forEach((r, y) => { s += `<text x="${ox - 10}" y="${y * c + 26}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="15" font-weight="700" fill="${hl.includes(y) ? "#6A3FD0" : "#9A93B5"}">${y + 1}</text>`;
@@ -454,23 +571,34 @@ function updateGz() {
 const VIEWS = {
   preco() {
     return head() + `<h2>Prečo súbory komprimujeme?</h2>
-    <p>Predstav si, že balíš na tábor a oblečenie sa nezmestí do kufra. Dáš ho do vákuového vaku, vysaješ vzduch a zrazu zaberá oveľa menej miesta. Keď vak otvoríš, oblečenie je celé a nepoškodené.</p>
-    <figure class="fig">${ART.suitcase}<figcaption>Komprimácia zmenší súbor. Dekomprimácia (rozbalenie) ho vráti do pôvodnej podoby.</figcaption></figure>
-    <p><b>Komprimácia údajov</b> je zmenšenie súboru tak, že tie isté údaje zapíšeme úspornejšie. Program pri tom hľadá, čo sa v údajoch <b>opakuje</b>, a zapíše to kratšie.</p>
-    <figure class="fig">${ART.email}<figcaption>Projekt má 60 MB a cez e-mail neprejde. Zabalený do archívu ZIP má 18 MB a prejde.</figcaption></figure>
-    <div>
-      <div class="box v"><p><b>Kedy sa to hodí?</b></p><ul style="margin:0;padding-left:20px">
-        <li>posielaš súbory e-mailom a príloha má limit,</li><li>chceš ušetriť miesto na disku alebo v mobile,</li>
-        <li>chceš rýchlejšie nahrať súbory na internet,</li><li>chceš veľa súborov spojiť do jedného <b>archívu</b>.</li></ul></div>
-    </div>
+    <div class="theory tsplit"><div>
+      <p>Predstav si, že balíš na tábor a oblečenie sa nezmestí do kufra. Dáš ho do vákuového vaku, vysaješ vzduch a zrazu zaberá oveľa menej miesta. Keď vak otvoríš, oblečenie je celé a nepoškodené.</p>
+      <p><b>Komprimácia údajov</b> je zmenšenie súboru tak, že tie isté údaje zapíšeme úspornejšie. Program pri tom hľadá, čo sa v údajoch <b>opakuje</b>, a zapíše to kratšie. Opačný postup, rozbalenie, je <b>dekomprimácia</b>.</p>
+      <table class="rtab"><thead><tr><th>Kedy sa to hodí?</th><th>Čo tým získaš</th></tr></thead><tbody>
+        <tr><td>posielaš súbory e-mailom</td><td>príloha sa zmestí do limitu</td></tr>
+        <tr><td>máš plný disk alebo mobil</td><td>ušetríš miesto</td></tr>
+        <tr><td>nahrávaš súbory na internet</td><td>nahrávanie je rýchlejšie</td></tr>
+        <tr><td>máš veľa súborov</td><td>spojíš ich do jedného <b>archívu</b></td></tr></tbody></table>
+    </div><div>${TFIG.preco}</div></div>
+    ${ltfigs(TFIG.suitcase, TFIG.email)}
+    ${VEDEL("Hodina videa vo Full HD by bez komprimácie zabrala vyše 600 GB. Vďaka komprimácii má film v rovnakej kvalite na streamovacej službe iba niekoľko GB.")}
     <h3>Otázky</h3><div class="task">${taskHTML("precoq")}</div>
     <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("kin")}</div>` + nextBar();
   },
   rle() {
     const hl = [3, 6, 7];
     return head() + `<h2>Opakovanie je poklad: metóda RLE</h2>
-    <p>Počítač si obrázok pamätá ako mriežku bodov, <b>pixelov</b>, a každý má svoju farbu. Keď je vedľa seba veľa rovnakých pixelov, nemusíme ich vypisovať jeden po druhom. Stačí napísať, <b>koľko</b> ich je a <b>akej farby</b>. Tejto metóde sa hovorí <b>RLE</b> (Run-Length Encoding), po slovensky kódovanie dĺžky behov.</p>
-    <figure class="fig">${ART.rleRow}<figcaption>Číslo = koľko pixelov za sebou, písmeno = farba.</figcaption></figure>
+    <div class="theory tsplit"><div>
+      <p>Počítač si obrázok pamätá ako mriežku bodov, <b>pixelov</b>, a každý má svoju farbu. Keď je vedľa seba veľa rovnakých pixelov, nemusíme ich vypisovať jeden po druhom.</p>
+      <p>Stačí napísať, <b>koľko</b> ich je a <b>akej farby</b>. Tejto metóde sa hovorí <b>RLE</b> (Run-Length Encoding), po slovensky kódovanie dĺžky behov.</p>
+      <table class="rtab num"><thead><tr><th>Zápis</th><th>Význam</th></tr></thead><tbody>
+        <tr><td>ZZZZZZ</td><td>6 žltých pixelov za sebou</td></tr>
+        <tr><td>6Z</td><td><b>číslo</b> = koľko pixelov, <b>písmeno</b> = farba</td></tr>
+        <tr><td>6Z3M</td><td>6 žltých, potom 3 modré</td></tr></tbody></table>
+      <p>Pri rozbalení sa z čísla a písmena opäť stane rad rovnakých pixelov, takže sa nič nestratí.</p>
+    </div><div>${TFIG.rle}</div></div>
+    ${ltfigs(TFIG.rleRow, TFIG.dekod)}
+    ${VEDEL("Faxy posielajú stránky už od roku 1980 metódou, ktorá zapisuje dĺžky behov bielych a čiernych bodov. Na bežnom liste papiera je totiž najviac bielej.")}
     <div class="palette">${Object.keys(COL).map(k => `<span class="sw" style="cursor:default"><i style="background:${COL[k]}"></i>${k} = ${CNAME[k]}</span>`).join("")}</div>
     <h3>Úloha 1: zakóduj loďku</h3>
     <div class="lab"><figure class="fig" style="margin:0">${pixelSVG(BOAT, hl)}<figcaption>Riadky 4, 7 a 8 sú zvýraznené. Počítaj pixely zľava doprava.</figcaption></figure>
@@ -489,9 +617,13 @@ const VIEWS = {
     const r = dictCalc(S.dict), done = S.t.dict;
     const shown = esc(r.txt).replace(/[①②③]/g, m => { const i = MARKS.indexOf(m); return `<span class="mk" style="background:${MCOL[i]}">${i + 1}</span>`; });
     return head() + `<h2>Slovník: nahraď, čo sa opakuje</h2>
-    <div class="two"><div><p>V texte sa často opakujú celé slová aj vety. Komprimačné programy ako ZIP si ich zapíšu do <b>slovníka</b> iba raz a v texte ich potom nahradia krátkou značkou. Pri rozbalení značky nahradia späť slovami, takže sa nič nestratí.</p>
-      <p>Slovník však tiež zaberá miesto. Oplatí sa preto nahrádzať to, čo je <b>dlhé</b> a <b>často sa opakuje</b>.</p></div>
-      <figure class="fig" style="margin:0">${ART.book}</figure></div>
+    <div class="theory tsplit"><div>
+      <p>V texte sa často opakujú celé slová aj vety. Komprimačné programy ako ZIP si ich zapíšu do <b>slovníka</b> iba raz a v texte ich potom nahradia krátkou <b>značkou</b>.</p>
+      <p>Pri rozbalení sa značky nahradia späť slovami, takže sa nič nestratí. Slovníková metóda je <b>bezstratová</b>.</p>
+      <p>Slovník však tiež zaberá miesto. Oplatí sa preto nahrádzať to, čo je <b>dlhé</b> a <b>často sa opakuje</b>.</p>
+    </div><div>${TFIG.pec}</div></div>
+    ${ltfigs(TFIG.lz, ...(done ? [TFIG.book] : []))}
+    ${VEDEL("Metódu Deflate, ktorú používajú ZIP, gzip aj obrázky PNG, vymyslel Phil Katz. Stavia na algoritme LZ77, ktorý v roku 1977 zverejnili Abraham Lempel a Jacob Ziv.")}
     <h3>Úloha 1: skomprimuj pieseň</h3>
     <div class="task"><div class="ins">Vyber do slovníka najviac 3 položky. Cieľ: ušetri aspoň 35 % znakov. Položku odstrániš ďalším kliknutím.</div>
       <div class="cands">${CANDS.map(w => { const i = S.dict.indexOf(w); return `<button class="ghost ${i >= 0 ? "on" : ""}" data-dw="${esc(w)}" ${done || (i < 0 && S.dict.length >= 3) ? "disabled" : ""}>${i >= 0 ? `<span class="mk" style="background:${MCOL[i]}">${i + 1}</span> ` : ""}„${esc(w)}“</button>`; }).join("")}</div>
@@ -510,11 +642,17 @@ const VIEWS = {
     <div class="task">${taskHTML("gzq")}</div>` + nextBar();
   },
   strata() {
-    return head() + `<h2>Bezstratová a stratová komprimácia</h2>
-    <div class="two"><figure class="fig" style="margin:0">${ART.lossless}<figcaption><b>Bezstratová:</b> po rozbalení máš presne pôvodné údaje. ZIP, 7z, RAR, PNG.</figcaption></figure>
-      <figure class="fig" style="margin:0">${ART.lossy}<figcaption><b>Stratová:</b> niečo sa zahodí navždy, ale súbor je oveľa menší. JPG, MP3, MP4.</figcaption></figure></div>
-    ${guessBox()}
-    <p>Stratové formáty zahadzujú hlavne detaily, ktoré oko alebo ucho takmer nepostrehne. Čím viac zahodíme, tým je súbor menší, ale aj horší. Vyskúšaj to.</p>
+    return head() + `<h2>Bezstratová a stratová komprimácia</h2>${guessBox()}
+    <div class="theory tsplit"><div>
+      <p>Komprimácia môže byť dvoch druhov. Líšia sa tým, či po rozbalení dostaneš úplne rovnaké údaje.</p>
+      <table class="rtab"><thead><tr><th></th><th>Bezstratová</th><th>Stratová</th></tr></thead><tbody>
+        <tr><td><b>Po rozbalení</b></td><td>presne pôvodné údaje</td><td>časť údajov chýba navždy</td></tr>
+        <tr><td><b>Veľkosť</b></td><td>menší súbor</td><td>oveľa menší súbor</td></tr>
+        <tr><td><b>Príklady</b></td><td>ZIP, 7z, RAR, PNG</td><td>JPG, MP3, MP4</td></tr></tbody></table>
+      <p>Stratové formáty zahadzujú hlavne detaily, ktoré oko alebo ucho takmer nepostrehne. Čím viac zahodíme, tým je súbor menší, ale aj horší. Vyskúšaj to.</p>
+    </div><div>${TFIG.vnem}</div></div>
+    ${ltfigs(TFIG.lossless, TFIG.lossy)}
+    ${VEDEL("Formát MP3 vznikol v nemeckom Fraunhoferovom inštitúte. Pieseň z CD zmenší asi 10-krát, a predsa väčšina ľudí rozdiel nepočuje.")}
     <h3>Laboratórium: pokaz fotku</h3>
     <div class="task"><div class="jlab"><div><img id="jimg" alt="Obrázok uložený ako JPG vo zvolenej kvalite"><p class="cap">Obrázok uložený ako JPG</p></div>
       <div><canvas id="zoom" width="320" height="216" aria-label="Zväčšený výrez obrázka"></canvas><p class="cap">Zväčšený výrez okolo domčeka</p></div></div>
@@ -528,10 +666,15 @@ const VIEWS = {
   pomer() {
     const a = parseNum(S.calc.a), b = parseNum(S.calc.b), okc = a > 0 && b > 0;
     return head() + `<h2>Kompresný pomer: o koľko sa to zmenšilo?</h2>
-    <figure class="fig">${ART.ratio}</figure>
-    <p>Úspešnosť komprimácie vyjadrujeme dvoma spôsobmi:</p>
-    <div class="two"><div class="box v" style="margin:0"><p><b>Kompresný pomer</b><br><span class="formula">pôvodná veľkosť : veľkosť archívu</span><br>100 MB : 25 MB = <b>4 : 1</b>, teda archív je 4-krát menší.</p></div>
-      <div class="box v" style="margin:0"><p><b>Úspora v percentách</b><br><span class="formula">(pôvodná − archív) / pôvodná × 100</span><br>(100 − 25) / 100 × 100 = <b>75 %</b></p></div></div>
+    <div class="theory tsplit"><div>
+      <p>Úspešnosť komprimácie vyjadrujeme dvoma spôsobmi. <b>Kompresný pomer</b> hovorí, koľkokrát je archív menší. <b>Úspora</b> hovorí, koľko percent miesta sme ušetrili.</p>
+      <table class="rtab"><thead><tr><th>Spôsob</th><th>Ako vypočítať</th><th>Príklad: 100 MB → 25 MB</th></tr></thead><tbody>
+        <tr><td><b>Kompresný pomer</b></td><td>pôvodná : archív</td><td>100 : 25 = <b>4 : 1</b> (archív je 4-krát menší)</td></tr>
+        <tr><td><b>Úspora v %</b></td><td>(pôvodná − archív) / pôvodná × 100</td><td>(100 − 25) / 100 × 100 = <b>75 %</b></td></tr></tbody></table>
+      <p>Čím väčší pomer a úspora, tým lepšia komprimácia. Keď je archív väčší ako pôvodný súbor, komprimácia sa neoplatila.</p>
+    </div><div>${TFIG.pomer}</div></div>
+    ${ltfigs(TFIG.typy)}
+    ${VEDEL("Existuje aj „ZIP bomba“: súbor 42.zip má iba 42 kB, ale po úplnom rozbalení by mal asi 4,5 petabajtu. Antivírusy si preto dávajú pozor na archívy s podozrivo veľkým kompresným pomerom.")}
     <h3>Kalkulačka na overenie</h3>
     <div class="task"><div class="calc"><div><label class="f" for="ca">Pôvodne (MB)</label><input class="in" id="ca" data-calc="a" value="${esc(S.calc.a)}"></div>
       <div><label class="f" for="cb">Archív (MB)</label><input class="in" id="cb" data-calc="b" value="${esc(S.calc.b)}"></div></div>
@@ -606,7 +749,24 @@ function AFTER_RENDER(id) { if (id === "strata") updateJpeg(); if (id === "slovn
 GZ.nahodne.t = "";
 
 /* ===== shared lesson engine ===== */
-const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+const QGLUE = {"kin": [3]};
+function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
+  const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
+  T.qs.forEach((q, i) => { if (G.includes(i + 1) && groups.length) groups[groups.length - 1].push(q); else groups.push([q]); });
+  if (groups.length < 2) return T.qs;
+  const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
+  if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
+  return o.flatMap(id => groups.find(g => g[0].id === id)); }
+function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none;padding:8px 14px;border-radius:10px" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
@@ -644,7 +804,7 @@ function checkBar(T, ready, hint) {
 }
 function mcHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
       let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
@@ -680,7 +840,7 @@ function orderHTML(T) {
 }
 function inputHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const v = d[q.id] || "", ok = done ? q.ok(v) : null;
     return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
   }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
@@ -722,12 +882,12 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
   let formBtn = "";
   if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
-    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+    formBtn = sendResults(detail); }
   return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
   <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
   <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
 };
@@ -739,7 +899,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

@@ -226,18 +226,53 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .pc p{font-size:14.5px;margin:0;color:var(--muted)}
 .lic.free{background:var(--okSoft);color:var(--ok)}.lic.trial{background:var(--amberSoft);color:#8A5A00}
 
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["ZIP otvorí každý Windows; 7z Ultra je najmenší; veľký archív rozdeľ na zväzky; citlivé dáta šifruj heslom AES-256 a heslo pošli inou cestou.", "Archív od neznámeho nerozbaľuj, mohol by obsahovať malvér."], "programy": ["Komprimačné programy: <b>7-Zip</b> (zadarmo), WinRAR (skúšobný), vstavaný ZIP vo Windows.", "<b>Freeware</b> je zadarmo navždy, <b>shareware/trial</b> len na skúšku."], "hladanie": ["Programy sťahuj z <b>oficiálnej stránky</b> autora (napr. 7-zip.org).", "Pozor na reklamy, sťahovacie portály a stránky s crackmi."], "instalacia": ["Vyber správnu verziu (64-bit pre dnešné počítače).", "Pri inštalácii čítaj každé okno a odškrtni pribalené programy."], "praca": ["Kontextová ponuka (pravé tlačidlo) → 7-Zip → Pridať do archívu / Rozbaliť.", "Archív môžeš chrániť <b>heslom</b> a rozdeliť na časti."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = { programy: ["<b>Archivátor</b> (komprimačný program) zbalí súbory do archívu a archív rozbalí.", "Programy: <b>7-Zip</b> a PeaZip (zadarmo, open source), WinRAR a WinZip (skúšobná verzia), ZIP vstavaný vo Windows.", "Formáty archívov: napr. ZIP, 7z, RAR.", "<b>Freeware</b>: program je zadarmo.", "<b>Open source</b>: zadarmo a zdrojový kód je verejný.", "<b>Shareware / trial</b>: program môžeš chvíľu skúšať, potom ho treba kúpiť."],
+  get hladanie() { return S.t.search && S.t.dlpick && S.t.portal ? ["Programy sťahuj z <b>oficiálnej stránky výrobcu</b> (napr. www.7-zip.org).", "Výsledky označené <b>Reklama</b> často vedú na cudzie stránky.", "<b>Sťahovacie portály</b> pridávajú vlastný inštalátor s ponukami partnerov.", "Nikdy neinštaluj „cracknuté“ programy (crack, keygen), sú častým zdrojom vírusov.", "Verziu vyber podľa typu systému: <b>x64</b> (64-bit), x86 (32-bit), ARM64.", "Skutočný odkaz na súbor býva nenápadný, pri názve, veľkosti a vydavateľovi."] : ["Program hľadáme vo <b>vyhľadávači</b>.", "Výsledok vyhľadávania má <b>adresu</b> (URL), <b>nadpis</b> a <b>popis</b>.", "Adresa prezradí, na ktorú stránku sa dostaneš. Nadpis môže napísať ktokoľvek.", "Platené výsledky sú označené nápisom <b>Reklama</b>.", "Typ systému zistíš v Nastavenia › Systém › Informácie."]; },
+  get instalacia() { return S.t.bundle ? ["<b>Inštalácia</b> skopíruje program na disk (Program Files) a pridá ho do ponuky Štart.", "Pred inštaláciou sa Windows opýta na povolenie (<b>Kontrola používateľských kont</b>).", "V okne povolenia skontroluj <b>vydavateľa</b> programu.", "Inštalovať programy môže iba používateľ s <b>právami správcu</b>.", "Programy zadarmo často ponúkajú <b>pribalené programy</b> (panely, domovské stránky, „čističe“).", "Zvoľ <b>vlastnú inštaláciu</b> a všetky ponuky navyše odškrtni."] : ["<b>Inštalácia</b> skopíruje program na disk (Program Files) a pridá ho do ponuky Štart.", "Pred inštaláciou sa Windows opýta na povolenie (<b>Kontrola používateľských kont</b>).", "V okne povolenia skontroluj <b>vydavateľa</b> programu.", "Inštalovať programy môže iba používateľ s <b>právami správcu</b>.", "Čítaj každé okno inštalátora, neklikaj naslepo na Ďalej."]; },
+  get praca() { return S.t.unzip && S.t.sevenq ? ["7-Zip nájdeš v <b>kontextovej ponuke</b> (pravé tlačidlo myši na súbor alebo priečinok).", "<b>Pridať do archívu…</b>: formát (7z, zip, tar), úroveň kompresie 0 – 9 (Ultra).", "<b>Rozdeliť na zväzky</b>: archív sa rozdelí na časti so zadanou veľkosťou (.7z.001, .7z.002…).", "<b>Šifrovanie</b>: heslo (AES-256), pri 7z aj zašifrovanie názvov súborov.", "„Rozbaliť do „názov\\““ vytvorí nový priečinok, „Rozbaliť sem“ vysype súbory na miesto archívu.", "Nastavenia: 7-Zip File Manager → Nástroje → Možnosti (karty Systém, 7-Zip, Jazyk)."] : ["7-Zip nájdeš v <b>kontextovej ponuke</b> (pravé tlačidlo myši na súbor alebo priečinok).", "<b>Pridať do archívu…</b>: formát (7z, zip, tar), úroveň kompresie 0 – 9 (Ultra).", "<b>Rozdeliť na zväzky</b>: archív sa rozdelí na časti so zadanou veľkosťou (.7z.001, .7z.002…).", "<b>Šifrovanie</b>: heslo (AES-256), pri 7z aj zašifrovanie názvov súborov.", "Nastavenia: 7-Zip File Manager → Nástroje → Možnosti (karty Systém, 7-Zip, Jazyk)."]; },
+  get precvic() { return S.ard && S.t.arq ? ["<b>ZIP</b> otvorí každý Windows aj bez ďalšieho programu.", "Najmenší archív: formát <b>7z</b>, úroveň kompresie <b>Ultra</b>.", "Veľký archív rozdeľ na <b>zväzky</b>, citlivé údaje šifruj heslom <b>AES-256</b>.", "Heslo pošli inou cestou ako archív (osobne, SMS).", "Archív od neznámeho nerozbaľuj, mohol by obsahovať <b>malvér</b>."] : ["V dialógu <b>Pridať do archívu</b> nastavíš formát, úroveň kompresie, zväzky a šifrovanie.", "Pri každej situácii najprv zváž, čo je dôležité: veľkosť, bezpečnosť, alebo či archív otvorí každý.", "Archív si môžeš v 7-Zip otvoriť a pozrieť bez rozbalenia.", "Archívy od neznámych odosielateľov môžu obsahovať <b>malvér</b>."]; } };
 const KEY = "komprimacia-22-v1";
 const LESSON = "2.2 Komprimačné programy – vyhľadanie, inštalovanie, nastavenie";
 const BRAND = "2.2 Komprimačné programy";
 const CLASS_DEFAULT = "Tercia";
-const WIDE = { hladanie: 1, instalacia: 1, praca: 1 };
+const WIDE = { programy: 1, hladanie: 1, instalacia: 1, praca: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "programy", title: "Programy", min: 6 },
@@ -320,6 +355,101 @@ const ART = {
   ${[0, 1, 2].map(i => `<g transform="translate(${270 + i * 120},40)"><rect width="84" height="64" rx="8" fill="#6A3FD0"/><rect x="30" y="24" width="24" height="20" rx="3" fill="#fff"/><text x="42" y="84" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#1A1530">.7z.00${i + 1}</text><text x="42" y="100" text-anchor="middle" font-family="Rubik,sans-serif" font-size="12" fill="#5E5877">${i < 2 ? "10 MB" : "7 MB"}</text></g>`).join("")}</svg>`
 };
 
+/* ---------- LENKA: ilustrácie k teórii ---------- */
+const TFIG = (() => {
+  const A = "#6A3FD0", AS = "#E9E2FB", TL = "#0B7A75";
+  const C = { ink: "#1A1530", mut: "#5E5877", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", line: "#DAD6E6", bg: "#F6F5FA" };
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`; let uid = 0;
+  const SV = (w, h, body, label) => { const id = "lf" + (++uid); const d = `<defs>${[C.mut, C.ok, A, C.bad, TL, C.amb].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="JetBrains Mono,Consolas,monospace"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  const doc = (x, y, c) => `<path d="M${x} ${y}h16l7 7v21h-23z" fill="#fff" stroke="${c}" stroke-width="1.6"/><path d="M${x + 16} ${y}v7h7" fill="none" stroke="${c}" stroke-width="1.6"/>`;
+  const zip = (x, y, c) => `<rect x="${x}" y="${y}" width="40" height="48" rx="6" fill="${c}"/><rect x="${x + 16}" y="${y}" width="8" height="48" fill="#1A1530" opacity=".22"/>${[0, 1, 2].map(i => `<rect x="${x + (i % 2 ? 19 : 16)}" y="${y + 4 + i * 8}" width="5" height="5" fill="#fff"/>`).join("")}<rect x="${x + 13}" y="${y + 30}" width="14" height="11" rx="2" fill="#fff"/>`;
+  const W = s => ART[s].replace(/<rect width="(\d+)" height="(\d+)" rx="14" fill="#[0-9A-F]{6}"\/>/, `<rect width="$1" height="$2" rx="14" fill="#FFFFFF"/>`);
+  return {
+    archiv: fig(SV(440, 250, `
+      ${T(220, 22, "Čo robí archivátor", { a: "middle", fs: 13, b: 1, c: A })}
+      ${["kapitola1.docx", "graf.png", "zdroje.txt"].map((n, i) => `${doc(22, 42 + i * 40, A)}${T(54, 61 + i * 40, n, { fs: 13 })}`).join("")}
+      ${ar(160, 78, 262, 78, A, 3)}${T(211, 68, "zbaliť", { a: "middle", fs: 12, b: 1, c: A })}
+      ${ar(262, 116, 160, 116, TL, 3)}${T(211, 136, "rozbaliť", { a: "middle", fs: 12, b: 1, c: TL })}
+      ${box(272, 40, 154, 120, AS, A, 12)}${zip(329, 52, "#F2A516")}${T(349, 124, "referat.zip", { a: "middle", fs: 12.5, b: 1 })}${T(349, 144, "jeden menší súbor", { a: "middle", fs: 11, c: C.mut })}
+      ${box(14, 176, 412, 64, C.bg, null, 8)}${T(220, 202, "Príklady: 7-Zip, PeaZip, WinRAR", { a: "middle", fs: 13, b: 1 })}
+      ${T(220, 224, "Formáty archívov: ZIP, 7z, RAR", { a: "middle", fs: 12.5, c: C.mut })}`, "Archivátor"),
+      "<b>Archivátor</b> zbalí súbory do archívu a archív zase rozbalí."),
+    flow: fig(W("flow").replace("oficiálnu stránku", "program na internete").replace("správnu verziu", "inštalačný súbor").replace("bez pribalených programov", "do počítača").replace(/font-size="12.5"/g, 'font-size="16"').replace(/font-size="16" font-weight="700"/g, 'font-size="19" font-weight="700"'), "Takto budeme postupovať s každým novým programom: <b>vyhľadať, stiahnuť, nainštalovať, nastaviť</b>."),
+    licencie: fig(SV(440, 250, `
+      ${T(220, 22, "Licencia = podmienky používania programu", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[["Freeware", "zadarmo", "kód nemusí byť|verejný", C.okS, C.ok], ["Open source", "zadarmo", "kód je|verejný", AS, A], ["Shareware / trial", "na skúšku", "potom ho treba|kúpiť", C.ambS, C.amb]].map(([n, a, b, f, c], i) => `${box(14 + i * 140, 40, 132, 154, f, c, 12)}${T(80 + i * 140, 66, n, { a: "middle", fs: 13, b: 1, c })}
+        <circle cx="${80 + i * 140}" cy="108" r="24" fill="#fff" stroke="${c}" stroke-width="2"/>${T(80 + i * 140, 117, ["€0", "{ }", "⏱"][i], { a: "middle", fs: 20, b: 1, c })}
+        ${T(80 + i * 140, 152, a, { a: "middle", fs: 13, b: 1 })}${b.split("|").map((t, k) => T(80 + i * 140, 170 + k * 15, t, { a: "middle", fs: 12, c: C.mut })).join("")}`).join("")}
+      ${box(14, 202, 412, 38, C.bg, null, 8)}${T(220, 226, "Zdrojový kód = text programu, ktorý napísal programátor.", { a: "middle", fs: 11.5 })}`, "Licencie"),
+      "Program môže byť <b>freeware</b>, <b>open source</b> alebo <b>shareware (trial)</b>."),
+    vysledok: fig(SV(440, 250, `
+      ${T(220, 22, "Ako čítať výsledok vyhľadávania", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(14, 34, 412, 104, "#fff", C.line, 10)}
+      ${box(26, 46, 58, 20, "#FFF1C2", "#B07400", 4)}${T(55, 60, "Reklama", { a: "middle", fs: 11, b: 1, c: "#7A5200" })}${num(96, 56, 1)}
+      ${T(112, 61, "www.videolan.org", { fs: 13, c: C.ok, mono: 1 })}${num(262, 56, 2)}
+      ${T(26, 92, "VLC media player", { fs: 17, b: 1, c: "#1A0DAB" })}${num(182, 86, 3)}
+      ${T(26, 114, "Bezplatný prehrávač videa a hudby", { fs: 12.5, c: C.mut })}${T(26, 130, "pre Windows, macOS a Linux.", { fs: 12.5, c: C.mut })}${num(268, 110, 4)}
+      ${[["označenie Reklama", "zaplatené zobrazenie"], ["adresa (URL)", "kto stránku prevádzkuje"], ["nadpis", "napísať ho môže ktokoľvek"], ["popis", "krátky text o stránke"]].map(([h, t], i) => { const x = 26 + (i % 2) * 206, y = 166 + Math.floor(i / 2) * 44; return `${num(x + 8, y - 4, i + 1)}${T(x + 24, y, h, { fs: 12.5, b: 1 })}${T(x + 24, y + 17, t, { fs: 11.5, c: C.mut })}`; }).join("")}`, "Výsledok vyhľadávania"),
+      "Každý výsledok má <b>adresu</b>, <b>nadpis</b> a <b>popis</b>. Skôr než klikneš, prečítaj si adresu."),
+    pasce: fig(SV(440, 250, `
+      ${T(220, 22, "Odkiaľ sťahovať programy", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[["✅", "oficiálna stránka výrobcu", "napr. www.7-zip.org", C.okS, C.ok], ["⚠️", "sťahovací portál", "vlastný inštalátor s ponukami", C.ambS, C.amb], ["⛔", "reklama „Stiahnuť teraz“", "cudzia stránka, iný program", C.badS, C.bad], ["⛔", "crack, keygen, „PRO zadarmo“", "najčastejší zdroj vírusov", C.badS, C.bad]].map(([ic, a, b, f, c], i) => `${box(14, 36 + i * 50, 412, 44, f, c, 8)}${T(36, 64 + i * 50, ic, { a: "middle", fs: 16 })}${T(58, 55 + i * 50, a, { fs: 12.5, b: 1, c })}${T(58, 72 + i * 50, b, { fs: 11.5, c: C.mut })}`).join("")}`, "Zdroje programov"),
+      "Najbezpečnejšia je vždy <b>oficiálna stránka výrobcu</b>."),
+    verzie: fig(SV(440, 250, `
+      ${T(220, 22, "Ktorá verzia pasuje k počítaču", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(14, 36, 412, 50, C.bg, C.line, 8)}${T(26, 56, "Nastavenia › Systém › Informácie › Typ systému", { fs: 12, b: 1 })}${T(26, 74, "tu zistíš, či máš 32- alebo 64-bitový systém a aký procesor", { fs: 11.5, c: C.mut })}
+      ${[["x64", "64-bitový systém, procesor Intel alebo AMD", "väčšina dnešných počítačov"], ["x86", "32-bitový systém", "staršie počítače"], ["ARM64", "procesor ARM", "niektoré tenké notebooky"]].map(([v, a, b], i) => `${box(14, 98 + i * 48, 70, 40, AS, A, 8)}${T(49, 123 + i * 48, v, { a: "middle", fs: 14, b: 1, c: A, mono: 1 })}${T(96, 114 + i * 48, a, { fs: 12, b: 1 })}${T(96, 131 + i * 48, b, { fs: 11.5, c: C.mut })}`).join("")}`, "Verzie programu"),
+      "Verziu programu vyber podľa <b>typu systému</b> a <b>procesora</b>."),
+    instal: fig(SV(440, 250, `
+      ${T(220, 22, "Čo urobí inštalácia", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(14, 40, 112, 104, C.bg, C.line, 10)}${doc(58, 54, A)}${T(70, 110, "setup.exe", { a: "middle", fs: 13, b: 1, mono: 1 })}${T(70, 130, "inštalátor", { a: "middle", fs: 12, c: C.mut })}
+      ${ar(132, 92, 170, 92, A, 3)}
+      ${box(176, 36, 250, 112, AS, A, 12)}<path d="M190 52 l14 -6 l14 6 v12 c0 10 -6 16 -14 20 c-8 -4 -14 -10 -14 -20z" fill="#F2A516" stroke="#1A1530" stroke-width="1.2"/>${T(228, 62, "Windows sa opýta,", { fs: 13, b: 1 })}${T(228, 80, "či zmeny dovolíš", { fs: 13, b: 1 })}
+      ${T(190, 112, "1. skopíruje program na disk", { fs: 12.5 })}${T(190, 134, "2. pridá ho do ponuky Štart", { fs: 12.5 })}
+      ${box(14, 160, 412, 80, C.bg, null, 8)}${T(26, 184, "Program Files = priečinok pre programy.", { fs: 13 })}${T(26, 206, "Inštalácia mení systém, preto potrebuje", { fs: 12.5 })}${T(26, 226, "práva správcu (administrátora).", { fs: 12.5, b: 1 })}`, "Inštalácia"),
+      "Inštalácia <b>skopíruje</b> program do počítača a <b>pripojí</b> ho do systému."),
+    uac: fig(SV(440, 250, `
+      ${T(220, 22, "Okno Kontrola používateľských kont", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[["Overený vydavateľ", "Igor Pavlov", C.okS, C.ok, ["výrobca je známy", "a program podpísal"]], ["Vydavateľ: Neznámy", "", C.ambS, C.amb, ["pozor, nevieme,", "kto program vyrobil"]]].map(([h, v, f, c, n], i) => `${box(14 + i * 210, 38, 202, 150, "#fff", C.line, 10)}<rect x="${14 + i * 210}" y="38" width="202" height="30" rx="10" fill="${c}"/><rect x="${14 + i * 210}" y="58" width="202" height="10" fill="${c}"/>${T(115 + i * 210, 59, "Povoliť zmeny?", { a: "middle", fs: 12.5, b: 1, c: "#fff" })}
+        ${box(26 + i * 210, 80, 178, 46, f, null, 8)}${T(36 + i * 210, 99, h, { fs: 12, b: 1, c })}${T(36 + i * 210, 116, v || "—", { fs: 11.5 })}
+        ${box(36 + i * 210, 140, 70, 28, i ? "#fff" : AS, C.line, 6)}${T(71 + i * 210, 159, "Áno", { a: "middle", fs: 12, b: 1 })}${box(118 + i * 210, 140, 70, 28, i ? AS : "#fff", C.line, 6)}${T(153 + i * 210, 159, "Nie", { a: "middle", fs: 12, b: 1 })}
+        ${n.map((t, k) => T(115 + i * 210, 210 + k * 17, t, { a: "middle", fs: 12.5, c: C.mut })).join("")}`).join("")}`, "UAC"),
+      "Windows pred inštaláciou ukáže <b>vydavateľa</b>. Pri neznámom vydavateľovi buď opatrný."),
+    pribal: fig(SV(440, 250, `
+      ${T(220, 22, "Vlastná inštalácia: odškrtni ponuky navyše", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(14, 36, 412, 150, "#fff", C.line, 10)}${T(30, 60, "Ďalšie ponuky", { fs: 13, b: 1 })}
+      ${["Panel FunBar do prehliadača", "Domovská stránka FunBar.fun", "Herný optimalizátor (skúšobný)"].map((t, i) => `${box(30, 74 + i * 34, 20, 20, "#fff", C.mut, 4)}${T(62, 89 + i * 34, t, { fs: 12.5 })}${T(406, 89 + i * 34, "odškrtnuté", { a: "end", fs: 11, b: 1, c: C.ok })}`).join("")}
+      ${box(14, 198, 412, 42, C.okS, null, 8)}${T(220, 224, "Nainštaluje sa iba program, ktorý naozaj chceš.", { a: "middle", fs: 12.5, b: 1, c: C.ok })}`, "Pribalené programy"),
+      "Pri <b>vlastnej inštalácii</b> vidíš všetky ponuky a môžeš ich <b>odškrtnúť</b>."),
+    dialog: fig(SV(440, 250, `
+      ${T(220, 22, "Okno Pridať do archívu (7-Zip)", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(14, 34, 240, 208, "#fff", "#C9D1DF", 8)}<rect x="14" y="34" width="240" height="26" rx="8" fill="#E9EDF3"/><rect x="14" y="50" width="240" height="10" fill="#E9EDF3"/>${T(26, 52, "Pridať do archívu", { fs: 12.5, b: 1 })}
+      ${[["Formát archívu", "7z ▾"], ["Úroveň kompresie", "5 – Normálna ▾"], ["Rozdeliť na zväzky", ""], ["Šifrovanie: heslo", "••••••"]].map(([l, v], i) => { const y = 78 + i * 42; return `${T(26, y, l, { fs: 12, c: C.mut })}${box(26, y + 6, 180, 24, C.bg, C.line, 4)}${T(34, y + 23, v, { fs: 12.5 })}${num(228, y + 18, i + 1)}`; }).join("")}
+      ${[["Formát", "7z, zip, tar"], ["Úroveň", "0 = bez … 9 = Ultra"], ["Zväzky", "archív na viac častí"], ["Šifrovanie", "AES-256 s heslom"]].map(([h, t], i) => { const y = 90 + i * 42; return `${num(276, y - 5, i + 1)}${T(292, y, h, { fs: 13, b: 1 })}${T(268, y + 18, t, { fs: 11.5, c: C.mut })}`; }).join("")}`, "Dialóg 7-Zip"),
+      "V okne <b>Pridať do archívu</b> nastavíš formát, úroveň kompresie, zväzky a heslo."),
+    menu: fig(SV(440, 250, `
+      ${T(220, 22, "Pravé tlačidlo myši → 7-Zip", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(14, 38, 150, 30, AS, A, 6)}${T(26, 58, "📁 Vylet_fotky", { fs: 12, b: 1 })}
+      ${box(30, 78, 170, 150, "#fff", C.line, 6)}${["Otvoriť", "Kopírovať", "Odstrániť", "7-Zip  ›", "Vlastnosti"].map((t, i) => `${i === 3 ? `<rect x="32" y="${84 + i * 28}" width="166" height="24" rx="4" fill="${AS}"/>` : ""}${T(44, 101 + i * 28, t, { fs: 12, b: i === 3 })}`).join("")}
+      ${box(206, 150, 220, 90, "#fff", A, 6)}${["Pridať do archívu…", "Pridať do „Vylet_fotky.7z“", "Pridať do „Vylet_fotky.zip“"].map((t, i) => T(218, 172 + i * 26, t, { fs: 12 })).join("")}
+      ${ar(196, 170, 204, 170, A, 2)}${T(212, 64, "ZIP aj 7z vytvoríš", { fs: 13, c: C.mut })}${T(212, 84, "priamo z ponuky, bez", { fs: 13, c: C.mut })}${T(212, 104, "spúšťania programu.", { fs: 13, c: C.mut })}`, "Kontextová ponuka"),
+      "7-Zip sa po inštalácii pridá do <b>kontextovej ponuky</b> (pravé tlačidlo myši)."),
+    lock: fig(SV(440, 250, `
+      ${T(220, 22, "Archív s heslom rozdelený na zväzky", { a: "middle", fs: 13, b: 1, c: A })}
+      ${zip(46, 50, "#F2A516")}<rect x="78" y="88" width="28" height="22" rx="4" fill="#1A1530"/><path d="M84 88 v-6 a8 8 0 0 1 16 0 v6" fill="none" stroke="#1A1530" stroke-width="3.5"/>
+      ${T(76, 134, "archív 27 MB", { a: "middle", fs: 12.5, b: 1 })}${T(76, 152, "+ heslo", { a: "middle", fs: 12, c: C.mut })}
+      ${ar(130, 86, 172, 86, A, 3)}
+      ${[["001", "10 MB"], ["002", "10 MB"], ["003", "7 MB"]].map(([n, m], i) => `${box(180 + i * 84, 52, 72, 64, A, null, 8)}<rect x="${206 + i * 84}" y="74" width="20" height="18" rx="3" fill="#fff"/>${T(216 + i * 84, 136, ".7z." + n, { a: "middle", fs: 12.5, b: 1, mono: 1 })}${T(216 + i * 84, 154, m, { a: "middle", fs: 12, c: C.mut })}`).join("")}
+      ${box(14, 176, 412, 64, AS, null, 8)}${T(220, 202, "Každá časť sa zmestí do prílohy e-mailu.", { a: "middle", fs: 12.5, b: 1 })}${T(220, 222, "Rozbaliť sa dá až so všetkými časťami a heslom.", { a: "middle", fs: 12, c: C.mut })}`, "Zväzky a heslo"),
+      "Archív chránený <b>heslom</b> a rozdelený na <b>zväzky</b> .7z.001, .7z.002…")
+  };
+  function num(x, y, n) { return `<circle cx="${x}" cy="${y}" r="9" fill="${A}"/><text x="${x}" y="${y + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${n}</text>`; }
+})();
+
 /* ---------- search ---------- */
 const SR = [
   { id: "ad", u: "www.7zip-download-free.net", ad: true, ti: "7-Zip Download 2026 – Rýchlo a Zadarmo!", de: "Stiahnite 7-Zip za pár sekúnd z najrýchlejšieho servera. Kliknite na Stiahnuť teraz!", fb: "Toto je platená reklama cudzej stránky, nie oficiálna stránka 7-Zip. Takéto stránky často pribalia k programu reklamný alebo škodlivý softvér." },
@@ -347,21 +477,35 @@ const VIEWS = {
       ["Windows", "#2A45C8", "#1C308F", "ZIP", "free", "Súčasť systému", "Vie vytvoriť a rozbaliť ZIP. Novšie verzie Windows 11 rozbalia aj RAR a 7z."]
     ];
     return head() + `<h2>Aké komprimačné programy existujú?</h2>
-    <figure class="fig">${ART.flow}<figcaption>Takto budeme postupovať s každým novým programom.</figcaption></figure>
-    <p>Komprimačný program (<b>archivátor</b>) vie súbory zbaliť do archívu a archív zase rozbaliť. Každý program pozná niekoľko formátov archívov. Líšia sa aj tým, či sú zadarmo.</p>
+    <div class="theory tsplit"><div>
+      <p>Komprimačný program (<b>archivátor</b>) vie súbory zbaliť do archívu a archív zase rozbaliť. Každý program pozná niekoľko <b>formátov</b> archívov.</p>
+      <p>Programy sa líšia aj tým, či sú zadarmo. Podmienky používania programu určuje <b>licencia</b>:</p>
+      <table class="rtab"><thead><tr><th>Licencia</th><th>Čo znamená</th></tr></thead><tbody>
+        <tr><td><b>Freeware</b></td><td>program je zadarmo</td></tr>
+        <tr><td><b>Open source</b></td><td>program je zadarmo a jeho zdrojový kód je verejný, takže ho môže ktokoľvek skontrolovať</td></tr>
+        <tr><td><b>Shareware / trial</b></td><td>program môžeš nejaký čas vyskúšať, potom by si ho mal kúpiť</td></tr></tbody></table>
+    </div><div>${TFIG.archiv}</div></div>
     <div class="cards">${P.map(p => `<div class="pc">${boxIcon(p[1], p[2], p[3])}<h4>${p[0]}</h4><span class="lic ${p[4]}">${p[5]}</span><p>${p[6]}</p></div>`).join("")}</div>
-    <div class="box v"><p><b>Licencie, teda podmienky používania:</b></p><ul style="margin:0;padding-left:20px">
-      <li><b>Freeware</b>: program je zadarmo.</li>
-      <li><b>Open source</b>: program je zadarmo a jeho zdrojový kód je verejný, takže ho môže ktokoľvek skontrolovať.</li>
-      <li><b>Shareware / trial</b>: program môžeš nejaký čas vyskúšať, potom by si ho mal kúpiť.</li></ul></div>
+    ${ltfigs(TFIG.flow, TFIG.licencie)}
+    ${VEDEL("Program 7-Zip vytvoril programátor Igor Pavlov v roku 1999 a dodnes ho vyvíja takmer sám. Napriek tomu ho používajú milióny ľudí na celom svete.")}
     <h3>Úloha 1: zadarmo alebo platený?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("progs")}</div>
     <h3>Úloha 2: licencie</h3><div class="task">${taskHTML("licq")}</div>
     <h3>Úloha 3: archív, alebo nie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>` + nextBar();
   },
   hladanie() {
     const sr = S.sr, dp = S.dp, po = S.po;
+    const hlDone = S.t.search && S.t.dlpick && S.t.portal;
     return head() + `<h2>Vyhľadanie a stiahnutie</h2>
-    <p>Rozhodli sme sa pre <b>7-Zip</b>: je zadarmo, bezpečný a zvládne takmer všetky formáty. Pri sťahovaní programov z internetu však číha veľa pascí. Nauč sa ich spoznať.</p>
+    <div class="theory tsplit"><div>
+      <p>Rozhodli sme sa pre <b>7-Zip</b>: je zadarmo, bezpečný a zvládne takmer všetky formáty. Pri sťahovaní programov z internetu však číha veľa pascí. Nauč sa ich spoznať.</p>
+      <p>Program najčastejšie hľadáme vo <b>vyhľadávači</b>. Každý výsledok má tri časti:</p>
+      <table class="rtab"><thead><tr><th>Časť výsledku</th><th>Čo z nej zistíš</th></tr></thead><tbody>
+        <tr><td><b>adresa</b> (URL)</td><td>na ktorú stránku sa dostaneš a kto ju prevádzkuje</td></tr>
+        <tr><td><b>nadpis</b></td><td>názov stránky, napísať ho môže ktokoľvek</td></tr>
+        <tr><td><b>popis</b></td><td>krátky text o obsahu stránky</td></tr></tbody></table>
+      <p>Niektoré výsledky sú <b>platené</b>. Vyhľadávač ich označuje nápisom Reklama.</p>
+    </div><div>${TFIG.vysledok}</div></div>
+    ${VEDEL("32-bitový systém dokáže využiť najviac 4 GB operačnej pamäte. Preto majú dnešné počítače takmer vždy 64-bitový systém.")}
     <h3>Úloha 1: ktorý výsledok otvoríš?</h3>
     <div class="win"><div class="wt">🌐 Hľadáčik – vyhľadávanie<span class="dots">— ▢ ✕</span></div>
       <div class="wb"><div class="sbar"><span class="logo">Hľadáčik</span><span class="qbox">7-zip stiahnuť</span></div>
@@ -384,7 +528,8 @@ const VIEWS = {
         <div class="two"><div><div class="finfo"><b style="font-size:17px">7-Zip</b><br>Súbor: <span style="font-family:var(--mono)">7z-x64.exe</span><br>Veľkosť: asi 1,5 MB<br>Vydavateľ: Igor Pavlov<br>Licencia: zadarmo (open source)<br><button class="plain pick ${po === "real" ? "ok" : ""}" data-po="real" style="margin-top:6px">Stiahnuť súbor</button></div></div>
           <div><button class="adbtn ado pick ${po === "o" ? "bad" : ""}" data-po="o">▶ Spustiť sťahovanie (odporúčané)<small>Reklama</small></button><button class="adbtn adw pick ${po === "w" ? "bad" : ""}" data-po="w">⚠ Váš počítač je pomalý! Opraviť 1 284 chýb<small>Reklama</small></button></div></div></div></div>
     ${po ? `<div class="fb ${po === "real" ? "ok" : "bad"}">${PO[po]}</div>` : ""}
-    ${S.t.portal ? `<div class="checkbar"><span class="score ${S.t.portal.score ? "" : "part"}">${S.t.portal.score ? "Na prvý pokus! 1 bod" : "0 bodov, reklamy sú naozaj zákerné"}</span></div>` : ""}` + nextBar();
+    ${S.t.portal ? `<div class="checkbar"><span class="score ${S.t.portal.score ? "" : "part"}">${S.t.portal.score ? "Na prvý pokus! 1 bod" : "0 bodov, reklamy sú naozaj zákerné"}</span></div>` : ""}
+    ${hlDone ? `<h3>Zhrnutie: bezpečné sťahovanie</h3>${ltfigs(TFIG.pasce, TFIG.verzie)}` : ""}` + nextBar();
   },
   instalacia() {
     const I = S.inst, B = S.bun;
@@ -411,8 +556,18 @@ const VIEWS = {
       ${["Nainštalovať panel SuperSearch do prehliadača", "Nastaviť SuperSearch.fun ako domovskú stránku", "Nainštalovať PC Booster Pro (skúšobná verzia)"].map((t, i) => `<label class="opt2"><input type="checkbox" data-bc="${i}" ${B.ch[i] ? "checked" : ""}><span>${t}</span></label>`).join("")}
       <div class="row" style="justify-content:flex-end"><button class="wbtn pri" data-bu="finish">Inštalovať</button></div></div></div>`;
     return head() + `<h2>Inštalácia bez nepríjemných prekvapení</h2>
-    <p>Inštalácia skopíruje program do počítača a pripojí ho do systému: do ponuky Štart a do ponuky po kliknutí pravým tlačidlom myši. Pretože mení systém, Windows sa najprv opýta, či to dovolíš.</p>
-    <div class="box v"><p>🏫 V škole bežný žiak programy inštalovať nemôže, na to treba <b>práva správcu</b>. Doma sa pýtaj rodičov a inštaluj iba programy, ktorým dôveruješ.</p></div>
+    <div class="theory tsplit"><div>
+      <p><b>Inštalácia</b> skopíruje program do počítača a pripojí ho do systému: do ponuky Štart a do ponuky po kliknutí pravým tlačidlom myši.</p>
+      <p>Pretože mení systém, Windows sa najprv opýta, či to dovolíš. Okno <b>Kontrola používateľských kont</b> ukáže aj vydavateľa programu.</p>
+      <table class="rtab"><thead><tr><th>Krok</th><th>Čo sa deje</th></tr></thead><tbody>
+        <tr><td>spustenie inštalátora</td><td>dvojklik na stiahnutý súbor .exe</td></tr>
+        <tr><td>povolenie zmien</td><td>Windows sa pýta, či programu dôveruješ</td></tr>
+        <tr><td>cieľový priečinok</td><td>obvykle C:\\Program Files\\</td></tr>
+        <tr><td>dokončenie</td><td>program nájdeš v ponuke Štart</td></tr></tbody></table>
+      <div class="box v"><p>🏫 V škole bežný žiak programy inštalovať nemôže, na to treba <b>práva správcu</b>. Doma sa pýtaj rodičov a inštaluj iba programy, ktorým dôveruješ.</p></div>
+    </div><div>${TFIG.instal}</div></div>
+    ${ltfigs(TFIG.uac, ...(S.t.bundle ? [TFIG.pribal] : []))}
+    ${VEDEL("Malý štít na tlačidle vo Windows prezrádza, že akcia potrebuje práva správcu. Po kliknutí sa vždy objaví okno Kontroly používateľských kont.")}
     <h3>Úloha 1: nainštaluj 7-Zip</h3><div class="task">${inst}${I.msg ? `<div class="fb info">${I.msg}</div>` : ""}
       ${S.t.install ? `<div class="checkbar"><span class="score">Nainštalované, 1 bod</span></div>` : ""}</div>
     <h3>Úloha 2: pozor na pribalené programy</h3>
@@ -433,7 +588,18 @@ const VIEWS = {
     const rows = E.items.map(it => `<div class="frow ${E.menu === it.id ? "m" : ""} ${E.newId === it.id ? "new" : ""}" data-row="${it.id}"><span class="nm">${icon(it.kind)} ${esc(it.name)}</span><span class="sz">${it.size}</span><button class="more" data-menu="${it.id}" aria-label="Ponuka pre ${esc(it.name)}">⋯</button></div>${E.menu === it.id ? menu(it) : ""}`).join("");
     const G = (k, t) => `<li>${S.t[k] ? (S.t[k].score === S.t[k].max ? "✅" : "☑️") : "⬜"} ${t}</li>`;
     return head() + `<h2>Práca so 7-Zip</h2>
-    <p>Po inštalácii sa 7-Zip pridá do ponuky, ktorá sa objaví po <b>kliknutí pravým tlačidlom myši</b> na súbor alebo priečinok. V simulácii nižšie klikni pravým tlačidlom na riadok, alebo na tlačidlo ⋯.</p>
+    <div class="theory tsplit"><div>
+      <p>Po inštalácii sa 7-Zip pridá do ponuky, ktorá sa objaví po <b>kliknutí pravým tlačidlom myši</b> na súbor alebo priečinok (<b>kontextová ponuka</b>).</p>
+      <p>Viac možností ponúka okno <b>Pridať do archívu…</b>:</p>
+      <table class="rtab"><thead><tr><th>Nastavenie</th><th>Čo urobí</th></tr></thead><tbody>
+        <tr><td><b>Formát archívu</b></td><td>7z, zip alebo tar</td></tr>
+        <tr><td><b>Úroveň kompresie</b></td><td>od 0 (bez kompresie) po 9 (Ultra), vyššia = menší archív, ale pomalšie</td></tr>
+        <tr><td><b>Rozdeliť na zväzky</b></td><td>rozdelí archív na viac častí so zadanou veľkosťou</td></tr>
+        <tr><td><b>Šifrovanie</b></td><td>archív sa otvorí iba so zadaným heslom</td></tr></tbody></table>
+    </div><div>${TFIG.dialog}</div></div>
+    ${ltfigs(TFIG.menu, ...(S.t.dialog ? [TFIG.lock] : []))}
+    ${VEDEL("7-Zip šifruje archívy metódou AES-256, ktorú používajú aj banky. Keď heslo zabudneš, súbory už neotvorí nikto, ani autor programu.")}
+    <p>V simulácii nižšie klikni pravým tlačidlom na riadok, alebo na tlačidlo ⋯.</p>
     <div class="task"><b>Tvoje úlohy:</b><ul class="goals">
       ${G("zipit", "Zbaľ priečinok <b>Projekt_dejepis</b> do archívu <b>ZIP</b>, ktorý otvorí každý počítač.")}
       ${G("unzip", "Rozbaľ <b>fotky_vylet.zip</b> tak, aby boli fotky pekne vo vlastnom priečinku.")}
@@ -578,7 +744,23 @@ document.addEventListener("contextmenu", e => {
 });
 
 /* ===== shared lesson engine ===== */
-const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
+  const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
+  T.qs.forEach((q, i) => { if (G.includes(i + 1) && groups.length) groups[groups.length - 1].push(q); else groups.push([q]); });
+  if (groups.length < 2) return T.qs;
+  const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
+  if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
+  return o.flatMap(id => groups.find(g => g[0].id === id)); }
+function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none;padding:8px 14px;border-radius:10px" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
@@ -616,7 +798,7 @@ function checkBar(T, ready, hint) {
 }
 function mcHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
       let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
@@ -652,7 +834,7 @@ function orderHTML(T) {
 }
 function inputHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const v = d[q.id] || "", ok = done ? q.ok(v) : null;
     return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
   }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
@@ -694,12 +876,12 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
   let formBtn = "";
   if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
-    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+    formBtn = sendResults(detail); }
   return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
   <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
   <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
 };
@@ -711,7 +893,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

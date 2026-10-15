@@ -185,13 +185,49 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
 @media (max-width:640px){.goals.g2{columns:1}}
 
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Editor (Audacity) na úpravy, diktafón na rýchlu nahrávku; WAV na archív a úpravy, MP3 na posielanie; zlú nahrávku radšej nahraj znova."], "zvuk": ["<b>Zvuk</b> je vlnenie vzduchu. Mikrofón ho mení na elektrický signál, reproduktor späť na zvuk.", "<b>Frekvencia</b> (Hz) určuje výšku tónu, <b>amplitúda</b> hlasitosť (dB)."], "programy": ["Nahrávanie: Zvukový záznamník (Windows), diktafón v mobile. Úpravy: <b>Audacity</b> (zadarmo).", "Prehrávanie: VLC media player, Media Player.", "Programy sťahuj z oficiálnych stránok."], "nahraj": ["Na nahrávanie potrebuješ <b>mikrofón</b> a povolenie prístupu k nemu.", "Rýchlejšie prehrávanie zvýši hlas, pomalšie ho zníži."], "uprava": ["V editore vidíš zvuk ako vlnu: vysoká vlna = hlasno, plochá = ticho.", "Označ časť → vystrihni, zosilni, stíš. Ctrl + Z vráti zmenu.", "<b>Exportom</b> vytvoríš zvukový súbor (MP3, WAV)."], "formaty": ["<b>WAV</b> je nekomprimovaný (≈ 10 MB/min), <b>FLAC</b> bezstratový.", "<b>MP3, AAC, OGG</b> sú stratové (≈ 1 MB/min).", "<b>Bitrate</b> (kbps) určuje kvalitu a veľkosť."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = { zvuk: ["<b>Zvuk</b> je vlnenie vzduchu. Mikrofón ho mení na elektrický signál, reproduktor späť na vlnenie.", "Počítač ukladá zvuk ako <b>čísla</b> (údaje).", "<b>Frekvencia</b> = počet kmitov za sekundu, jednotka hertz (Hz). Vyššia frekvencia = vyšší tón.", "<b>Amplitúda</b> = veľkosť kmitov. Väčšia amplitúda = hlasnejší zvuk.", "Hlasitosť meriame v <b>decibeloch</b> (dB).", "Človek počuje približne 20 Hz – 20 000 Hz."],
+  get programy() { return S.t.search ? ["Nahrávanie: <b>Zvukový záznamník</b> (Windows), diktafón v mobile.", "Úpravy (strih, hlasitosť, efekty): <b>Audacity</b>, zadarmo a open source.", "Prehrávanie: <b>VLC media player</b> (takmer všetky formáty), Media Player (súčasť Windows).", "Audacity vie nahrávať, upravovať aj exportovať do MP3 či WAV.", "Programy sťahuj z <b>oficiálnej stránky</b> (napr. audacityteam.org)."] : ["Nahrávanie: <b>Zvukový záznamník</b> (Windows), diktafón v mobile.", "Úpravy (strih, hlasitosť, efekty): <b>Audacity</b>, zadarmo a open source.", "Prehrávanie: <b>VLC media player</b> (takmer všetky formáty), Media Player (súčasť Windows).", "Audacity vie nahrávať, upravovať aj exportovať do MP3 či WAV."]; },
+  nahraj: ["Na nahrávanie potrebuješ <b>mikrofón</b> (v notebooku, slúchadlách alebo mobile).", "Stránka alebo program musí dostať <b>povolenie</b> používať mikrofón.", "Nahrávať → Zastaviť: vznikne nahrávka, ktorú môžeš uložiť ako súbor.", "Rýchlejšie prehrávanie = vyšší hlas, pomalšie = hlbší hlas (mení sa frekvencia)."],
+  get uprava() { return S.t.audq ? ["V editore vidíš zvuk ako <b>vlnu</b>: vysoká vlna = hlasno, plochá = ticho.", "Najprv časť nahrávky <b>označíš</b>, potom ju upravíš.", "<b>Vystrihnúť</b> odstráni časť, <b>zosilniť</b> a <b>stíšiť</b> mení hlasitosť.", "<b>Exportovať</b> vytvorí zvukový súbor (MP3, WAV).", "<b>Ctrl + Z</b> vráti poslednú zmenu.", "<b>Uložiť projekt</b> = súbor Audacity na ďalšie úpravy, nie bežný zvukový súbor.", "Nahrávku iného človeka zverejni iba s jeho <b>súhlasom</b>."] : ["V editore vidíš zvuk ako <b>vlnu</b>: vysoká vlna = hlasno, plochá = ticho.", "Najprv časť nahrávky <b>označíš</b>, potom ju upravíš.", "<b>Vystrihnúť</b> odstráni časť, <b>zosilniť</b> a <b>stíšiť</b> mení hlasitosť.", "<b>Exportovať</b> vytvorí zvukový súbor (MP3, WAV)."]; },
+  formaty: ["<b>WAV</b>: nekomprimovaný, ≈ 10 MB za minútu, na nahrávanie a úpravy.", "<b>FLAC</b>: bezstratový, ≈ 5 MB za minútu.", "<b>MP3, AAC (M4A), OGG</b>: stratové, ≈ 1 MB za minútu.", "Stratové formáty zahadzujú zvuky, ktoré ucho takmer nepočuje.", "<b>Bitrate</b> (kbps) = množstvo údajov na 1 sekundu zvuku. Vyšší = lepšia kvalita aj väčší súbor."],
+  get precvic() { return S.zdd && S.t.kq ? ["Editor (Audacity) na úpravy, diktafón na rýchlu nahrávku, prehrávač na počúvanie.", "<b>WAV</b> na archív a úpravy, <b>MP3</b> na posielanie (opakované ukladanie do MP3 zhoršuje kvalitu).", "<b>Vzorkovacia frekvencia</b> 44,1 kHz = zvuk sa zmeria 44 100-krát za sekundu.", "<b>Mono</b> = 1 kanál, <b>stereo</b> = 2 kanály (ľavý a pravý).", "Zlú nahrávku radšej nahraj znova: v tichu a blízko mikrofónu."] : ["Program vyber podľa úlohy: nahrať, upraviť, alebo prehrať.", "Formát vyber podľa toho, či potrebuješ kvalitu, alebo malý súbor.", "Kvalitu nahrávky ovplyvní mikrofón, prostredie aj formát.", "<b>Vzorkovacia frekvencia</b> a <b>bitrate</b> určujú, ako verne počítač zvuk uloží."]; } };
 /* Spoločné pomôcky na ilustrácie k teórii (Prima) */
 const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
 const PF = (() => {
@@ -223,6 +259,8 @@ const PF = (() => {
 
 /* Ilustrácie – Tercia 3.1 Zvuk */
 const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF;
+const WV = (x0, y0, w, amp, n, c) => { let d = ""; for (let k = 0; k <= w; k += 2) d += (k ? "L" : "M") + (x0 + k) + " " + (y0 - amp * Math.sin(k / w * n * 2 * Math.PI)).toFixed(1); return `<path d="${d}" fill="none" stroke="${c}" stroke-width="2.2"/>`; };
+const WSEG = (x0, y0, segs, c) => { let d = "", x = x0, t = 0; segs.forEach(([w, a]) => { for (let k = 0; k < w; k += 2, t++) { const v = a * (0.45 + 0.55 * Math.abs(Math.sin(t * 1.7) * Math.cos(t * 0.31))); d += `M${x + k} ${(y0 - v).toFixed(1)}V${(y0 + v).toFixed(1)}`; } x += w; }); return `<path d="${d}" stroke="${c}" stroke-width="1.4"/>`; };
 return {
   programy: fig(SV(440, 230, `
     ${[["🎙️", "NAHRAŤ", "Zvukový záznamník", "Diktafón v mobile", C.bad, C.badS], ["🎚️", "UPRAVIŤ", "Audacity", "strih, hlasitosť, efekty", C.acc, C.accS], ["▶️", "PREHRAŤ", "VLC media player", "Media Player", C.ok, C.okS]].map(([e, h, a, b, c, bg], i) => { const x = 8 + i * 146; return `${box(x, 8, 134, 180, bg, c, 12)}<text x="${x + 67}" y="62" text-anchor="middle" font-size="36">${e}</text>${T(x + 67, 92, h, { a: "middle", fs: 14, b: 1, c })}${box(x + 10, 104, 114, 32, "#fff", null, 8)}${T(x + 67, 125, a, { a: "middle", fs: 11, b: 1 })}${T(x + 67, 160, b, { a: "middle", fs: 10.5, c: C.mut })}${i < 2 ? ar(x + 136, 98, x + 144, 98, C.mut, 2) : ""}`; }).join("")}
@@ -232,14 +270,79 @@ return {
     ${T(14, 22, "Koľko zaberie 1 minúta zvuku", { fs: 13, b: 1 })}
     ${[[".wav", "nekomprimovaný", 10, C.bad], [".flac", "bezstratový", 5, C.amb], [".mp3", "stratový", 1, C.ok], [".m4a/.aac", "stratový", 1, C.ok], [".ogg", "stratový", 1, C.ok]].map(([f, t, mb, c], i) => { const y = 38 + i * 40, w = mb * 26; return `${T(14, y + 20, f, { fs: 13, b: 1, mono: 1 })}${T(14, y + 34, t, { fs: 10, c: C.mut })}<rect x="104" y="${y + 6}" width="${w}" height="22" rx="5" fill="${c}"/>${T(110 + w, y + 22, "≈ " + mb + " MB", { fs: 12, b: 1, c })}`; }).join("")}
     ${box(14, 240, 412, 34, C.accS, null, 8)}${T(220, 262, "Bitrate (kbps) = koľko údajov na 1 sekundu zvuku: viac = lepšie, ale väčšie", { a: "middle", fs: 11, b: 1, c: C.acc })}`, "Veľkosť zvukových formátov"),
-    "<b>WAV</b> nie je komprimovaný, preto je najväčší. <b>FLAC</b> zmenšuje bez straty, <b>MP3</b>, <b>AAC</b> a <b>OGG</b> sú stratové a veľmi malé.")
+    "<b>WAV</b> nie je komprimovaný, preto je najväčší. <b>FLAC</b> zmenšuje bez straty, <b>MP3</b>, <b>AAC</b> a <b>OGG</b> sú stratové a veľmi malé."),
+  cesta: fig(SV(440, 250, `
+    ${T(220, 22, "Cesta zvuku", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${[["🗣️", "zdroj", "hlas, nástroj"], ["🎤", "mikrofón", "vlnenie → signál"], ["💻", "počítač", "signál → čísla"], ["🔊", "reproduktor", "čísla → vlnenie"]].map(([e, h, d], i) => { const x = 56 + i * 109; return `<circle cx="${x}" cy="78" r="34" fill="${i % 2 ? C.accS : C.bg}" stroke="${C.acc}" stroke-width="1.6"/><text x="${x}" y="90" text-anchor="middle" font-size="30">${e}</text>${T(x, 136, h, { a: "middle", fs: 13, b: 1 })}${T(x, 154, d, { a: "middle", fs: 11, c: C.mut })}${i < 3 ? ar(x + 37, 78, x + 72, 78, C.acc, 2.5) : ""}`; }).join("")}
+    ${box(14, 176, 412, 64, C.accS, null, 8)}${T(220, 200, "Mikrofón mení vlnenie vzduchu na elektrický signál.", { a: "middle", fs: 12.5, b: 1 })}${T(220, 222, "Reproduktor robí opak: zo signálu urobí znova vlnenie.", { a: "middle", fs: 12, c: C.mut })}`, "Cesta zvuku"),
+    "Zvuk je <b>vlnenie vzduchu</b>. Počítač ho uloží ako <b>čísla</b>."),
+  frek: fig(SV(440, 250, `
+    ${T(220, 22, "Frekvencia = výška tónu", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${T(20, 66, "nízky tón", { fs: 13, b: 1 })}${T(20, 84, "málo kmitov", { fs: 11, c: C.mut })}${WV(130, 72, 290, 26, 2, C.acc)}
+    ${T(20, 146, "vysoký tón", { fs: 13, b: 1 })}${T(20, 164, "veľa kmitov", { fs: 11, c: C.mut })}${WV(130, 152, 290, 26, 9, C.bad)}
+    <line x1="130" y1="108" x2="420" y2="108" stroke="${C.line}" stroke-dasharray="4 4"/>
+    ${box(14, 196, 412, 44, C.bg, null, 8)}${T(220, 216, "Frekvencia = počet kmitov za sekundu, jednotka hertz (Hz).", { a: "middle", fs: 12, b: 1 })}${T(220, 232, "Človek počuje približne 20 Hz – 20 000 Hz.", { a: "middle", fs: 11.5, c: C.mut })}`, "Frekvencia"),
+    "Čím viac kmitov za sekundu (vyššia <b>frekvencia</b>), tým <b>vyšší</b> tón."),
+  ampl: fig(SV(440, 250, `
+    ${T(220, 22, "Amplitúda = hlasitosť", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${T(20, 66, "tichý zvuk", { fs: 13, b: 1 })}${T(20, 84, "malé kmity", { fs: 11, c: C.mut })}${WV(130, 72, 290, 10, 4, C.ok)}
+    ${T(20, 146, "hlasný zvuk", { fs: 13, b: 1 })}${T(20, 164, "veľké kmity", { fs: 11, c: C.mut })}${WV(130, 152, 290, 34, 4, C.amb)}
+    ${box(14, 196, 412, 44, C.bg, null, 8)}${T(220, 216, "Hlasitosť meriame v decibeloch (dB).", { a: "middle", fs: 12, b: 1 })}${T(220, 232, "šepot ≈ 30 dB · rozhovor ≈ 60 dB · rockový koncert ≈ 110 dB", { a: "middle", fs: 11.5, c: C.mut })}`, "Amplitúda"),
+    "Väčšia <b>amplitúda</b> (vyššia vlna) znamená <b>hlasnejší</b> zvuk."),
+  audacity: fig(SV(440, 250, `
+    ${T(220, 22, "Okno zvukového editora Audacity", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${box(14, 34, 412, 206, "#fff", "#C9D1DF", 8)}<rect x="14" y="34" width="412" height="40" rx="8" fill="#E9EDF3"/>
+    ${[["▶", C.ok], ["■", C.mut], ["●", C.bad]].map(([t, c], i) => `${box(26 + i * 38, 42, 30, 26, "#fff", C.line, 6)}${T(41 + i * 38, 61, t, { a: "middle", fs: 14, b: 1, c })}`).join("")}${T(150, 60, "prehrať · zastaviť · nahrávať", { fs: 11.5, c: C.mut })}
+    ${box(26, 86, 70, 80, C.bg, C.line, 4)}${T(36, 106, "Stopa 1", { fs: 11, b: 1 })}${T(36, 124, "mono", { fs: 10.5, c: C.mut })}
+    <rect x="230" y="86" width="90" height="80" fill="${C.accS}"/>${WV(100, 126, 316, 30, 22, C.acc, 1)}
+    ${T(275, 182, "označená časť", { a: "middle", fs: 12, b: 1, c: C.acc })}${T(160, 182, "vlna = zvuk", { a: "middle", fs: 12, c: C.mut })}
+    ${box(26, 196, 388, 34, C.bg, null, 6)}${T(220, 218, "Ponuky: Súbor · Úpravy · Efekt (zosilnenie, ozvena…)", { a: "middle", fs: 12 })}`, "Audacity"),
+    "<b>Audacity</b> zobrazí nahrávku ako <b>vlnu</b>. Časť označíš myšou a upravíš ju."),
+  povol: fig(SV(440, 250, `
+    ${T(220, 22, "Prehliadač sa pýta na mikrofón", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${box(14, 34, 412, 34, "#E9EDF3", "#C9D1DF", 8)}${box(24, 41, 300, 20, "#fff", null, 10)}${T(36, 56, "🔒 hodina-informatiky.sk", { fs: 11.5 })}${T(336, 57, "🎤", { fs: 15 })}
+    ${box(40, 78, 300, 112, "#fff", C.acc, 10)}${T(56, 104, "Stránka chce použiť:", { fs: 13, b: 1 })}${T(56, 130, "🎤 mikrofón", { fs: 14 })}
+    ${box(56, 146, 110, 32, C.acc, null, 8)}${T(111, 167, "Povoliť", { a: "middle", fs: 13, b: 1, c: "#fff" })}${box(178, 146, 110, 32, "#fff", C.line, 8)}${T(233, 167, "Blokovať", { a: "middle", fs: 13, b: 1 })}
+    ${T(352, 100, "🎤 v adrese:", { fs: 12, c: C.amb, b: 1 })}${T(352, 118, "tu povolenie", { fs: 12, c: C.amb })}${T(352, 136, "neskôr zmeníš", { fs: 12, c: C.amb })}
+    ${box(14, 202, 412, 38, C.bg, null, 8)}${T(220, 226, "Bez povolenia stránka ani program mikrofón nepoužije.", { a: "middle", fs: 12 })}`, "Povolenie mikrofónu"),
+    "Stránka môže použiť mikrofón, iba keď to <b>povolíš</b>."),
+  rychlost: fig(SV(440, 250, `
+    ${T(220, 22, "Rýchlosť prehrávania mení výšku hlasu", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${[["0,5×", "hlbší hlas", 3, C.ok], ["1×", "normálny hlas", 6, C.acc], ["2×", "vyšší hlas", 12, C.bad]].map(([r, d, n, c], i) => `${T(20, 66 + i * 58, r, { fs: 16, b: 1, c })}${T(20, 84 + i * 58, d, { fs: 11, c: C.mut })}${WV(120, 70 + i * 58, 300, 18, n, c)}`).join("")}
+    ${T(220, 236, "Rýchlejšie prehrávanie = viac kmitov za sekundu = vyšší tón.", { a: "middle", fs: 12 })}`, "Rýchlosť prehrávania"),
+    "Pri rýchlejšom prehrávaní stúpne <b>frekvencia</b>, a preto aj výška hlasu."),
+  vlna: fig(SV(440, 250, `
+    ${T(220, 22, "Čo prezradí vlna v editore", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${box(14, 40, 412, 130, C.bg, C.line, 8)}<line x1="24" y1="105" x2="416" y2="105" stroke="${C.line}"/>
+    ${WSEG(24, 105, [[60, 1], [120, 22], [36, 52], [110, 9], [66, 1]], C.acc)}
+    ${[["ticho", 54], ["reč", 144], ["tlesknutie", 222], ["šepot", 295], ["ticho", 383]].map(([t, x]) => T(x, 162, t, { a: "middle", fs: 11.5, b: 1, c: C.mut })).join("")}
+    ${box(14, 184, 412, 56, C.accS, null, 8)}${T(220, 206, "Vysoká vlna = hlasno, plochá čiara = ticho.", { a: "middle", fs: 12.5, b: 1 })}${T(220, 226, "Vďaka tomu nájdeš chyby bez počúvania celej nahrávky.", { a: "middle", fs: 12, c: C.mut })}`, "Vlna"),
+    "Podľa výšky <b>vlny</b> spoznáš hlasné aj tiché miesta nahrávky."),
+  strih: fig(SV(440, 250, `
+    ${T(220, 22, "Označ a vystrihni", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${T(20, 50, "pred", { fs: 12, b: 1, c: C.mut })}<rect x="190" y="58" width="80" height="60" fill="${C.badS}" stroke="${C.bad}" stroke-dasharray="4 3"/>${WSEG(20, 88, [[170, 20], [80, 26], [150, 18]], C.acc)}
+    ${T(230, 134, "označená chyba", { a: "middle", fs: 11.5, b: 1, c: C.bad })}
+    ${T(20, 164, "po", { fs: 12, b: 1, c: C.mut })}${WSEG(20, 200, [[170, 20], [150, 18]], C.acc)}<line x1="190" y1="174" x2="190" y2="226" stroke="${C.bad}" stroke-width="2"/>
+    ${T(400, 214, "kratšia", { a: "end", fs: 12, b: 1, c: C.ok })}${T(400, 230, "nahrávka", { a: "end", fs: 12, b: 1, c: C.ok })}`, "Strih"),
+    "Po <b>vystrihnutí</b> zostanú ostatné časti nahrávky spojené za sebou."),
+  zosil: fig(SV(440, 250, `
+    ${T(220, 22, "Efekt Zosilnenie", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${T(20, 56, "pred: tichá časť", { fs: 12, b: 1, c: C.mut })}${WSEG(20, 96, [[140, 26], [130, 7], [130, 26]], C.acc)}<rect x="160" y="62" width="130" height="68" fill="${C.accS}" opacity=".7"/>${WSEG(160, 96, [[130, 7]], C.acc)}
+    ${T(20, 156, "po: hlasitosť je vyrovnaná", { fs: 12, b: 1, c: C.mut })}${WSEG(20, 196, [[140, 26], [130, 25], [130, 26]], C.acc)}
+    ${T(220, 240, "Zosilnenie zväčší amplitúdu označenej časti.", { a: "middle", fs: 12 })}`, "Zosilnenie"),
+    "<b>Zosilnenie</b> urobí tichú časť hlasnejšou, <b>stíšenie</b> naopak."),
+  bitrate: fig(SV(440, 250, `
+    ${T(220, 22, "Bitrate MP3 a veľkosť 1 minúty", { a: "middle", fs: 13, b: 1, c: C.acc })}
+    ${[["64 kbps", 0.47, "0,5", "hovorené slovo"], ["128 kbps", 0.94, "0,9", "bežná hudba"], ["320 kbps", 2.34, "2,3", "najvyššia kvalita MP3"]].map(([b, mb, l, d], i) => `${T(20, 66 + i * 50, b, { fs: 13, b: 1, mono: 1 })}${T(20, 82 + i * 50, d, { fs: 11, c: C.mut })}<rect x="170" y="${52 + i * 50}" width="${mb * 72}" height="22" rx="5" fill="${C.acc}"/>${T(178 + mb * 72, 68 + i * 50, "≈ " + l + " MB", { fs: 12, b: 1, c: C.acc })}`).join("")}
+    ${box(14, 200, 412, 40, C.accS, null, 8)}${T(220, 224, "kbps = kilobitov za sekundu · vyšší bitrate = lepší zvuk, väčší súbor", { a: "middle", fs: 11.5, b: 1 })}`, "Bitrate"),
+    "<b>Bitrate</b> určuje, koľko údajov pripadá na sekundu zvuku.")
 }; })();
 
 const KEY = "zvuk-t31-v1";
 const LESSON = "3.1 Nahrávanie a prehrávanie zvuku – vyhľadanie programov, používanie";
 const BRAND = "3.1 Nahrávanie zvuku";
 const CLASS_DEFAULT = "Tercia";
-const WIDE = { zvuk: 1, programy: 1, nahraj: 1, uprava: 1 };
+const WIDE = { zvuk: 1, programy: 1, nahraj: 1, uprava: 1, formaty: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "zvuk", title: "Čo je zvuk", min: 6 },
@@ -417,8 +520,16 @@ const VIEWS = {
   zvuk() {
     const G = S.gen;
     return head() + `<h2>Čo je zvuk</h2>
-    <p><b>Zvuk</b> je vlnenie vzduchu. Mikrofón ho zmení na elektrický signál a počítač ho uloží ako čísla, teda údaje. Reproduktor alebo slúchadlá ho zmenia späť na vlnenie vzduchu. Dôležité sú dve vlastnosti:</p>
-    <div class="two"><div class="box v" style="margin:0"><p><b>Frekvencia</b> (Hz): koľkokrát za sekundu vzduch zakmitá. Čím viac, tým <b>vyšší</b> tón.</p></div><div class="box" style="margin:0"><p><b>Amplitúda</b>: ako veľmi vzduch kmitá. Čím viac, tým <b>hlasnejší</b> zvuk.</p></div></div>
+    <div class="theory tsplit"><div>
+      <p><b>Zvuk</b> je vlnenie vzduchu. Mikrofón ho zmení na elektrický signál a počítač ho uloží ako čísla, teda údaje. Reproduktor alebo slúchadlá ho zmenia späť na vlnenie vzduchu.</p>
+      <p>Dôležité sú dve vlastnosti zvuku:</p>
+      <table class="rtab"><thead><tr><th>Vlastnosť</th><th>Čo znamená</th><th>Čím viac, tým…</th></tr></thead><tbody>
+        <tr><td><b>Frekvencia</b> (Hz)</td><td>koľkokrát za sekundu vzduch zakmitá</td><td><b>vyšší</b> tón</td></tr>
+        <tr><td><b>Amplitúda</b></td><td>ako veľmi vzduch kmitá</td><td><b>hlasnejší</b> zvuk</td></tr></tbody></table>
+      <p>Hlasitosť sa meria v <b>decibeloch</b> (dB). Človek počuje tóny približne od 20 Hz do 20 000 Hz.</p>
+    </div><div>${TFIG.cesta}</div></div>
+    ${tfigs(TFIG.frek, TFIG.ampl)}
+    ${VEDEL("Netopiere sa v tme orientujú zvukom s frekvenciou až okolo 100 000 Hz. Takýto zvuk, ultrazvuk, človek vôbec nepočuje.")}
     <h3>Generátor tónu</h3><p>🎧 Nasaď si slúchadlá alebo stíš reproduktory! Zapni tón a hýb posuvníkmi.</p>
     <div class="task"><div class="gen"><div>${waveSVG()}</div><div>
       <div class="sl"><span>Výška (Hz)</span><input type="range" min="100" max="2000" step="10" value="${G.f}" data-gf aria-label="Frekvencia"><b id="gfv">${G.f}</b></div>
@@ -430,13 +541,17 @@ const VIEWS = {
   },
   programy() {
     return head() + `<h2>Programy na zvuk</h2>
-    <div class="cards">
-      <div class="pc"><div class="ic">🎙️</div><h4>Zvukový záznamník</h4><span class="lic">súčasť Windows</span><p>Jednoduché nahrávanie hlasu jedným tlačidlom.</p></div>
-      <div class="pc"><div class="ic">🎚️</div><h4>Audacity</h4><span class="lic">zadarmo · open source</span><p>Nahrávanie aj úpravy: strihanie, zosilnenie, efekty, export do MP3.</p></div>
-      <div class="pc"><div class="ic">🔶</div><h4>VLC media player</h4><span class="lic">zadarmo · open source</span><p>Prehrá takmer všetky zvukové aj video formáty.</p></div>
-      <div class="pc"><div class="ic">▶️</div><h4>Media Player</h4><span class="lic">súčasť Windows</span><p>Prehrávač hudby a videa vo Windows.</p></div>
-      <div class="pc"><div class="ic">📱</div><h4>Diktafón v mobile</h4><span class="lic">súčasť telefónu</span><p>Nahrávanie na cestách, napríklad rozhovoru.</p></div></div>
-    ${tfigs(TFIG.programy)}
+    <div class="theory tsplit"><div>
+      <p>So zvukom robíme tri veci: <b>nahrávame</b>, <b>upravujeme</b> a <b>prehrávame</b>. Na každú sa hodí iný program.</p>
+      <table class="rtab"><thead><tr><th>Program</th><th>Licencia</th><th>Na čo slúži</th></tr></thead><tbody>
+        <tr><td>🎙️ <b>Zvukový záznamník</b></td><td>súčasť Windows</td><td>jednoduché nahrávanie hlasu jedným tlačidlom</td></tr>
+        <tr><td>🎚️ <b>Audacity</b></td><td>zadarmo · open source</td><td>nahrávanie aj úpravy: strihanie, zosilnenie, efekty, export do MP3</td></tr>
+        <tr><td>🔶 <b>VLC media player</b></td><td>zadarmo · open source</td><td>prehrá takmer všetky zvukové aj video formáty</td></tr>
+        <tr><td>▶️ <b>Media Player</b></td><td>súčasť Windows</td><td>prehrávač hudby a videa vo Windows</td></tr>
+        <tr><td>📱 <b>Diktafón v mobile</b></td><td>súčasť telefónu</td><td>nahrávanie na cestách, napríklad rozhovoru</td></tr></tbody></table>
+    </div><div>${TFIG.programy}</div></div>
+    ${tfigs(TFIG.audacity)}
+    ${VEDEL("Audacity vzniklo v roku 1999 ako projekt na univerzite Carnegie Mellon v USA. Dnes ho zadarmo používajú milióny ľudí na nahrávanie podcastov aj hudby.")}
     <h3>Úloha 1: nájdi Audacity bezpečne</h3><p>Pamätáš si z hodiny o komprimačných programoch, ako sa bezpečne sťahuje? Ktorý výsledok otvoríš?</p>
     <div class="srch"><div style="font-weight:700;color:#6A3FD0;margin-bottom:8px">Hľadáčik: <span style="font-weight:400;color:#1B1B1F">audacity stiahnuť</span></div>${SRCH.map(r => `<button class="sr ${S.sr === r.id ? (r.id === "off" ? "ok" : "bad") : ""}" data-sr="${r.id}"><div class="u">${r.ad ? '<span class="ad">Reklama</span>' : ""}${r.u}</div><div class="ti">${r.ti}</div><div class="de">${r.de}</div></button>`).join("")}</div>
     ${S.sr ? `<div class="fb ${S.sr === "off" ? "ok" : "bad"}">${SRCH.find(r => r.id === S.sr).fb}</div>` : ""}
@@ -446,7 +561,17 @@ const VIEWS = {
   nahraj() {
     const G = S.rg;
     return head() + `<h2>Nahraj sa</h2>
-    <p>Teraz naozaj nahráš zvuk mikrofónom, tak ako v Zvukovom záznamníku. Prehliadač sa ťa opýta, či môže použiť mikrofón: klikni na <b>Povoliť</b>. Ak mikrofón nemáš, použi ukážkovú nahrávku.</p>
+    <div class="theory tsplit"><div>
+      <p>Teraz naozaj nahráš zvuk mikrofónom, tak ako v Zvukovom záznamníku. Na nahrávanie potrebuješ <b>mikrofón</b>: vstavaný v notebooku, v slúchadlách alebo v mobile.</p>
+      <p>Prehliadač sa ťa opýta, či môže použiť mikrofón: klikni na <b>Povoliť</b>. Ak mikrofón nemáš, použi ukážkovú nahrávku.</p>
+      <table class="rtab"><thead><tr><th>Tlačidlo</th><th>Čo urobí</th></tr></thead><tbody>
+        <tr><td>● Nahrávať</td><td>začne zaznamenávať zvuk z mikrofónu</td></tr>
+        <tr><td>■ Zastaviť</td><td>ukončí nahrávanie, vznikne nahrávka</td></tr>
+        <tr><td>Rýchlosť 0,5× – 2×</td><td>prehrá nahrávku pomalšie alebo rýchlejšie</td></tr>
+        <tr><td>⬇ Stiahnuť</td><td>uloží nahrávku ako súbor</td></tr></tbody></table>
+    </div><div>${TFIG.povol}</div></div>
+    ${tfigs(TFIG.rychlost)}
+    ${VEDEL("Vlastný hlas ti na nahrávke znie cudzo. Keď hovoríš, počuješ ho aj cez kosti hlavy, ktoré zosilňujú hlboké tóny. Mikrofón zachytí iba zvuk zo vzduchu, tak ako ťa počujú ostatní.")}
     <div class="box"><p>🎤 Povedz napríklad: <i>„Ahoj, volám sa … a chodím do Tercie. Moja obľúbená pesnička je …“</i></p></div>
     <div class="rec"><div style="display:flex;justify-content:space-between;align-items:center"><b>🎙️ Záznamník</b><span>${S.recOn ? `<span class="rdot"></span><span id="rtime">0.0 s</span>` : S.recDur ? `Nahrávka: ${S.recDur.toFixed(1)} s` : ""}</span></div>
       <canvas id="rcv" width="800" height="160" style="margin-top:10px" aria-label="Zvuková vlna nahrávky"></canvas>
@@ -459,7 +584,17 @@ const VIEWS = {
   },
   uprava() {
     return head() + `<h2>Úprava zvuku v Audacity</h2>
-    <p>V Audacity vidíš zvuk ako <b>vlnu</b>: kde je vlna vysoká, je zvuk hlasný, kde je plochá, je ticho. Označíš časť nahrávky a potom ju vystrihneš, zosilníš alebo stíšiš. Nakoniec nahrávku <b>exportuješ</b> do zvukového súboru.</p>
+    <div class="theory tsplit"><div>
+      <p>V Audacity vidíš zvuk ako <b>vlnu</b>: kde je vlna vysoká, je zvuk hlasný, kde je plochá, je ticho.</p>
+      <p>Najprv časť nahrávky <b>označíš</b> a potom s ňou niečo urobíš. Nakoniec nahrávku <b>exportuješ</b> do zvukového súboru.</p>
+      <table class="rtab"><thead><tr><th>Úprava</th><th>Čo urobí s označenou časťou</th></tr></thead><tbody>
+        <tr><td><b>Vystrihnúť</b></td><td>odstráni ju, nahrávka bude kratšia</td></tr>
+        <tr><td><b>Zosilniť</b></td><td>urobí ju hlasnejšou (väčšia vlna)</td></tr>
+        <tr><td><b>Stíšiť</b></td><td>urobí ju tichšou (menšia vlna)</td></tr>
+        <tr><td><b>Exportovať</b></td><td>vytvorí zvukový súbor, napr. MP3 alebo WAV</td></tr></tbody></table>
+    </div><div>${TFIG.vlna}</div></div>
+    ${tfigs(TFIG.strih, TFIG.zosil)}
+    ${VEDEL("Zvukový editor vie nahrávku aj obrátiť odzadu dopredu. Hudobníci takto už v 60. rokoch schovávali do pesničiek obrátené spevy a zvuky.")}
     <h3>Úloha 1: uprav rozhovor</h3><p>Klikni na časť stopy, aby si ju označil, a potom použi tlačidlo hore.</p>
     <div class="task">${audHTML()}${S.t.aud ? `<div class="checkbar"><span class="score ${S.t.aud.score < AUG.length ? "part" : ""}">Splnené: ${S.t.aud.score} z ${AUG.length}</span></div>` : ""}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("audq")}</div>` + nextBar();
@@ -467,10 +602,14 @@ const VIEWS = {
   formaty() {
     return head() + `<h2>Formáty a veľkosť zvuku</h2>
     ${guessBox()}
-    <table style="max-width:680px"><thead><tr><th>Formát</th><th>Typ</th><th>1 minúta ≈</th><th>Kde sa používa</th></tr></thead><tbody>
-      ${[[".wav", "nekomprimovaný", "10 MB", "nahrávanie, úpravy"], [".flac", "bezstratový", "5 MB", "hudba v najvyššej kvalite"], [".mp3", "stratový", "1 MB", "hudba, podcasty"], [".m4a / .aac", "stratový", "1 MB", "iPhone, YouTube, streamovanie"], [".ogg", "stratový", "1 MB", "hry, niektoré aplikácie"]].map(r => `<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}</tbody></table>
-    <p style="margin-top:10px"><b>Bitrate</b> (napr. 128 kbps alebo 320 kbps) hovorí, koľko údajov pripadá na 1 sekundu zvuku. Vyšší bitrate znamená lepšiu kvalitu, ale väčší súbor.</p>
-    ${tfigs(TFIG.formaty)}
+    <div class="theory tsplit"><div>
+      <p>Zvuk sa dá uložiť v rôznych <b>formátoch</b>. Líšia sa veľkosťou aj tým, či sa pri uložení stratí časť zvuku.</p>
+      <table class="rtab"><thead><tr><th>Formát</th><th>Typ, 1 minúta</th><th>Kde sa používa</th></tr></thead><tbody>
+      ${[[".wav", "nekomprimovaný", "10 MB", "nahrávanie, úpravy"], [".flac", "bezstratový", "5 MB", "hudba v najvyššej kvalite"], [".mp3", "stratový", "1 MB", "hudba, podcasty"], [".m4a / .aac", "stratový", "1 MB", "iPhone, YouTube, streamovanie"], [".ogg", "stratový", "1 MB", "hry, niektoré aplikácie"]].map(r => `<tr><td><b>${r[0]}</b></td><td>${r[1]}, ≈ ${r[2]}</td><td>${r[3]}</td></tr>`).join("")}</tbody></table>
+      <p><b>Bitrate</b> (napr. 128 kbps alebo 320 kbps) hovorí, koľko údajov pripadá na 1 sekundu zvuku. Vyšší bitrate znamená lepšiu kvalitu, ale väčší súbor.</p>
+    </div><div>${TFIG.formaty}</div></div>
+    ${tfigs(TFIG.bitrate)}
+    ${VEDEL("Vývojár formátu MP3 Karlheinz Brandenburg testoval kompresiu na piesni Tom’s Diner od Suzanne Vega. Jej čistý hlas bol pre MP3 taký náročný, že pieseň počul stovky ráz.")}
     <h3>Úloha 1: roztrieď formáty</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>
     <h3>Úloha 2: vypočítaj</h3><div class="task">${taskHTML("fin")}</div>` + nextBar();
   },
@@ -699,7 +838,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

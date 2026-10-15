@@ -214,13 +214,58 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}
+.theory ul{margin:6px 0;padding-left:22px}
+.memo li{overflow-wrap:anywhere}
+.two>*{min-width:0}
+.q code,.iqq code{overflow-wrap:anywhere;word-break:break-all}
+.iqq>span{min-width:0}
+@media (max-width:640px){.upr-tree{font-size:12px!important}}
+
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Priečinok vytvoríš až vtedy, keď existuje jeho nadradený priečinok; cesta = priečinky oddelené znakom \\."], "priecinok": ["<b>Priečinok</b> (zložka) je miesto na disku pre súbory a ďalšie priečinky.", "<b>Koreňový priečinok</b> je najvyšší priečinok disku (C:\\). <b>Podpriečinok</b> je priečinok v inom priečinku."], "strom": ["Priečinky tvoria <b>stromovú štruktúru</b>: koreň → priečinky → súbory.", "<b>Cesta</b> k súboru je zoznam priečinkov oddelených \\, napr. C:\\Používatelia\\Jana\\Dokumenty\\referat.docx."], "upratovanie": ["Súbory triedime do priečinkov podľa obsahu, aby sme ich rýchlo našli.", "Priečinky pomenúvaj výstižne (Škola, Fotky, Hudba)."], "navigacia": ["Prieskumník otvoríš skratkou <b>Win + E</b>.", "Tlačidlo Hore ťa presunie do nadradeného priečinka, adresný riadok ukazuje celú cestu."], "operacie": ["<b>Kopírovať</b>: Ctrl + C, Ctrl + V (originál zostane). <b>Presunúť</b>: Ctrl + X, Ctrl + V.", "Premenovať: F2. Vymazať: Delete, súbor ide do Koša."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {
+  priecinok: ["<b>Priečinok</b> (zložka, adresár) je pomenované miesto na disku pre <b>súbory</b> a ďalšie <b>priečinky</b>.", "<b>Koreňový priečinok</b> je najvyšší priečinok disku, napr. C:\\.", "<b>Podpriečinok</b> je priečinok uložený v inom priečinku.", "<b>Nadradený priečinok</b> je priečinok, v ktorom je iný priečinok.", "Priečinok nemá príponu, jeho ikona je žltá zložka."],
+  strom: ["Priečinky tvoria <b>stromovú štruktúru</b>, strom hore nohami.", "<b>Koreň</b> = disk · <b>vetvy</b> = priečinky · <b>listy</b> = súbory.", "<b>Cesta</b> = disk a priečinky oddelené spätnou lomkou <b>\\</b>, na konci meno súboru.", "Príklad: C:\\Používatelia\\Peter\\Hudba\\pesnicka.mp3.", "Čím je položka v strome viac odsadená doprava, tým je hlbšie."],
+  upratovanie: ["Súbory triedime do priečinkov <b>podľa obsahu</b>, aby sme ich rýchlo našli.", "Priečinky pomenúvaj <b>výstižne</b> (Recepty, Výlety), nie Nový priečinok (2).", "Nový priečinok: pravé tlačidlo myši → Nový → Priečinok, alebo Ctrl + Shift + N.", "Strom nerob zbytočne hlboký, stačí niekoľko úrovní.", "Aj <b>Plocha</b> je priečinok, nenechávaj na nej neporiadok."],
+  navigacia: ["<b>Prieskumník</b> otvoríš skratkou <b>Win + E</b>.", "Vľavo je strom priečinkov, v strede obsah priečinka, hore <b>adresný riadok</b> s cestou.", "⬆ <b>Hore</b>: do nadradeného priečinka · ⬅ <b>Späť</b>: tam, kde si bol predtým.", "🔍 <b>Hľadať</b>: nájde súbor podľa mena."],
+  operacie: ["<b>Kopírovať</b>: Ctrl + C, potom Ctrl + V. Originál zostane, vznikne kópia.", "<b>Presunúť</b>: Ctrl + X, potom Ctrl + V. Súbor sa premiestni.", "<b>Premenovať</b>: F2 · <b>nový priečinok</b>: Ctrl + Shift + N.", "<b>Vymazať</b>: Delete, súbor ide do <b>Koša</b>.", "Ťahanie myšou: na tom istom disku sa súbor presunie, na iný disk skopíruje."],
+  precvic: ["Priečinok vytvoríš, iba ak už existuje jeho <b>nadradený priečinok</b>.", "Strom staviaš <b>zhora nadol</b>: najprv rodič, potom jeho podpriečinky.", "Cestu píšeš od Dokumentov a časti oddeľuješ znakom <b>\\</b>.", "Na presných názvoch záleží: Slovenčina nie je to isté ako Slovencina."]
+};
 /* Spoločné pomôcky na ilustrácie k teórii (Prima) */
 const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
 const PF = (() => {
@@ -246,7 +291,7 @@ const PF = (() => {
 /* Ilustrácie – Sekunda 1.3 Priečinky */
 const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#C2560C", AS = "#FBE3D2";
 const folder = (x, y, w, h, c, s) => `<path d="M${x} ${y + 8} q0 -8 8 -8 h${w * 0.32} l8 8 h${w * 0.68 - 16} q8 0 8 8 v${h - 16} q0 8 -8 8 h-${w - 16} q-8 0 -8 -8z" fill="${c}" stroke="${s}" stroke-width="1.5"/>`;
-const file = (x, y, t, e) => `<path d="M${x} ${y} h22 l8 8 v30 h-30z" fill="#fff" stroke="${C.mut}" stroke-width="1.5"/><text x="${x + 15}" y="${y + 26}" text-anchor="middle" font-size="13">${e}</text>${T(x + 15, y + 52, t, { a: "middle", fs: 9.5 })}`;
+const file = (x, y, t, e) => `<path d="M${x} ${y} h22 l8 8 v30 h-30z" fill="#fff" stroke="${C.mut}" stroke-width="1.5"/><text x="${x + 15}" y="${y + 26}" text-anchor="middle" font-size="13">${e}</text>${T(x + 15, y + 52, t, { a: "middle", fs: 10.5 })}`;
 return {
   vnorenie: fig(SV(440, 250, `
     ${box(6, 6, 428, 238, "#EEF1F5", "#9AA5B4", 14)}${T(20, 28, "💽 disk C:  (koreňový priečinok)", { fs: 12.5, b: 1 })}
@@ -273,14 +318,83 @@ return {
       ${ar(x + 96, 112, x + 112, 112, c, 2.5)}
       ${folder(x + 116, 70, 76, 60, "#FFE7A3", "#D9A520")}${T(x + 154, 88, "Záloha", { a: "middle", fs: 10.5, b: 1 })}${file(x + 139, 94, "", "📄")}
       ${T(x + 103, 168, copy ? "originál zostane" : "z pôvodného miesta zmizne", { a: "middle", fs: 11.5, b: 1, c })}${T(x + 103, 186, copy ? "a vznikne kópia" : "a objaví sa v novom", { a: "middle", fs: 11.5, b: 1, c })}${T(x + 103, 208, copy ? "súbor je 2-krát" : "súbor je 1-krát", { a: "middle", fs: 10.5, c: C.mut })}`).join("")}`, "Kopírovanie a presúvanie"),
-    "Pri <b>kopírovaní</b> originál zostane a vznikne kópia. Pri <b>presúvaní</b> súbor zmizne z pôvodného miesta.")
+    "Pri <b>kopírovaní</b> originál zostane a vznikne kópia. Pri <b>presúvaní</b> súbor zmizne z pôvodného miesta."),
+  vztahy: fig(SV(440, 250, `
+    ${T(220, 22, "Kto je komu nadradený", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["💽 D:\\  (koreň)", 20, 40, "#EEF1F5", "#9AA5B4"], ["📁 Filmy", 44, 96, "#FFE7A3", "#D9A520"], ["📁 Rozprávky", 68, 152, "#FFE7A3", "#D9A520"], ["🎬 mrazik.mp4", 92, 208, "#fff", "#9AA5B4"]].map(([t, x, y, f, st], i) => `${i ? `<path d="M${x - 12} ${y - 22} V${y + 17} H${x}" fill="none" stroke="#B9A89A" stroke-width="2.5"/>` : ""}${box(x, y, 132, 34, f, st, 8)}${T(x + 10, y + 22, t, { fs: 12, b: 1 })}`).join("")}
+    ${box(244, 40, 184, 202, AS, null, 10)}
+    ${T(256, 62, "⬆ nadradený priečinok", { fs: 12, b: 1, c: A })}${T(256, 80, "Filmy je nadradený", { fs: 11.5 })}${T(256, 96, "priečinku Rozprávky.", { fs: 11.5 })}
+    ${T(256, 128, "⬇ podpriečinok", { fs: 12, b: 1, c: A })}${T(256, 146, "Rozprávky je", { fs: 11.5 })}${T(256, 162, "podpriečinok Filmov.", { fs: 11.5 })}
+    ${T(256, 194, "💽 koreňový priečinok", { fs: 12, b: 1, c: A })}${T(256, 212, "D:\\ je najvyšší,", { fs: 11.5 })}${T(256, 228, "nad ním už nie je nič.", { fs: 11.5 })}`, "Nadradený priečinok a podpriečinok"),
+    "Priečinok, v ktorom niečo je, je <b>nadradený</b>. Priečinok vo vnútri je <b>podpriečinok</b>."),
+  strom1: fig(SV(440, 250, `
+    ${T(220, 22, "Strom hore nohami", { a: "middle", fs: 13, b: 1, c: A })}
+    ${T(6, 58, "koreň", { fs: 11, b: 1, c: C.mut })}${T(6, 126, "vetvy", { fs: 11, b: 1, c: C.mut })}${T(6, 194, "listy", { fs: 11, b: 1, c: C.mut })}
+    ${[[146, 94], [146, 188], [300, 296], [300, 390]].map(([bx, lx]) => `<line x1="${bx}" y1="138" x2="${lx}" y2="170" stroke="#7FB069" stroke-width="2.5"/>`).join("")}
+    <line x1="220" y1="70" x2="146" y2="104" stroke="#B88200" stroke-width="3"/><line x1="220" y1="70" x2="300" y2="104" stroke="#B88200" stroke-width="3"/>
+    ${box(155, 36, 130, 34, "#EEF1F5", "#9AA5B4", 8)}${T(220, 58, "💽 C:\\", { a: "middle", fs: 13, b: 1 })}
+    ${[[146, "📁 Hudba"], [300, "📁 Fotky"]].map(([x, t]) => `${box(x - 55, 104, 110, 34, "#FFE7A3", "#D9A520", 8)}${T(x, 126, t, { a: "middle", fs: 12, b: 1 })}`).join("")}
+    ${[[94, "🎵 rap.mp3"], [188, "🎵 pop.mp3"], [296, "🖼️ pes.jpg"], [390, "🖼️ more.png"]].map(([x, t]) => `<rect x="${x - 44}" y="170" width="88" height="32" rx="16" fill="#E6F4EE" stroke="#7FB069" stroke-width="1.5"/>${T(x, 191, t, { a: "middle", fs: 11 })}`).join("")}
+    ${box(14, 214, 412, 30, C.bg, null, 8)}${T(220, 234, "Koreň je hore, listy (súbory) sú na konci vetiev.", { a: "middle", fs: 11.5, b: 1 })}`, "Stromová štruktúra"),
+    "Disk je <b>koreň</b>, priečinky sú <b>vetvy</b> a súbory sú <b>listy</b>."),
+  cesta: fig(SV(440, 200, `
+    ${T(220, 22, "Ako čítať cestu k súboru", { a: "middle", fs: 13, b: 1, c: A })}
+    ${(() => { let x = 14, o = ""; const P = [["C:", "#EEF1F5", "#9AA5B4"], ["Používatelia", "#FFE7A3", "#D9A520"], ["Peter", "#FFE7A3", "#D9A520"], ["Hudba", "#FFE7A3", "#D9A520"], ["pesnicka.mp3", "#E6F4EE", "#7FB069"]], X = [];
+      P.forEach(([t, f, st], i) => { const w = t.length * 7.6 + 10; X.push([x, w]); o += box(x, 44, w, 34, f, st, 6) + T(x + w / 2, 66, t, { a: "middle", fs: 12, b: 1, mono: 1 }); x += w; if (i < 4) { o += T(x + 10, 67, "\\", { a: "middle", fs: 18, b: 1, c: C.bad, mono: 1 }); x += 20; } });
+      const [x1] = X[1], [x3, w3] = X[3];
+      o += T(X[0][0] + X[0][1] / 2, 98, "disk", { a: "middle", fs: 11, b: 1, c: C.mut }) + `<path d="M${x1} 86 v6 h${x3 + w3 - x1} v-6" fill="none" stroke="${C.mut}" stroke-width="1.5"/>` + T((x1 + x3 + w3) / 2, 110, "priečinky (od najvyššieho)", { a: "middle", fs: 11, b: 1, c: C.mut }) + T(X[4][0] + X[4][1] / 2, 98, "súbor", { a: "middle", fs: 11, b: 1, c: C.mut });
+      return o; })()}
+    ${box(14, 126, 412, 62, AS, null, 10)}${T(26, 150, "Spätná lomka \\ oddeľuje jednotlivé časti cesty.", { fs: 12, b: 1 })}${T(26, 172, "Cestu čítaš zľava: disk → priečinok → … → súbor.", { fs: 11.5 })}`, "Cesta k súboru"),
+    "<b>Cesta</b> povie, kde presne je súbor: disk, potom priečinky a na konci meno súboru."),
+  predpo: fig(SV(440, 240, `
+    ${box(10, 10, 200, 186, "#E8EEF6", "#9AA5B4", 10)}${T(110, 32, "PRED", { a: "middle", fs: 13, b: 1, c: C.bad })}
+    ${[["📄", 34, 66], ["🖼️", 92, 58], ["🎵", 156, 72], ["📕", 52, 112], ["🖼️", 120, 104], ["📄", 172, 126], ["🎵", 32, 162], ["📊", 98, 158], ["🖼️", 150, 178]].map(([e, x, y]) => `<text x="${x}" y="${y}" font-size="24" text-anchor="middle">${e}</text>`).join("")}
+    ${box(230, 10, 200, 186, "#E8EEF6", "#9AA5B4", 10)}${T(330, 32, "PO", { a: "middle", fs: 13, b: 1, c: C.ok })}
+    ${[["Recepty", 50], ["Výlety", 100], ["Hry", 150]].map(([t, y]) => `${box(246, y, 168, 40, "#fff", "#D9A520", 8)}<text x="266" y="${y + 29}" font-size="22" text-anchor="middle">📁</text>${T(286, y + 26, t, { fs: 13, b: 1 })}`).join("")}
+    ${T(110, 220, "❌ nič nenájdeš", { a: "middle", fs: 12, b: 1, c: C.bad })}${T(330, 220, "✅ všetko má svoje miesto", { a: "middle", fs: 12, b: 1, c: C.ok })}`, "Plocha pred a po upratovaní"),
+    "Keď súbory roztriediš do priečinkov <b>podľa obsahu</b>, nájdeš ich za pár sekúnd."),
+  mena: fig(SV(440, 210, `
+    ${T(220, 22, "Ako pomenovať priečinok", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(10, 38, 204, 160, C.badS, C.bad, 10)}${T(112, 60, "❌ zlé názvy", { a: "middle", fs: 12.5, b: 1, c: C.bad })}
+    ${["Nový priečinok (2)", "asdf", "veci", "fotky_final_FINAL"].map((t, i) => T(26, 90 + i * 28, "📁 " + t, { fs: 12 })).join("")}
+    ${box(226, 38, 204, 160, C.okS, C.ok, 10)}${T(328, 60, "✅ dobré názvy", { a: "middle", fs: 12.5, b: 1, c: C.ok })}
+    ${["Recepty", "Výlety 2026", "Biológia", "Hry"].map((t, i) => T(242, 90 + i * 28, "📁 " + t, { fs: 12 })).join("")}`, "Názvy priečinkov"),
+    "Názov priečinka má <b>povedať, čo je vo vnútri</b>, aby si to vedel aj o rok."),
+  hore: fig(SV(440, 230, `
+    ${T(220, 22, "Hore, alebo Späť?", { a: "middle", fs: 13, b: 1, c: A })}
+    ${T(220, 44, "Bol si v Obrázkoch, potom si otvoril Dokumenty › Projekty.", { a: "middle", fs: 11.5, c: C.mut })}
+    ${box(120, 56, 200, 44, AS, A, 10)}${T(220, 76, "📂 Dokumenty › Projekty", { a: "middle", fs: 12, b: 1 })}${T(220, 92, "tu si teraz", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(170, 104, 100, 146, C.blue, 2.5)}${ar(270, 104, 340, 146, C.ok, 2.5)}
+    ${T(112, 124, "⬅ Späť", { a: "end", fs: 12, b: 1, c: C.blue })}${T(330, 124, "⬆ Hore", { fs: 12, b: 1, c: C.ok })}
+    ${box(14, 150, 190, 66, C.blueS, C.blue, 10)}${T(109, 174, "📁 Obrázky", { a: "middle", fs: 12.5, b: 1 })}${T(109, 196, "kde si bol predtým", { a: "middle", fs: 11, c: C.mut })}
+    ${box(236, 150, 190, 66, C.okS, C.ok, 10)}${T(331, 174, "📁 Dokumenty", { a: "middle", fs: 12.5, b: 1 })}${T(331, 196, "nadradený priečinok", { a: "middle", fs: 11, c: C.mut })}`, "Tlačidlá Hore a Späť"),
+    "<b>Späť</b> ťa vráti tam, kde si bol. <b>Hore</b> ťa vždy posunie o jednu úroveň vyššie v strome."),
+  tahaj: fig(SV(440, 220, `
+    ${T(220, 22, "Ťahanie súboru myšou", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["🖱️ na ten istý disk", "C: → C:", "súbor sa PRESUNIE", A, AS], ["🖱️ na iný disk", "C: → USB kľúč", "súbor sa SKOPÍRUJE", C.ok, C.okS], ["🖱️ + držíš Ctrl", "kamkoľvek", "súbor sa SKOPÍRUJE", C.ok, C.okS]].map(([a, b, c, col, bg], i) => { const y = 38 + i * 58; return `${box(14, y, 412, 50, bg, col, 10)}${T(28, y + 22, a, { fs: 12.5, b: 1 })}${T(28, y + 40, b, { fs: 11, c: C.mut, mono: 1 })}${T(412, y + 31, c, { a: "end", fs: 12, b: 1, c: col })}`; }).join("")}`, "Ťahanie myšou"),
+    "Pri ťahaní myšou záleží na tom, <b>kam</b> súbor pustíš. S klávesom <b>Ctrl</b> vždy vznikne kópia."),
+  kos: fig(SV(440, 220, `
+    ${T(220, 22, "Cesta súboru do Koša", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 44, 110, 70, "#fff", C.line, 10)}${T(69, 76, "📄", { a: "middle", fs: 22 })}${T(69, 100, "kreslenie.png", { a: "middle", fs: 10.5 })}
+    ${ar(128, 79, 168, 79, C.bad, 2.5)}${T(148, 70, "Delete", { a: "middle", fs: 10.5, b: 1, c: C.bad })}
+    ${box(174, 44, 110, 70, C.ambS, C.amb, 10)}${T(229, 78, "🗑️", { a: "middle", fs: 24 })}${T(229, 102, "Kôš", { a: "middle", fs: 12, b: 1 })}
+    ${ar(288, 66, 324, 54, C.ok, 2.5)}${ar(288, 92, 324, 106, C.bad, 2.5)}
+    ${box(328, 34, 100, 38, C.okS, C.ok, 8)}${T(378, 57, "↩ Obnoviť", { a: "middle", fs: 11.5, b: 1, c: C.ok })}
+    ${box(328, 90, 100, 38, C.badS, C.bad, 8)}${T(378, 107, "Vyprázdniť", { a: "middle", fs: 11, b: 1, c: C.bad })}${T(378, 121, "= navždy preč", { a: "middle", fs: 10.5, c: C.bad })}
+    ${box(14, 146, 412, 62, C.bg, null, 10)}${T(26, 170, "Shift + Delete vymaže súbor hneď, bez Koša.", { fs: 12, b: 1 })}${T(26, 192, "Súbory z USB kľúča sa do Koša nedostanú.", { fs: 11.5, c: C.mut })}`, "Kôš"),
+    "Vymazaný súbor najprv putuje do <b>Koša</b>. Kým Kôš nevyprázdniš, dá sa <b>obnoviť</b>."),
+  stavba: fig(SV(440, 220, `
+    ${T(220, 22, "Strom staviaš zhora nadol", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["1", "Dokumenty\\Výlety", "✅ vytvorené", C.ok, C.okS], ["2", "Dokumenty\\Výlety\\Tatry", "✅ vytvorené", C.ok, C.okS], ["3", "Dokumenty\\Hory\\Roháče", "❌ Hory neexistuje", C.bad, C.badS]].map(([n, t, r, col, bg], i) => { const y = 40 + i * 48; return `${box(14, y, 412, 40, bg, col, 8)}${PF.num(34, y + 20, n, col)}${T(54, y + 25, t, { fs: 12, mono: 1, b: 1 })}${T(414, y + 25, r, { a: "end", fs: 11.5, b: 1, c: col })}`; }).join("")}
+    ${box(14, 186, 412, 28, AS, null, 8)}${T(220, 205, "Najprv musí existovať rodič, až potom jeho podpriečinok.", { a: "middle", fs: 11.5, b: 1 })}`, "Stavba stromu"),
+    "Podpriečinok vytvoríš iba v priečinku, ktorý <b>už existuje</b>.")
 }; })();
 
 const KEY = "priecinky-s13-v1";
 const LESSON = "1.3 Zložka (priečinok), stromová štruktúra";
 const BRAND = "1.3 Priečinky a strom";
 const CLASS_DEFAULT = "Sekunda";
-const WIDE = { strom: 1, upratovanie: 1 };
+const WIDE = { priecinok: 1, strom: 1, upratovanie: 1, navigacia: 1, operacie: 1, precvic: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "priecinok", title: "Priečinok", min: 5 },
@@ -392,15 +506,32 @@ const VIEWS = {
   priecinok() {
     return head() + `<h2>Priečinok (zložka)</h2>
     ${guessBox()}
-    <div class="two"><div><p><b>Priečinok</b> (zložka, adresár) je pomenované miesto na disku, do ktorého ukladáme <b>súbory</b> a ďalšie <b>priečinky</b>. Funguje ako šanón alebo šuplík: do šuplíka môžeš dať krabičky a do krabičiek ďalšie veci.</p>
-      <ul style="padding-left:20px"><li><b>Koreňový priečinok</b>: najvyšší priečinok disku, napríklad <code>C:\\</code></li><li><b>Podpriečinok</b>: priečinok v inom priečinku</li><li><b>Nadradený priečinok</b>: priečinok, v ktorom je iný priečinok</li></ul></div>
-      <div class="box" style="margin:0"><p>📁 ➜ 📁 ➜ 📁 ➜ 📄<br>disk ➜ priečinok ➜ podpriečinok ➜ súbor<br><br>Priečinok sám nemá príponu. Ikona je žltá zložka.</p></div></div>
-    ${tfigs(TFIG.vnorenie, TFIG.sanon)}
+    <div class="theory tsplit"><div>
+      <p><b>Priečinok</b> (zložka, adresár) je pomenované miesto na disku, do ktorého ukladáme <b>súbory</b> a ďalšie <b>priečinky</b>.</p>
+      <p>Funguje ako šanón alebo šuplík: do šuplíka môžeš dať krabičky a do krabičiek ďalšie veci.</p>
+      <table class="rtab"><thead><tr><th>Pojem</th><th>Čo znamená</th></tr></thead><tbody>
+        <tr><td><b>Koreňový priečinok</b></td><td>najvyšší priečinok disku, napríklad <code>C:\\</code></td></tr>
+        <tr><td><b>Podpriečinok</b></td><td>priečinok v inom priečinku</td></tr>
+        <tr><td><b>Nadradený priečinok</b></td><td>priečinok, v ktorom je iný priečinok</td></tr></tbody></table>
+      <p>Priečinok sám <b>nemá príponu</b>. Jeho ikona je žltá zložka 📁.</p>
+    </div><div>${TFIG.vnorenie}</div></div>
+    ${ltfigs(TFIG.sanon, TFIG.vztahy)}
+    ${VEDEL("Do jedného priečinka sa vo Windows zmestí viac ako <b>4 miliardy</b> súborov. V takom priečinku by si sa však nikdy nevyznal, preto ich radšej triedime.")}
     <h3>Úloha: otázky</h3><div class="task">${taskHTML("prq")}</div>` + nextBar();
   },
   strom() {
     return head() + `<h2>Stromová štruktúra</h2>
-    <p>Priečinky tvoria <b>strom</b> otočený hore nohami: navrchu je <b>koreň</b> (disk), z neho vyrastajú <b>vetvy</b> (priečinky) a na konci sú <b>listy</b> (súbory). Cestu k súboru zapíšeme ako zoznam priečinkov oddelených spätnou lomkou <code>\\</code>.</p>
+    <div class="theory tsplit"><div>
+      <p>Priečinky tvoria <b>strom</b> otočený hore nohami. Navrchu je koreň, pod ním sa strom rozvetvuje.</p>
+      <table class="rtab"><thead><tr><th>Časť stromu</th><th>V počítači</th></tr></thead><tbody>
+        <tr><td><b>koreň</b></td><td>disk, napríklad <code>C:\\</code></td></tr>
+        <tr><td><b>vetvy</b></td><td>priečinky a podpriečinky</td></tr>
+        <tr><td><b>listy</b></td><td>súbory</td></tr></tbody></table>
+      <p><b>Cestu</b> k súboru zapíšeme ako zoznam priečinkov oddelených spätnou lomkou <code>\\</code>. Na konci cesty je meno súboru.</p>
+    </div><div>${TFIG.strom1}</div></div>
+    ${ltfigs(TFIG.cesta)}
+    ${VEDEL("Prečo sa hlavný disk volá práve <b>C:</b>? Písmená A: a B: patrili kedysi disketovým mechanikám. Prvý pevný disk preto dostal až písmeno C: a zostalo to tak dodnes.")}
+    <h3>Klikni na strom</h3>
     <div class="two"><div class="tree">${treeSVG()}</div><div><div class="task" style="margin:0"><p style="margin:0 0 6px"><b>Klikni na priečinok alebo súbor v strome</b> a uvidíš jeho cestu:</p><div class="pathbar">${S.tsel ? esc(tpath(S.tsel)) : "…"}</div></div><div class="box v"><p>Čím je položka viac odsadená doprava, tým je hlbšie v strome. Čiara ukazuje, v ktorom priečinku je.</p></div></div></div>
     <h3>Úloha: čítaj strom</h3><p>Pri písaní ceste nezáleží na veľkých písmenách ani na diakritike.</p><div class="task">${taskHTML("stin")}</div>
     <h3>Úloha 2: cesta</h3><div class="task">${taskHTML("cin")}</div>` + nextBar();
@@ -408,8 +539,17 @@ const VIEWS = {
   upratovanie() {
     const g = uprGoals(), G = (ok, t) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`;
     return head() + `<h2>Upratovanie plochy</h2>
-    <p>Na ploche je neporiadok. Vytvor priečinky a presuň súbory tak, aby vznikla takáto štruktúra:</p>
-    <div class="two"><div class="task" style="margin:0;font-family:var(--mono);white-space:pre;font-size:14.5px;line-height:1.7">🖥️ Plocha
+    <div class="theory tsplit"><div>
+      <p>Keď sú všetky súbory na jednom mieste, nič nenájdeš. Preto súbory triedime do priečinkov <b>podľa obsahu</b>: fotky k fotkám, hudbu k hudbe.</p>
+      <table class="rtab"><thead><tr><th>Rada</th><th>Prečo</th></tr></thead><tbody>
+        <tr><td>pomenúvaj priečinky <b>výstižne</b></td><td>aj o rok budeš vedieť, čo je vo vnútri</td></tr>
+        <tr><td>nerob strom <b>príliš hlboký</b></td><td>stačí niekoľko úrovní, inak sa preklikávaš dlho</td></tr>
+        <tr><td><b>nový priečinok</b>: pravé tlačidlo → Nový → Priečinok</td><td>alebo skratka Ctrl + Shift + N</td></tr></tbody></table>
+    </div><div>${TFIG.predpo}</div></div>
+    ${ltfigs(TFIG.mena)}
+    ${VEDEL("Aj <b>Plocha</b> je obyčajný priečinok. Nájdeš ho na ceste <code>C:\\Používatelia\\meno\\Plocha</code>.")}
+    <h3>Úloha: uprac plochu</h3><p>Na ploche je neporiadok. Vytvor priečinky a presuň súbory tak, aby vznikla takáto štruktúra:</p>
+    <div class="two"><div class="task upr-tree" style="margin:0;font-family:var(--mono);white-space:pre;font-size:14.5px;line-height:1.7;overflow-x:auto">🖥️ Plocha
 ├─ 📁 Škola
 │  ├─ 📁 Matematika   (zlomky, rovnice)
 │  └─ 📁 Informatika  (python, prezentácia)
@@ -423,21 +563,38 @@ const VIEWS = {
   },
   navigacia() {
     return head() + `<h2>Navigácia v Prieskumníkovi</h2>
-    <p>V <b>Prieskumníkovi</b> (Win + E) sa pohybuješ po strome priečinkov. Vľavo vidíš strom, v strede obsah priečinka, hore adresný riadok s cestou.</p>
-    <div class="keys"><div class="key">⬅ <b>Späť</b>: kde si bol predtým</div><div class="key">⬆ <b>Hore</b>: do nadradeného priečinka</div><div class="key">📍 <b>Adresný riadok</b>: celá cesta</div><div class="key">🔍 <b>Hľadať</b>: nájde súbor podľa mena</div></div>
-    ${tfigs(TFIG.pries)}
+    <div class="theory tsplit"><div>
+      <p>V <b>Prieskumníkovi</b> (Win + E) sa pohybuješ po strome priečinkov. Vľavo vidíš strom, v strede obsah priečinka, hore adresný riadok s cestou.</p>
+      <table class="rtab"><thead><tr><th>Ovládanie</th><th>Čo urobí</th></tr></thead><tbody>
+        <tr><td>⬅ <b>Späť</b></td><td>vráti ťa tam, kde si bol predtým</td></tr>
+        <tr><td>⬆ <b>Hore</b></td><td>presunie ťa do nadradeného priečinka</td></tr>
+        <tr><td>📍 <b>Adresný riadok</b></td><td>ukazuje celú cestu k priečinku</td></tr>
+        <tr><td>🔍 <b>Hľadať</b></td><td>nájde súbor podľa mena</td></tr></tbody></table>
+    </div><div>${TFIG.pries}</div></div>
+    ${ltfigs(TFIG.hore)}
+    ${VEDEL("Písmeno <b>E</b> v skratke Win + E pochádza z anglického názvu Prieskumníka: <i>File Explorer</i>.")}
     <h3>Úloha 1: zlož cestu k fotke</h3><p>Súbor <b>more.jpg</b> je v priečinku Leto, ktorý je v Obrázkoch používateľky Jana. Zoraď časti cesty.</p><div class="task">${taskHTML("cesta")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("navq")}</div>` + nextBar();
   },
   operacie() {
     return head() + `<h2>Kopírovať, presúvať, premenovať, mazať</h2>
-    <div class="keys"><div class="key"><kbd>Ctrl</kbd><kbd>C</kbd> kopírovať</div><div class="key"><kbd>Ctrl</kbd><kbd>X</kbd> vystrihnúť</div><div class="key"><kbd>Ctrl</kbd><kbd>V</kbd> vložiť</div><div class="key"><kbd>F2</kbd> premenovať</div><div class="key"><kbd>Delete</kbd> vymazať do Koša</div><div class="key"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>N</kbd> nový priečinok</div></div>
-    <div class="two"><div class="box v" style="margin:0"><p><b>📋 Kopírovať</b> = Ctrl + C a Ctrl + V. Originál zostane, vznikne kópia.</p></div><div class="box" style="margin:0"><p><b>✂️ Presunúť</b> = Ctrl + X a Ctrl + V. Súbor zmizne z pôvodného miesta a objaví sa v novom.</p></div></div>
-    ${tfigs(TFIG.kopia)}
+    <div class="theory tsplit"><div>
+      <p><b>📋 Kopírovať</b> znamená, že originál zostane a vznikne kópia. <b>✂️ Presunúť</b> znamená, že súbor zmizne z pôvodného miesta a objaví sa v novom.</p>
+      <table class="rtab num"><thead><tr><th>Skratka</th><th>Čo urobí</th></tr></thead><tbody>
+        <tr><td>Ctrl + C</td><td><b>kopírovať</b></td></tr>
+        <tr><td>Ctrl + X</td><td><b>vystrihnúť</b> (na presun)</td></tr>
+        <tr><td>Ctrl + V</td><td><b>vložiť</b></td></tr>
+        <tr><td>F2</td><td><b>premenovať</b></td></tr>
+        <tr><td>Delete</td><td><b>vymazať</b> do Koša</td></tr>
+        <tr><td>Ctrl + Shift + N</td><td><b>nový priečinok</b></td></tr></tbody></table>
+    </div><div>${TFIG.kopia}</div></div>
+    ${S.t.opq ? ltfigs(TFIG.tahaj, TFIG.kos) : ltfigs(TFIG.tahaj)}
+    ${VEDEL("Kopírovanie a vkladanie vymyslel v 70. rokoch počítačový vedec <b>Larry Tesler</b>. Klávesy C, X a V sú na klávesnici vedľa seba pri klávese Ctrl, takže ich stlačíš jednou rukou.")}
     <h3>Úloha: otázky</h3><div class="task">${taskHTML("opq")}</div>` + nextBar();
   },
   precvic() { return head() + `<h2>Precvičovanie: postav strom</h2>
-    <div class="theory"><p>Vytvor v priečinku <b>Dokumenty</b> túto štruktúru. Priečinok vytvoríš tak, že napíšeš jeho <b>cestu</b> od Dokumentov, časti oddelíš znakom <code>\\</code>, napríklad <code>Dokumenty\\Škola</code>. Podpriečinok sa dá vytvoriť, až keď existuje jeho nadradený priečinok.</p>
+    <div class="theory tsplit"><div><p>Vytvor v priečinku <b>Dokumenty</b> túto štruktúru. Priečinok vytvoríš tak, že napíšeš jeho <b>cestu</b> od Dokumentov, časti oddelíš znakom <code>\\</code>, napríklad <code>Dokumenty\\Škola</code>.</p>
+    <p>Podpriečinok sa dá vytvoriť, až keď existuje jeho <b>nadradený priečinok</b>. Strom preto staviaš zhora nadol.</p>
     <pre style="background:var(--surface2);padding:10px;border-radius:10px">Dokumenty
 ├── Škola
 │   ├── Matematika
@@ -445,7 +602,9 @@ const VIEWS = {
 │   └── Informatika
 │       └── Projekty
 └── Záľuby
-    └── Futbal</pre></div>
+    └── Futbal</pre></div><div>${TFIG.stavba}</div></div>
+    ${ltfigs(TFIG.cesta)}
+    ${VEDEL("Celá cesta k súboru mohla vo Windows dlho mať najviac <b>260 znakov</b>. Príliš hlboký strom s dlhými názvami preto robil problémy.")}
     ${treeHTML()}` + nextBar(); },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
@@ -648,7 +807,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
