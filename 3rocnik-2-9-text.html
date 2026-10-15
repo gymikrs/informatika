@@ -224,13 +224,44 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .fp{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}
 .fp label{font-weight:600;font-size:14px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Kde: x, y, anchor. Čo: text, \\n, str(). Ako: font, fill. Text kresli nakoniec.", "Stred obdĺžnika = ((x1 + x2) / 2, (y1 + y2) / 2). Zoznamy zarovnávaj anchor='w'."], "text": ["canvas.create_text(x, y, text='…', font=('Arial', 24, 'bold'), fill='navy'); nový riadok \\n."], "anchor": ["anchor určuje, ktorý bod textu je v (x, y): n, s, w, e, nw, ne, sw, se, center (predvolený).", "Zoznamy zarovnané vľavo: anchor='w' a rovnaké x."], "projekty": ["Pozadie a tvary najprv, text navrch; kontrast, čitateľná veľkosť, najviac 2–3 písma."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"text": ["Text do plochy: <code>canvas.create_text(x, y, text='…')</code>.", "<b>text</b> = čo sa napíše (reťazec alebo číslo). <b>Nový riadok</b> vložíš znakmi <code>\\n</code>.", "<b>font</b> = trojica (písmo, veľkosť, rez), napr. <code>('Arial', 24, 'bold')</code>.", "Rezy: <b>'bold'</b> tučné, <b>'italic'</b> kurzíva, <b>'underline'</b> podčiarknuté; dajú sa kombinovať.", "<b>fill</b> = farba textu.", "<b>anchor</b> = ktorým bodom je text ukotvený v (x, y)."], "anchor": ["<b>anchor</b> určuje, ktorý bod textu leží v bode (x, y).", "Hodnoty sú svetové strany: <code>'n'</code> hore v strede, <code>'s'</code> dole, <code>'w'</code> vľavo, <code>'e'</code> vpravo.", "Rohy: <code>'nw'</code>, <code>'ne'</code>, <code>'sw'</code>, <code>'se'</code>. Predvolené je <code>'center'</code>.", "Pri tom istom (x, y) a inom anchor sa text <b>posunie</b> okolo bodu.", "<b>Zoznamy a tabuľky</b>: rovnaké x a <code>anchor='w'</code>, všetky riadky začínajú pod sebou."], "projekty": ["Najprv <b>pozadie</b> (bg) a <b>tvary</b>, nakoniec <b>text</b> navrch.", "Text nakreslený skôr ako tvar s výplňou sa pod tvarom <b>stratí</b>.", "<b>Kontrast</b>: tmavý text na svetlom pozadí alebo svetlý na tmavom.", "<b>Veľkosť</b> písma primeraná: nadpis väčší, ostatné riadky menšie.", "Najviac <b>2 – 3 písma</b> na jeden návrh."], "precvic": ["<b>Kde</b> je text: x, y a ukotvenie <b>anchor</b>.", "<b>Čo</b> obsahuje: text, nový riadok <code>\\n</code>, čísla prevedené funkciou <code>str()</code>.", "<b>Ako</b> vyzerá: <b>font</b> (písmo, veľkosť, bold, italic) a <b>fill</b> (farba).", "<b>Či ho vidno</b>: text kresli až po tvaroch.", "<b>Stred obdĺžnika</b>: ((x1 + x2) / 2, (y1 + y2) / 2).", "<b>Zoznam</b>: rovnaké x, <code>anchor='w'</code> a y rastie o rovnaký krok."]};
 /* ---------- mini tkinter.Canvas interpreter (subset of Python) ---------- */
 const TKCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
 function tkColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (TKCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
@@ -399,7 +430,7 @@ const KEY = "text-r29-v1";
 const LESSON = "2.9 Písanie textu do grafickej plochy";
 const BRAND = "2.9 Text v grafickej ploche";
 const CLASS_DEFAULT = "III.";
-const WIDE = { text: 1, anchor: 1, projekty: 1 };
+const WIDE = { text: 1, anchor: 1, projekty: 1, precvic: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "text", title: "create_text a písmo", min: 12 },
@@ -434,7 +465,7 @@ const has = (env, t, pts, f) => env.shapes.some(s => s.t === t && s.pts.length =
 function CUSTOM_CLICK(e) {
   if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return tkClick(e); }
 function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; return tkInput(e); }
+  if (selInput(e)) return true; if (axInput(e.target)) return true; return tkInput(e); }
 const CH = {
   c_txt: [
     { n: "A", t: "Napíš do stredu plochy (200, 150) text <b>Ahoj, svet!</b>", ref: PRE + "canvas.create_text(200, 150, text='Ahoj, svet!')", ok: e => T(e, s => s.text === "Ahoj, svet!" && Math.abs(s.pts[0] - 200) <= 3 && Math.abs(s.pts[1] - 150) <= 3) || "Text 'Ahoj, svet!' v bode (200, 150) nevidím. Skontroluj aj čiarku a výkričník." },
@@ -483,29 +514,171 @@ const TASKS = {
     { id: "5", ...Q("anchor='e' zarovná text:", ["tak, že jeho pravý okraj je v bode (x, y)", "na stred", "hore", "doľava"], 0) }
   ]}
 };
+/* ---------- LENKA: obrázky k teórii ---------- */
+/* ---------- LENKA: obrázky k teórii ---------- */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#0E7A5C", accS: "#D5EEE5", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, C.ink].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-Fa-f]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  return { C, fig, SV, ar, T, box, num };
+})();
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num } = PF; const A = C.acc, AS = C.accS;
+const M = (x, y, s, o = {}) => T(x, y, s, Object.assign({ mono: 1 }, o));
+const dot = (x, y, c, r) => `<circle cx="${x}" cy="${y}" r="${r || 4}" fill="${c || C.bad}"/>`;
+const R = (x1, y1, x2, y2, f, s, w, ex) => `<rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" fill="${f || "none"}"${s === "" ? "" : ` stroke="${s || C.ink}" stroke-width="${w || 2}"`}${ex || ""}/>`;
+const O = (x1, y1, x2, y2, f, s, w, ex) => `<ellipse cx="${(x1 + x2) / 2}" cy="${(y1 + y2) / 2}" rx="${(x2 - x1) / 2}" ry="${(y2 - y1) / 2}" fill="${f || "none"}"${s === "" ? "" : ` stroke="${s || C.ink}" stroke-width="${w || 2}"`}${ex || ""}/>`;
+const DS = ` stroke-dasharray="5 4"`;
+const grid = (x, y, w, h, s) => { let g = ""; for (let i = s; i < w; i += s) g += `<line x1="${x + i}" y1="${y}" x2="${x + i}" y2="${y + h}" stroke="#E6EEF0"/>`; for (let j = s; j < h; j += s) g += `<line x1="${x}" y1="${y + j}" x2="${x + w}" y2="${y + j}" stroke="#E6EEF0"/>`; return g; };
+const dark = (x, y, w, h) => box(x, y, w, h, "#0F1A2E", null, 6);
+const cl = (x, y, s, fs) => `<text x="${x}" y="${y}" font-size="${fs || 11.5}" font-family="Consolas,monospace" fill="#DCE7FF" xml:space="preserve">${s}</text>`;
+const H = (s) => T(220, 20, s, { a: "middle", fs: 13.5, b: 1, c: A });
+const TX = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 18}" font-family="${o.ff || "Arial,sans-serif"}"${o.it ? ` font-style="italic"` : ""}${o.b ? ` font-weight="700"` : ""}${o.u ? ` text-decoration="underline"` : ""} fill="${o.c || C.ink}" text-anchor="${o.a || "middle"}" dominant-baseline="${o.db || "central"}">${s}</text>`;
+const cross = (x, y, w, h) => `<line x1="${x - w}" y1="${y}" x2="${x + w}" y2="${y}" stroke="${C.bad}" stroke-width="1" stroke-dasharray="3 3"/><line x1="${x}" y1="${y - h}" x2="${x}" y2="${y + h}" stroke="${C.bad}" stroke-width="1" stroke-dasharray="3 3"/>`;
+return {
+  anatomia: fig(SV(440, 250, `
+    ${H("Čo všetko nastavíš pri texte")}
+    ${box(14, 32, 412, 104, "#fff", C.line, 8)}${cross(220, 82, 150, 40)}
+    ${TX(220, 82, "Pekný deň", { fs: 30, ff: "Georgia,serif", it: 1, c: "#1F2F7A" })}${dot(220, 82, C.bad, 4)}
+    ${T(424 - 8, 128, "bod (x, y) = stred textu", { a: "end", fs: 11, b: 1, c: C.bad })}
+    ${[["text", "'Pekný deň'", "čo sa napíše (aj číslo)"], ["font", "('Georgia', 26, 'italic')", "písmo, veľkosť, rez"], ["fill", "'navy'", "farba textu"]].map(([p, v, d], i) => { const y = 146 + i * 34; return `${box(14, y, 412, 28, i % 2 ? AS : C.bg, null, 6)}${M(24, y + 19, p, { fs: 12, b: 1, c: A })}${M(70, y + 19, v, { fs: 11 })}${T(416, y + 19, d, { a: "end", fs: 11, c: C.mut })}`; }).join("")}`, "Parametre príkazu create_text"),
+    "Bod <b>(x, y)</b> je predvolene <b>stred</b> textu. Vzhľad menia <b>font</b> a <b>fill</b>."),
+  font: fig(SV(440, 236, `
+    ${H("Trojica font = (písmo, veľkosť, rez)")}
+    ${box(14, 32, 412, 74, C.bg, null, 8)}
+    ${M(60, 62, "(", { fs: 17, b: 1 })}${M(72, 62, "'Verdana'", { fs: 17, b: 1, c: C.blue })}${M(172, 62, ",", { fs: 17, b: 1 })}${M(190, 62, "16", { fs: 17, b: 1, c: C.amb })}${M(212, 62, ",", { fs: 17, b: 1 })}${M(230, 62, "'italic'", { fs: 17, b: 1, c: C.bad })}${M(318, 62, ")", { fs: 17, b: 1 })}
+    ${T(118, 92, "písmo", { a: "middle", fs: 11.5, b: 1, c: C.blue })}${T(200, 92, "veľkosť", { a: "middle", fs: 11.5, b: 1, c: C.amb })}${T(274, 92, "rez", { a: "middle", fs: 11.5, b: 1, c: C.bad })}
+    ${[["'bold'", { b: 1 }], ["'italic'", { it: 1 }], ["'underline'", { u: 1 }], ["'bold italic'", { b: 1, it: 1 }]].map(([n, o], i) => { const x = 14 + i * 104; return `${box(x, 118, 98, 92, i % 2 ? AS : "#fff", C.line, 8)}${TX(x + 49, 154, "Abc", Object.assign({ fs: 22 }, o))}${M(x + 49, 196, n, { a: "middle", fs: 11, c: A })}`; }).join("")}
+    ${T(220, 228, "Rezy sa dajú kombinovať v jednom reťazci.", { a: "middle", fs: 11 })}`, "Trojica font"),
+    "Písmo, <b>veľkosť</b> a <b>rez</b> zapíšeme do zátvorky ako trojicu."),
+  riadky: fig(SV(440, 200, `
+    ${H("Nový riadok: \\n")}
+    ${dark(14, 34, 200, 126)}${cl(24, 64, "canvas.create_text(", 11)}${cl(24, 86, "  110, 60,", 11)}<text x="24" y="108" font-size="11" font-family="Consolas,monospace" fill="#DCE7FF" xml:space="preserve">  text='Rimavská<tspan fill="#FFC857" font-weight="700">\\n</tspan>Sobota')</text>
+    ${ar(218, 97, 238, 97, A, 2)}
+    ${box(242, 34, 184, 126, "#fff", C.line, 8)}${TX(334, 84, "Rimavská", { fs: 20 })}${TX(334, 110, "Sobota", { fs: 20 })}
+    ${T(220, 186, "Znaky \\n v reťazci zalomia text na ďalší riadok.", { a: "middle", fs: 11.5, b: 1 })}`, "Nový riadok"),
+    "Dvojica znakov <b>\\n</b> v reťazci znamená <b>nový riadok</b>."),
+  kotvy: fig(SV(440, 250, `
+    ${H("anchor: ktorý bod textu je v (x, y)")}
+    ${R(120, 70, 320, 180, "#EEF2F8", "#99A3B8", 1.5)}${TX(220, 112, "Text", { fs: 34, b: 1, c: "#8A93AB" })}
+    ${[["nw", 120, 70], ["n", 220, 70], ["ne", 320, 70], ["w", 120, 125], ["center", 220, 125], ["e", 320, 125], ["sw", 120, 180], ["s", 220, 180], ["se", 320, 180]].map(([k, x, y]) => { const c = k === "center"; const lx = x === 120 ? x - 10 : x === 320 ? x + 10 : x, ly = c ? y + 32 : y === 70 ? y - 10 : y === 180 ? y + 20 : y + 4, a = x === 120 ? "end" : x === 320 ? "start" : "middle"; return `${dot(x, y, C.bad, 5)}${M(lx, ly, "'" + k + "'", { a, fs: 12, b: 1, c: c ? A : C.bad })}`; }).join("")}
+    ${T(220, 238, "Predvolené je 'center' – v bode (x, y) je stred textu.", { a: "middle", fs: 11.5 })}`, "Ukotvenie textu"),
+    "Hodnoty <b>anchor</b> sú svetové strany a rohy obdĺžnika okolo textu."),
+  bod: fig(SV(440, 232, `
+    ${H("Ten istý bod, iné ukotvenie")}
+    ${[["nw", "start", 14], ["center", "middle", 0], ["se", "end", -14]].map(([k, a, dy], i) => { const y = 34 + i * 64, cy = y + 30; return `${box(14, y, 412, 56, i % 2 ? AS : C.bg, null, 8)}${M(24, cy + 4, "anchor='" + k + "'", { fs: 12, b: 1, c: A })}${cross(290, cy, 110, 24)}${TX(a === "start" ? 292 : a === "end" ? 288 : 290, cy, "Gymnázium", { fs: 18, a, db: k === "center" ? "central" : k === "nw" ? "hanging" : "text-after-edge" })}${dot(290, cy, C.bad, 4)}`; }).join("")}`, "Ten istý bod, iné ukotvenie"),
+    "Červený bod sa nehýbe. Podľa <b>anchor</b> sa text posunie okolo neho."),
+  zoznam: fig(SV(440, 222, `
+    ${H("Zoznam pod sebou")}
+    ${box(14, 32, 200, 150, C.badS, null, 10)}<line x1="114" y1="44" x2="114" y2="172" stroke="${C.bad}" stroke-dasharray="3 3"/>${["Pondelok", "Utorok", "Streda", "Štvrtok"].map((d, i) => TX(114, 64 + i * 30, d, { fs: 16 })).join("")}
+    ${box(226, 32, 200, 150, AS, null, 10)}<line x1="260" y1="44" x2="260" y2="172" stroke="${A}" stroke-dasharray="3 3"/>${["Pondelok", "Utorok", "Streda", "Štvrtok"].map((d, i) => `${TX(260, 64 + i * 30, d, { fs: 16, a: "start" })}${dot(260, 64 + i * 30, A, 3)}`).join("")}
+    ${M(114, 200, "anchor='center'", { a: "middle", fs: 11.5, b: 1, c: C.bad })}${T(114, 216, "riadky sú „rozstrapkané“", { a: "middle", fs: 11 })}
+    ${M(326, 200, "anchor='w'", { a: "middle", fs: 11.5, b: 1, c: A })}${T(326, 216, "všetky začínajú v rovnakom x", { a: "middle", fs: 11 })}`, "Zarovnanie zoznamu"),
+    "Pri zozname má každý riadok <b>rovnaké x</b> a ukotvenie <b>'w'</b>, preto začínajú pod sebou."),
+  vrstvy: fig(SV(440, 232, `
+    ${H("Návrh po vrstvách")}
+    ${[["1. pozadie", 1], ["2. tvary", 2], ["3. text navrch", 3]].map(([t, k], i) => { const x = 14 + i * 140; let g = `${box(x, 32, 132, 150, C.bg, null, 8)}<rect x="${x + 10}" y="42" width="112" height="130" fill="#E6E0FA"/>`;
+      if (k > 1) g += `${O(x + 94, 46, x + 118, 70, "#FFC93C", "")}${R(x + 10, 132, x + 122, 172, "#7B5BD6", "")}`;
+      if (k > 2) g += `${TX(x + 62, 98, "TURNAJ", { fs: 17, b: 1, c: "#3B2380" })}${TX(x + 66, 152, "piatok 14:00", { fs: 11.5, c: "#fff" })}`;
+      return g + T(x + 66, 200, t, { a: "middle", fs: 12, b: 1, c: A }) + (i < 2 ? ar(x + 132, 107, x + 140, 107, A, 2) : ""); }).join("")}
+    ${T(220, 224, "Text píšeme až nakoniec, inak ho tvary prekryjú.", { a: "middle", fs: 11.5 })}`, "Vrstvy návrhu"),
+    "Najprv <b>pozadie</b>, potom <b>tvary</b> a <b>text</b> až nakoniec, aby bol navrchu."),
+  kontrast: fig(SV(440, 214, `
+    ${H("Kontrast farieb")}
+    ${[["#FFF6D6", "#1F2F7A", 1], ["#1E6B3A", "#FFFFFF", 1], ["#FFFFFF", "#F5D300", 0], ["#C9C9C9", "#9A9A9A", 0]].map(([bg, fg, ok], i) => { const x = 14 + (i % 2) * 210, y = 32 + Math.floor(i / 2) * 88; return `${box(x, y, 202, 80, ok ? AS : C.badS, null, 8)}${box(x + 10, y + 10, 182, 42, bg, C.line, 6)}${TX(x + 101, y + 31, "Školský ples", { fs: 18, b: 1, c: fg })}${T(x + 101, y + 70, ok ? "dobre čitateľné" : "zle čitateľné", { a: "middle", fs: 11.5, b: 1, c: ok ? A : C.bad })}`; }).join("")}`, "Kontrast"),
+    "Text musí mať dostatočný <b>kontrast</b> s pozadím: tmavý na svetlom alebo svetlý na tmavom."),
+  pisma: fig(SV(440, 214, `
+    ${H("Koľko písiem použiť")}
+    ${box(14, 32, 200, 150, C.badS, null, 10)}${TX(114, 56, "Výlet", { fs: 20, ff: "Impact,fantasy", c: "#8E24AA" })}${TX(114, 84, "do Tatier", { fs: 15, ff: "Courier New,monospace", it: 1, c: "#2E7D32" })}${TX(114, 108, "sobota", { fs: 17, ff: "Georgia,serif", b: 1, c: "#E65100" })}${TX(114, 132, "o 7:00", { fs: 13, ff: "Comic Sans MS,cursive", c: "#1565C0" })}${TX(114, 158, "pri škole", { fs: 16, ff: "Times New Roman,serif", it: 1, c: "#C62828" })}
+    ${box(226, 32, 200, 150, AS, null, 10)}${TX(326, 62, "Výlet do Tatier", { fs: 19, b: 1, c: "#1F2F7A" })}${TX(326, 104, "sobota o 7:00", { fs: 14, ff: "Georgia,serif" })}${TX(326, 130, "pred školou", { fs: 14, ff: "Georgia,serif" })}
+    ${T(114, 200, "5 písiem – chaos", { a: "middle", fs: 11.5, b: 1, c: C.bad })}${T(326, 200, "2 písma – prehľadné", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Počet písiem"),
+    "Na jeden návrh stačia <b>2 – 3 písma</b>. Nadpis odlíš <b>veľkosťou</b> a <b>rezom</b>."),
+  styri: fig(SV(440, 250, `
+    ${H("Štyri otázky pri texte")}
+    ${[["Kde?", "x, y a anchor"], ["Čo?", "text, \\n, str()"], ["Ako?", "font (písmo, veľkosť, rez), fill"], ["Vidno ho?", "text kresli až po tvaroch"]].map(([q, a], i) => { const y = 32 + i * 52; return `${box(14, y, 412, 44, i % 2 ? AS : C.bg, null, 8)}${num(36, y + 22, i + 1)}${T(56, y + 27, q, { fs: 13, b: 1, c: A })}${T(150, y + 27, a, { fs: 12 })}`; }).join("")}`, "Štyri otázky"),
+    "Pri každom texte skontroluj <b>kde</b> je, <b>čo</b> obsahuje, <b>ako</b> vyzerá a či ho <b>vidno</b>."),
+  stred: fig(SV(440, 236, `
+    ${H("Text do stredu obdĺžnika")}
+    ${R(60, 40, 300, 160, "#D6E6FB", C.blue, 2)}${TX(180, 100, "Vstup", { fs: 22, b: 1, c: "#1F2F7A" })}${cross(180, 100, 120, 60)}${dot(180, 100, C.bad, 4)}
+    ${dot(60, 40, C.ink, 3.5)}${M(66, 54, "(60, 40)", { fs: 11, b: 1 })}${dot(300, 160, C.ink, 3.5)}${M(294, 152, "(300, 160)", { a: "end", fs: 11, b: 1 })}
+    ${box(312, 40, 114, 120, AS, null, 8)}${M(320, 64, "x = (60 + 300)", { fs: 10.5 })}${M(320, 80, "    / 2 = 180", { fs: 10.5, b: 1 })}${M(320, 110, "y = (40 + 160)", { fs: 10.5 })}${M(320, 126, "    / 2 = 100", { fs: 10.5, b: 1 })}
+    ${M(220, 194, "create_text(180, 100, text='Vstup')", { a: "middle", fs: 11.5, b: 1, c: A })}
+    ${T(220, 220, "Stred = priemer x-ových a priemer y-ových súradníc rohov.", { a: "middle", fs: 11 })}`, "Stred obdĺžnika"),
+    "Stred obdĺžnika je <b>((x1 + x2) / 2, (y1 + y2) / 2)</b>. Predvolené ukotvenie text vycentruje."),
+  krok: fig(SV(440, 222, `
+    ${H("Riadky s rovnakým krokom")}
+    ${box(14, 32, 412, 150, C.bg, null, 8)}<line x1="70" y1="40" x2="70" y2="176" stroke="${A}" stroke-dasharray="3 3"/>
+    ${["Názov", "Autor", "Rok", "Žáner"].map((t, i) => { const y = 54 + i * 34; return `${dot(70, y, A, 3)}${TX(76, y, t, { fs: 16, a: "start" })}${M(24, y + 4, "y=" + (40 + i * 25), { fs: 10.5, c: C.mut })}${i ? `${ar(200, y - 30, 200, y - 4, C.amb, 1.5)}${T(208, y - 13, "+ 25", { fs: 11, b: 1, c: C.amb })}` : ""}`; }).join("")}
+    ${T(300, 90, "rovnaké x = 50", { fs: 11.5, b: 1, c: A })}${T(300, 108, "anchor='w'", { fs: 11.5, b: 1, c: A, mono: 1 })}
+    ${T(220, 204, "Každý ďalší riadok má y väčšie o rovnaký krok.", { a: "middle", fs: 11.5 })}`, "Riadky zoznamu"),
+    "Riadky zoznamu majú rovnaké <b>x</b> a ich <b>y</b> rastie o rovnaký <b>krok</b>.")
+};
+})();
+
+/* ---------- skúšačka ukotvenia textu (bez bodov) ---------- */
+function axState() { return S.ax || (S.ax = { anchor: "center", size: 24, st: "bold", fill: "navy" }); }
+function axCode() { const X = axState(); let a = `canvas.create_text(200, 90, text='Python', font=('Arial', ${X.size}${X.st ? `, '${X.st}'` : ""})`; if (X.fill !== "black") a += `, fill='${X.fill}'`; if (X.anchor !== "center") a += `, anchor='${X.anchor}'`; return "canvas.create_oval(196, 86, 204, 94, fill='red', outline='')\n" + a + ")"; }
+function axInner() { const env = tkRun("import tkinter\ncanvas = tkinter.Canvas(width=400, height=180, bg='white')\ncanvas.pack()\ncanvas.create_line(0, 90, 400, 90, fill='lightgray', dash=(4, 4))\ncanvas.create_line(200, 0, 200, 180, fill='lightgray', dash=(4, 4))\n" + axCode()); return `<div class="pv" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff">${tkSVG(env)}</div><div class="pcode" style="white-space:pre-wrap;word-break:break-word">${hl(axCode())}</div>`; }
+function axHTML() { const X = axState(); const sel = (id, lab, opts, v) => `<label>${lab} <select id="${id}">${opts.map(([val, t]) => `<option value="${val}" ${String(v) === String(val) ? "selected" : ""}>${t}</option>`).join("")}</select></label>`;
+  return `<h3>Vyskúšaj si: skúšačka ukotvenia</h3><p>Červený bod (200, 90) sa nehýbe. Meň <code>anchor</code> a písmo a sleduj, kam sa text posunie. Táto časť sa neboduje.</p>
+    <div class="task"><div class="fp">${sel("axa", "anchor", ["center", "n", "s", "w", "e", "nw", "ne", "sw", "se"].map(a => [a, "'" + a + "'"]), X.anchor)}${sel("axs", "veľkosť", [12, 18, 24, 36].map(w => [w, w]), X.size)}${sel("axt", "rez", [["", "bez rezu"], ["bold", "'bold'"], ["italic", "'italic'"], ["bold italic", "'bold italic'"], ["underline", "'underline'"]], X.st)}${sel("axf", "fill", [["black", "black"], ["navy", "navy"], ["red", "red"], ["green", "green"]], X.fill)}</div>
+    <div id="axbox">${axInner()}</div></div>`; }
+function axInput(t) { const m = { axa: "anchor", axs: "size", axt: "st", axf: "fill" }[t.id]; if (!m) return false; const X = axState(); X[m] = m === "size" ? +t.value : t.value; save(); const b = document.getElementById("axbox"); if (b) b.innerHTML = axInner(); return true; }
+
 const VIEWS = {
   text: () => head() + `<h2>create_text a písmo</h2>${guessBox()}
-    <div class="theory"><div class="pcode">canvas.create_text(x, y, text='Ahoj', font=('Arial', 24, 'bold'), fill='navy')</div>
-      <table class="cmdt"><thead><tr><th>Parameter</th><th>Význam</th></tr></thead><tbody><tr><td><code>text</code></td><td>zobrazený text (reťazec alebo číslo), nový riadok <code>\\n</code></td></tr><tr><td><code>font</code></td><td>trojica (písmo, veľkosť, rez): rez 'bold', 'italic', 'underline' alebo kombinácia</td></tr><tr><td><code>fill</code></td><td>farba textu</td></tr><tr><td><code>anchor</code></td><td>ktorým bodom je text ukotvený v (x, y)</td></tr></tbody></table></div>
+    <div class="theory tsplit"><div><p>Text do grafickej plochy napíšeme príkazom <code>create_text</code>. Bod <b>(x, y)</b> určuje, kde text bude, ostatné parametre jeho <b>obsah</b> a <b>vzhľad</b>:</p><div class="pcode" style="white-space:pre-wrap;word-break:break-word">canvas.create_text(x, y, text='Ahoj', font=('Arial', 24, 'bold'), fill='navy')</div>
+      <table class="rtab"><thead><tr><th>Parameter</th><th>Význam</th></tr></thead><tbody><tr><td style="white-space:nowrap"><code>text</code></td><td>zobrazený text (reťazec alebo číslo), nový riadok <code>\\n</code></td></tr><tr><td style="white-space:nowrap"><code>font</code></td><td>trojica (písmo, veľkosť, rez): rez 'bold', 'italic', 'underline' alebo kombinácia</td></tr><tr><td style="white-space:nowrap"><code>fill</code></td><td>farba textu</td></tr><tr><td style="white-space:nowrap"><code>anchor</code></td><td>ktorým bodom je text ukotvený v (x, y)</td></tr></tbody></table></div><div>${TFIG.anatomia}</div></div>
+    ${ltfigs(TFIG.font, TFIG.riadky)}
+    ${VEDEL("Veľkosť písma sa meria v <b>bodoch</b>: 1 bod je 1/72 palca, asi 0,35 mm. V tkinteri kladné číslo vo <code>font</code> znamená body, záporné, napríklad <code>-20</code>, znamená pixely.")}
     <h3>Úlohy</h3>${chalHTML("c_txt", "txt")}${ideHTML("txt", PRE + "canvas.create_text(200, 150, text='Ahoj, svet!')\n")}
     <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>
     <h3>Úloha 2: ktorý parameter?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(),
   anchor: () => head() + `<h2>Ukotvenie textu (anchor)</h2>
-    <div class="theory"><p>Parameter <code>anchor</code> určuje, ktorý bod textu leží v (x, y). Hodnoty sú svetové strany: <code>'n'</code> (hore v strede), <code>'s'</code> (dole), <code>'w'</code> (vľavo), <code>'e'</code> (vpravo), rohy <code>'nw'</code>, <code>'ne'</code>, <code>'sw'</code>, <code>'se'</code> a predvolený <code>'center'</code>. Na zoznamy a tabuľky sa hodí <code>anchor='w'</code>: všetky riadky začínajú v tom istom x.</p>
-      <svg viewBox="0 0 300 120" style="max-width:420px;display:block;margin:8px auto"><rect x="75" y="35" width="150" height="50" fill="#EEF2F8" stroke="#99A"/>${[["nw", 75, 35], ["n", 150, 35], ["ne", 225, 35], ["w", 75, 60], ["center", 150, 60], ["e", 225, 60], ["sw", 75, 85], ["s", 150, 85], ["se", 225, 85]].map(([k, x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="#C0392B"/><text x="${x + (x === 75 ? -8 : x === 225 ? 8 : 0)}" y="${y + (y === 35 ? -8 : y === 85 ? 16 : 4)}" font-size="11" text-anchor="${x === 75 ? "end" : x === 225 ? "start" : "middle"}" fill="#333">${k}</text>`).join("")}<text x="150" y="65" text-anchor="middle" font-size="15" font-weight="700">Text</text></svg></div>
+    <div class="theory tsplit"><div><p>Parameter <code>anchor</code> určuje, ktorý bod textu leží v (x, y). Hodnoty sú <b>svetové strany</b>:</p>
+      <table class="rtab"><thead><tr><th>anchor</th><th>Bod textu v (x, y)</th></tr></thead><tbody>
+        <tr><td style="white-space:nowrap"><code>'n'</code></td><td>hore v strede</td></tr>
+        <tr><td style="white-space:nowrap"><code>'s'</code></td><td>dole v strede</td></tr>
+        <tr><td style="white-space:nowrap"><code>'w'</code> / <code>'e'</code></td><td>vľavo / vpravo v strede</td></tr>
+        <tr><td><code>'nw'</code>, <code>'ne'</code>, <code>'sw'</code>, <code>'se'</code></td><td>rohy</td></tr>
+        <tr><td style="white-space:nowrap"><code>'center'</code></td><td>stred textu (<b>predvolené</b>)</td></tr></tbody></table>
+      <p>Na <b>zoznamy a tabuľky</b> sa hodí <code>anchor='w'</code>: všetky riadky začínajú v tom istom x.</p></div><div>${TFIG.kotvy}</div></div>
+    ${S.t.asort ? ltfigs(TFIG.bod, TFIG.zoznam) : ltfigs(TFIG.bod)}
+    ${VEDEL("Slovo <i>anchor</i> znamená po anglicky <b>kotva</b>. Text je v bode (x, y) „zakotvený“ ako loď: bod sa nehýbe a text sa okolo neho posunie podľa toho, ktorou časťou je ukotvený.")}
+    ${axHTML()}
     <h3>Úlohy</h3>${chalHTML("c_anc", "anc")}${ideHTML("anc", PRE + "canvas.create_text(10, 10, text='Vľavo hore', anchor='nw')\n")}
     <h3>Otázky</h3><div class="task">${taskHTML("aq")}</div>
     <h3>Úloha 2: aké ukotvenie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("asort")}</div>` + nextBar(),
-  projekty: () => head() + `<h2>Vizitka a pozvánka</h2><div class="theory"><p>Spoj tvary a text. Najprv pozadie a tvary, nakoniec text navrch. Dbaj na čitateľnosť: kontrast farieb, primeraná veľkosť písma, najviac 2 až 3 písma.</p></div>
+  projekty: () => head() + `<h2>Vizitka a pozvánka</h2>
+    <div class="theory tsplit"><div><p>Teraz spojíš <b>tvary a text</b>. Najprv nakresli pozadie a tvary, <b>text nakoniec</b>, aby bol navrchu.</p>
+      <table class="rtab"><thead><tr><th>Pravidlo</th><th>Prečo</th></tr></thead><tbody>
+        <tr><td><b>kontrast</b> farieb</td><td>tmavý text na svetlom (alebo naopak) sa dobre číta</td></tr>
+        <tr><td>primeraná <b>veľkosť</b></td><td>nadpis väčší, ostatné riadky menšie</td></tr>
+        <tr><td>najviac <b>2 až 3 písma</b></td><td>viac písiem pôsobí chaoticky</td></tr></tbody></table></div><div>${TFIG.vrstvy}</div></div>
+    ${ltfigs(TFIG.kontrast, TFIG.pisma)}
+    ${VEDEL("Písmo <b>Comic Sans</b> navrhol v roku 1994 Vincent Connare z Microsoftu. Inšpiroval sa písmom v komiksových bublinách a pôvodne ho určil pre detský program Microsoft Bob.")}
     <h3>Úlohy</h3>${chalHTML("c_proj", "proj")}${ideHTML("proj", PRE)}` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: text na správnom mieste</h2>
-    <div class="theory"><p>Text v grafickej ploche ovplyvňujú štyri veci: <b>kde</b> je (x, y a ukotvenie anchor), <b>čo</b> obsahuje (text, nový riadok &#92;n, čísla prevedené str()), <b>ako vyzerá</b> (font: písmo, veľkosť, bold, italic a fill: farba) a <b>či ho vidno</b> (text kresli až po tvaroch, inak ho prekryjú). Pri centrovaní do obdĺžnika vypočítaj jeho stred: ((x1 + x2) / 2, (y1 + y2) / 2).</p><p>Pri každom probléme vyber opravu a potom vypočítaj súradnice.</p></div>
+    <div class="theory tsplit"><div><p>Text v grafickej ploche ovplyvňujú štyri veci:</p>
+      <table class="rtab"><thead><tr><th>Otázka</th><th>Čo skontroluješ</th></tr></thead><tbody>
+        <tr><td style="white-space:nowrap"><b>kde</b> je</td><td>x, y a ukotvenie anchor</td></tr>
+        <tr><td style="white-space:nowrap"><b>čo</b> obsahuje</td><td>text, nový riadok &#92;n, čísla prevedené str()</td></tr>
+        <tr><td style="white-space:nowrap"><b>ako vyzerá</b></td><td>font: písmo, veľkosť, bold, italic a fill: farba</td></tr>
+        <tr><td style="white-space:nowrap"><b>či ho vidno</b></td><td>text kresli až po tvaroch, inak ho prekryjú</td></tr></tbody></table>
+      <p>Pri centrovaní do obdĺžnika vypočítaj jeho <b>stred</b>: ((x1 + x2) / 2, (y1 + y2) / 2).</p><p>Pri každom probléme vyber opravu a potom vypočítaj súradnice.</p></div><div>${TFIG.styri}</div></div>
+    ${ltfigs(TFIG.stred, TFIG.krok)}
+    ${VEDEL("Písmo <b>Times New Roman</b> vzniklo pre londýnske noviny The Times, ktoré ho prvýkrát použili v roku 1932. Je úzke, aby sa do stĺpca novín zmestilo veľa slov, a pritom dobre čitateľné.")}
     <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
     <h3>Úloha 2: počítaj súradnice</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span style="flex:1 1 260px;min-width:0">${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="flex:0 1 250px;width:250px;min-width:0;max-width:100%;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
   if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
 function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
@@ -663,7 +836,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

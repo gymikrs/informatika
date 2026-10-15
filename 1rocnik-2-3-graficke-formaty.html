@@ -204,13 +204,44 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["JPG fotky, PNG ostré obrázky s priehľadnosťou, GIF jednoduché animácie, SVG vektorové logá a ikony; pomer veľkostí = väčšia ÷ menšia."], "prehlad": ["Formát určuje raster/vektor, kompresiu (bezstratová/stratová), priehľadnosť, animáciu, počet farieb.", "BMP, PNG, JPEG, GIF, WebP, HEIC, TIFF, RAW, SVG, PDF; fotky majú metaúdaje EXIF."], "porovnanie": ["Fotka: najmenšia v JPEG/WebP. Grafika s textom: najlepšie PNG (bez artefaktov). BMP nekomprimuje."], "vyber": ["Fotky = JPEG, grafika a priehľadnosť = PNG, animácia = GIF, logá = SVG, archív a tlač = TIFF/PDF."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"prehlad": ["Grafický formát určuje, <b>ako je obrázok uložený</b>: <b>rastrovo</b> (pixely) alebo <b>vektorovo</b> (tvary).", "<b>Bezstratová</b> kompresia zachová každý pixel, <b>stratová</b> zahodí detaily, ktoré oko nepostrehne.", "Formáty sa líšia aj podporou <b>priehľadnosti</b>, <b>animácie</b> a <b>počtom farieb</b>.", "Rastrové formáty: BMP, PNG, JPEG, GIF, WebP, HEIC, TIFF, RAW; vektorové: SVG, PDF (aj s rastrom).", "Fotky obsahujú <b>metaúdaje EXIF</b>: dátum, fotoaparát, nastavenia, niekedy GPS polohu."], "porovnanie": ["<b>Kompresia</b> hľadá v obrázku <b>opakovania</b>: jednofarebné plochy sa dajú zapísať krátko.", "Obrázok s množstvom detailov a odtieňov sa bezstratovo skomprimuje zle.", "<b>JPEG</b> má nastaviteľnú <b>kvalitu</b>: nižšia kvalita = menší súbor, ale viac <b>artefaktov</b>.", "Artefakty (škvrny, štvorčeky) najviac vidno okolo ostrých hrán a písmen.", "<b>BMP</b> nekomprimuje, jeho veľkosť závisí iba od rozlíšenia a farebnej hĺbky."], "vyber": ["<b>Fotky</b>: JPEG (alebo WebP, HEIC).", "<b>Grafika, text, snímky obrazovky, priehľadnosť</b>: PNG.", "<b>Jednoduché animácie</b>: GIF (alebo WebP).", "<b>Logá a ikony v ľubovoľnej veľkosti</b>: SVG, vektor sa zväčší bez straty kvality.", "<b>Archív a tlač v najvyššej kvalite</b>: TIFF, PDF.", "JPEG nemá priehľadnosť, okolo obrázka ostane biele pozadie."], "precvic": ["JPEG = fotky, PNG = ostré obrázky a priehľadnosť, GIF = jednoduché animácie, SVG = vektorové logá a ikony.", "Koľkokrát je súbor menší: <b>väčšia veľkosť ÷ menšia veľkosť</b>.", "Koľko percent pôvodnej veľkosti: <b>nová ÷ pôvodná × 100</b>.", "Pred delením preveď obe veľkosti na rovnakú jednotku (1 MB = 1000 kB)."]};
 /* Spoločné pomôcky na ilustrácie k teórii (Prima) */
 const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
 const PF = (() => {
@@ -257,7 +288,54 @@ return {
   prieh: fig(SV(440, 200, `
     ${T(220, 18, "Ikona položená na farebnej snímke", { a: "middle", fs: 12, b: 1 })}
     ${[[8, "s priehľadnosťou (PNG, GIF, SVG)", 0, C.ok], [226, "bez priehľadnosti (JPEG)", 1, C.bad]].map(([x, t, bg, c]) => `<rect x="${x}" y="30" width="206" height="140" rx="10" fill="#FFE082"/>${bg ? `<rect x="${x + 63}" y="56" width="80" height="80" fill="#fff"/>` : ""}<circle cx="${x + 103}" cy="96" r="30" fill="#E53935"/><path d="M${x + 89} 96 l10 10 l18 -20" stroke="#fff" stroke-width="6" fill="none"/>${T(x + 103, 190, t, { a: "middle", fs: 10.5, b: 1, c })}`).join("")}`, "Priehľadné pozadie"),
-    "Formáty s <b>priehľadnosťou</b> nechajú pozadie presvitať. JPEG okolo obrázka nechá biely štvorec.")
+    "Formáty s <b>priehľadnosťou</b> nechajú pozadie presvitať. JPEG okolo obrázka nechá biely štvorec."),
+  rastvek: fig(SV(440, 250, `
+    ${T(220, 20, "Kruh zväčšený 8-krát", { a: "middle", fs: 12.5, b: 1 })}
+    ${box(10, 32, 204, 166, "#fff", C.line, 10)}${box(226, 32, 204, 166, "#fff", C.line, 10)}
+    ${(() => { let o = ""; for (let r = 0; r < 12; r++) for (let c = 0; c < 12; c++) { const d = Math.hypot(c - 5.5, r - 5.5); if (d < 5.6) o += `<rect x="${40 + c * 12}" y="${43 + r * 12}" width="12" height="12" fill="${C.blue}" stroke="#fff" stroke-width=".6"/>`; } return o; })()}
+    <circle cx="328" cy="115" r="70" fill="${C.blue}"/>
+    ${T(112, 220, "rastrový", { a: "middle", fs: 12.5, b: 1, c: C.bad })}${T(112, 238, "pixely, zubatý okraj", { a: "middle", fs: 11, c: C.mut })}
+    ${T(328, 220, "vektorový", { a: "middle", fs: 12.5, b: 1, c: C.ok })}${T(328, 238, "tvar „kruh, polomer 70“", { a: "middle", fs: 11, c: C.mut })}`, "Raster a vektor"),
+    "<b>Rastrový</b> obrázok tvoria pixely, po zväčšení vidno zuby. <b>Vektorový</b> je zapísaný tvarmi a ostane hladký."),
+  kompresia: fig(SV(440, 250, `
+    ${[["Bezstratová kompresia", C.ok, ["#E53935", "#E53935", "#FDD835", "#FDD835", "#1E88E5"], ["#E53935", "#E53935", "#FDD835", "#FDD835", "#1E88E5"], "8 kB", "rovnaké"],
+       ["Stratová kompresia", C.bad, ["#6FA8DC", "#7DB1E0", "#8BBAE4", "#99C3E8", "#A7CCEC"], ["#7DB1E0", "#7DB1E0", "#7DB1E0", "#9FC7EA", "#9FC7EA"], "3 kB", "podobné"]].map(([t, c, a, b, k, r], i) => { const y = 46 + i * 84;
+      return `${T(14, y - 10, t, { fs: 12, b: 1, c })}${a.map((f, j) => `<rect x="${14 + j * 24}" y="${y}" width="24" height="24" fill="${f}"/>`).join("")}${T(74, y + 42, "originál", { a: "middle", fs: 11, c: C.mut })}
+      ${ar(140, y + 12, 174, y + 12, c, 2)}${box(180, y - 2, 80, 28, AS, null, 6)}${T(220, y + 17, "📦 " + k, { a: "middle", fs: 11.5, b: 1 })}${T(220, y + 42, "súbor", { a: "middle", fs: 11, c: C.mut })}
+      ${ar(266, y + 12, 300, y + 12, c, 2)}${b.map((f, j) => `<rect x="${306 + j * 24}" y="${y}" width="24" height="24" fill="${f}"/>`).join("")}${T(366, y + 42, "po otvorení: " + r, { a: "middle", fs: 11, b: 1, c })}`; }).join("")}
+    ${box(14, 210, 412, 32, AS, null, 8)}${T(220, 231, "Stratová dá menší súbor, ale zahodené detaily sa už nevrátia.", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Bezstratová a stratová kompresia"),
+    "<b>Bezstratová</b> kompresia vráti presne ten istý obrázok, <b>stratová</b> iba podobný, zato menší."),
+  exif: fig(SV(440, 230, `
+    ${T(220, 20, "Metaúdaje EXIF ukryté vo fotke", { a: "middle", fs: 12.5, b: 1 })}
+    <rect x="14" y="34" width="150" height="150" rx="10" fill="#CFE3F7"/><path d="M14 160 L64 92 L96 130 L124 100 L164 150 L164 174 Q164 184 154 184 L24 184 Q14 184 14 174Z" fill="#6E8BA6"/><path d="M64 92 L74 106 L56 106Z" fill="#fff"/><circle cx="132" cy="62" r="14" fill="#FDD835"/>
+    ${T(89, 201, "hory.jpg", { a: "middle", fs: 11, b: 1, mono: 1 })}
+    ${ar(170, 108, 196, 108, A, 2)}
+    ${box(200, 34, 230, 150, "#fff", A, 10)}
+    ${[["📅", "dátum: 2. 8. 2026, 14:25"], ["📷", "fotoaparát: Pixel 8"], ["⚙️", "f/1.7 · 1/500 s · ISO 50"], ["📐", "rozlíšenie: 4080 × 3072"], ["📍", "GPS: 49,119° N; 20,060° E"]].map(([e, t], i) => `${T(212, 62 + i * 26, e, { fs: 12 })}${T(232, 62 + i * 26, t, { fs: 11 })}`).join("")}
+    ${T(220, 224, "Obraz vidíš, metaúdaje sú skryté vo vnútri súboru.", { a: "middle", fs: 11.5, c: C.mut })}`, "Metaúdaje EXIF"),
+    "Okrem pixelov ukladá fotoaparát do súboru aj <b>metaúdaje EXIF</b>: kedy, čím a kde fotka vznikla."),
+  jpegq: fig(SV(440, 230, `
+    ${T(220, 20, "Ten istý obrázok v JPEG s rôznou kvalitou", { a: "middle", fs: 12.5, b: 1 })}
+    ${[[90, 6, 24], [50, 12, 8], [10, 22, 3]].map(([q, cs, lv], i) => { const x0 = 16 + i * 142; let o = "";
+      for (let y = 0; y < 132; y += cs) for (let x = 0; x < 132; x += cs) { const cx = x + cs / 2, cy = y + cs / 2; let v = 0.25 + 0.6 * (cy / 132) * 0.6 + 0.4 * (cx / 132) * 0.5; if (Math.hypot(cx - 88, cy - 44) < 24) v = 0.98; v = Math.round(v * (lv - 1)) / (lv - 1);
+        o += `<rect x="${x0 + x}" y="${34 + y}" width="${Math.min(cs, 132 - x)}" height="${Math.min(cs, 132 - y)}" fill="hsl(210 65% ${Math.round(28 + v * 60)}%)" shape-rendering="crispEdges"/>`; }
+      return o + `<rect x="${x0}" y="34" width="132" height="132" fill="none" stroke="${C.line}"/>${T(x0 + 66, 188, "kvalita " + q + " %", { a: "middle", fs: 12, b: 1, c: i === 2 ? C.bad : C.ink })}${T(x0 + 66, 206, ["veľký súbor", "menší súbor", "najmenší, štvorčeky"][i], { a: "middle", fs: 11, c: C.mut })}`; }).join("")}`, "Kvalita JPEG"),
+    "Nižšia <b>kvalita</b> JPEG = menší súbor, ale viditeľné <b>artefakty</b> (JPEG pracuje v blokoch 8 × 8 pixelov)."),
+  opakovania: fig(SV(440, 200, `
+    ${T(14, 26, "grafika: jednofarebné plochy", { fs: 12, b: 1 })}
+    ${[...Array(16)].map((_, i) => `<rect x="${14 + i * 20}" y="34" width="20" height="24" fill="${i < 10 ? "#fff" : "#1E88E5"}" stroke="#C9CED8" stroke-width=".8"/>`).join("")}
+    ${T(344, 46, "10× biela", { fs: 11, b: 1, c: C.ok })}${T(344, 62, "6× modrá", { fs: 11, b: 1, c: C.ok })}
+    ${T(14, 92, "fotka: takmer každý pixel iný", { fs: 12, b: 1 })}
+    ${[...Array(16)].map((_, i) => `<rect x="${14 + i * 20}" y="100" width="20" height="24" fill="hsl(${(i * 47) % 360} ${40 + (i * 13) % 40}% ${45 + (i * 29) % 35}%)"/>`).join("")}
+    ${T(344, 112, "16 rôznych", { fs: 11, b: 1, c: C.bad })}${T(344, 128, "farieb", { fs: 11, b: 1, c: C.bad })}
+    ${box(14, 148, 412, 40, AS, null, 8)}${T(220, 166, "Kompresia nahradí opakovania krátkym zápisom.", { a: "middle", fs: 11.5, b: 1, c: A })}${T(220, 181, "Keď sa nič neopakuje, nemá čo skrátiť.", { a: "middle", fs: 11, c: A })}`, "Opakovania v obrázku"),
+    "Plochy rovnakej farby sa dajú zapísať veľmi krátko, pestré detaily oveľa horšie."),
+  anim: fig(SV(440, 200, `
+    ${T(220, 20, "Animácia = rýchlo striedané snímky", { a: "middle", fs: 12.5, b: 1 })}
+    ${[54, 92, 116, 92].map((cy, i) => `${box(14 + i * 106, 32, 94, 108, "#fff", C.line, 8)}<line x1="${22 + i * 106}" y1="130" x2="${100 + i * 106}" y2="130" stroke="${C.mut}" stroke-width="2"/><circle cx="${61 + i * 106}" cy="${cy}" r="12" fill="${A}"/>${T(61 + i * 106, 160, "snímka " + (i + 1), { a: "middle", fs: 11.5, b: 1 })}`).join("")}
+    ${ar(110, 86, 118, 86, C.mut, 1.5)}${ar(216, 86, 224, 86, C.mut, 1.5)}${ar(322, 86, 330, 86, C.mut, 1.5)}
+    ${T(220, 188, "snímky sa opakujú dokola, oko vidí skákajúcu loptu", { a: "middle", fs: 11.5, c: C.mut })}`, "Animácia zo snímok"),
+    "<b>Animovaný</b> obrázok obsahuje viac snímok, ktoré sa rýchlo striedajú.")
 }; })();
 
 const KEY = "formaty-n23-v1";
@@ -299,6 +377,13 @@ function mk(kind) { const c = document.createElement("canvas"); c.width = 320; c
 const sz = d => Math.round((d.length - d.indexOf(",") - 1) * 3 / 4);
 function runLab() { const L = {}; ["foto", "grafika"].forEach(k => { const c = mk(k); L[k] = { png: sz(c.toDataURL("image/png")), jpg90: sz(c.toDataURL("image/jpeg", 0.9)), jpg50: sz(c.toDataURL("image/jpeg", 0.5)), webp: sz(c.toDataURL("image/webp", 0.8)), bmp: 320 * 200 * 3 + 54, img: c.toDataURL("image/png"), jimg: c.toDataURL("image/jpeg", 0.3) }; }); S.lab = L; }
 const kb = n => (n / 1024).toFixed(1).replace(".", ",") + " kB";
+/* interaktívne: posuvník kvality JPEG (bez bodov) */
+let JQC = null;
+function jqHTML() { const q = S.jq || 40; if (!JQC) JQC = mk("grafika"); const d = JQC.toDataURL("image/jpeg", q / 100);
+  return `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>Kvalita JPEG</b><input type="range" min="5" max="100" step="5" value="${q}" data-jq aria-label="Kvalita JPEG" style="flex:1;min-width:150px;accent-color:var(--acc)"><b style="font-family:var(--mono);min-width:56px">${q} %</b></div>
+    <div style="overflow:hidden;height:180px;border-radius:8px;border:1px solid var(--border);max-width:560px;margin:10px auto 6px"><img src="${d}" alt="Detail grafiky uloženej ako JPEG" style="width:960px;height:600px;max-width:none;margin:-150px 0 0 -10px;image-rendering:pixelated"></div>
+    <p style="text-align:center;margin:4px 0 0">Veľkosť súboru: <b>${kb(sz(d))}</b> · tá istá grafika v PNG: ${kb(sz(JQC.toDataURL("image/png")))}</p>`; }
+function CUSTOM_INPUT(e) { const t = e.target; if (t.dataset && t.dataset.jq !== undefined) { S.jq = +t.value; save(); document.getElementById("jqbox").innerHTML = jqHTML(); const n = document.querySelector("[data-jq]"); if (n) n.focus(); return true; } return false; }
 function labHTML() { if (!S.lab) return `<button class="primary" data-lab>🧪 Spustiť laboratórium (uložiť obrázky do formátov)</button>`; const L = S.lab, rows = [["BMP (bez kompresie)", "bmp"], ["PNG (bezstratový)", "png"], ["JPEG kvalita 90 %", "jpg90"], ["JPEG kvalita 50 %", "jpg50"], ["WebP kvalita 80 %", "webp"]];
   const minK = k => rows.filter(r => r[1] !== "bmp").reduce((a, r) => L[k][r[1]] < L[k][a] ? r[1] : a, "png");
   return `<div class="imgs"><div><b>📷 Fotka (veľa detailov a farieb)</b><img src="${L.foto.img}" style="width:100%;max-width:320px;border-radius:8px;display:block"></div><div><b>🖥️ Grafika (text, plochy)</b><img src="${L.grafika.img}" style="width:100%;max-width:320px;border-radius:8px;display:block"></div></div>
@@ -354,17 +439,44 @@ const TASKS = {
 };
 const VIEWS = {
   prehlad: () => head() + `<h2>Prehľad grafických formátov</h2>
-    <div class="theory"><p>Grafický formát určuje, <b>ako je obrázok uložený</b>: rastrovo (pixely) alebo vektorovo (tvary), s akou <b>kompresiou</b> (bezstratová zachová každý pixel, stratová zahodí to, čo oko nepostrehne), či podporuje <b>priehľadnosť</b>, <b>animáciu</b> a koľko má <b>farieb</b>. Fotky navyše obsahujú <b>metaúdaje EXIF</b>: dátum, fotoaparát, nastavenia a niekedy aj GPS polohu.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Grafický formát určuje, <b>ako je obrázok uložený</b>: <b>rastrovo</b> (pixely) alebo <b>vektorovo</b> (tvary). Formáty sa líšia v týchto vlastnostiach:</p>
+      <table class="rtab"><thead><tr><th>Vlastnosť</th><th>Čo znamená</th></tr></thead><tbody>
+        <tr><td style="white-space:nowrap"><b>kompresia</b></td><td><b>bezstratová</b> zachová každý pixel, <b>stratová</b> zahodí to, čo oko nepostrehne</td></tr>
+        <tr><td style="white-space:nowrap"><b>priehľadnosť</b></td><td>časť obrázka je priesvitná a presvitá cez ňu pozadie</td></tr>
+        <tr><td style="white-space:nowrap"><b>animácia</b></td><td>súbor obsahuje viac snímok, ktoré sa striedajú</td></tr>
+        <tr><td style="white-space:nowrap"><b>počet farieb</b></td><td>obmedzená paleta alebo milióny farieb</td></tr></tbody></table>
+      <p>Fotky navyše obsahujú <b>metaúdaje EXIF</b>: dátum, fotoaparát, nastavenia a niekedy aj GPS polohu.</p>
+    </div><div>${TFIG.rastvek}</div></div>
+    ${ltfigs(TFIG.kompresia, TFIG.exif)}
+    ${VEDEL("Formát GIF vznikol v roku 1987. O jeho výslovnosti sa ľudia spierajú dodnes: autor formátu Steve Wilhite tvrdil, že sa vyslovuje „džif“.")}
+    <h3>Formáty v skratke</h3>
     <div class="fcards">${FMT.map(([n, d]) => `<div><b>${n}</b><br>${d}</div>`).join("")}</div>
     <h3>Úloha 1: roztrieď formáty</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
   porovnanie: () => head() + `<h2>Laboratórium formátov</h2>${guessBox()}
-    <div class="theory"><p>Uložíme dva obrázky: <b>fotku</b> (veľa detailov a farieb) a <b>grafiku</b> (text, jednofarebné plochy) do rôznych formátov a porovnáme veľkosti. Najmenší súbor v každom stĺpci sa zvýrazní.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Uložíme dva obrázky: <b>fotku</b> (veľa detailov a farieb) a <b>grafiku</b> (text, jednofarebné plochy) do rôznych formátov a porovnáme veľkosti. Najmenší súbor v každom stĺpci sa zvýrazní.</p>
+      <p><b>Kompresia</b> hľadá v obrázku <b>opakovania</b>. Jednofarebnú plochu zapíše krátko („100 bielych pixelov“), pri pestrých detailoch to nejde.</p>
+      <p><b>JPEG</b> má nastaviteľnú <b>kvalitu</b>: čím nižšia, tým menší súbor, ale tým viac <b>artefaktov</b> (škvŕn a štvorčekov).</p>
+    </div><div>${TFIG.jpegq}</div></div>
+    ${ltfigs(TFIG.opakovania)}
+    ${VEDEL("Názov JPEG je skratka skupiny odborníkov Joint Photographic Experts Group, ktorá formát zverejnila v roku 1992. Dodnes je to najpoužívanejší formát fotiek.")}
     <div class="tool" id="labbox">${labHTML()}</div>
+    <h3>Vyskúšaj: posuvník kvality JPEG</h3><div class="tool" id="jqbox">${jqHTML()}</div>
     <h3>Otázky</h3><div class="task">${taskHTML("lq")}</div>` + nextBar(),
   vyber: () => head() + `<h2>Správny formát</h2>
-    <div class="theory"><ul><li><b>Fotky</b>: JPEG (alebo WebP, HEIC).</li><li><b>Grafika, text, snímky obrazovky, priehľadnosť</b>: PNG.</li><li><b>Jednoduché animácie</b>: GIF (alebo WebP).</li><li><b>Logá a ikony v akejkoľvek veľkosti</b>: SVG.</li><li><b>Archív a tlač v najvyššej kvalite</b>: TIFF, PDF.</li></ul></div>
-    ${tfigs(TFIG.jpegpng, TFIG.prieh)}
+    <div class="theory tsplit"><div>
+      <p>Formát vyber podľa toho, <b>čo je na obrázku</b> a <b>na čo ho použiješ</b>.</p>
+      <table class="rtab"><thead><tr><th>Obrázok</th><th>Formát</th></tr></thead><tbody>
+        <tr><td><b>fotky</b></td><td>JPEG (alebo WebP, HEIC)</td></tr>
+        <tr><td><b>grafika, text, snímky obrazovky, priehľadnosť</b></td><td>PNG</td></tr>
+        <tr><td><b>jednoduché animácie</b></td><td>GIF (alebo WebP)</td></tr>
+        <tr><td><b>logá a ikony v akejkoľvek veľkosti</b></td><td>SVG</td></tr>
+        <tr><td><b>archív a tlač v najvyššej kvalite</b></td><td>TIFF, PDF</td></tr></tbody></table>
+    </div><div>${TFIG.jpegpng}</div></div>
+    ${ltfigs(TFIG.prieh, TFIG.anim)}
+    ${VEDEL("Formát PNG vznikol v roku 1996 ako bezplatná náhrada GIF-u. Na kompresiu v GIF-e sa vtedy vzťahoval patent a firmy za ňu museli platiť.")}
     <h3>Úloha: aký formát zvolíš?</h3><div class="task">${taskHTML("vq")}</div>
     <h3>Úloha 2: priraď formát</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("vsort")}</div>` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: formátový detektív</h2>
@@ -525,7 +637,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

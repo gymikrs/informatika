@@ -224,13 +224,44 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .fp{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}
 .fp label{font-weight:600;font-size:14px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["randint(a, b) vrátane oboch, randrange(n) 0 až n − 1, choice zo zoznamu. Na začiatok import random.", "Premenné = jedno číslo mení celý obrázok. Kruh zo stredu: sx ± r, sy ± r."], "premenne": ["Premenná = pomenovaná hodnota: x = 50. Výrazy x + a, a // 2; x = x + 20 zmení hodnotu."], "vyrazy": ["Kruh zo stredu a polomeru: create_oval(sx − r, sy − r, sx + r, sy + r); r = r − 40 pre ďalší kruh."], "nahoda": ["import random; random.randint(a, b) vrátane b; random.randrange(n) 0 až n − 1; random.choice(zoznam)."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"premenne": ["<b>Premenná</b> je pomenované miesto v pamäti s hodnotou, napr. <code>x = 50</code>.", "Kde napíšeš meno premennej, Python použije jej <b>uloženú hodnotu</b>.", "Premenné používame vo <b>výrazoch</b>: <code>x + a</code>, <code>y - 10</code>, <code>a // 2</code> (celočíselné delenie).", "Priradenie <code>x = x + a + 20</code>: vezme <b>starú hodnotu</b> x, pripočíta a + 20 a výsledok uloží <b>späť do x</b>.", "Výhoda: zmeníš <b>jedno číslo</b> a obrázok sa posunie alebo zmení veľkosť bez prepisovania príkazov na kreslenie."], "vyrazy": ["Kruh je pohodlnejšie zadať <b>stredom (sx, sy) a polomerom r</b> ako rohmi.", "Rohy vypočíta Python: <code>create_oval(sx - r, sy - r, sx + r, sy + r)</code>.", "Zmenou <b>r</b> (napr. <code>r = r - 20</code>) nakreslí ten istý príkaz ďalší kruh s <b>rovnakým stredom</b>.", "Zmenou <b>sx</b> alebo <b>sy</b> sa kruh <b>posunie</b>.", "Kruhy tesne vedľa seba: stred posunieme o <b>priemer 2 · r</b>."], "nahoda": ["Na začiatok programu napíšeme <code>import random</code>.", "<code>random.randint(a, b)</code> – celé číslo od a do b <b>vrátane oboch</b> hraníc.", "<code>random.randrange(n)</code> – celé číslo od 0 do <b>n − 1</b>.", "<code>random.choice(zoznam)</code> – náhodný <b>prvok zoznamu</b>.", "Pri každom spustení vznikne <b>iný obrázok</b>.", "Aby bol kruh celý v ploche, stred vyberaj s odstupom <b>polomeru</b> od okrajov."], "precvic": ["Premenné robia program <b>prispôsobiteľný</b>: zmeníš jedno číslo a zmení sa celý obrázok.", "Náhoda robí program <b>prekvapivý</b>: každé spustenie je iné.", "Over <b>rozsah</b>: randint(a, b) dá a až b vrátane, randrange(n) dá 0 až n − 1, choice vyberie jeden prvok zoznamu.", "Náhodné súradnice voľ tak, aby tvar nevyšiel <b>mimo plochy</b>.", "Na začiatok programu nezabudni <code>import random</code>."]};
 /* ---------- mini tkinter.Canvas interpreter (subset of Python) ---------- */
 const TKCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
 function tkColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (TKCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
@@ -399,7 +430,7 @@ const KEY = "premenne-r210-v1";
 const LESSON = "2.10 Premenné a náhodné hodnoty";
 const BRAND = "2.10 Premenné a náhoda";
 const CLASS_DEFAULT = "III.";
-const WIDE = { premenne: 1, vyrazy: 1, nahoda: 1 };
+const WIDE = { premenne: 1, vyrazy: 1, nahoda: 1, precvic: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "premenne", title: "Premenné v kreslení", min: 12 },
@@ -432,7 +463,7 @@ const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const sh = (env, t) => env.shapes.filter(s => s.t === t);
 const has = (env, t, pts, f) => env.shapes.some(s => s.t === t && s.pts.length === pts.length && s.pts.every((v, i) => Math.abs(v - pts[i]) <= 3) && (!f || f(s)));
 function CUSTOM_CLICK(e) {
-  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return tkClick(e); }
+  if (selClick(e, { px: [PX_I, "g_sit"] })) return true; if (dkClick(e)) return true; return tkClick(e); }
 function CUSTOM_INPUT(e) {
   if (selInput(e)) return true; return tkInput(e); }
 const CH = {
@@ -493,35 +524,187 @@ const TASKS = {
     { id: "5", ...Q("Kruh so stredom (sx, sy) a polomerom r:", ["create_oval(sx - r, sy - r, sx + r, sy + r)", "create_oval(sx, sy, r, r)", "create_oval(r, r, sx, sy)", "create_circle(sx, sy, r)"], 0) }
   ]}
 };
+/* ---------- LENKA: obrázky k teórii ---------- */
+/* ---------- LENKA: obrázky k teórii ---------- */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#0E7A5C", accS: "#D5EEE5", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, C.ink].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-Fa-f]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  return { C, fig, SV, ar, T, box, num };
+})();
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num } = PF; const A = C.acc, AS = C.accS;
+const M = (x, y, s, o = {}) => T(x, y, s, Object.assign({ mono: 1 }, o));
+const dot = (x, y, c, r) => `<circle cx="${x}" cy="${y}" r="${r || 4}" fill="${c || C.bad}"/>`;
+const R = (x1, y1, x2, y2, f, s, w, ex) => `<rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" fill="${f || "none"}"${s === "" ? "" : ` stroke="${s || C.ink}" stroke-width="${w || 2}"`}${ex || ""}/>`;
+const O = (x1, y1, x2, y2, f, s, w, ex) => `<ellipse cx="${(x1 + x2) / 2}" cy="${(y1 + y2) / 2}" rx="${(x2 - x1) / 2}" ry="${(y2 - y1) / 2}" fill="${f || "none"}"${s === "" ? "" : ` stroke="${s || C.ink}" stroke-width="${w || 2}"`}${ex || ""}/>`;
+const DS = ` stroke-dasharray="5 4"`;
+const grid = (x, y, w, h, s) => { let g = ""; for (let i = s; i < w; i += s) g += `<line x1="${x + i}" y1="${y}" x2="${x + i}" y2="${y + h}" stroke="#E6EEF0"/>`; for (let j = s; j < h; j += s) g += `<line x1="${x}" y1="${y + j}" x2="${x + w}" y2="${y + j}" stroke="#E6EEF0"/>`; return g; };
+const dark = (x, y, w, h) => box(x, y, w, h, "#0F1A2E", null, 6);
+const cl = (x, y, s, fs) => `<text x="${x}" y="${y}" font-size="${fs || 11.5}" font-family="Consolas,monospace" fill="#DCE7FF" xml:space="preserve">${s}</text>`;
+const H = (s) => T(220, 20, s, { a: "middle", fs: 13.5, b: 1, c: A });
+const VB = (x, y, n, v, c) => `${box(x, y, 96, 58, "#fff", c || A, 8)}${box(x, y, 96, 20, c || A, null, 8)}<rect x="${x}" y="${y + 12}" width="96" height="8" fill="${c || A}"/>${M(x + 48, y + 15, n, { a: "middle", fs: 12, b: 1, c: "#fff" })}${M(x + 48, y + 46, v, { a: "middle", fs: 17, b: 1 })}`;
+const mini = (x, y, w, h, body, bg) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${bg || "#fff"}" stroke="#9FB0C8" stroke-width="1.5"/>${body}`;
+return {
+  skatulka: fig(SV(440, 250, `
+    ${H("Premenná = škatuľka s menom")}
+    ${VB(40, 34, "x", "40")}${VB(172, 34, "y", "30")}${VB(304, 34, "a", "90")}
+    ${dark(14, 108, 412, 30)}${cl(24, 128, "canvas.create_rectangle(x, y, x + a, y + a)", 12)}
+    ${ar(220, 142, 220, 166, A, 2)}${T(232, 159, "Python dosadí hodnoty", { fs: 11.5, b: 1, c: A })}
+    ${box(14, 170, 412, 30, AS, null, 6)}${M(24, 190, "canvas.create_rectangle(40, 30, 130, 120)", { fs: 12, b: 1 })}
+    ${T(220, 228, "x + a = 40 + 90 = 130,  y + a = 30 + 90 = 120", { a: "middle", fs: 11.5 })}`, "Premenné a dosadenie hodnôt"),
+    "Kde napíšeš meno premennej, Python použije jej <b>uloženú hodnotu</b>."),
+  posun: fig(SV(440, 220, `
+    ${H("Zmeníš jedno číslo, zmení sa obrázok")}
+    ${[["x = 20", 20, A], ["x = 110", 110, C.blue]].map(([t, x, c], i) => { const ox = 14 + i * 212; return `${box(ox, 32, 200, 180, i ? C.blueS : AS, null, 10)}${mini(ox + 20, 44, 160, 100, `${R(ox + 20 + x * 0.6, 44 + 20, ox + 20 + x * 0.6 + 42, 44 + 62, "#FFB74D", C.ink, 1.5)}`)}${M(ox + 100, 168, t, { a: "middle", fs: 13, b: 1, c })}${M(ox + 100, 190, "y = 40, a = 70", { a: "middle", fs: 11 })}`; }).join("")}`, "Posun pomocou premennej"),
+    "Rovnaký príkaz, iná hodnota <b>x</b>: štvorec sa <b>posunie</b> a príkaz na kreslenie meniť netreba."),
+  priradenie: fig(SV(440, 220, `
+    ${H("Čo urobí y = y + 40")}
+    ${VB(20, 40, "y", "60", C.mut)}${T(68, 120, "stará hodnota", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(124, 69, 152, 69, A, 2)}
+    ${box(156, 44, 128, 50, C.ambS, null, 8)}${M(220, 66, "y + 40", { a: "middle", fs: 12, b: 1, c: C.amb })}${M(220, 84, "60 + 40 = 100", { a: "middle", fs: 11.5 })}${T(220, 120, "výpočet vpravo", { a: "middle", fs: 11, c: C.amb })}
+    ${ar(288, 69, 316, 69, A, 2)}
+    ${VB(324, 40, "y", "100")}${T(372, 120, "nová hodnota", { a: "middle", fs: 11, c: A })}
+    ${box(14, 140, 412, 66, C.bg, null, 8)}${T(220, 164, "Najprv sa vypočíta pravá strana so starou hodnotou,", { a: "middle", fs: 11.5 })}${T(220, 184, "výsledok sa uloží späť do premennej vľavo.", { a: "middle", fs: 11.5 })}`, "Priradenie"),
+    "Pri priradení sa najprv vypočíta <b>pravá strana</b>, potom sa výsledok uloží do premennej."),
+  stredr: fig(SV(440, 252, `
+    ${H("Python vypočíta rohy za nás")}
+    ${R(40, 50, 200, 210, "none", C.mut, 1.5, ` stroke-dasharray="5 4"`)}${O(40, 50, 200, 210, "#FFF3C4", C.amb, 3)}
+    ${dot(120, 130, C.ink, 4)}${M(120, 122, "(sx, sy)", { a: "middle", fs: 11, b: 1 })}
+    <line x1="120" y1="130" x2="200" y2="130" stroke="${C.bad}" stroke-width="2.5"/>${T(160, 146, "r", { a: "middle", fs: 13, b: 1, c: C.bad })}
+    ${dot(40, 50, C.blue, 4)}${M(46, 44, "(sx − r, sy − r)", { fs: 11, b: 1, c: C.blue })}${dot(200, 210, C.blue, 4)}${M(206, 228, "(sx + r, sy + r)", { a: "end", fs: 11, b: 1, c: C.blue })}
+    ${dark(226, 40, 200, 92)}${cl(236, 62, "sx = 160", 12)}${cl(236, 84, "sy = 120", 12)}${cl(236, 106, "r = 50", 12)}
+    ${box(226, 140, 200, 76, AS, null, 8)}${M(236, 160, "sx − r = 110", { fs: 11.5, b: 1 })}${M(236, 178, "sy − r = 70", { fs: 11.5, b: 1 })}${M(236, 196, "sx + r = 210", { fs: 11.5, b: 1 })}${M(236, 212, "sy + r = 170", { fs: 11.5, b: 1 })}
+    ${M(220, 246, "create_oval(sx - r, sy - r, sx + r, sy + r)", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Kruh zo stredu a polomeru"),
+    "Zadáme <b>stred a polomer</b>, súradnice rohov dopočíta Python z výrazov."),
+  sustredne: fig(SV(440, 230, `
+    ${H("Ten istý príkaz, menšie r")}
+    ${[100, 75, 50, 25].map((r, i) => O(110 - r * 0.8, 120 - r * 0.8, 110 + r * 0.8, 120 + r * 0.8, ["#5C6BC0", "#FFFFFF", "#5C6BC0", "#FFFFFF"][i], C.ink, 1.5)).join("")}
+    ${[100, 75, 50, 25].map((r, i) => `${M(244, 62 + i * 30, "r = " + r, { fs: 12, b: 1, c: i ? C.ink : A })}${i ? T(310, 62 + i * 30, "po r = r − 25", { fs: 11, c: C.mut }) : T(310, 62, "začiatok", { fs: 11, c: C.mut })}`).join("")}
+    ${T(220, 214, "Stred ostáva rovnaký, mení sa iba polomer.", { a: "middle", fs: 11.5 })}`, "Sústredné kruhy"),
+    "Po každom <b>r = r − 25</b> nakreslí ten istý príkaz <b>menší kruh</b> s rovnakým stredom."),
+  rad: fig(SV(440, 200, `
+    ${H("Kruhy vedľa seba: posun o 2 · r")}
+    ${[0, 1, 2, 3, 4, 5].map(i => `${O(40 + i * 60, 60, 100 + i * 60, 120, i % 2 ? "#F48FB1" : "#81D4FA", C.ink, 1.5)}${dot(70 + i * 60, 90, C.ink, 3)}${M(70 + i * 60, 140, String(40 + i * 60), { a: "middle", fs: 11, b: 1 })}`).join("")}
+    ${T(14, 158, "sx:", { fs: 11, c: C.mut })}
+    ${ar(70, 46, 128, 46, C.bad, 1.5)}${T(100, 40, "+ 60", { a: "middle", fs: 11, b: 1, c: C.bad })}
+    ${M(220, 176, "r = 30;  sx = sx + 2 * r", { a: "middle", fs: 12, b: 1, c: A })}${T(220, 194, "Každý ďalší stred je o priemer (2 · r) ďalej.", { a: "middle", fs: 11 })}`, "Rad kruhov"),
+    "Ak má ďalší kruh susediť s predchádzajúcim, jeho stred posunieme o <b>priemer 2 · r</b>."),
+  ciselna: fig(SV(440, 262, `
+    ${H("Čo môže vrátiť random")}
+    ${[["random.randint(3, 7)", 3, 7, 2, 8], ["random.randrange(5)", 0, 4, 0, 6]].map(([f, a, b, lo, hi], i) => { const y = 34 + i * 76; let g = `${box(14, y, 412, 68, i ? AS : C.bg, null, 8)}${M(24, y + 20, f, { fs: 12, b: 1, c: A })}`; for (let v = lo; v <= hi; v++) { const x = 40 + (v - lo) * 52, on = v >= a && v <= b; g += `<circle cx="${x}" cy="${y + 46}" r="13" fill="${on ? A : "#fff"}" stroke="${on ? A : C.line}" stroke-width="1.5"/>${T(x, y + 51, v, { a: "middle", fs: 12, b: 1, c: on ? "#fff" : C.mut })}`; } return g + T(416, y + 20, i ? "0 až 4 (5 nie)" : "3 až 7 vrátane", { a: "end", fs: 11, b: 1, c: i ? C.bad : A }); }).join("")}
+    ${box(14, 186, 412, 68, C.bg, null, 8)}${M(24, 206, "random.choice(['jablko', 'hruška', 'slivka'])", { fs: 12, b: 1, c: A })}
+    ${["jablko", "hruška", "slivka"].map((t, i) => `${box(40 + i * 130, 218, 110, 26, i === 1 ? A : "#fff", A, 13)}${T(95 + i * 130, 236, t, { a: "middle", fs: 12, b: 1, c: i === 1 ? "#fff" : A })}`).join("")}`, "Rozsahy funkcií random"),
+    "Zelené hodnoty môžu padnúť. <b>randint</b> zahŕňa obe hranice, <b>randrange(n)</b> končí pri n − 1."),
+  okraj: fig(SV(440, 248, `
+    ${H("Aby bol kruh celý v ploche")}
+    ${mini(70, 40, 300, 140, "")}<rect x="95" y="65" width="250" height="90" fill="${AS}" stroke="${A}" stroke-dasharray="5 4"/>
+    ${O(70, 40, 120, 90, "#FFB74D", C.ink, 1.5)}${dot(95, 65, C.ink, 3)}${O(320, 130, 370, 180, "#FFB74D", C.ink, 1.5)}${dot(345, 155, C.ink, 3)}
+    <circle cx="200" cy="180" r="25" fill="#FDECEA" stroke="${C.bad}" stroke-width="1.5" stroke-dasharray="4 3"/>${dot(200, 180, C.bad, 3)}
+    ${T(220, 114, "tu môže byť stred", { a: "middle", fs: 11.5, b: 1, c: A })}${T(232, 200, "stred pri okraji → kruh pretečie", { fs: 11, b: 1, c: C.bad })}
+    ${M(220, 224, "r = 25: x = random.randint(25, 275)", { a: "middle", fs: 11.5, b: 1, c: A })}${T(220, 242, "plocha 300 × 140, stred aspoň r od každého okraja", { a: "middle", fs: 11 })}`, "Kruh v ploche"),
+    "Stred vyberaj od <b>r</b> po <b>šírka − r</b> (a od r po výška − r), inak kruh vyjde z plochy."),
+  spustenia: fig(SV(440, 200, `
+    ${H("Ten istý program, tri spustenia")}
+    ${[[[30, 40, 14, "red"], [90, 80, 22, "blue"], [60, 100, 10, "green"], [110, 30, 16, "orange"]], [[100, 90, 18, "green"], [40, 60, 12, "orange"], [80, 30, 20, "red"], [20, 100, 9, "blue"]], [[60, 60, 24, "orange"], [110, 100, 11, "red"], [25, 25, 14, "blue"], [115, 40, 10, "green"]]].map((L, i) => { const x = 14 + i * 140; return `${mini(x, 34, 132, 124, L.map(([cx, cy, r, c]) => `<circle cx="${x + cx}" cy="${34 + cy}" r="${r}" fill="${c}" opacity=".85"/>`).join(""), "#fff")}${T(x + 66, 178, (i + 1) + ". spustenie", { a: "middle", fs: 12, b: 1, c: A })}`; }).join("")}
+    ${T(220, 196, "Náhodná poloha, polomer aj farba sa zakaždým zmenia.", { a: "middle", fs: 11 })}`, "Tri spustenia"),
+    "Program s <b>random</b> nakreslí pri každom spustení <b>iný obrázok</b>."),
+  dve: fig(SV(440, 236, `
+    ${H("Premenné vs. náhoda")}
+    ${box(14, 32, 200, 196, AS, null, 10)}${T(114, 54, "premenné", { a: "middle", fs: 13, b: 1, c: A })}${T(114, 72, "prispôsobiteľný program", { a: "middle", fs: 11 })}
+    ${mini(30, 84, 76, 76, R(40, 94, 70, 124, "#FFB74D", C.ink, 1.5))}${mini(122, 84, 76, 76, R(132, 94, 188, 150, "#FFB74D", C.ink, 1.5))}
+    ${M(68, 182, "a = 30", { a: "middle", fs: 11.5, b: 1 })}${M(160, 182, "a = 56", { a: "middle", fs: 11.5, b: 1 })}${T(114, 212, "zmeníš 1 číslo", { a: "middle", fs: 11, c: C.mut })}
+    ${box(226, 32, 200, 196, C.blueS, null, 10)}${T(326, 54, "náhoda", { a: "middle", fs: 13, b: 1, c: C.blue })}${T(326, 72, "prekvapivý program", { a: "middle", fs: 11 })}
+    ${mini(242, 84, 76, 76, `<circle cx="262" cy="104" r="10" fill="red"/><circle cx="300" cy="140" r="12" fill="green"/>`)}${mini(334, 84, 76, 76, `<circle cx="384" cy="100" r="13" fill="blue"/><circle cx="352" cy="144" r="8" fill="orange"/>`)}
+    ${T(280, 182, "1. beh", { a: "middle", fs: 11.5, b: 1 })}${T(372, 182, "2. beh", { a: "middle", fs: 11.5, b: 1 })}${T(326, 212, "každé spustenie iné", { a: "middle", fs: 11, c: C.mut })}`, "Premenné a náhoda"),
+    "<b>Premenné</b> menia obrázok podľa nás, <b>náhoda</b> ho mení sama pri každom spustení."),
+  kontrola: fig(SV(440, 236, `
+    ${H("Kontrola programu s náhodou")}
+    ${[["import random", "je na začiatku programu?"], ["rozsah", "môže padnúť krajná hodnota?"], ["v ploche", "stred aspoň r od okraja?"], ["premenné", "čísla sa píšu iba raz, hore?"]].map(([a, b], i) => { const y = 32 + i * 50; return `${box(14, y, 412, 42, i % 2 ? AS : C.bg, null, 8)}<rect x="28" y="${y + 12}" width="18" height="18" rx="4" fill="#fff" stroke="${A}" stroke-width="2"/><path d="M32 ${y + 21} l4 4 l7 -9" fill="none" stroke="${A}" stroke-width="2.5"/>${M(58, y + 26, a, { fs: 12, b: 1, c: A })}${T(190, y + 26, b, { fs: 11.5 })}`; }).join("")}`, "Kontrolný zoznam"),
+    "Pred spustením si over <b>import</b>, <b>rozsah</b> náhody a či tvar ostane <b>v ploche</b>."),
+  pocet: fig(SV(440, 200, `
+    ${H("Koľko rôznych hodnôt?")}
+    ${[["random.randint(a, b)", "b − a + 1 hodnôt", "randint(3, 7): 7 − 3 + 1 = 5"], ["random.randrange(n)", "n hodnôt (0 až n − 1)", "randrange(5): 0, 1, 2, 3, 4"]].map(([f, n, p], i) => { const y = 32 + i * 76; return `${box(14, y, 412, 68, i ? AS : C.bg, null, 8)}${M(24, y + 22, f, { fs: 12, b: 1, c: A })}${T(416, y + 22, n, { a: "end", fs: 12, b: 1 })}${M(24, y + 50, p, { fs: 11.5 })}`; }).join("")}
+    ${T(220, 192, "Pri randint sa počíta aj prvé aj posledné číslo.", { a: "middle", fs: 11.5 })}`, "Počet hodnôt"),
+    "<b>randint(a, b)</b> má b − a + 1 možností, <b>randrange(n)</b> presne n možností.")
+};
+})();
+
+/* ---------- hádzanie dvoma kockami (bez bodov) ---------- */
+function dkState() { return S.dk || (S.dk = { c: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], n: 0, last: null }); }
+function dkRoll(k) { const D = dkState(); for (let i = 0; i < k; i++) { const a = 1 + Math.floor(Math.random() * 6), b = 1 + Math.floor(Math.random() * 6); D.c[a + b - 2]++; D.n++; D.last = [a, b]; } }
+function dkInner() { const D = dkState(), mx = Math.max(1, ...D.c);
+  const bars = D.c.map((v, i) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;min-width:0"><small style="font-size:12px">${v}</small><div style="width:100%;max-width:34px;height:${Math.round(110 * v / mx)}px;background:${i === 5 ? "var(--acc)" : "#7FA6D9"};border-radius:4px 4px 0 0"></div><b style="font-size:13px">${i + 2}</b></div>`).join("");
+  return `<p style="margin:6px 0">${D.last ? `Posledný hod: <b>${D.last[0]} + ${D.last[1]} = ${D.last[0] + D.last[1]}</b>. ` : ""}Počet hodov: <b>${D.n}</b></p>
+    <div style="display:flex;gap:4px;align-items:flex-end;height:150px;padding:6px;background:#fff;border:1px solid var(--border);border-radius:8px">${bars}</div>
+    ${D.n >= 100 ? `<p style="margin:8px 0 0">Súčet <b>7</b> sa dá hodiť až 6 spôsobmi (1 + 6, 2 + 5, 3 + 4, 4 + 3, 5 + 2, 6 + 1), súčty 2 a 12 iba jedným. Každá kocka je pritom spravodlivá – <code>randint(1, 6)</code> dáva všetky čísla rovnako často.</p>` : `<p style="margin:8px 0 0"><small>Hoď aspoň 100-krát a pozri sa, ktorý stĺpec je najvyšší.</small></p>`}`; }
+function dkHTML() { return `<h3>Vyskúšaj si: hádzanie dvoma kockami</h3><p>Program hodí dvoma kockami a sčíta body. Tipni si, ktorý súčet padne najčastejšie, a potom hádž. Táto časť sa neboduje.</p>
+    <div class="task"><div class="pcode" style="white-space:pre-wrap">${hl("k1 = random.randint(1, 6)\nk2 = random.randint(1, 6)\nsucet = k1 + k2")}</div>
+    <div class="row"><button class="primary" data-dk="1">🎲 Hoď 1×</button><button class="ghost" data-dk="100">Hoď 100×</button><button class="ghost" data-dk="0">↺ Vynuluj</button></div>
+    <div id="dkbox">${dkInner()}</div></div>`; }
+function dkClick(e) { const b = e.target.closest && e.target.closest("[data-dk]"); if (!b) return false; const k = +b.dataset.dk; if (k) dkRoll(k); else S.dk = null; save(); const x = document.getElementById("dkbox"); if (x) x.innerHTML = dkInner(); return true; }
+
 const VIEWS = {
   premenne: () => head() + `<h2>Premenné v kreslení</h2>
-    <div class="theory"><p><b>Premenná</b> je pomenované miesto v pamäti, kam uložíme hodnotu: <code>x = 50</code>. Kdekoľvek potom napíšeme <code>x</code>, Python použije uloženú hodnotu. Premenné môžeme používať vo <b>výrazoch</b>: <code>x + a</code>, <code>y - 10</code>, <code>a // 2</code> (celočíselné delenie). Priradenie <code>x = x + a + 20</code> vezme starú hodnotu x, pripočíta k nej a + 20 a výsledok uloží späť do x.</p>
-      <div class="pcode">x = 50
+    <div class="theory tsplit"><div><p><b>Premenná</b> je pomenované miesto v pamäti, kam uložíme hodnotu: <code>x = 50</code>. Kdekoľvek potom napíšeme <code>x</code>, Python použije <b>uloženú hodnotu</b>.</p>
+      <table class="rtab"><thead><tr><th>Výraz</th><th>Význam</th></tr></thead><tbody>
+        <tr><td style="white-space:nowrap"><code>x + a</code></td><td>súčet hodnôt premenných</td></tr>
+        <tr><td style="white-space:nowrap"><code>y - 10</code></td><td>rozdiel</td></tr>
+        <tr><td style="white-space:nowrap"><code>a // 2</code></td><td><b>celočíselné delenie</b></td></tr></tbody></table>
+      <p>Priradenie <code>x = x + a + 20</code> vezme <b>starú hodnotu</b> x, pripočíta k nej a + 20 a výsledok uloží <b>späť do x</b>.</p>
+      <div class="pcode" style="white-space:pre-wrap;word-break:break-word">x = 50
 y = 60
 a = 120
-canvas.create_rectangle(x, y, x + a, y + a, fill='orange')</div><p>Keď zmeníš napr. <code>a = 60</code>, štvorec sa zmenší bez toho, aby si menil príkaz na kreslenie.</p></div>
+canvas.create_rectangle(x, y, x + a, y + a, fill='orange')</div><p>Keď zmeníš napr. <code>a = 60</code>, štvorec sa zmenší bez toho, aby si menil príkaz na kreslenie.</p></div><div>${TFIG.skatulka}</div></div>
+    ${ltfigs(TFIG.posun, TFIG.priradenie)}
+    ${VEDEL("Jazyk Python vymyslel Holanďan Guido van Rossum a prvú verziu zverejnil v roku 1991. Nepomenoval ho podľa hada, ale podľa britskej komediálnej skupiny <b>Monty Python</b>.")}
     <h3>Úlohy</h3>${chalHTML("c_var", "var")}${ideHTML("var", PRE + "x = 50\ny = 60\na = 120\n")}
     <h3>Otázky</h3><div class="task">${taskHTML("vq")}</div>
     <h3>Úloha 2: počítaj s premennými</h3><div class="task">${taskHTML("vin")}</div>` + nextBar(),
   vyrazy: () => head() + `<h2>Výpočty zo stredu a polomeru</h2>
-    <div class="theory"><p>Kruh je pohodlnejšie zadávať <b>stredom a polomerom</b> ako rohmi. Súradnice rohov necháme vypočítať Python: <code>create_oval(sx - r, sy - r, sx + r, sy + r)</code>. Keď meníme r (napr. <code>r = r - 40</code>), rovnakým príkazom nakreslíme ďalší kruh s rovnakým stredom.</p></div>
+    <div class="theory tsplit"><div><p>Kruh je pohodlnejšie zadávať <b>stredom a polomerom</b> ako rohmi. Súradnice rohov necháme vypočítať Python:</p>
+      <div class="pcode" style="white-space:pre-wrap;word-break:break-word">create_oval(sx - r, sy - r, sx + r, sy + r)</div>
+      <table class="rtab"><thead><tr><th>Zmeníme</th><th>Čo sa stane</th></tr></thead><tbody>
+        <tr><td><b>r</b>, napr. <code>r = r - 40</code></td><td>rovnakým príkazom nakreslíme ďalší kruh s <b>rovnakým stredom</b></td></tr>
+        <tr><td style="white-space:nowrap"><b>sx</b> alebo <b>sy</b></td><td>kruh sa <b>posunie</b></td></tr></tbody></table></div><div>${TFIG.stredr}</div></div>
+    ${ltfigs(TFIG.sustredne, TFIG.rad)}
+    ${VEDEL("Obvod kruhu vypočítaš ako 2 · π · r a obsah ako π · r · r. Python má číslo π pripravené v module <code>math</code> ako <code>math.pi</code> = 3.141592653589793.")}
     <h3>Úlohy</h3>${chalHTML("c_expr", "expr")}${ideHTML("expr", PRE + "sx = 200\nsy = 150\nr = 70\n")}
     <h3>Úloha 2: počítaj zo stredu a polomeru</h3><div class="task">${taskHTML("kin")}</div>` + nextBar(),
   nahoda: () => head() + `<h2>Náhodné hodnoty</h2>${guessBox()}
-    <div class="theory"><p>Modul <b>random</b> generuje náhodné hodnoty. Na začiatok programu napíšeme <code>import random</code>.</p>
-      <table class="cmdt"><thead><tr><th>Funkcia</th><th>Vráti</th><th>Príklad</th></tr></thead><tbody><tr><td><code>random.randint(a, b)</code></td><td>celé číslo od a do b vrátane</td><td><code>random.randint(1, 6)</code> kocka</td></tr><tr><td><code>random.randrange(n)</code></td><td>celé číslo od 0 do n − 1</td><td><code>random.randrange(400)</code></td></tr><tr><td><code>random.choice(zoznam)</code></td><td>náhodný prvok zoznamu</td><td><code>random.choice(['red', 'blue'])</code></td></tr></tbody></table>
-      <p>Spusť program viackrát: obrázok bude zakaždým iný. Aby bol kruh celý v ploche, stred vyberaj s odstupom polomeru od okrajov.</p></div>
+    <div class="theory tsplit"><div><p>Modul <b>random</b> generuje náhodné hodnoty. Na začiatok programu napíšeme <code>import random</code>.</p>
+      <table class="rtab"><thead><tr><th>Funkcia</th><th>Vráti</th></tr></thead><tbody><tr><td style="white-space:nowrap"><code>random.randint(a, b)</code></td><td>celé číslo od a do b <b>vrátane</b></td></tr><tr><td style="white-space:nowrap"><code>random.randrange(n)</code></td><td>celé číslo od 0 do <b>n − 1</b></td></tr><tr><td style="white-space:nowrap"><code>random.choice(zoznam)</code></td><td>náhodný <b>prvok zoznamu</b></td></tr></tbody></table>
+      <p>Príklady (prvý je hod kockou):</p><div class="pcode" style="white-space:pre-wrap;word-break:break-word">random.randint(1, 6)
+random.randrange(400)
+random.choice(['red', 'blue'])</div>
+      <p>Spusť program viackrát: obrázok bude zakaždým iný. Aby bol kruh celý v ploche, stred vyberaj s odstupom <b>polomeru</b> od okrajov.</p></div><div>${TFIG.ciselna}</div></div>
+    ${ltfigs(TFIG.okraj, TFIG.spustenia)}
+    ${VEDEL("Počítač náhodu iba napodobňuje: modul <code>random</code> počíta <b>pseudonáhodné</b> čísla podľa vzorca zo štartovacej hodnoty (<i>seed</i>). Ak na začiatku napíšeš <code>random.seed(42)</code>, dostaneš pri každom spustení rovnakú postupnosť.")}
+    ${dkHTML()}
     <h3>Úlohy</h3>${chalHTML("c_rnd", "rnd")}${ideHTML("rnd", "import tkinter\nimport random\ncanvas = tkinter.Canvas(width=400, height=300, bg='white')\ncanvas.pack()\n")}
     <h3>Otázky</h3><div class="task">${taskHTML("nq")}</div>
     <h3>Úloha 2: môže to funkcia vrátiť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: premenné a náhoda</h2>
-    <div class="theory"><p>Premenné robia program <b>prispôsobiteľný</b> (zmeníš jedno číslo a zmení sa celý obrázok), náhoda ho robí <b>prekvapivý</b> (každé spustenie je iné). Pri náhode si vždy over <b>rozsah</b>: randint(a, b) dá a až b vrátane, randrange(n) dá 0 až n − 1, choice vyberie jeden prvok zoznamu. Náhodné súradnice voľ tak, aby tvar nevyšiel mimo plochy. Na začiatok programu nezabudni <code>import random</code>.</p><p>Vyber funkciu pre každú úlohu a potom odpovedz.</p></div>
+    <div class="theory tsplit"><div><p>Premenné robia program <b>prispôsobiteľný</b> (zmeníš jedno číslo a zmení sa celý obrázok), náhoda ho robí <b>prekvapivý</b> (každé spustenie je iné).</p>
+      <p>Pri náhode si vždy over <b>rozsah</b>:</p>
+      <table class="rtab"><thead><tr><th>Funkcia</th><th>Rozsah</th></tr></thead><tbody>
+        <tr><td style="white-space:nowrap"><code>randint(a, b)</code></td><td>a až b vrátane</td></tr>
+        <tr><td style="white-space:nowrap"><code>randrange(n)</code></td><td>0 až n − 1</td></tr>
+        <tr><td style="white-space:nowrap"><code>choice(zoznam)</code></td><td>jeden prvok zoznamu</td></tr></tbody></table>
+      <p>Náhodné súradnice voľ tak, aby tvar nevyšiel <b>mimo plochy</b>. Na začiatok programu nezabudni <code>import random</code>.</p><p>Vyber funkciu pre každú úlohu a potom odpovedz.</p></div><div>${TFIG.dve}</div></div>
+    ${S.t.pxin ? ltfigs(TFIG.kontrola, TFIG.pocet) : ltfigs(TFIG.kontrola)}
+    ${VEDEL("Firma Cloudflare získava skutočne náhodné čísla aj z kamery, ktorá sníma stenu so stovkou <b>lávových lámp</b> v jej kancelárii v San Franciscu. Pohyb vosku v lampách sa nedá predpovedať.")}
     <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 6 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 6</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
     <h3>Úloha 2: rozsah náhody</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span style="flex:1 1 260px;min-width:0">${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="flex:0 1 250px;width:250px;min-width:0;max-width:100%;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
   if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
 function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
@@ -678,7 +861,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

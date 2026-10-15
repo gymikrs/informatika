@@ -224,13 +224,44 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .fp{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}
 .fp label{font-weight:600;font-size:14px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Šírka x2 − x1, výška y2 − y1. Kruh = create_oval vo štvorci alebo zo stredu a polomeru.", "fill výplň, outline obrys, width hrúbka. Neskôr nakreslené je navrchu."], "obdlznik": ["create_rectangle(x1, y1, x2, y2): dva protiľahlé rohy; šírka x2 − x1, výška y2 − y1.", "fill = výplň, outline = obrys ('' bez obrysu), width = hrúbka. Neskorší tvar prekryje skorší."], "elipsa": ["create_oval vpíše elipsu do obdĺžnika; štvorec → kruh.", "Kruh so stredom (sx, sy) a polomerom r: create_oval(sx − r, sy − r, sx + r, sy + r)."], "obrazky": ["Najprv náčrt a súradnice, kresli od pozadia k detailom."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"obdlznik": ["Obdĺžnik: <code>create_rectangle(x1, y1, x2, y2)</code> – (x1, y1) a (x2, y2) sú <b>dva protiľahlé rohy</b> (zvyčajne ľavý horný a pravý dolný).", "<b>Šírka</b> = x2 − x1, <b>výška</b> = y2 − y1. <b>Štvorec</b> má šírku aj výšku rovnakú.", "<b>fill</b> = farba výplne (predvolene žiadna, tvar je priehľadný).", "<b>outline</b> = farba obrysu (predvolene čierna), <code>outline=''</code> = bez obrysu.", "<b>width</b> = hrúbka obrysu v pixeloch.", "Tvary sa kreslia v poradí príkazov: <b>neskorší tvar prekryje skorší</b>."], "elipsa": ["<code>create_oval(x1, y1, x2, y2)</code> nakreslí elipsu <b>vpísanú do obdĺžnika</b> s rohmi (x1, y1) a (x2, y2).", "Ak je ohraničujúci obdĺžnik <b>štvorec</b>, vznikne <b>kruh</b>.", "<b>Stred</b> elipsy je v strede obdĺžnika: x = (x1 + x2) / 2, y = (y1 + y2) / 2.", "Kruh so stredom (sx, sy) a polomerom r: <code>create_oval(sx − r, sy − r, sx + r, sy + r)</code>.", "Parametre <b>fill</b>, <b>outline</b> a <b>width</b> fungujú rovnako ako pri obdĺžniku."], "obrazky": ["Pred programovaním obrázok <b>načrtni</b> na štvorčekový papier.", "Obrázok rozlož na <b>jednoduché tvary</b>: obdĺžniky, štvorce, elipsy, kruhy.", "Zapíš si <b>rohy</b> obdĺžnikov a pri kruhoch <b>stred a polomer</b>.", "Kresli <b>od pozadia k detailom</b>: najprv veľké plochy, nakoniec drobnosti.", "Neskôr nakreslený tvar <b>prekryje</b> skôr nakreslený."], "precvic": ["Chyba tvaru býva v <b>súradniciach</b>, v <b>parametroch</b> alebo v <b>poradí</b> príkazov.", "Súradnice: rohy, šírka x2 − x1, výška y2 − y1; kruh vznikne iba zo <b>štvorca</b>.", "Parametre: <b>fill</b> = výplň, <b>outline</b> = obrys, <b>width</b> = hrúbka obrysu.", "Poradie: neskôr nakreslený tvar je <b>navrchu</b>.", "Kruh zadávaj <b>stredom a polomerom</b>, rohy nech vypočíta Python.", "Trik: prerušovaný <b>pomocný obdĺžnik</b> na tých istých súradniciach ukáže, kde elipsa leží."]};
 /* ---------- mini tkinter.Canvas interpreter (subset of Python) ---------- */
 const TKCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
 function tkColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (TKCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
@@ -399,7 +430,7 @@ const KEY = "tvary-r28-v1";
 const LESSON = "2.8 Kreslenie štvorcov, obdĺžnikov, kruhov, elíps";
 const BRAND = "2.8 Obdĺžniky a elipsy";
 const CLASS_DEFAULT = "III.";
-const WIDE = { obdlznik: 1, elipsa: 1, obrazky: 1 };
+const WIDE = { obdlznik: 1, elipsa: 1, obrazky: 1, precvic: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "obdlznik", title: "Obdĺžnik a štvorec", min: 12 },
@@ -433,7 +464,7 @@ const has = (env, t, pts, f) => env.shapes.some(s => s.t === t && s.pts.length =
 function CUSTOM_CLICK(e) {
   if (selClick(e, { px: [PX_I, "g_sit"] })) return true; return tkClick(e); }
 function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; return tkInput(e); }
+  if (selInput(e)) return true; if (rxInput(e.target)) return true; return tkInput(e); }
 const CH = {
   c_rect: [
     { n: "A", t: "Nakresli <b>štvorec</b> s ľavým horným rohom (50, 50) a stranou 100. Výplň <b>yellow</b>.", ref: PRE + "canvas.create_rectangle(50, 50, 150, 150, fill='yellow')", ok: e => has(e, "rectangle", [50, 50, 150, 150], s => s.fill === "yellow") || "Štvorec s rohmi (50, 50) a (150, 150) so žltou výplňou nevidím." },
@@ -489,31 +520,170 @@ const TASKS = {
     { id: "6", ...Q("width=5 pri obdĺžniku mení:", ["hrúbku obrysu", "šírku obdĺžnika", "výplň", "polohu"], 0) }
   ]}
 };
+/* ---------- LENKA: obrázky k teórii ---------- */
+/* ---------- LENKA: obrázky k teórii ---------- */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#0E7A5C", accS: "#D5EEE5", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, C.ink].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-Fa-f]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  return { C, fig, SV, ar, T, box, num };
+})();
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num } = PF; const A = C.acc, AS = C.accS;
+const M = (x, y, s, o = {}) => T(x, y, s, Object.assign({ mono: 1 }, o));
+const dot = (x, y, c, r) => `<circle cx="${x}" cy="${y}" r="${r || 4}" fill="${c || C.bad}"/>`;
+const R = (x1, y1, x2, y2, f, s, w, ex) => `<rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" fill="${f || "none"}"${s === "" ? "" : ` stroke="${s || C.ink}" stroke-width="${w || 2}"`}${ex || ""}/>`;
+const O = (x1, y1, x2, y2, f, s, w, ex) => `<ellipse cx="${(x1 + x2) / 2}" cy="${(y1 + y2) / 2}" rx="${(x2 - x1) / 2}" ry="${(y2 - y1) / 2}" fill="${f || "none"}"${s === "" ? "" : ` stroke="${s || C.ink}" stroke-width="${w || 2}"`}${ex || ""}/>`;
+const DS = ` stroke-dasharray="5 4"`;
+const grid = (x, y, w, h, s) => { let g = ""; for (let i = s; i < w; i += s) g += `<line x1="${x + i}" y1="${y}" x2="${x + i}" y2="${y + h}" stroke="#E6EEF0"/>`; for (let j = s; j < h; j += s) g += `<line x1="${x}" y1="${y + j}" x2="${x + w}" y2="${y + j}" stroke="#E6EEF0"/>`; return g; };
+const dark = (x, y, w, h) => box(x, y, w, h, "#0F1A2E", null, 6);
+const cl = (x, y, s, fs) => `<text x="${x}" y="${y}" font-size="${fs || 11.5}" font-family="Consolas,monospace" fill="#DCE7FF" xml:space="preserve">${s}</text>`;
+const H = (s) => T(220, 20, s, { a: "middle", fs: 13.5, b: 1, c: A });
+return {
+  rohy: fig(SV(440, 270, `
+    ${H("Obdĺžnik = dva protiľahlé rohy")}
+    ${box(14, 32, 412, 206, C.bg, null, 8)}${grid(14, 32, 412, 206, 26)}
+    ${R(100, 76, 340, 196, "#FFE7A8", C.ink, 2.5)}
+    ${dot(100, 76, C.bad, 5)}${M(94, 66, "(x1, y1) = (60, 40)", { fs: 11.5, b: 1, c: C.bad })}
+    ${dot(340, 196, C.blue, 5)}${M(346, 222, "(x2, y2) = (300, 160)", { a: "end", fs: 11.5, b: 1, c: C.blue })}
+    ${ar(108, 106, 332, 106, A, 2, 1)}${T(214, 99, "šírka = 300 − 60 = 240", { a: "middle", fs: 11.5, b: 1, c: A })}
+    ${ar(326, 84, 326, 188, C.amb, 2, 1)}${T(316, 160, "výška = 160 − 40 = 120", { a: "end", fs: 11.5, b: 1, c: C.amb })}
+    ${M(220, 258, "create_rectangle(60, 40, 300, 160, fill='gold')", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Obdĺžnik zadaný dvoma rohmi"),
+    "Štyri čísla sú <b>dva protiľahlé rohy</b>. Šírka = x2 − x1, výška = y2 − y1."),
+  param: fig(SV(440, 214, `
+    ${H("Výplň, obrys a hrúbka")}
+    ${[["fill='gold'", "", "výplň, obrys čierny"], ["outline='blue'", "width=6", "obrys a jeho hrúbka"], ["fill='gold'", "outline=''", "výplň bez obrysu"]].map(([a, b, d], i) => { const x = 14 + i * 140; return `${box(x, 32, 132, 174, i % 2 ? AS : C.bg, null, 8)}${i === 0 ? R(x + 22, 48, x + 110, 128, "#F2C230", C.ink, 1.5) : i === 1 ? R(x + 25, 51, x + 107, 125, "none", C.blue, 6) : R(x + 22, 48, x + 110, 128, "#F2C230", "")}${M(x + 66, 152, a, { a: "middle", fs: 11, b: 1, c: A })}${b ? M(x + 66, 168, b, { a: "middle", fs: 11, b: 1, c: A }) : ""}${T(x + 66, 194, d, { a: "middle", fs: 11 })}`; }).join("")}`, "Parametre fill, outline, width"),
+    "<b>fill</b> = výplň, <b>outline</b> = farba obrysu, <b>width</b> = hrúbka obrysu."),
+  poradie: fig(SV(440, 220, `
+    ${H("Na poradí príkazov záleží")}
+    ${[[0, "1. obdĺžnik", "2. kruh", "kruh je navrchu"], [1, "1. kruh", "2. obdĺžnik", "obdĺžnik je navrchu"]].map(([k, a, b, d], i) => { const x = 14 + i * 212; const r = R(x + 40, 50, x + 130, 120, "#4D7FD6", C.ink, 1.5), o = O(x + 90, 70, x + 170, 150, "#F59A3C", C.ink, 1.5); return `${box(x, 32, 200, 180, C.bg, null, 10)}${k ? o + r : r + o}${T(x + 20, 172, a, { fs: 11.5 })}${T(x + 20, 188, b, { fs: 11.5 })}${T(x + 100, 206, d, { a: "middle", fs: 11.5, b: 1, c: A })}`; }).join("")}`, "Poradie kreslenia"),
+    "Tvar nakreslený <b>neskôr</b> leží <b>navrchu</b> a prekryje skoršie tvary."),
+  vpisana: fig(SV(440, 262, `
+    ${H("Elipsa vpísaná do obdĺžnika")}
+    ${R(80, 50, 340, 180, "none", C.mut, 1.5, DS)}${O(80, 50, 340, 180, AS, A, 3)}
+    ${dot(80, 50, C.bad, 5)}${M(74, 44, "(60, 40)", { a: "end", fs: 11.5, b: 1, c: C.bad })}
+    ${dot(340, 180, C.blue, 5)}${M(346, 194, "(300, 160)", { fs: 11.5, b: 1, c: C.blue })}
+    ${dot(210, 115, C.ink, 4)}${T(218, 111, "stred (180, 100)", { fs: 11.5, b: 1 })}
+    ${M(220, 212, "x stredu = (60 + 300) / 2 = 180", { a: "middle", fs: 11.5 })}${M(220, 230, "y stredu = (40 + 160) / 2 = 100", { a: "middle", fs: 11.5 })}
+    ${M(220, 254, "create_oval(60, 40, 300, 160)", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Elipsa vpísaná do obdĺžnika"),
+    "create_oval dostane <b>rohy obdĺžnika</b>, elipsa sa doň vpíše. Stred je v strede obdĺžnika."),
+  kruh: fig(SV(440, 220, `
+    ${H("Štvorec dá kruh, obdĺžnik elipsu")}
+    ${box(14, 32, 200, 180, AS, null, 10)}${R(64, 48, 164, 148, "none", C.mut, 1.5, DS)}${O(64, 48, 164, 148, "#fff", A, 3)}
+    ${T(114, 170, "štvorec 100 × 100 → kruh", { a: "middle", fs: 11.5, b: 1, c: A })}${M(114, 192, "create_oval(40, 40, 140, 140)", { a: "middle", fs: 10.5 })}
+    ${box(226, 32, 200, 180, C.bg, null, 10)}${R(244, 68, 408, 128, "none", C.mut, 1.5, DS)}${O(244, 68, 408, 128, "#fff", C.blue, 3)}
+    ${T(326, 170, "obdĺžnik 180 × 80 → elipsa", { a: "middle", fs: 11.5, b: 1, c: C.blue })}${M(326, 192, "create_oval(20, 60, 200, 140)", { a: "middle", fs: 10.5 })}`, "Kruh a elipsa"),
+    "Kruh vznikne, keď majú <b>šírka a výška</b> ohraničenia rovnakú hodnotu."),
+  stred: fig(SV(440, 252, `
+    ${H("Kruh zo stredu a polomeru")}
+    ${R(50, 50, 210, 210, "none", C.mut, 1.5, DS)}${O(50, 50, 210, 210, "#FDECEA", C.bad, 3)}
+    ${dot(130, 130, C.ink, 4)}${M(124, 122, "(sx, sy)", { a: "middle", fs: 11, b: 1 })}
+    <line x1="130" y1="130" x2="210" y2="130" stroke="${C.amb}" stroke-width="2.5"/>${T(170, 146, "r", { a: "middle", fs: 13, b: 1, c: C.amb })}
+    ${dot(50, 50, C.blue, 4)}${M(44, 42, "(sx − r, sy − r)", { fs: 11, b: 1, c: C.blue })}
+    ${dot(210, 210, C.blue, 4)}${M(216, 228, "(sx + r, sy + r)", { a: "end", fs: 11, b: 1, c: C.blue })}
+    ${box(236, 40, 190, 176, AS, null, 8)}${T(250, 60, "Príklad:", { fs: 11.5, b: 1, c: A })}${M(250, 80, "sx = 150, sy = 100", { fs: 11 })}${M(250, 98, "r = 60", { fs: 11 })}
+    ${[["x1 = 150 − 60 = 90"], ["y1 = 100 − 60 = 40"], ["x2 = 150 + 60 = 210"], ["y2 = 100 + 60 = 160"]].map(([s], i) => M(250, 126 + i * 22, s, { fs: 11, b: 1 })).join("")}
+    ${M(220, 246, "create_oval(sx − r, sy − r, sx + r, sy + r)", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Kruh zo stredu a polomeru"),
+    "Rohy štvorca okolo kruhu sú od stredu vzdialené o <b>polomer r</b> vodorovne aj zvisle."),
+  vrstvy: fig(SV(440, 232, `
+    ${H("Od pozadia k detailom")}
+    ${[["1. pozadie", 1], ["2. veľké tvary", 2], ["3. detaily", 3]].map(([t, k], i) => { const x = 14 + i * 140; let g = `${box(x, 32, 132, 150, C.bg, null, 8)}<rect x="${x + 8}" y="40" width="116" height="96" fill="#CFE8FF"/><rect x="${x + 8}" y="136" width="116" height="38" fill="#9AA3AE"/>`;
+      if (k > 1) g += `${R(x + 18, 104, x + 114, 144, "#D9433B", C.ink, 1.5)}${R(x + 38, 80, x + 94, 106, "#D9433B", C.ink, 1.5)}`;
+      if (k > 2) g += `${R(x + 44, 85, x + 64, 102, "#E8F6FF", C.ink, 1)}${R(x + 68, 85, x + 88, 102, "#E8F6FF", C.ink, 1)}${O(x + 26, 132, x + 52, 158, "#222", C.ink, 1)}${O(x + 82, 132, x + 108, 158, "#222", C.ink, 1)}${O(x + 92, 50, x + 116, 74, "#FFC93C", "")}`;
+      return g + T(x + 66, 200, t, { a: "middle", fs: 12, b: 1, c: A }) + (i < 2 ? ar(x + 132, 107, x + 140, 107, A, 2) : ""); }).join("")}
+    ${T(220, 224, "Každý ďalší krok kreslí cez predchádzajúci.", { a: "middle", fs: 11.5 })}`, "Kreslenie po vrstvách"),
+    "Auto kreslíme po <b>vrstvách</b>: pozadie, potom veľké tvary, nakoniec <b>detaily</b>."),
+  nacrt: fig(SV(440, 236, `
+    ${H("Náčrt so súradnicami")}
+    ${box(14, 32, 196, 196, "#fff", C.line, 6)}${grid(14, 32, 196, 196, 14)}
+    ${R(42, 116, 182, 172, "#7FB3E8", C.ink, 2)}${O(56, 158, 84, 186, "#333", C.ink, 1.5)}${O(140, 158, 168, 186, "#333", C.ink, 1.5)}${R(70, 88, 154, 116, "#7FB3E8", C.ink, 2)}
+    ${dot(42, 116, C.bad, 3.5)}${dot(182, 172, C.bad, 3.5)}${dot(70, 172, C.amb, 3)}${dot(154, 172, C.amb, 3)}
+    ${box(222, 32, 204, 196, AS, null, 8)}${T(234, 54, "Tvary a ich čísla:", { fs: 11.5, b: 1, c: A })}
+    ${[["karoséria", "(20, 60) – (120, 100)"], ["strecha", "(40, 40) – (100, 60)"], ["koleso 1", "stred (40, 100), r = 10"], ["koleso 2", "stred (100, 100), r = 10"]].map(([n, s], i) => `${T(234, 80 + i * 36, n, { fs: 11.5, b: 1 })}${M(234, 96 + i * 36, s, { fs: 10.5 })}`).join("")}`, "Náčrt auta"),
+    "Na štvorčekovom papieri zistíš <b>rohy</b> obdĺžnikov a <b>stredy a polomery</b> kolies."),
+  sklad: fig(SV(440, 214, `
+    ${H("Obrázok rozložený na tvary")}
+    ${[["strom", 0], ["hríb", 1]].map(([n, k], i) => { const y = 34 + i * 88; const pic = k ? `${R(52, y + 30, 72, y + 62, "#F3E3C3", C.ink, 1.5)}${O(28, y + 6, 96, y + 38, "#C0392B", C.ink, 1.5)}` : `${R(55, y + 42, 69, y + 64, "#8B5A2B", C.ink, 1.5)}${O(34, y + 4, 90, y + 48, "#3FA34D", C.ink, 1.5)}`;
+      const p1 = k ? `${O(176, y + 18, 244, y + 54, "#C0392B", C.ink, 1.5)}${M(210, y + 72, "create_oval", { a: "middle", fs: 10.5, c: A })}` : `${O(184, y + 6, 236, y + 58, "#3FA34D", C.ink, 1.5)}${M(210, y + 74, "create_oval", { a: "middle", fs: 10.5, c: A })}`;
+      const p2 = k ? `${R(330, y + 14, 350, y + 54, "#F3E3C3", C.ink, 1.5)}` : `${R(332, y + 16, 348, y + 56, "#8B5A2B", C.ink, 1.5)}`;
+      return `${box(14, y, 412, 82, i ? AS : C.bg, null, 8)}${pic}${T(62, y + 78, n, { a: "middle", fs: 11, b: 1 })}${T(136, y + 46, "=", { a: "middle", fs: 22, b: 1, c: A })}${p1}${T(286, y + 46, "+", { a: "middle", fs: 22, b: 1, c: A })}${p2}${M(340, y + 74, "create_rectangle", { a: "middle", fs: 10.5, c: A })}`; }).join("")}`, "Rozklad obrázka na tvary"),
+    "Zložitý obrázok rozložíme na <b>jednoduché tvary</b>: obdĺžniky, elipsy a kruhy."),
+  kategorie: fig(SV(440, 250, `
+    ${H("Kde hľadať chybu tvaru")}
+    ${[["súradnice", ["rohy (x1, y1), (x2, y2)", "šírka x2 − x1", "výška y2 − y1", "kruh = štvorec"], C.blue, C.blueS], ["parametre", ["fill = výplň", "outline = obrys", "width = hrúbka", "'' = bez farby"], C.amb, C.ambS], ["poradie", ["príkazy idú", "zhora nadol", "neskorší tvar", "je navrchu"], A, AS]].map(([t, L, c, s], i) => { const x = 14 + i * 140; return `${box(x, 32, 132, 210, s, null, 10)}${num(x + 22, 54, i + 1, c)}${T(x + 40, 59, t, { fs: 12.5, b: 1, c })}${L.map((l, j) => T(x + 12, 92 + j * 24, l, { fs: 11 })).join("")}`; }).join("")}`, "Tri miesta, kde býva chyba"),
+    "Chybu tvaru hľadaj v <b>súradniciach</b>, <b>parametroch</b> alebo v <b>poradí</b> príkazov."),
+  ohranicenie: fig(SV(440, 220, `
+    ${H("Trik: ukáž si ohraničenie")}
+    ${box(14, 32, 200, 150, C.bg, null, 10)}${O(44, 62, 184, 152, "#E3EEFC", C.blue, 2.5)}${T(114, 112, "kde sú rohy?", { a: "middle", fs: 11.5, c: C.mut })}
+    ${box(226, 32, 200, 150, AS, null, 10)}${R(256, 62, 396, 152, "none", C.bad, 2, DS)}${O(256, 62, 396, 152, "#E3EEFC", C.blue, 2.5)}${dot(256, 62, C.bad)}${dot(396, 152, C.bad)}
+    ${T(114, 200, "iba create_oval", { a: "middle", fs: 11.5, b: 1 })}${T(326, 200, "+ create_rectangle s dash", { a: "middle", fs: 11.5, b: 1, c: A })}
+    ${T(220, 216, "Po kontrole pomocný obdĺžnik zmaž.", { a: "middle", fs: 11 })}`, "Pomocný obdĺžnik"),
+    "Prerušovaný <b>pomocný obdĺžnik</b> na tých istých súradniciach ukáže, kde elipsa leží.")
+};
+})();
+
+/* ---------- skúšačka tvarov (bez bodov) ---------- */
+function rxState() { return S.rx || (S.rx = { t: "rectangle", r: "o", fill: "gold", outline: "", width: 3 }); }
+function rxCode() { const X = rxState(); let a = `canvas.create_${X.t}(${X.r === "s" ? "120, 20, 280, 180" : "60, 40, 340, 160"}`; if (X.fill) a += `, fill='${X.fill}'`; if (X.outline !== "") a += `, outline='${X.outline === "-" ? "" : X.outline}'`; if (X.width !== 1) a += `, width=${X.width}`; return a + ")"; }
+function rxInner() { const env = tkRun("import tkinter\ncanvas = tkinter.Canvas(width=400, height=200, bg='white')\ncanvas.pack()\n" + rxCode()); return `<div class="pv" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff">${tkSVG(env)}</div><div class="pcode" style="white-space:pre-wrap;word-break:break-word">${hl(rxCode())}</div>`; }
+function rxHTML() { const X = rxState(); const sel = (id, lab, opts, v) => `<label>${lab} <select id="${id}">${opts.map(([val, t]) => `<option value="${val}" ${String(v) === String(val) ? "selected" : ""}>${t}</option>`).join("")}</select></label>`;
+  return `<h3>Vyskúšaj si: skúšačka tvarov</h3><p>Vyber tvar, rozmer a parametre a sleduj, ako sa mení obrázok aj príkaz. Táto časť sa neboduje.</p>
+    <div class="task"><div class="fp">${sel("rxt", "tvar", [["rectangle", "create_rectangle"], ["oval", "create_oval"]], X.t)}${sel("rxr", "ohraničenie", [["o", "280 × 120"], ["s", "160 × 160"]], X.r)}${sel("rxf", "fill", [["", "bez"], ["gold", "gold"], ["skyblue", "skyblue"], ["tomato", "tomato"], ["lightgreen", "lightgreen"]], X.fill)}${sel("rxo", "outline", [["", "predvolený"], ["navy", "navy"], ["red", "red"], ["-", "'' (bez)"]], X.outline)}${sel("rxw", "width", [1, 3, 6, 10].map(w => [w, w]), X.width)}</div>
+    <div id="rxbox">${rxInner()}</div></div>`; }
+function rxInput(t) { const m = { rxt: "t", rxr: "r", rxf: "fill", rxo: "outline", rxw: "width" }[t.id]; if (!m) return false; const X = rxState(); X[m] = m === "width" ? +t.value : t.value; save(); const b = document.getElementById("rxbox"); if (b) b.innerHTML = rxInner(); return true; }
+
 const VIEWS = {
   obdlznik: () => head() + `<h2>Obdĺžnik a štvorec</h2>
-    <div class="theory"><p>Obdĺžnik nakreslíme príkazom <code>canvas.create_rectangle(x1, y1, x2, y2)</code>, kde (x1, y1) a (x2, y2) sú <b>dva protiľahlé rohy</b> (zvyčajne ľavý horný a pravý dolný). Šírka je x2 − x1, výška y2 − y1. Štvorec má obe rovnaké.</p>
-      <table class="cmdt"><thead><tr><th>Parameter</th><th>Význam</th><th>Príklad</th></tr></thead><tbody><tr><td><code>fill</code></td><td>farba výplne (predvolene žiadna)</td><td><code>fill='yellow'</code></td></tr><tr><td><code>outline</code></td><td>farba obrysu (predvolene čierna, '' = bez obrysu)</td><td><code>outline='navy'</code></td></tr><tr><td><code>width</code></td><td>hrúbka obrysu</td><td><code>width=4</code></td></tr></tbody></table>
-      <p>Tvary sa kreslia v poradí príkazov: neskorší tvar <b>prekryje</b> skorší.</p></div>
+    <div class="theory tsplit"><div><p>Obdĺžnik nakreslíme príkazom <code>canvas.create_rectangle(x1, y1, x2, y2)</code>, kde (x1, y1) a (x2, y2) sú <b>dva protiľahlé rohy</b> (zvyčajne ľavý horný a pravý dolný).</p>
+      <p><b>Šírka</b> je x2 − x1, <b>výška</b> y2 − y1. <b>Štvorec</b> má obe rovnaké. Vzhľad tvaru menia parametre za súradnicami:</p>
+      <table class="rtab"><thead><tr><th>Parameter</th><th>Význam a príklad</th></tr></thead><tbody><tr><td style="white-space:nowrap"><code>fill</code></td><td>farba výplne (predvolene žiadna), napr. <code>fill='yellow'</code></td></tr><tr><td style="white-space:nowrap"><code>outline</code></td><td>farba obrysu (predvolene čierna, '' = bez obrysu), napr. <code>outline='navy'</code></td></tr><tr><td style="white-space:nowrap"><code>width</code></td><td>hrúbka obrysu, napr. <code>width=4</code></td></tr></tbody></table>
+      <p>Tvary sa kreslia v poradí príkazov: neskorší tvar <b>prekryje</b> skorší.</p></div><div>${TFIG.rohy}</div></div>
+    ${ltfigs(TFIG.param, TFIG.poradie)}
+    ${VEDEL("Názov <b>tkinter</b> znamená <i>Tk interface</i>. Knižnicu Tk vytvoril v roku 1991 John Ousterhout pre jazyk Tcl. Preto sa niektoré chyby pri kreslení volajú <code>TclError</code>.")}
+    ${rxHTML()}
     <h3>Úlohy</h3>${chalHTML("c_rect", "rect")}${ideHTML("rect", PRE + "canvas.create_rectangle(50, 50, 150, 150, fill='yellow')\n")}
     <h3>Otázky</h3><div class="task">${taskHTML("rq")}</div>
     <h3>Úloha 2: počítaj súradnice</h3><div class="task">${taskHTML("rin")}</div>` + nextBar(),
   elipsa: () => head() + `<h2>Elipsa a kruh</h2>${guessBox()}
-    <div class="theory"><p><code>canvas.create_oval(x1, y1, x2, y2)</code> nakreslí elipsu <b>vpísanú do obdĺžnika</b> s rohmi (x1, y1) a (x2, y2). Ak je obdĺžnik štvorec, vznikne <b>kruh</b>. Kruh so stredom (sx, sy) a polomerom r:</p>
-      <div class="pcode">canvas.create_oval(sx - r, sy - r, sx + r, sy + r, fill='red')</div><p>Parametre <code>fill</code>, <code>outline</code>, <code>width</code> fungujú rovnako ako pri obdĺžniku.</p></div>
+    <div class="theory tsplit"><div><p><code>canvas.create_oval(x1, y1, x2, y2)</code> nakreslí elipsu <b>vpísanú do obdĺžnika</b> s rohmi (x1, y1) a (x2, y2). Ak je obdĺžnik <b>štvorec</b>, vznikne <b>kruh</b>.</p>
+      <p><b>Stred</b> elipsy je v strede obdĺžnika: x = (x1 + x2) / 2, y = (y1 + y2) / 2.</p>
+      <p>Kruh so stredom (sx, sy) a <b>polomerom r</b>:</p>
+      <div class="pcode" style="white-space:pre-wrap;word-break:break-word">canvas.create_oval(sx - r, sy - r, sx + r, sy + r, fill='red')</div><p>Parametre <code>fill</code>, <code>outline</code>, <code>width</code> fungujú rovnako ako pri obdĺžniku.</p></div><div>${TFIG.vpisana}</div></div>
+    ${ltfigs(TFIG.kruh, TFIG.stred)}
+    ${VEDEL("Planéty obiehajú okolo Slnka po <b>elipsách</b>, nie po kruhoch. Zistil to Johannes Kepler a zverejnil v roku 1609. Slnko pritom nie je v strede elipsy, ale v jednom z jej ohnísk.")}
     <h3>Úlohy</h3>${chalHTML("c_ov", "ov")}${ideHTML("ov", PRE + "canvas.create_oval(120, 70, 280, 230, fill='red')\n")}
     <h3>Otázky</h3><div class="task">${taskHTML("oq")}</div>
     <h3>Úloha 2: počítaj súradnice</h3><div class="task">${taskHTML("oin")}</div>` + nextBar(),
   obrazky: () => head() + `<h2>Obrázky z tvarov</h2>
-    <div class="theory"><p>Pred písaním programu si obrázok <b>načrtni</b> a zapíš súradnice stredov a polomerov. Kresli od pozadia k popredí (najprv veľké plochy, potom detaily).</p></div>
+    <div class="theory tsplit"><div><p>Pred písaním programu si obrázok <b>načrtni</b> a rozlož ho na <b>jednoduché tvary</b>. Zapíš si rohy obdĺžnikov a pri kruhoch súradnice <b>stredov a polomery</b>.</p>
+      <table class="rtab num"><thead><tr><th>Krok</th><th>Čo nakreslíš</th></tr></thead><tbody>
+        <tr><td>1</td><td><b>pozadie</b>: obloha, zem, veľké plochy</td></tr>
+        <tr><td>2</td><td><b>veľké tvary</b>: telo, stena, karoséria</td></tr>
+        <tr><td>3</td><td><b>detaily</b>: oči, okná, kolesá</td></tr></tbody></table>
+      <p>Kreslíme teda <b>od pozadia k popredí</b>, lebo neskorší tvar prekryje skorší.</p></div><div>${TFIG.vrstvy}</div></div>
+    ${ltfigs(TFIG.nacrt, TFIG.sklad)}
+    ${VEDEL("Holandský maliar Piet Mondrian skladal svoje slávne obrazy iba z <b>obdĺžnikov</b> v červenej, žltej, modrej a bielej farbe, oddelených hrubými čiernymi čiarami. Taký obraz by si vedel nakresliť samými príkazmi <code>create_rectangle</code>.")}
     <h3>Úlohy</h3>${chalHTML("c_obr", "obr")}${ideHTML("obr", "import tkinter\ncanvas = tkinter.Canvas(width=400, height=300, bg='lightblue')\ncanvas.pack()\n")}
     <h3>Úloha 2: v akom poradí kresliť?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: oprav tvar</h2>
-    <div class="theory"><p>Keď tvar v tkinteri nevyzerá správne, chyba býva v jednej z troch vecí: <b>súradnice</b> (rohy, šírka x2 − x1, výška y2 − y1, kruh len vo štvorci), <b>parametre</b> (fill výplň, outline obrys, width hrúbka) alebo <b>poradie</b> príkazov (neskôr nakreslené je navrchu). Kruh zadávaj radšej stredom a polomerom, súradnice nech vypočíta Python.</p><p>Pri každom probléme vyber opravu.</p></div>
+    <div class="theory tsplit"><div><p>Keď tvar v tkinteri nevyzerá správne, chyba býva v jednej z troch vecí:</p>
+      <table class="rtab"><thead><tr><th>Kde</th><th>Čo skontroluješ</th></tr></thead><tbody>
+        <tr><td style="white-space:nowrap"><b>súradnice</b></td><td>rohy, šírka x2 − x1, výška y2 − y1, kruh len vo štvorci</td></tr>
+        <tr><td style="white-space:nowrap"><b>parametre</b></td><td><code>fill</code> výplň, <code>outline</code> obrys, <code>width</code> hrúbka</td></tr>
+        <tr><td style="white-space:nowrap"><b>poradie</b></td><td>neskôr nakreslené je navrchu</td></tr></tbody></table>
+      <p>Kruh zadávaj radšej <b>stredom a polomerom</b>, súradnice nech vypočíta Python. Pri každom probléme nižšie vyber opravu.</p></div><div>${TFIG.kategorie}</div></div>
+    ${ltfigs(TFIG.ohranicenie)}
+    ${VEDEL("Olympijské kruhy navrhol Pierre de Coubertin v roku 1913. Päť prepletených kruhov by si nakreslil piatimi príkazmi <code>create_oval</code> s hrubým obrysom a bez výplne.")}
     <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span style="flex:1 1 260px;min-width:0">${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="flex:0 1 250px;width:250px;min-width:0;max-width:100%;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
   if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
 function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
@@ -671,7 +841,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
