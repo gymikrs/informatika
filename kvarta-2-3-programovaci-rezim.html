@@ -237,19 +237,56 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .modes .code{margin:6px 0 0}
 .tgtbar{display:grid;grid-template-columns:230px 1fr;gap:16px;align-items:start;margin-bottom:14px}
 @media (max-width:700px){.tgtbar{grid-template-columns:1fr}}
+.menubar{flex-wrap:wrap}
+@media (max-width:900px){.ws{grid-template-columns:minmax(0,1fr)}.drop{left:auto!important;right:0}}
+.theory .modes{grid-template-columns:1fr}
+.segi{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:16px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+@media (max-width:600px){.segi{grid-template-columns:minmax(0,1fr)}.segi svg{max-width:200px}}
+.segi svg{width:100%;height:auto;display:block;background:#fff;border-radius:10px}
+.segi [data-sg]{cursor:pointer}
+.segi .big{font-family:var(--mono);font-size:40px;font-weight:700;color:var(--acc);line-height:1.1}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"rezimy": ["<b>Príkazový režim</b> (Shell): príkaz sa vykoná hneď.", "<b>Programovací režim</b> (editor): napíšeš celý program a spustíš ho klávesom <b>F5</b>.", "Pri spustení sa Python reštartuje, preto program musí začínať <b>from turtle import *</b>."], "program": ["Nový program: File → New File. Uloženie: Ctrl + S. Spustenie: Run → Run Module (F5).", "Program sa ukladá do súboru s príponou <b>.py</b>."], "nazvy": ["Názov programu má vystihovať obsah, napr. 03stvorec.py.", "Nepoužívaj mená modulov (turtle.py, random.py, math.py), program by nefungoval."], "pismena": ["Zložitejšie obrázky skladáme z rovných čiar a otočení.", "Korytnačka môže prejsť po tej istej čiare viackrát, napríklad príkazom bk()."], "cislice": ["Pri skladaní obrázkov je dobré začínať aj končiť na rovnakom mieste.", "Tak sa dajú obrázky ľahko kresliť vedľa seba."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"rezimy": ["<b>Príkazový režim</b> (Shell): príkaz sa vykoná hneď po Enter, hodí sa na skúšanie.", "<b>Programovací režim</b> (editor): napíšeš celý program a spustíš ho klávesom <b>F5</b>.", "Po spustení sa príkazy vykonajú všetky, jeden po druhom zhora nadol.", "Pracuješ s tromi oknami: <b>editor</b>, okno <b>korytnačky</b> a <b>Shell</b> so správami a chybami.", "Program s korytnačkou musí vždy začínať riadkom <b>from turtle import *</b>."], "program": ["<b>Program</b> je postupnosť príkazov uložená v súbore s príponou <b>.py</b>.", "Nový program: <b>File → New File</b> (Ctrl + N).", "Uloženie: <b>File → Save</b> (Ctrl + S). Spustenie: <b>Run → Run Module</b> (F5).", "Otvorenie uloženého programu: <b>File → Open</b> (Ctrl + O).", "Hviezdičky v názve okna znamenajú neuložené zmeny."], "nazvy": ["Uloženie: Ctrl + S. Prvýkrát IDLE vypýta názov súboru.", "Otvorenie: pravým tlačidlom → <b>Edit with IDLE</b>, alebo File → Open.", "Názov programu má vystihovať, čo program robí.", "Na začiatok názvu daj číslo pracovného listu.", "Nepoužívaj mená modulov (napr. math.py), medzery ani diakritiku."], "pismena": ["Zložitejšie obrázky skladáme z <b>rovných čiar</b> a <b>otočení</b>.", "Korytnačka môže prejsť po tej istej čiare viackrát, napríklad späť príkazom <b>bk()</b>.", "Pred programovaním si obrázok načrtni na papier.", "Označ si začiatok, poradie čiar a ich dĺžky."], "cislice": ["Digitálna číslica sa skladá zo <b>7 segmentov</b>.", "Naša číslica je 50 široká a 100 vysoká.", "Kreslenie začni aj skonči v <b>ľavom dolnom rohu</b>.", "Vďaka tomu sa dajú číslice ľahko kresliť vedľa seba.", "Korytnačka smie ísť po tej istej čiare viackrát."]};
 const KEY = "python-k23-v1";
 const LESSON = "2.3 Programovací režim, ukladanie a spúšťanie programu";
 const BRAND = "2.3 Programovací režim";
 const CLASS_DEFAULT = "Kvarta";
-const WIDE = { rezimy: 1, program: 1, pismena: 1, cislice: 1 };
+const WIDE = { rezimy: 1, program: 1, nazvy: 1, pismena: 1, cislice: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "rezimy", title: "Dva režimy", min: 6 },
@@ -428,20 +465,177 @@ const TASKS = {
   ]}
 };
 
+/* ===== Ilustrácie k teórii: pomôcky (Kvarta) ===== */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`, MONO = `font-family="JetBrains Mono,Consolas,monospace"`;
+  const C = { ink: "#101A2B", mut: "#526079", acc: "#1766C2", accS: "#DCE8F8", ok: "#12805A", okS: "#E6F5EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", teal: "#0B7A75", tealS: "#E0F2F1", org: "#D9480F", orgS: "#FDEBDD", pur: "#6A3FD0", purS: "#E9E2FB", line: "#D3DCE8", bg: "#F4F7FB" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "kf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.amb, C.teal, C.org, C.pur].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}<rect width="${w}" height="${h}" fill="#fff"/>${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const pa = (d, c, w, dash) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w || 2.5}"${dash ? ` stroke-dasharray="${dash}"` : ""} marker-end="url(#M${c.slice(1)})"/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? " " + MONO : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  /* farebné zvýraznenie Pythonu ako v IDLE */
+  const he = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const KW = /^(from|import|for|in|if|else|elif|while|def|return|and|or|not|True|False|None)$/, BI = /^(print|range|input|int|float|str|len)$/;
+  const hl = s => { let out = "", i = 0; while (i < s.length) { const c = s[i];
+      if (c === "#") { out += `<tspan fill="#DD0000">${he(s.slice(i))}</tspan>`; break; }
+      if (c === "'" || c === '"') { let j = s.indexOf(c, i + 1); j = j < 0 ? s.length : j + 1; out += `<tspan fill="#00AA00">${he(s.slice(i, j))}</tspan>`; i = j; continue; }
+      if (/[A-Za-z_]/.test(c)) { let j = i; while (j < s.length && /\w/.test(s[j])) j++; const w = s.slice(i, j); out += KW.test(w) ? `<tspan fill="#FF7700" font-weight="700">${w}</tspan>` : BI.test(w) ? `<tspan fill="#900090">${w}</tspan>` : w; i = j; continue; }
+      out += he(c); i++; } return out; };
+  /* riadok kódu; o.out = výstup (modrá), o.err = chyba (červená), o.pr = výzva >>> */
+  const code = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${MONO} fill="${o.err ? "#C0392B" : o.out ? "#1A4FD0" : C.ink}" xml:space="preserve">${o.pr ? `<tspan fill="#8A2C0D">&gt;&gt;&gt; </tspan>` : ""}${o.raw || o.out || o.err ? he(s) : hl(s)}</text>`;
+  /* okno programu (napr. IDLE) */
+  const win = (x, y, w, h, title, o = {}) => `${box(x, y, w, h, o.fill || "#fff", "#B9C4D4", 8)}<path d="M${x} ${y + 8} a8 8 0 0 1 8 -8 h${w - 16} a8 8 0 0 1 8 8 v16 h-${w} z" fill="${o.bar || "#E9EDF3"}"/>${T(x + 10, y + 16, title, { fs: 10.5, b: 1, c: C.mut })}${[0, 1, 2].map(i => `<circle cx="${x + w - 12 - i * 13}" cy="${y + 12}" r="4" fill="${["#E5534B", "#E0A800", "#2DA44E"][i]}"/>`).join("")}`;
+  /* korytnačka (šípka) – uhol v stupňoch ako v Pythone: 0 = vpravo, 90 = hore */
+  const tur = (x, y, deg, c, s) => `<g transform="translate(${x} ${y}) rotate(${-deg}) scale(${s || 1})"><path d="M11 0 L-7 -7 L-3 0 L-7 7 Z" fill="${c || C.ink}"/></g>`;
+  /* nakreslí piktogram (svg 64×64) na pozíciu */
+  const ico = (svg, x, y, s) => `<g transform="translate(${x} ${y}) scale(${s / 64})">${svg.replace(/^<svg[^>]*>/, "").replace(/<\/svg>$/, "")}</g>`;
+  return { C, fig, SV, ar, pa, T, TW, box, num, he, hl, code, win, tur, ico };
+})();
+/* Ilustrácie – Kvarta 2.3 Programovací režim */
+const TFIG = (() => { const { C, fig, SV, ar, pa, T, TW, box, num, code, win, tur } = PF;
+  const H = (s, o = {}) => T(220, 24, s, Object.assign({ a: "middle", fs: 13.5, b: 1, c: C.acc }, o));
+  const trail = (x0, y0, prog, s, o = {}) => { let x = x0, y = y0, h = o.h || 0, out = ""; prog.forEach(([op, a]) => {
+      if (op === "fd" || op === "bk") { const d = (op === "fd" ? a : -a) * s, r = h * Math.PI / 180, nx = x + d * Math.cos(r), ny = y - d * Math.sin(r); out += `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${o.c || C.ink}" stroke-width="${o.w || 3}" stroke-linecap="round"/>`; x = nx; y = ny; }
+      if (op === "rt") h -= a; if (op === "lt") h += a; });
+    return (o.start === false ? "" : `<circle cx="${x0}" cy="${y0}" r="5" fill="${C.ok}"/>`) + out + (o.noT ? "" : tur(x, y, h, o.tc || C.ink, o.ts || 1.1)); };
+  const SEGS = { a: [0, 100, 50, 100], b: [50, 100, 50, 50], c: [50, 50, 50, 0], d: [0, 0, 50, 0], e: [0, 0, 0, 50], f: [0, 50, 0, 100], g: [0, 50, 50, 50] };
+  const digit = (x, y, s, on, c) => Object.keys(SEGS).map(k => { const [x1, y1, x2, y2] = SEGS[k]; return `<line x1="${x + x1 * s}" y1="${y - y1 * s}" x2="${x + x2 * s}" y2="${y - y2 * s}" stroke="${on.includes(k) ? c || C.acc : "#E3E8EF"}" stroke-width="${on.includes(k) ? 5 : 4}" stroke-linecap="round"/>`; }).join("");
+  return {
+  okna: fig(SV(440, 250, `
+    ${win(14, 10, 200, 150, "03ukazka.py")}
+    ${["from turtle import *", "fd(80)", "lt(90)", "fd(40)"].map((l, i) => code(24, 54 + i * 20, l, { fs: 12 })).join("")}
+    ${T(114, 150, "editor: tu píšeš program", { a: "middle", fs: 11.5, b: 1, c: C.acc })}
+    ${win(226, 10, 200, 150, "Python Turtle Graphics")}
+    ${trail(290, 120, [["fd", 80], ["lt", 90], ["fd", 40]], 1, { w: 3 })}
+    ${T(326, 150, "tu kreslí korytnačka", { a: "middle", fs: 11.5, b: 1, c: C.ok })}
+    ${win(14, 172, 412, 70, "IDLE Shell")}
+    ${code(24, 212, "= RESTART: ...\\03ukazka.py", { raw: 1, fs: 11.5 }).replace('fill="' + C.ink + '"', 'fill="#8A2C0D"')}${code(24, 232, "", { pr: 1, fs: 12 })}
+    ${T(414, 226, "Shell: správy a chyby", { a: "end", fs: 11.5, b: 1, c: C.bad })}`, "Tri okná"),
+    "V programovacom režime pracuješ s <b>tromi oknami</b>: editor, korytnačka a Shell."),
+  poradie: fig(SV(440, 230, `
+    ${H("Program sa vykoná zhora nadol")}
+    ${box(14, 40, 200, 176, "#fff", C.line, 10)}
+    ${["from turtle import *", "fd(60)", "rt(90)", "fd(60)", "lt(90)", "fd(60)"].map((l, i) => num(32, 60 + i * 26, i + 1, i ? C.acc : C.mut) + code(50, 64 + i * 26, l, { fs: 12.5 })).join("")}
+    ${ar(222, 128, 246, 128, C.mut, 2.5)}
+    ${box(252, 40, 174, 176, C.bg, C.line, 10)}${trail(286, 80, [["fd", 60], ["rt", 90], ["fd", 60], ["lt", 90], ["fd", 60]], 1, { w: 3.5 })}
+    ${T(339, 204, "po stlačení F5", { a: "middle", fs: 12, b: 1, c: C.acc })}`, "Poradie príkazov"),
+    "Po spustení sa príkazy vykonajú <b>všetky</b>, jeden po druhom v <b>poradí</b>, ako sú napísané."),
+  restart: fig(SV(440, 200, `
+    ${H("Čo urobí F5")}
+    ${[["💾", "uloží", "program"], ["🔄", "reštartuje", "Python"], ["▶", "vykoná", "od 1. riadka"]].map(([e, a, b], i) => { const x = 14 + i * 146; return box(x, 44, 120, 110, i === 1 ? C.ambS : "#fff", i === 1 ? C.amb : C.acc, 10) + T(x + 60, 84, e, { a: "middle", fs: 26 }) + T(x + 60, 116, a, { a: "middle", fs: 12.5, b: 1 }) + T(x + 60, 136, b, { a: "middle", fs: 11.5, c: C.mut }) + (i < 2 ? ar(x + 122, 99, x + 144, 99, C.mut, 2.5) : ""); }).join("")}
+    ${T(220, 186, "Po reštarte Python zabudne všetko, čo si predtým písal do Shellu.", { a: "middle", fs: 12, c: C.amb, b: 1 })}`, "Spustenie F5"),
+    "Pri spustení sa Python <b>reštartuje</b>, preto musí program začínať importom."),
+
+  editor: fig(SV(440, 250, `
+    ${win(14, 10, 300, 176, "*03ukazka.py* – C:\\...\\Documents")}
+    <rect x="15" y="34" width="298" height="22" fill="#F6F7F9"/>${["File", "Edit", "Format", "Run", "Options"].map((m, i) => T(24 + i * 50, 49, m, { fs: 11.5, c: m === "Run" || m === "File" ? C.acc : C.ink, b: m === "Run" || m === "File" ? 1 : 0 })).join("")}
+    ${["from turtle import *", "fd(80)", "lt(90)", "fd(40)"].map((l, i) => code(24, 80 + i * 22, l, { fs: 12.5 })).join("")}
+    <rect x="15" y="164" width="298" height="21" fill="#F1F3F6"/>${T(304, 178, "Ln: 4  Col: 6", { a: "end", fs: 10.5, c: C.mut })}
+    ${T(338, 26, "*…* = neuložené", { fs: 11.5, b: 1, c: C.amb })}
+    ${ar(334, 72, 206, 54, C.acc, 2)}${T(338, 76, "spustenie", { fs: 11.5, b: 1, c: C.acc })}
+    ${ar(334, 120, 200, 112, C.ok, 2)}${T(338, 124, "príkazy", { fs: 11.5, b: 1, c: C.ok })}
+    ${box(14, 198, 412, 44, C.bg, null, 8)}${TW(26, 216, "Program v editore je obyčajný text. Príkazy sa nevykonajú, kým program nespustíš.", 62, { fs: 11.5 })}`, "Okno editora"),
+    "V <b>editore</b> píšeš program. Hviezdičky v názve okna znamenajú <b>neuložené</b> zmeny."),
+  klavesy: fig(SV(440, 200, `
+    ${H("Klávesové skratky v IDLE")}
+    ${[["Ctrl", "N", "nový súbor"], ["Ctrl", "O", "otvoriť súbor"], ["Ctrl", "S", "uložiť"], ["", "F5", "spustiť program"]].map(([m, k, t], i) => { const x = 14 + (i % 2) * 212, y = 44 + Math.floor(i / 2) * 72; return (m ? box(x, y, 52, 40, "#fff", "#9AA6B8", 7) + T(x + 26, y + 25, m, { a: "middle", fs: 12, b: 1 }) + T(x + 62, y + 26, "+", { a: "middle", fs: 14, b: 1, c: C.mut }) : "") + box(x + (m ? 72 : 0), y, 44, 40, "#fff", "#9AA6B8", 7) + T(x + (m ? 94 : 22), y + 25, k, { a: "middle", fs: 13, b: 1 }) + T(x + (m ? 126 : 54), y + 25, t, { fs: 12 }); }).join("")}`, "Klávesové skratky"),
+    "Skratky šetria čas: <b>Ctrl + S</b> uloží, <b>F5</b> spustí program."),
+
+  priecinok: fig(SV(440, 236, `
+    ${win(14, 10, 412, 216, "📁 Documents › Informatika")}
+    ${T(30, 54, "Názov", { fs: 11.5, b: 1, c: C.mut })}${T(300, 54, "Typ", { fs: 11.5, b: 1, c: C.mut })}<line x1="22" y1="62" x2="418" y2="62" stroke="${C.line}"/>
+    ${["01ahoj.py", "02schody.py", "02stvorce.py", "03hviezda.py", "03trojuholnik.py"].map((n, i) => { const y = 84 + i * 26; return T(30, y, "🐍", { fs: 13 }) + code(52, y, n, { raw: 1, fs: 12.5 }) + T(300, y, "Python File", { fs: 11.5, c: C.mut }); }).join("")}
+    ${box(150, 196, 260, 24, C.okS, null, 6)}${T(280, 213, "zoradené podľa čísla pracovného listu", { a: "middle", fs: 11.5, b: 1, c: C.ok })}`, "Priečinok s programami"),
+    "Číslo na začiatku a výstižný názov: programy sú <b>zoradené</b> a ľahko ich nájdeš."),
+  modul: fig(SV(440, 236, `
+    ${H("Prečo program nesmie mať meno modulu")}
+    ${box(14, 40, 150, 70, "#fff", C.acc, 10)}${code(26, 66, "math.py", { raw: 1, fs: 13 })}${T(26, 92, "tvoj program", { fs: 11.5, c: C.mut })}
+    ${box(14, 130, 150, 70, C.bg, C.line, 10)}${code(26, 156, "math", { raw: 1, fs: 13 })}${T(26, 182, "modul Pythonu", { fs: 11.5, c: C.mut })}
+    ${box(250, 70, 176, 100, C.badS, C.bad, 10)}${code(262, 96, "import math", { raw: 1, fs: 12.5 })}${TW(262, 120, "Python najprv nájde tvoj súbor math.py a skutočný modul nenačíta.", 24, { fs: 11.5 })}
+    ${ar(168, 76, 246, 100, C.bad, 2.5)}${T(206, 76, "1.", { a: "middle", fs: 12, b: 1, c: C.bad })}
+    ${pa("M168 166 L246 150", C.mut, 2, "5 4")}${T(206, 176, "2.", { a: "middle", fs: 12, b: 1, c: C.mut })}
+    ${T(220, 222, "Python hľadá najprv v priečinku s tvojím programom.", { a: "middle", fs: 12, c: C.mut })}`, "Meno modulu"),
+    "Python hľadá moduly najprv v priečinku s programom, preto by súbor <b>s menom modulu</b> všetko pokazil."),
+
+  pismenoT: fig(SV(440, 250, `
+    ${H("Písmeno T jedným programom")}
+    ${box(14, 40, 190, 196, "#fff", C.line, 10)}
+    ${["lt(90)", "fd(100)", "lt(90)", "fd(40)", "bk(80)"].map((l, i) => num(32, 64 + i * 32, i + 1) + code(50, 68 + i * 32, l, { fs: 13 })).join("")}
+    ${box(216, 40, 210, 196, C.bg, C.line, 10)}
+    ${trail(321, 210, [["lt", 90], ["fd", 100], ["lt", 90], ["fd", 40], ["bk", 80]], 1.5, { w: 4 })}
+    ${T(380, 130, "bk ide späť", { a: "middle", fs: 11.5, b: 1, c: C.org })}${T(380, 146, "po čiare", { a: "middle", fs: 11.5, b: 1, c: C.org })}`, "Písmeno T"),
+    "Korytnačka smie prejsť po čiare <b>viackrát</b>, napríklad späť príkazom <b>bk</b>."),
+  plan: fig(SV(440, 236, `
+    ${H("Najprv plán na štvorčekovom papieri")}
+    ${box(14, 40, 200, 186, "#FFFDF5", "#E3D8B8", 8)}
+    ${Array.from({ length: 9 }, (_, i) => `<line x1="${22 + i * 22}" y1="44" x2="${22 + i * 22}" y2="222" stroke="#EADFC2"/>`).join("")}${Array.from({ length: 8 }, (_, j) => `<line x1="16" y1="${50 + j * 22}" x2="212" y2="${50 + j * 22}" stroke="#EADFC2"/>`).join("")}
+    <path d="M66 72 V182 H154 V72" fill="none" stroke="${C.acc}" stroke-width="4" stroke-linecap="round"/><circle cx="66" cy="72" r="5" fill="${C.ok}"/>
+    ${num(48, 128, 1)}${num(110, 200, 2)}${num(172, 128, 3)}
+    ${box(226, 40, 200, 186, "#fff", C.line, 8)}${T(326, 62, "plán písmena U", { a: "middle", fs: 12, b: 1, c: C.acc })}
+    ${[["1", "dole 100"], ["2", "doprava 80"], ["3", "hore 100"]].map(([n, t], i) => num(248, 90 + i * 34, n) + T(266, 94 + i * 34, t, { fs: 12.5 })).join("")}
+    ${TW(240, 196, "Zapíš si dĺžky a smery, potom prepíš do príkazov.", 26, { fs: 11.5, c: C.mut })}`, "Plán písmena"),
+    "Na papieri si označ <b>začiatok</b>, poradie čiar a ich <b>dĺžky</b>."),
+
+  segment: fig(SV(440, 250, `
+    ${H("Sedemsegmentový displej")}
+    ${digit(70, 220, 1.6, "abcdefg", C.acc)}
+    ${[["a", 25, 100, 0, -12], ["b", 50, 75, 14, 0], ["c", 50, 25, 14, 0], ["d", 25, 0, 0, 22], ["e", 0, 25, -14, 0], ["f", 0, 75, -14, 0], ["g", 25, 50, 0, -10]].map(([k, x, y, dx, dy]) => T(70 + x * 1.6 + dx, 220 - y * 1.6 + dy + 4, k, { a: "middle", fs: 13, b: 1, c: C.org })).join("")}
+    <circle cx="70" cy="220" r="6" fill="${C.ok}"/>
+    ${ar(184, 220, 184, 60, C.mut, 1.5, 1)}${T(194, 144, "100", { fs: 12.5, b: 1, c: C.bad, mono: 1 })}
+    ${box(240, 50, 186, 150, C.bg, C.line, 10)}${TW(254, 76, "Každá číslica má 7 úsečiek. Šírka je 50, výška 100.", 24, { fs: 12 })}
+    ${TW(254, 140, "Zelená bodka: tu korytnačka začína aj končí.", 24, { fs: 12, b: 1, c: C.ok })}`, "Sedem segmentov"),
+    "Číslicu poskladáš zo <b>7 úsečiek</b> (segmentov) ako na digitálnych hodinách."),
+  vedla: fig(SV(440, 210, `
+    ${H("Začiatok = koniec, číslice idú vedľa seba")}
+    ${["afgedc", "abcdfg", "afgedc"].map((d, i) => { const x = 90 + i * 120; return digit(x, 170, 1.1, d, C.ink) + `<circle cx="${x}" cy="170" r="5" fill="${C.ok}"/>` + (i < 2 ? pa(`M${x + 6} 184 Q${x + 60} 202 ${x + 114} 184`, C.ok, 2, "4 4") : ""); }).join("")}`, "Číslice vedľa seba"),
+    "Keď číslica začína aj končí v <b>ľavom dolnom rohu</b>, ďalšiu nakreslíš ľahko hneď vedľa.")
+  };
+})();
+
+/* rozsvieť segmenty (neboduje sa) */
+const SEGD = { abcdef: "0", bc: "1", abdeg: "2", abcdg: "3", bcfg: "4", acdfg: "5", acdefg: "6", abc: "7", abcdefg: "8", abcdfg: "9" };
+function segHTML() { const on = S.segon || "", key = [...on].sort().join(""), d = SEGD[key];
+  const P = { a: [0, 100, 50, 100], b: [50, 100, 50, 50], c: [50, 50, 50, 0], d: [0, 0, 50, 0], e: [0, 0, 0, 50], f: [0, 50, 0, 100], g: [0, 50, 50, 50] };
+  const svg = `<svg viewBox="-30 -15 110 130" role="img" aria-label="Sedemsegmentový displej">${Object.keys(P).map(k => { const [x1, y1, x2, y2] = P[k]; return `<g data-sg="${k}"><rect x="${Math.min(x1, x2) - 8}" y="${100 - Math.max(y1, y2) - 8}" width="${Math.abs(x2 - x1) + 16}" height="${Math.abs(y2 - y1) + 16}" fill="#fff" fill-opacity="0.01"/><line x1="${x1}" y1="${100 - y1}" x2="${x2}" y2="${100 - y2}" stroke="${on.includes(k) ? "#1766C2" : "#E3E8EF"}" stroke-width="7" stroke-linecap="round"/></g>`; }).join("")}</svg>`;
+  return `<div class="segi"><div>${svg}</div><div><div class="muted">Na displeji je:</div><div class="big">${!key ? "–" : d !== undefined ? d : "?"}</div><p class="muted" style="margin:6px 0 10px">${!key ? "Klikni na niektorý segment." : d !== undefined ? "Toto je číslica " + d + "." : "Takú číslicu nepoznáme, skús pridať alebo ubrať segment."}</p><button class="ghost" data-segclr>Zhasnúť všetko</button></div></div>`; }
+document.addEventListener("click", e => { const g = e.target.closest && e.target.closest("[data-sg]"), c = e.target.closest && e.target.closest("[data-segclr]"); if (!g && !c) return;
+  const on = S.segon || ""; S.segon = c ? "" : on.includes(g.dataset.sg) ? on.replace(g.dataset.sg, "") : on + g.dataset.sg; save(); const b = document.getElementById("segbox"); if (b) b.innerHTML = segHTML(); });
+
 /* ---------- views ---------- */
 const VIEWS = {
   rezimy() {
     return head() + `<h2>Príkazový a programovací režim</h2>
     ${guessBox()}
+    <div class="theory tsplit"><div>
     <div class="modes"><div class="box" style="margin:0"><p><b>⌨️ Príkazový režim</b> (okno Shell)<br>Príkaz napíšeš za <code>&gt;&gt;&gt;</code>, stlačíš Enter a hneď sa vykoná. Hodí sa na skúšanie.</p><div class="code" style="font-family:var(--mono);background:#0F1A2E;color:#DCE7FF;border-radius:10px;padding:8px 12px;white-space:pre">&gt;&gt;&gt; fd(100)\n&gt;&gt;&gt; rt(90)</div></div>
       <div class="box v" style="margin:0"><p><b>📝 Programovací režim</b> (editor)<br>Napíšeš celý program, uložíš ho a spustíš klávesom <b>F5</b>. Príkazy sa vykonajú <b>všetky naraz</b>, až po spustení.</p><div class="code" style="font-family:var(--mono);background:#0F1A2E;color:#DCE7FF;border-radius:10px;padding:8px 12px;white-space:pre">from turtle import *\nfd(100)\nrt(90)</div></div></div>
     <p>V programovacom režime pracuješ s <b>tromi oknami</b>: editor s programom, okno s korytnačkou a Shell, kde Python píše správy a chyby.</p>
+    </div><div>${TFIG.okna}</div></div>
+    ${ltfigs(TFIG.poradie, ...(S.t.rq ? [TFIG.restart] : []))}
+    ${VEDEL("Okno Shell sa odborne volá aj <b>REPL</b>, z anglického Read, Eval, Print, Loop: prečítaj príkaz, vyhodnoť ho, vypíš výsledok a opakuj.")}
     <h3>Úloha 1: ktorý režim?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("rsort")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("rq")}</div>` + nextBar();
   },
   program() {
     const G = (k, t) => `<li>${S.g[k] ? "✅" : "⬜"} ${t}</li>`;
     return head() + `<h2>Prvý program: štvorec</h2>
+    <div class="theory tsplit"><div>
+      <p><b>Program</b> je postupnosť príkazov uložená v súbore s príponou <b>.py</b>. Píšeme ho v <b>editore</b>, ktorý otvoríš v IDLE cez menu <b>File → New File</b>.</p>
+      <table class="rtab num"><thead><tr><th>Skratka</th><th>Čo urobí</th><th>Menu</th></tr></thead><tbody>
+        <tr><td>Ctrl + N</td><td>nový program</td><td>File → New File</td></tr>
+        <tr><td>Ctrl + S</td><td>uložiť</td><td>File → Save</td></tr>
+        <tr><td>F5</td><td>spustiť</td><td>Run → Run Module</td></tr>
+        <tr><td>Ctrl + O</td><td>otvoriť uložený</td><td>File → Open</td></tr></tbody></table>
+      <p>Program musí začínať riadkom <code>from turtle import *</code>.</p>
+    </div><div>${TFIG.editor}</div></div>
+    ${ltfigs(TFIG.klavesy)}
+    ${VEDEL("Veľké programy majú obrovské množstvo riadkov. Operačný systém Windows obsahuje desiatky miliónov riadkov kódu, na ktorých pracovali tisíce programátorov.")}
+    <h3>Vyskúšaj: prvý program</h3>
     <p>Vyskúšaj celý postup ako v skutočnom IDLE. Menu <b>File</b> a <b>Run</b> fungujú. Ctrl + S uloží program a F5 ho spustí, keď píšeš v editore.</p>
     <div class="task"><b>Tvoje úlohy:</b><ul class="goals">${G("newfile", "Otvor nový súbor: <b>File → New File</b>.")}${G("saved", "Napíš program, ktorý nakreslí štvorec so stranou 100, a ulož ho ako <b>03stvorec.py</b>.")}${G("ran", "Spusti program (<b>Run → Run Module</b> alebo F5).")}${G("opened", "Zavri editor (File → Close Window) a program znova otvor cez <b>File → Open</b>.")}</ul>
       ${S.t.prog ? `<div class="checkbar"><span class="score ${S.t.prog.score < 4 ? "part" : ""}">Splnené: ${S.t.prog.score} zo 4</span></div>` : ""}</div>
@@ -451,14 +645,31 @@ const VIEWS = {
   },
   nazvy() {
     return head() + `<h2>Ukladanie a názvy programov</h2>
-    <div class="two"><div class="box v" style="margin:0"><p><b>💾 Uloženie:</b> Ctrl + S alebo File → Save. Prvýkrát sa ťa IDLE opýta na názov.<br><b>📂 Otvorenie:</b> pravým tlačidlom na súbor → <i>Edit with IDLE</i>, alebo v IDLE File → Open.</p></div>
-      <div class="box" style="margin:0"><p><b>Pravidlá pre názvy:</b><br>• podľa názvu vieš, čo program kreslí,<br>• na začiatku je číslo pracovného listu, napr. <code>03domcek.py</code>,<br>• nikdy nie mená modulov: <code>turtle</code>, <code>random</code>, <code>math</code>,<br>• bez medzier a diakritiky.</p></div></div>
+    <div class="theory tsplit"><div>
+      <p><b>💾 Uloženie:</b> Ctrl + S alebo File → Save. Prvýkrát sa ťa IDLE opýta na názov.</p>
+      <p><b>📂 Otvorenie:</b> pravým tlačidlom na súbor → <i>Edit with IDLE</i>, alebo v IDLE File → Open.</p>
+      <table class="rtab"><thead><tr><th>Pravidlá pre názvy programov</th></tr></thead><tbody>
+        <tr><td>podľa názvu vieš, čo program kreslí</td></tr>
+        <tr><td>na začiatku je číslo pracovného listu, napr. <code>03domcek.py</code></td></tr>
+        <tr><td>nikdy nie mená modulov: <code>turtle</code>, <code>random</code>, <code>math</code></td></tr>
+        <tr><td>bez medzier a diakritiky</td></tr></tbody></table>
+    </div><div>${TFIG.priecinok}</div></div>
+    ${ltfigs(TFIG.modul)}
+    ${VEDEL("Okrem prípony <b>.py</b> existuje aj <b>.pyw</b>. Program s touto príponou sa vo Windows spustí bez čierneho okna konzoly, čo sa hodí pre programy s vlastným oknom.")}
     <h3>Úloha: dobrý, alebo zlý názov?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>` + nextBar();
   },
   pismena() {
     const sel = S.sel.p, T = LET[sel], w = WS("pl" + sel); if (!w.ed) { w.ed = true; w.name = `03pismeno${sel}.py`; w.text = "from turtle import *\n"; w.saved = w.text; }
     const done = S.pdone || (S.pdone = {});
     return head() + `<h2>Písmená veľkej abecedy</h2>
+    <div class="theory tsplit"><div>
+      <p>Zložitejšie obrázky skladáme z <b>rovných čiar</b> a <b>otočení</b>. Hranaté písmená sú na to ideálne.</p>
+      <p>Korytnačka smie prejsť po tej istej čiare aj <b>viackrát</b>, napríklad späť príkazom <code>bk()</code>. Tak sa dostane na miesto, odkiaľ pokračuje ďalšia čiara.</p>
+      <p>Pred písaním programu si písmeno načrtni: kde začneš, v akom poradí pôjdeš a aké dlhé sú čiary.</p>
+    </div><div>${TFIG.pismenoT}</div></div>
+    ${ltfigs(TFIG.plan)}
+    ${VEDEL("Aj písma v počítači sú uložené ako čiary a krivky, nie ako obrázky z bodov. Preto sa písmená v textovom editore dajú zväčšiť na ľubovoľnú veľkosť a ostanú ostré. Takým písmam hovoríme <b>vektorové</b>.")}
+    <h3>Úloha: písmená</h3>
     <p>Úloha z pracovného listu: nakresli písmená <b>L, E, H, K, M</b>. Každé písmeno je samostatný program. Korytnačka začína na <b>zelenej bodke</b> a pozerá sa doprava. Po napísaní programu stlač <b>Run Module</b>.</p>
     <div class="targets">${Object.keys(LET).map(k => `<button class="${sel === k ? "on" : ""}" data-pl="${k}">${done[k] ? "✅" : "⬜"} ${k}</button>`).join("")}<button class="${sel === "INI" ? "on" : ""}" data-pl="INI">${done.INI ? "✅" : "⬜"} Tvoje iniciály</button></div>
     ${sel === "INI" ? iniHTML() : `<div class="tgtbar"><div class="tprev">${targetSVG(T.s, T.l)}</div><div><h4 style="font-family:var(--head);margin:0 0 4px">Písmeno ${sel}</h4><p class="muted" style="margin:0 0 8px;font-size:15px">${T.t}</p><div class="row"><button class="primary" data-pchk="${sel}">Skontrolovať písmeno</button></div>${S.msg.pc ? `<div class="fb ${S.msg.pc.c}">${S.msg.pc.t}</div>` : ""}</div></div>${wsHTML("pl" + sel, "simple")}`}
@@ -468,7 +679,16 @@ const VIEWS = {
     const sel = S.sel.c, w = WS("dg" + sel); if (!w.ed) { w.ed = true; w.name = `03cislica${sel}.py`; w.text = "from turtle import *\n"; w.saved = w.text; }
     const done = S.cdone || (S.cdone = {});
     return head() + `<h2>Digitálne číslice</h2>
-    <p>Nakresli číslice ako na digitálnych hodinách. Každá číslica je <b>50 široká a 100 vysoká</b>. Pravidlo z pracovného listu: číslicu začni kresliť v <b>ľavom dolnom rohu</b> (zelená bodka) a na konci vráť korytnačku späť do ľavého dolného rohu. Nevadí, ak korytnačka ide viackrát po tej istej čiare.</p>
+    <div class="theory tsplit"><div>
+      <p>Číslice na digitálnych hodinách sa skladajú zo <b>7 úsečiek</b> (segmentov). Každá naša číslica je <b>50 široká a 100 vysoká</b>.</p>
+      <p>Pravidlo z pracovného listu: číslicu začni kresliť v <b>ľavom dolnom rohu</b> (zelená bodka) a na konci vráť korytnačku späť do ľavého dolného rohu. Nevadí, ak korytnačka ide viackrát po tej istej čiare.</p>
+      <p>Vďaka tomuto pravidlu sa dajú číslice ľahko kresliť <b>vedľa seba</b>.</p>
+    </div><div>${TFIG.segment}</div></div>
+    ${ltfigs(TFIG.vedla)}
+    ${VEDEL("Sedemsegmentový displej nájdeš na mikrovlnke, budíku aj na čerpacej stanici. Sedem segmentov sa dá rozsvietiť 2<sup>7</sup> = 128 rôznymi spôsobmi, číslic je však iba 10.")}
+    <h3>Rozsvieť segmenty</h3><p>Klikaj na segmenty displeja a skús zložiť rôzne číslice. Neboduje sa.</p><div id="segbox">${segHTML()}</div>
+    <h3>Úloha: digitálne číslice</h3>
+    <p>Nakresli číslice podľa predlohy.</p>
     <div class="targets">${Object.keys(DIG).map(k => `<button class="${sel === k ? "on" : ""}" data-dg="${k}">${done[k] ? "✅" : "⬜"} ${k}</button>`).join("")}</div>
     <div class="tgtbar"><div class="tprev">${targetSVG(digSegs(sel), [[-14, 50, "100"], [25, 112, "50"]])}</div><div><h4 style="font-family:var(--head);margin:0 0 4px">Číslica ${sel}</h4><p class="muted" style="margin:0 0 8px;font-size:15px">Korytnačka sa na začiatku pozerá doprava. Na konci musí stáť znova na zelenej bodke.</p><div class="row"><button class="primary" data-dchk="${sel}">Skontrolovať číslicu</button></div>${S.msg.dc ? `<div class="fb ${S.msg.dc.c}">${S.msg.dc.t}</div>` : ""}</div></div>
     ${wsHTML("dg" + sel, "simple")}
@@ -534,7 +754,23 @@ document.addEventListener("keydown", e => {
 });
 
 /* ===== shared lesson engine ===== */
-const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
+  const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
+  T.qs.forEach((q, i) => { if (G.includes(i + 1) && groups.length) groups[groups.length - 1].push(q); else groups.push([q]); });
+  if (groups.length < 2) return T.qs;
+  const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
+  if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
+  return o.flatMap(id => groups.find(g => g[0].id === id)); }
+function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none;padding:8px 14px;border-radius:10px" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
@@ -572,7 +808,7 @@ function checkBar(T, ready, hint) {
 }
 function mcHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
       let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
@@ -608,7 +844,7 @@ function orderHTML(T) {
 }
 function inputHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const v = d[q.id] || "", ok = done ? q.ok(v) : null;
     return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
   }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
@@ -650,12 +886,12 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
   let formBtn = "";
   if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
-    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+    formBtn = sendResults(detail); }
   return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
   <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
   <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
 };
@@ -667,7 +903,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

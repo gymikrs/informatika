@@ -186,12 +186,44 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}
+.rtab td:last-child,.rtab th:last-child{text-align:left;white-space:normal}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
 function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
   const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
@@ -527,7 +559,7 @@ function uefiGoals() {
 
 /* ---------- Views ---------- */
 const head = () => `<p class="kicker">Zastávka ${S.cur} zo 6${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
-const THEORY = {"doska": ["<b>Základná doska</b> spája všetky súčiastky počítača.", "Na nej je pätica procesora, sloty RAM, sloty PCIe, M.2, SATA, čipová sada a čip s BIOS/UEFI."], "montaz": ["Každá súčiastka má svoj konektor: CPU do pätice, RAM do slotov DIMM, grafika do PCIe x16, SSD do M.2.", "Zdroj napája dosku konektorom ATX."], "io": ["<b>Vstupné</b> zariadenia posielajú údaje do počítača (klávesnica, myš, mikrofón, skener).", "<b>Výstupné</b> zariadenia ich zobrazujú alebo tlačia (monitor, tlačiareň, reproduktory).", "Niektoré sú vstupno-výstupné (dotyková obrazovka, USB kľúč)."], "porty": ["Porty na zadnej strane: USB, HDMI/DisplayPort (monitor), RJ-45 (sieť), audio konektory.", "USB-C je obojstranný a zvládne dáta, obraz aj nabíjanie."], "bios": ["<b>BIOS/UEFI</b> je firmvér na doske, spustí sa ako prvý po zapnutí.", "Urobí test <b>POST</b>, nájde disk so systémom a spustí operačný systém.", "V UEFI sa nastavuje poradie bootovania, čas a ďalšie."]};
+const THEORY = {"doska": ["<b>Základná doska</b> spája všetky súčiastky počítača, rozvádza údaje aj napájanie.", "<b>Pätica</b> (socket) – procesor · sloty <b>DIMM</b> – RAM · <b>PCIe x16</b> – grafická karta · <b>PCIe x1</b> – menšie karty.", "<b>M.2</b> – SSD NVMe · <b>SATA</b> – HDD, 2,5\" SSD a optické mechaniky.", "<b>Čipová sada</b> riadi komunikáciu procesora s USB, SATA a ďalšími slotmi.", "Čip <b>BIOS/UEFI</b> obsahuje firmvér, <b>batéria CMOS</b> drží hodiny a nastavenia.", "Napájanie: <b>ATX 24-pin</b> pre celú dosku, <b>EPS 8-pin</b> pre procesor.", "Veľkosti dosiek: <b>ATX</b>, micro-ATX, mini-ITX."], "montaz": ["Montuj iba <b>vypnutý a odpojený</b> počítač.", "<b>Statická elektrina</b> ničí čipy: uzemni sa dotykom kovovej skrinky alebo antistatickým náramkom.", "Súčiastky drž za okraje, nechytaj kontakty.", "Konektory majú <b>kľúč</b> (zárez), naopak sa nedajú zasunúť. Netlač silou.", "Medzi procesor a chladič patrí <b>teplovodivá pasta</b>.", "Procesor, chladič a RAM sa osadzujú ešte mimo skrinky."], "io": ["<b>Periféria</b> = zariadenie pripojené k počítaču.", "Smer údajov posudzujeme vždy <b>z pohľadu počítača</b>.", "<b>Vstupné</b> zariadenia posielajú údaje do počítača (napr. gamepad, čítačka čiarových kódov).", "<b>Výstupné</b> zariadenia údaje prijímajú a zobrazia, vytlačia alebo prehrajú (napr. plotter, 3D tlačiareň).", "<b>Vstupno-výstupné</b> robia oboje (napr. externý disk, sieťová karta).", "Model práce počítača: <b>vstup → spracovanie → výstup</b>."], "porty": ["<b>USB-A</b> – klasický konektor periférií · <b>USB-C</b> – malý, obojstranný: dáta, obraz aj nabíjanie.", "Novšie verzie USB sú rýchlejšie: USB 2.0 480 Mb/s, USB 3.2 až 20 Gb/s, USB4 až 40 Gb/s.", "<b>HDMI</b> a <b>DisplayPort</b> – digitálny obraz aj zvuk pre monitor; staršie sú VGA (analógový) a DVI.", "<b>RJ-45</b> – káblová sieť LAN.", "<b>Jack 3,5 mm</b> – zvuk, vstupy a výstupy sa rozlišujú farbou.", "Pri samostatnej grafickej karte zapájaš monitor do jej portu, nie do dosky."], "bios": ["<b>BIOS/UEFI</b> = <b>firmvér</b> základnej dosky, prvý program po zapnutí.", "<b>POST</b> (Power-On Self-Test) = test hardvéru pri zapnutí.", "Firmvér potom podľa <b>poradia zavádzania</b> (boot order) nájde a spustí operačný systém.", "<b>UEFI</b> je nástupca BIOS-u: grafické rozhranie, myš, veľké disky GPT, Secure Boot.", "Do nastavení: <b>Del</b> alebo <b>F2</b> po zapnutí · jednorazové <b>boot menu</b>: F12, F11, F8 alebo Esc.", "Zmeny v UEFI treba <b>uložiť</b> (Save Changes and Reset), inak sa stratia."]};
 function memoHTML() { const T = THEORY[STEPS[S.cur].id]; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
 function nextBar() { return memoHTML() + nextBar0(); }
 function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; return `<div class="next"><button class="primary" data-go="${S.cur + 1}">Ďalšia zastávka: ${n.title}</button></div>`; }
@@ -564,16 +596,118 @@ const PF = (() => {
   return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
 })();
 
-/* Ilustrácie – 2. ročník 1.3 Vstupné a výstupné zariadenia */
-const TFIG = (() => { const { C, fig, SV, ar, T, box, pc } = PF; const A = "#0B7A75", AS = "#DDF2F0";
+/* Ilustrácie – 2. ročník 1.3 Základná doska, vstupné a výstupné zariadenia, BIOS */
+const TFIG = (() => { const { C, fig, SV, ar, T, TW, box, pc } = PF; const A = "#0B7A75", AS = "#DDF2F0";
+const cl = (x, y, w, h, f, s, l1, l2, o = {}) => `${box(x, y, w, h, f, s, 10)}${T(x + w / 2, y + (l2 ? h / 2 - 3 : h / 2 + 4), l1, { a: "middle", fs: o.fs || 11.5, b: 1, c: o.c || C.ink })}${l2 ? T(x + w / 2, y + h / 2 + 13, l2, { a: "middle", fs: o.fs2 || 10.5, c: o.c2 || C.mut }) : ""}`;
 return {
+  form: fig(SV(440, 250, `
+    ${T(220, 22, "Veľkosti základných dosiek", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="20" y="44" width="189" height="151" rx="4" fill="#EAF6F5" stroke="${A}" stroke-width="1.5"/>
+    <rect x="20" y="44" width="151" height="151" rx="4" fill="#CBE9E5" stroke="${A}" stroke-width="1.5" stroke-dasharray="5 3"/>
+    <rect x="20" y="44" width="105" height="105" rx="4" fill="#9FD6D0" stroke="${A}" stroke-width="1.5"/>
+    ${T(72, 100, "mini-ITX", { a: "middle", fs: 11.5, b: 1 })}${T(95, 177, "micro-ATX", { a: "middle", fs: 11.5, b: 1 })}${T(190, 124, "ATX", { a: "middle", fs: 11.5, b: 1 })}
+    ${[["ATX", "305 × 244 mm", "až 7 rozširujúcich slotov", "#EAF6F5", 56], ["micro-ATX", "244 × 244 mm", "až 4 rozširujúce sloty", "#CBE9E5", 112], ["mini-ITX", "170 × 170 mm", "1 rozširujúci slot", "#9FD6D0", 168]].map(([n, r, s, f, y]) => `${box(228, y - 12, 14, 14, f, A, 3)}${T(250, y, n, { fs: 12, b: 1 })}${T(250, y + 17, r, { fs: 11, c: A, b: 1 })}${T(250, y + 33, s, { fs: 10.5, c: C.mut })}`).join("")}
+    ${T(220, 228, "Všetky tri dosky sú nakreslené v rovnakej mierke.", { a: "middle", fs: 11, c: C.mut })}`, "Veľkosti dosiek"),
+    "Veľkosť dosky (<b>form factor</b>) určuje, do akej skrinky sa zmestí a koľko kariet do nej zapojíš."),
+  bus: fig(SV(440, 250, `
+    ${T(220, 22, "Kto s kým komunikuje na doske", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(170, 92, 100, 56, A, null, 10)}${T(220, 118, "procesor", { a: "middle", fs: 12.5, b: 1, c: "#fff" })}${T(220, 134, "CPU", { a: "middle", fs: 10.5, c: "#fff" })}
+    ${cl(20, 92, 104, 56, C.blueS, C.blue, "pamäť RAM", "priamo k CPU")}${ar(126, 120, 168, 120, C.blue, 2.2, 1)}
+    ${cl(316, 40, 110, 46, "#fff", C.line, "grafická karta", "PCIe x16")}${ar(272, 104, 314, 66, A, 2.2, 1)}
+    ${cl(316, 100, 110, 46, "#fff", C.line, "SSD NVMe", "M.2")}${ar(272, 124, 314, 124, A, 2.2, 1)}
+    ${cl(170, 188, 100, 46, C.ambS, C.amb, "čipová sada", "chipset")}${ar(220, 150, 220, 186, C.amb, 2.2, 1)}
+    ${cl(20, 188, 104, 46, "#fff", C.line, "USB, SATA", "disky, periférie")}${ar(168, 211, 126, 211, C.amb, 2, 1)}
+    ${cl(316, 188, 110, 46, "#fff", C.line, "sieť, zvuk", "ďalšie sloty")}${ar(272, 211, 314, 211, C.amb, 2, 1)}`, "Prepojenie častí dosky"),
+    "Najrýchlejšie časti sú pripojené <b>priamo k procesoru</b>, pomalšie cez <b>čipovú sadu</b>."),
+  power: fig(SV(440, 220, `
+    ${T(220, 22, "Ako sa napája základná doska", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(20, 50, 110, 116, C.bg, C.mut, 10)}${T(75, 74, "zdroj (PSU)", { a: "middle", fs: 12, b: 1 })}${T(75, 98, "zo siete 230 V", { a: "middle", fs: 10.5, c: C.mut })}${T(75, 116, "vyrobí 12 V,", { a: "middle", fs: 10.5, c: C.mut })}${T(75, 132, "5 V a 3,3 V", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(132, 80, 180, 80, A, 2.5)}${cl(184, 56, 242, 48, AS, A, "ATX 24-pin", "napája celú dosku, RAM a sloty", { c: A })}
+    ${ar(132, 140, 180, 140, C.bad, 2.5)}${cl(184, 116, 72, 48, "#fff", C.bad, "EPS 8-pin", "12 V", { fs: 11 })}
+    ${ar(258, 140, 268, 140, C.bad, 2.2)}${cl(270, 116, 74, 48, C.ambS, C.amb, "VRM", "na ≈ 1 V")}
+    ${ar(346, 140, 358, 140, C.bad, 2.2)}${cl(360, 116, 66, 48, A, null, "procesor", "", { c: "#fff", fs: 11 })}
+    ${box(20, 180, 406, 30, C.bg, null, 8)}${T(223, 200, "Procesor potrebuje veľký prúd pri nízkom napätí okolo 1 V.", { a: "middle", fs: 11.5 })}`, "Napájanie dosky"),
+    "Zdroj napája dosku dvoma hlavnými konektormi: <b>ATX 24-pin</b> pre celú dosku a <b>EPS 8-pin</b> pre procesor."),
+  esd: fig(SV(440, 250, `
+    ${T(220, 22, "Statická elektrina ničí čipy", { a: "middle", fs: 13, b: 1, c: A })}
+    <text x="62" y="104" text-anchor="middle" font-size="44">✋</text>
+    <text x="118" y="98" text-anchor="middle" font-size="30">⚡</text>
+    ${box(144, 62, 52, 52, "#2A2D31", null, 6)}${[0, 1, 2, 3, 4].map(i => `<rect x="${150 + i * 9}" y="54" width="4" height="8" fill="#B7BDC4"/><rect x="${150 + i * 9}" y="114" width="4" height="8" fill="#B7BDC4"/>`).join("")}${T(170, 92, "čip", { a: "middle", fs: 11, b: 1, c: "#fff" })}
+    ${TW(20, 150, "Chôdzou po koberci sa nabiješ až na tisíce voltov. Výboj slabší ako asi 3 000 V ani necítiš, čip však zničí aj oveľa menší.", 32, { fs: 11, lh: 16 })}
+    ${box(222, 40, 204, 196, C.okS, C.ok, 10)}${T(234, 62, "Ako montovať bezpečne", { fs: 12, b: 1, c: C.ok })}
+    ${[["✅ vypni zdroj a vytiahni", "kábel zo zásuvky"], ["✅ dotkni sa kovovej", "časti skrinky"], ["✅ použi antistatický", "náramok"], ["✅ súčiastky drž za okraje,", "nechytaj kontakty"]].map(([a, b], i) => T(234, 92 + i * 38, a, { fs: 11, b: 1 }) + T(252, 108 + i * 38, b, { fs: 11 })).join("")}`, "Statická elektrina"),
+    "Pred montážou sa <b>uzemni</b> dotykom kovovej skrinky alebo antistatickým náramkom."),
+  pasta: fig(SV(440, 230, `
+    ${T(220, 22, "Teplovodivá pasta medzi procesorom a chladičom", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[...Array(12)].map((_, i) => `<rect x="${30 + i * 15}" y="42" width="8" height="52" fill="#B7BDC4"/>`).join("")}
+    ${box(26, 92, 180, 16, "#9AA4AE", null, 2)}${T(116, 104, "chladič", { a: "middle", fs: 10.5, b: 1, c: "#fff" })}
+    <rect x="46" y="108" width="140" height="7" fill="#E3E7EB" stroke="${C.mut}" stroke-width="1"/>
+    ${box(46, 115, 140, 24, "#6F7B87", null, 2)}${T(116, 131, "procesor", { a: "middle", fs: 11, b: 1, c: "#fff" })}
+    ${box(26, 139, 180, 18, "#2F6B4F", null, 2)}${T(116, 152, "pätica na doske", { a: "middle", fs: 10.5, c: "#fff" })}
+    ${ar(196, 111, 236, 111, C.mut, 1.5)}${T(242, 115, "pasta", { fs: 11, b: 1 })}
+    ${ar(20, 135, 20, 50, C.bad, 2.5)}${T(14, 172, "teplo", { fs: 10.5, b: 1, c: C.bad })}
+    ${TW(242, 134, "Povrchy nie sú dokonale hladké. Vzduch v drobných medzerách brzdí teplo, pasta ich vyplní.", 30, { fs: 11, lh: 15 })}
+    ${box(20, 194, 406, 30, C.ambS, null, 8)}${T(223, 214, "Stačí kvapka veľkosti hrášku. Viac pasty nechladí lepšie.", { a: "middle", fs: 11.5, c: "#7A5200", b: 1 })}`, "Teplovodivá pasta"),
+    "<b>Teplovodivá pasta</b> vyplní nerovnosti medzi procesorom a chladičom, aby teplo dobre prechádzalo."),
+  poradie: fig(SV(440, 230, `
+    ${T(220, 22, "Postup montáže počítača", { a: "middle", fs: 13, b: 1, c: A })}
+    ${["procesor do pätice", "pasta a chladič procesora", "moduly RAM do slotov DIMM", "SSD NVMe do slotu M.2", "dosku priskrutkuj do skrinky", "grafickú kartu do PCIe x16", "káble ATX 24-pin a EPS 8-pin", "prvé zapnutie, kontrola v UEFI"].map((t, i) => { const x = 20 + (i > 3 ? 206 : 0), y = 44 + (i % 4) * 44; return `${box(x, y, 200, 36, i < 3 ? AS : "#fff", i < 3 ? A : C.line, 8)}<circle cx="${x + 18}" cy="${y + 18}" r="10" fill="${A}"/>${T(x + 18, y + 22, String(i + 1), { a: "middle", fs: 11, b: 1, c: "#fff" })}${T(x + 34, y + 22, t, { fs: 11 })}`; }).join("")}
+    ${T(220, 224, "Kroky 1 – 3 sa robia ešte mimo skrinky.", { a: "middle", fs: 11, c: C.mut })}`, "Postup montáže"),
+    "Procesor, chladič a RAM sa osadzujú, kým doska ešte <b>leží mimo skrinky</b>."),
+  ipo: fig(SV(440, 230, `
+    ${T(220, 22, "Vstup → spracovanie → výstup", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 50, 122, 100, C.blueS, C.blue, 12)}${T(75, 74, "VSTUP", { a: "middle", fs: 12, b: 1, c: C.blue })}${T(75, 104, "7 × 6", { a: "middle", fs: 22, b: 1, mono: 1 })}${T(75, 132, "stlačené klávesy", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(140, 100, 156, 100, C.mut, 2.5)}
+    ${box(160, 50, 122, 100, AS, A, 12)}${T(221, 74, "SPRACOVANIE", { a: "middle", fs: 12, b: 1, c: A })}${T(221, 106, "⚙️", { a: "middle", fs: 24 })}${T(221, 132, "procesor počíta", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(286, 100, 302, 100, C.mut, 2.5)}
+    ${box(306, 50, 120, 100, C.okS, C.ok, 12)}${T(366, 74, "VÝSTUP", { a: "middle", fs: 12, b: 1, c: C.ok })}${T(366, 104, "42", { a: "middle", fs: 22, b: 1, mono: 1 })}${T(366, 132, "číslo na displeji", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(14, 168, 412, 50, C.bg, null, 10)}${T(220, 189, "Takto pracuje každý počítač, aj obyčajná kalkulačka.", { a: "middle", fs: 11.5, b: 1 })}${T(220, 207, "Vstupné zariadenie dodá údaje, výstupné ukáže výsledok.", { a: "middle", fs: 11, c: C.mut })}`, "Model vstup, spracovanie, výstup"),
+    "Počítač údaje <b>prijme</b> (vstup), <b>spracuje</b> a výsledok <b>odovzdá</b> (výstup)."),
+  dalsie: fig(SV(440, 250, `
+    ${T(220, 22, "Ďalšie periférie podľa smeru údajov", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["⬅️ vstupné", C.blue, C.blueS, ["gamepad", "čítačka čiarových kódov", "grafický tablet", "snímač odtlačku prsta"]], ["➡️ výstupné", C.ok, C.okS, ["3D tlačiareň", "plotter", "dataprojektor v kine", "tlačiareň štítkov"]], ["↔️ oboje", C.acc, C.accS, ["externý disk", "sieťová karta", "multifunkčná tlačiareň", "VR okuliare"]]].map(([h, c, f, L], k) => { const x = 14 + k * 140; return `${box(x, 40, 132, 196, f, c, 12)}${T(x + 66, 64, h, { a: "middle", fs: 12, b: 1, c })}${L.map((t, i) => TW(x + 10, 96 + i * 36, t, 20, { fs: 11, lh: 14 })).join("")}`; }).join("")}`, "Ďalšie periférie"),
+    "Rozhoduje <b>smer toku údajov</b> z pohľadu počítača, nie to, ako zariadenie vyzerá."),
+  usb: fig(SV(440, 250, `
+    ${T(220, 22, "Rýchlosť USB v čase", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["USB 1.1", "1998", 12, "12 Mb/s"], ["USB 2.0", "2000", 480, "480 Mb/s"], ["USB 3.2 Gen 1", "2008", 5000, "5 Gb/s"], ["USB 3.2 Gen 2", "2013", 10000, "10 Gb/s"], ["USB4", "2019", 40000, "40 Gb/s"]].map(([n, y, v, l], i) => { const yy = 44 + i * 34, w = Math.max(6, Math.log10(v) / Math.log10(40000) * 190); return `${T(20, yy + 15, n, { fs: 11.5, b: 1 })}${T(20, yy + 28, y, { fs: 10.5, c: C.mut })}<rect x="132" y="${yy + 4}" width="${w}" height="20" rx="4" fill="${i === 4 ? A : "#7CC4BE"}"/>${T(140 + w, yy + 19, l, { fs: 11, b: 1 })}`; }).join("")}
+    ${box(20, 218, 406, 26, C.bg, null, 8)}${T(223, 235, "USB4 je viac ako 3 000-krát rýchlejšie ako USB 1.1.", { a: "middle", fs: 11.5 })}`, "Rýchlosti USB"),
+    "Každá nová verzia <b>USB</b> je rýchlejšia. Stĺpce sú skrátené, inak by sa USB4 nezmestilo na stránku."),
+  video: fig(SV(440, 230, `
+    ${T(220, 22, "Ako sa menili obrazové konektory", { a: "middle", fs: 13, b: 1, c: A })}
+    <line x1="30" y1="62" x2="410" y2="62" stroke="${C.line}" stroke-width="3"/>
+    ${[["VGA", "1987", "analógový obraz", "15 kolíkov"], ["DVI", "1999", "digitálny obraz", "až 29 kolíkov"], ["HDMI", "2003", "obraz aj zvuk", "televízory, monitory"], ["DisplayPort", "2006", "obraz aj zvuk", "počítačové monitory"]].map(([n, y, a, b], i) => { const x = 14 + i * 104; return `<circle cx="${x + 48}" cy="62" r="7" fill="${i < 2 ? C.mut : A}"/>${T(x + 48, 48, y, { a: "middle", fs: 11, b: 1, c: C.mut })}${box(x, 80, 96, 100, i < 2 ? C.bg : AS, i < 2 ? C.line : A, 10)}${T(x + 48, 104, n, { a: "middle", fs: 12, b: 1, c: i < 2 ? C.ink : A })}${TW(x + 48, 130, a, 14, { a: "middle", fs: 10.5, lh: 14 })}${TW(x + 48, 160, b, 14, { a: "middle", fs: 10.5, lh: 13, c: C.mut })}`; }).join("")}
+    ${T(220, 212, "Staré VGA a DVI už nové počítače často nemajú.", { a: "middle", fs: 11, c: C.mut })}`, "Obrazové konektory"),
+    "Dnešné monitory sa pripájajú digitálne cez <b>HDMI</b> alebo <b>DisplayPort</b>, staršie cez VGA a DVI."),
+  jack: fig(SV(440, 230, `
+    ${T(220, 22, "Farby zvukových konektorov 3,5 mm", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["#4F8CFF", "modrý", "linkový vstup", "prehrávač, mixpult"], ["#3FB950", "zelený", "výstup", "reproduktory, slúchadlá"], ["#F778BA", "ružový", "mikrofón", "vstup pre mikrofón"], ["#F5A524", "oranžový", "stred a subwoofer", "zostava 5.1"], ["#2A2D31", "čierny", "zadné reproduktory", "zostava 5.1"]].map(([c, n, a, b], i) => { const y = 42 + i * 36; return `<circle cx="34" cy="${y + 14}" r="13" fill="${c}"/><circle cx="34" cy="${y + 14}" r="5" fill="#101114"/>${T(58, y + 12, n, { fs: 11.5, b: 1 })}${T(58, y + 26, a, { fs: 11, c: A, b: 1 })}${T(230, y + 19, b, { fs: 11, c: C.mut })}`; }).join("")}`, "Farby audio konektorov"),
+    "Farby zvukových konektorov sú dohodnuté normou, preto sú rovnaké na väčšine počítačov."),
+  vrstvy: fig(SV(440, 250, `
+    ${T(220, 22, "Kde je firmvér medzi ostatnými programami", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["aplikácie", "prehliadač, hry, Word", "#fff", C.line, C.ink], ["operačný systém", "Windows, Linux, macOS", "#fff", C.line, C.ink], ["firmvér BIOS / UEFI", "program priamo v doske", AS, A, A], ["hardvér", "procesor, RAM, disky", C.bg, C.mut, C.ink]].map(([n, d, f, s, c], i) => { const y = 40 + i * 48; return `${box(60, y, 300, 40, f, s, 8)}${T(76, y + 25, n, { fs: 12.5, b: 1, c })}${T(344, y + 25, d, { a: "end", fs: 11, c: C.mut })}`; }).join("")}
+    ${ar(390, 220, 390, 50, A, 2.5)}${T(400, 140, "štart", { fs: 10.5, b: 1, c: A })}`, "Vrstvy programov"),
+    "<b>Firmvér</b> je most medzi hardvérom a operačným systémom."),
+  klavesy: fig(SV(440, 230, `
+    ${T(220, 22, "Ako sa dostaneš do nastavení", { a: "middle", fs: 13, b: 1, c: A })}
+    ${["Del", "F2"].map((k, i) => `${box(20 + i * 52, 44, 44, 40, "#fff", C.ink, 7)}${T(42 + i * 52, 70, k, { a: "middle", fs: 13, b: 1, mono: 1 })}`).join("")}
+    ${T(130, 60, "nastavenia (Setup)", { fs: 12, b: 1, c: A })}${T(130, 77, "čas, poradie zavádzania, procesor…", { fs: 11, c: C.mut })}
+    ${["F12", "F11", "F8", "Esc"].map((k, i) => `${box(20 + i * 52, 104, 44, 40, "#fff", C.ink, 7)}${T(42 + i * 52, 130, k, { a: "middle", fs: 12, b: 1, mono: 1 })}`).join("")}
+    ${T(234, 120, "boot menu", { fs: 12, b: 1, c: A })}${T(234, 137, "jednorazový výber disku", { fs: 11, c: C.mut })}
+    ${box(20, 160, 406, 60, C.ambS, null, 10)}${T(32, 181, "Klávesu stlač hneď po zapnutí, kým svieti logo výrobcu.", { fs: 11.5, b: 1, c: "#7A5200" })}
+    ${T(32, 200, "Ktorá klávesa platí, závisí od výrobcu dosky alebo notebooku.", { fs: 11, c: "#7A5200" })}${T(32, 214, "Vo Windows: Nastavenia → Obnovenie → Spustenie s rozšírenými možnosťami.", { fs: 10.5, c: "#7A5200" })}`, "Klávesy pre UEFI"),
+    "Do <b>Setupu</b> sa dostaneš klávesom Del alebo F2, jednorazový výber disku ponúka <b>boot menu</b>."),
   smer: fig(SV(440, 270, `
     ${box(160, 70, 120, 100, AS, A, 14)}${pc(188, 86, 1, "")}${T(220, 160, "POČÍTAČ", { a: "middle", fs: 12.5, b: 1, c: A })}
     ${[["⌨️", "klávesnica", 20, 30], ["🖱️", "myš", 20, 110], ["🎤", "mikrofón", 20, 190]].map(([e, n, x, y]) => `${box(x, y, 100, 44, C.blueS, C.blue, 10)}<text x="${x + 22}" y="${y + 29}" text-anchor="middle" font-size="18">${e}</text>${T(x + 40, y + 27, n, { fs: 11, b: 1 })}${ar(x + 104, y + 22, 156, 120, C.blue, 2)}`).join("")}
     ${[["🖥️", "monitor", 320, 30], ["🖨️", "tlačiareň", 320, 110], ["🔊", "reproduktor", 320, 190]].map(([e, n, x, y]) => `${box(x, y, 100, 44, C.okS, C.ok, 10)}<text x="${x + 22}" y="${y + 29}" text-anchor="middle" font-size="18">${e}</text>${T(x + 40, y + 27, n, { fs: 11, b: 1 })}${ar(284, 120, x - 4, y + 22, C.ok, 2)}`).join("")}
     ${T(70, 22, "⬅️ VSTUPNÉ", { a: "middle", fs: 12, b: 1, c: C.blue })}${T(370, 22, "VÝSTUPNÉ ➡️", { a: "middle", fs: 12, b: 1, c: C.ok })}
     ${T(220, 256, "📱 dotyková obrazovka, 🎧 headset = vstupno-výstupné (oboje)", { a: "middle", fs: 11, b: 1, c: C.acc })}`, "Smer toku údajov"),
-    "Smer šípky je vždy <b>z pohľadu počítača</b>: vstupné zariadenia údaje posielajú dnu, výstupné ich prijímajú von.")
+    "Smer šípky je vždy <b>z pohľadu počítača</b>: vstupné zariadenia údaje posielajú dnu, výstupné ich prijímajú von."),
+  start: fig(SV(440, 230, `
+    ${T(220, 22, "Od tlačidla po Windows", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["⚡", "napätie", "zo zdroja"], ["UEFI", "firmvér", "sa spustí"], ["POST", "test", "hardvéru"], ["1 2 3", "boot order", "hľadá disk"], ["💾", "zavádzač", "na disku"], ["OS", "systém", "sa načíta"]].map(([e, a, b], i) => { const x = 14 + i * 70; return `${box(x, 50, 62, 110, i === 1 || i === 2 ? AS : "#fff", i === 1 || i === 2 ? A : C.line, 10)}${T(x + 31, 86, e, { a: "middle", fs: e.length > 2 ? 12 : 20, b: 1, c: A })}${T(x + 31, 120, a, { a: "middle", fs: 10.5, b: 1 })}${T(x + 31, 136, b, { a: "middle", fs: 10.5, c: C.mut })}${i < 5 ? ar(x + 62, 105, x + 70, 105, C.mut, 1.6) : ""}`; }).join("")}
+    ${box(14, 178, 412, 40, C.bg, null, 8)}${T(220, 203, "Celý štart trvá na počítači s SSD diskom iba pár sekúnd.", { a: "middle", fs: 11.5 })}`, "Priebeh štartu"),
+    "Po zapnutí sa vždy najprv spustí <b>firmvér</b>, až potom operačný systém.")
 }; })();
 
 const VIEWS = {
@@ -601,7 +735,19 @@ const VIEWS = {
           : `<p class="muted" style="font-size:14.5px">Popisky sú skryté. Každá otázka má jeden pokus.</p>`}</div>`;
     }
     return head() + `<h2>Základná doska zblízka</h2>
-    <p>Základná doska (motherboard) je chrbtica počítača. Všetky ostatné súčiastky sa do nej zapájajú a cez jej vodivé cestičky si posielajú údaje aj napájanie.</p>
+    <div class="theory tsplit"><div>
+      <p><b>Základná doska</b> (motherboard) je chrbtica počítača. Všetky ostatné súčiastky sa do nej zapájajú a cez jej vodivé cestičky si posielajú <b>údaje</b> aj <b>napájanie</b>.</p>
+      <table class="rtab"><thead><tr><th>Časť dosky</th><th>Na čo slúži</th></tr></thead><tbody>
+        <tr><td><b>pätica</b> (socket)</td><td>miesto pre procesor</td></tr>
+        <tr><td>sloty <b>DIMM</b></td><td>moduly operačnej pamäte RAM</td></tr>
+        <tr><td>sloty <b>PCIe</b></td><td>rozširujúce karty (grafická, sieťová, zvuková)</td></tr>
+        <tr><td><b>M.2</b> a <b>SATA</b></td><td>pripojenie diskov SSD a HDD</td></tr>
+        <tr><td><b>čipová sada</b></td><td>riadi komunikáciu s USB, SATA a ďalšími slotmi</td></tr>
+        <tr><td>čip <b>BIOS/UEFI</b>, batéria CMOS</td><td>firmvér a jeho nastavenia, hodiny</td></tr></tbody></table>
+      <p>Dosky sa vyrábajú v štandardných veľkostiach (<b>ATX</b>, micro-ATX, mini-ITX), aby pasovali do skriniek.</p>
+    </div><div>${TFIG.bus}</div></div>
+    ${ltfigs(TFIG.form, TFIG.power)}
+    ${VEDEL("Základná doska nie je jedna tenká doštička. Má zvyčajne 4 až 8 vrstiev medených cestičiek nad sebou a väčšinu z nich zvonka vôbec nevidno.")}
     <h3>Prieskum: klikaj na časti dosky</h3>
     <div class="lab"><div class="boardwrap">${boardSVG("explore")}</div>
       <div class="side">${e ? `<span class="tag">Preskúmané ${n} z ${all}</span><h4>${e.n}</h4><p style="font-size:15.5px;margin:0">${e.t}</p>` : `<h4>Klikni na časť dosky</h4><p class="muted" style="font-size:15px">Pri každej časti sa dozvieš, na čo slúži. Preskúmané časti sa orámujú prerušovanou čiarou.</p>`}
@@ -613,20 +759,48 @@ const VIEWS = {
   montaz() {
     const done = S.t.build;
     return head() + `<h2>Poskladaj počítač</h2>
+    <div class="theory tsplit"><div>
+      <p>Pri montáži musí byť počítač <b>vypnutý a odpojený</b> zo siete. Najväčším nepriateľom súčiastok je <b>statická elektrina</b>, preto sa pred prácou uzemni.</p>
+      <p>Každá súčiastka má <b>vlastný typ slotu alebo konektora</b>. Konektory majú zárezy (kľúč), takže ich nezasunieš naopak ani do nesprávneho miesta. Netreba tlačiť silou.</p>
+      <table class="rtab"><thead><tr><th>Pravidlo</th><th>Prečo</th></tr></thead><tbody>
+        <tr><td>uzemniť sa</td><td>výboj statickej elektriny zničí čip</td></tr>
+        <tr><td>teplovodivá pasta</td><td>teplo z procesora prejde do chladiča</td></tr>
+        <tr><td>držať za okraje</td><td>pot a nečistoty škodia kontaktom</td></tr></tbody></table>
+    </div><div>${TFIG.esd}</div></div>
+    ${ltfigs(TFIG.pasta, ...(done ? [TFIG.poradie] : []))}
+    ${VEDEL("Pri skutočnej montáži sa najprv vkladá procesor a RAM, kým je doska ešte mimo skrinky. K doske sa dostaneš ľahšie a nehrozí, že ju pri tlačení na sloty prehneš.")}
     <p>Na doske je prázdna pätica aj prázdne sloty. Osaď súčiastky na správne miesta. Za každú súčiastku zapojenú na prvý pokus dostaneš bod.</p>
     <div class="lab"><div class="boardwrap">${boardSVG("build")}</div>${placeSide("build")}</div>
-    ${done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">${done.score === done.max ? "Výborne! " : ""}Počítač je zložený. Získal si ${done.score} z ${done.max} bodov</span></div>
-      <div class="box teal"><p><b>Vedel si?</b> Pri skutočnej montáži sa najprv vkladá procesor a RAM, kým je doska ešte mimo skrinky. K doske sa dostaneš ľahšie a nehrozí, že ju pri tlačení na sloty prehneš.</p></div>` : ""}` + nextBar();
+    ${done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">${done.score === done.max ? "Výborne! " : ""}Počítač je zložený. Získal si ${done.score} z ${done.max} bodov</span></div>` : ""}` + nextBar();
   },
   io() {
     return head() + `<h2>Vstupné a výstupné zariadenia</h2>
-    <p>Periférie sú zariadenia pripojené k počítaču. Delíme ich podľa toho, ktorým smerom tečú údaje, <b>vždy z pohľadu počítača</b>. Vstupné zariadenia údaje do počítača posielajú, výstupné ich od neho prijímajú a niektoré robia oboje.</p>
+    <div class="theory tsplit"><div>
+      <p><b>Periférie</b> sú zariadenia pripojené k počítaču. Delíme ich podľa toho, ktorým smerom tečú údaje, <b>vždy z pohľadu počítača</b>.</p>
+      <table class="rtab"><thead><tr><th>Druh</th><th>Čo robí</th></tr></thead><tbody>
+        <tr><td><b>vstupné</b></td><td>údaje do počítača <b>posielajú</b></td></tr>
+        <tr><td><b>výstupné</b></td><td>údaje od počítača <b>prijímajú</b> a zobrazia, vytlačia alebo prehrajú</td></tr>
+        <tr><td><b>vstupno-výstupné</b></td><td>robia oboje</td></tr></tbody></table>
+      <p>Počítač pracuje stále rovnako: údaje <b>prijme, spracuje</b> a výsledok <b>odovzdá</b>.</p>
+    </div><div>${TFIG.ipo}</div></div>
+    ${ltfigs(TFIG.dalsie)}
+    ${VEDEL("Prvú počítačovú myš zostrojil Douglas Engelbart v roku 1964. Mala drevenú krabičku a namiesto guľôčky dve kovové kolieska.")}
     <div class="task"><div class="ins">Klikni na kartičku a potom na správny kôš. Kartičky môžeš aj ťahať myšou.</div>${taskHTML("iosort")}</div>${S.t.iosort ? tfigs(TFIG.smer) : ""}` + nextBar();
   },
   porty() {
     const done = S.t.ports;
     return head() + `<h2>Zadný panel: kam čo zapojiť?</h2>
-    <p>Na zadnom paneli základnej dosky sú porty pre periférie. Každý typ konektora má iný tvar, takže kábel sa dá zasunúť len tam, kam patrí. Zvukové konektory sa rozlišujú farbou.</p>
+    <div class="theory tsplit"><div>
+      <p>Na <b>zadnom paneli</b> základnej dosky sú porty pre periférie. Každý typ konektora má iný tvar, takže kábel sa dá zasunúť len tam, kam patrí. Zvukové konektory sa rozlišujú <b>farbou</b>.</p>
+      <table class="rtab"><thead><tr><th>Port</th><th>Na čo slúži</th></tr></thead><tbody>
+        <tr><td><b>USB-A</b></td><td>klasický obdĺžnikový konektor pre väčšinu periférií</td></tr>
+        <tr><td><b>USB-C</b></td><td>malý obojstranný konektor: dáta, obraz aj nabíjanie</td></tr>
+        <tr><td><b>HDMI</b>, <b>DisplayPort</b></td><td>digitálny obraz a zvuk pre monitor</td></tr>
+        <tr><td><b>RJ-45</b></td><td>káblová počítačová sieť (LAN)</td></tr>
+        <tr><td><b>jack 3,5 mm</b></td><td>zvuk: vstupy a výstupy rozlíšené farbou</td></tr></tbody></table>
+    </div><div>${TFIG.usb}</div></div>
+    ${ltfigs(TFIG.video, ...(done ? [TFIG.jack] : []))}
+    ${VEDEL("Konektor USB-A je navrhnutý aspoň na 1 500 zasunutí, obojstranný USB-C až na 10 000. Pri nabíjaní mobilu každý deň by USB-C vydržal vyše 27 rokov.")}
     <div class="lab"><div class="portwrap">${portsSVG()}</div>${placeSide("ports")}</div>
     ${done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">${done.score === done.max ? "Výborne! " : ""}Všetko je zapojené. Získal si ${done.score} z ${done.max} bodov</span></div>
       <div class="box teal"><p><b>Pozor v praxi:</b> ak má počítač samostatnú grafickú kartu, monitor zapoj do jej portu HDMI alebo DisplayPort, nie do portu na doske. Porty na doske patria k integrovanej grafike v procesore.</p></div>` : ""}` + nextBar();
@@ -634,7 +808,17 @@ const VIEWS = {
   bios() {
     const g = S.guess !== null ? `<div class="box ${S.guess === GUESS_OK ? "teal" : ""}"><p>Na začiatku si tipoval: <b>„${GUESSES[S.guess]}“</b>. ${S.guess === GUESS_OK ? "Presne tak! Ako prvý sa vždy spustí firmvér." : "Nie celkom. Ako prvý sa vždy spustí firmvér na základnej doske, až potom operačný systém."}</p></div>` : "";
     return head() + `<h2>BIOS a UEFI: prvý program po zapnutí</h2>
-    <p><b>BIOS</b> (Basic Input/Output System) je firmvér uložený v čipe na základnej doske. Po zapnutí otestuje hardvér a vyhľadá operačný systém. Moderné počítače majú jeho nástupcu <b>UEFI</b>: má grafické rozhranie, ovláda sa aj myšou a podporuje veľké disky aj Secure Boot. Do nastavení sa dostaneš klávesom <b>Del</b> alebo <b>F2</b> hneď po zapnutí.</p>
+    <div class="theory tsplit"><div>
+      <p><b>BIOS</b> (Basic Input/Output System) je <b>firmvér</b> uložený v čipe na základnej doske. Po zapnutí otestuje hardvér a vyhľadá operačný systém.</p>
+      <p>Moderné počítače majú jeho nástupcu <b>UEFI</b>:</p>
+      <table class="rtab"><thead><tr><th></th><th>BIOS</th><th>UEFI</th></tr></thead><tbody>
+        <tr><td>ovládanie</td><td>textové, iba klávesnica</td><td>grafické, aj myš</td></tr>
+        <tr><td>veľké disky</td><td>nie (najviac 2 TB)</td><td>áno (disky GPT)</td></tr>
+        <tr><td>Secure Boot</td><td>nie</td><td>áno</td></tr></tbody></table>
+      <p>Do nastavení sa dostaneš klávesom <b>Del</b> alebo <b>F2</b> hneď po zapnutí.</p>
+    </div><div>${TFIG.vrstvy}</div></div>
+    ${ltfigs(TFIG.klavesy, ...(S.t.boot ? [TFIG.start] : []))}
+    ${VEDEL("Názov BIOS vymyslel Gary Kildall v roku 1975 pre operačný systém CP/M. Do počítačov IBM PC sa BIOS dostal v roku 1981 a takmer 30 rokov sa v podstate nemenil.")}
     ${g}
     <h3>Úloha 1: čo sa deje po zapnutí</h3>
     <div class="task"><div class="ins">Zoraď kroky od stlačenia tlačidla po spustenie systému.</div>${taskHTML("boot")}</div>
@@ -671,12 +855,12 @@ const VIEWS = {
 
 /* ---------- Render & events ---------- */
 const main = document.getElementById("main");
-const WIDE = { doska: 1, montaz: 1, porty: 1 };
+const WIDE = { doska: 1, montaz: 1, io: 1, porty: 1, bios: 1 };
 function render(toTop) {
   renderTop();
   const id = STEPS[S.cur].id;
   main.className = WIDE[id] ? "wide" : "";
-  main.innerHTML = VIEWS[id]();
+  main.innerHTML = VIEWS[id](); typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
 }
 function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }

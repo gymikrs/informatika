@@ -183,13 +183,106 @@ sub{font-size:.7em}
 .ctl select{border:1.5px solid var(--border);border-radius:10px;padding:9px 10px;background:var(--surface2);color:var(--ink);font:inherit}
 .err{color:#C0392B;font-weight:600}
 
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}.theory h4{margin:12px 0 4px;font-family:var(--head)}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"pozicne": ["Sústavy: dvojková (0, 1), osmičková (0 – 7), desiatková (0 – 9), šestnástková (0 – 9, A – F).", "Hodnota čísla = súčet (cifra × váha pozície)."], "do10": ["Do desiatkovej: každú cifru vynásob mocninou základu a sčítaj.", "1101₂ = 8 + 4 + 0 + 1 = 13."], "z10": ["Z desiatkovej: opakovane <b>deľ základom</b> a zapisuj zvyšky.", "Výsledok sú zvyšky čítané <b>odspodu nahor</b>."], "skratka": ["Jedna osmičková cifra = <b>3 bity</b>, jedna šestnástková cifra = <b>4 bity</b>.", "Bity delíme do skupín <b>sprava</b>, zľava doplníme nuly."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"pozicne": ["Hodnota cifry závisí od pozície, každá pozícia má <b>váhu</b> = mocninu základu.", "Sústavy: <b>dvojková</b> (0, 1), <b>osmičková</b> (0 – 7), <b>desiatková</b> (0 – 9), <b>šestnástková</b> (0 – 9, A – F).", "A = 10, B = 11, C = 12, D = 13, E = 14, F = 15.", "Základ píšeme ako index: 1101<sub>2</sub>, 36<sub>8</sub>, 7B<sub>16</sub>.", "Hodnota čísla = súčet (cifra · váha pozície)."], "do10": ["Do desiatkovej: každú cifru vynásob jej váhou a všetko sčítaj.", "Váhy: dvojková 1, 2, 4, 8, 16 … · osmičková 1, 8, 64, 512 · šestnástková 1, 16, 256, 4096.", "Príklad: 10110<sub>2</sub> = 16 + 4 + 2 = 22.", "Príklad: 352<sub>8</sub> = 3·64 + 5·8 + 2 = 234.", "Šestnástková: písmená najprv nahraď hodnotami (B4<sub>16</sub> = 11·16 + 4 = 180)."], "z10": ["Z desiatkovej: opakovane <b>celočíselne deľ základom</b> a zapisuj zvyšky.", "Deliť prestaneš, keď vyjde podiel 0.", "Výsledok sú zvyšky čítané <b>odspodu nahor</b>.", "Zvyšok je vždy menší ako základ; zvyšky 10 – 15 zapíš ako A – F.", "Príklad: 45 = 101101<sub>2</sub> = 55<sub>8</sub> = 2D<sub>16</sub>."], "skratka": ["8 = 2<sup>3</sup>: jedna osmičková cifra = <b>3 bity</b>.", "16 = 2<sup>4</sup>: jedna šestnástková cifra = <b>4 bity</b>.", "2 → 8 / 16: bity delíme do skupín <b>sprava</b>, zľava doplníme nuly, každú skupinu nahradíme cifrou.", "8 / 16 → 2: každú cifru nahradíme 3 / 4 bitmi, úvodné nuly vynecháme.", "Medzi 8 a 16 prevádzame cez bity (6C<sub>16</sub> = 0110 1100 = 001 101 100 = 154<sub>8</sub>)."]};
+/* Ilustrácie k teórii – 1. ročník 1.5 Prevody (čisté SVG) */
+const LF = (() => { const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`, A = "#B4235A", AS = "#FBE4EC", INK = "#1A1530", MUT = "#5E5877", LINE = "#DAD6E6", BG = "#F6F5FA", BL = "#1E6FD9", BLS = "#E3EEFC", OK = "#12805A", AMS = "#FFF6E0", AMT = "#7A5200";
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "lf" + (++uid); return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><defs>${[A, BL, MUT].map((c, i) => `<marker id="${id}m${i}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>${body.replace(/url\(#M(\d)\)/g, `url(#${id}m$1)`)}</svg>`; };
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || INK}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, st, r = 8) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${st ? ` stroke="${st}" stroke-width="1.5"` : ""}/>`;
+  const ar = (x1, y1, x2, y2, m = 0, c = A, w = 2.5) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w}" marker-end="url(#M${m})"/>`;
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  /* rozklad čísla na váhy */
+  const rozklad = (title, digits, base, vals, sum, col, colS) => { const n = digits.length, w = 66, x0 = 220 - (n * w - 8) / 2; return SV(440, 230, `
+    ${T(220, 22, title, { a: "middle", fs: 13, b: 1, c: col })}
+    ${digits.map((d, i) => { const x = x0 + i * w, p = n - 1 - i, wt = base ** p; return `${T(x + 29, 50, base + "⁰¹²³⁴⁵⁶⁷⁸⁹"[p], { a: "middle", fs: 12.5, c: MUT })}${T(x + 29, 66, "= " + wt, { a: "middle", fs: 11, c: MUT, mono: 1 })}${box(x, 74, 58, 46, colS, col)}${T(x + 29, 105, d, { a: "middle", fs: 22, b: 1, mono: 1 })}${T(x + 29, 142, vals[i] + "·" + wt, { a: "middle", fs: 11.5, b: 1, c: col, mono: 1 })}`; }).join("")}
+    ${box(14, 160, 412, 56, BG, null, 10)}${T(220, 184, digits.map((d, i) => vals[i] * base ** (n - 1 - i)).join(" + "), { a: "middle", fs: 13, mono: 1 })}${T(220, 206, "= " + sum + " (desiatkovo)", { a: "middle", fs: 14, b: 1, c: col })}`, title); };
+  /* rebrík delenia */
+  const rebrik = (title, n, base, col, colS) => { const st = []; let m = n; while (m > 0) { st.push([m, Math.floor(m / base), m % base]); m = Math.floor(m / base); } const H = 70 + st.length * 28 + 56, res = st.map(s => "0123456789ABCDEF"[s[2]]).reverse().join(""); return SV(440, H, `
+    ${T(220, 22, title, { a: "middle", fs: 13, b: 1, c: col })}
+    ${T(60, 50, "delenie", { fs: 11, c: MUT })}${T(190, 50, "podiel", { fs: 11, c: MUT })}${T(270, 50, "zvyšok", { fs: 11, c: MUT })}
+    ${st.map(([a, q, r], i) => { const y = 60 + i * 28; return `${T(60, y + 18, `${a} : ${base}`, { fs: 14, mono: 1 })}${T(190, y + 18, "= " + q, { fs: 14, mono: 1 })}${box(268, y, 44, 24, colS, col, 6)}${T(290, y + 17, r > 9 ? "0123456789ABCDEF"[r] : String(r), { a: "middle", fs: 14, b: 1, mono: 1, c: col })}${r > 9 ? T(320, y + 17, "(" + r + ")", { fs: 11, c: MUT }) : ""}`; }).join("")}
+    ${ar(370, 60 + st.length * 28 - 6, 370, 64, col === A ? 0 : 1, col, 3)}
+    ${box(14, H - 46, 412, 36, AMS, null, 8)}${T(220, H - 23, `zvyšky odspodu nahor: ${n} = ${res}${({ 2: "₂", 8: "₈", 16: "₁₆" })[base]}`, { a: "middle", fs: 13, b: 1, c: AMT })}`, title); };
+  return {
+    styri: fig(SV(440, 230, `
+      ${T(220, 22, "Jedno číslo, štyri zápisy", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(150, 38, 140, 50, A, null, 12)}${T(220, 71, "45 vecí", { a: "middle", fs: 18, b: 1, c: "#fff" })}
+      ${[["101101", "2", "dvojková"], ["55", "8", "osmičková"], ["45", "10", "desiatková"], ["2D", "16", "šestnástková"]].map(([v, b, n], i) => { const x = 14 + i * 104; return `${ar(220, 92, x + 48, 124, 2, MUT, 1.5)}${box(x, 128, 96, 70, i === 2 ? AS : "#fff", A, 10)}${T(x + 48, 162, v, { a: "middle", fs: 18, b: 1, mono: 1 })}${T(x + 48 + v.length * 5.4 + 2, 168, b, { fs: 10.5, b: 1, c: A })}${T(x + 48, 186, n, { a: "middle", fs: 10.5, c: MUT })}`; }).join("")}
+      ${T(220, 220, "Množstvo je to isté, mení sa iba zápis.", { a: "middle", fs: 11.5, c: MUT })}`, "Štyri zápisy"),
+      "To isté množstvo môžeme zapísať v <b>rôznych sústavách</b>. Index za číslom hovorí, v ktorej."),
+    vahy: fig(SV(440, 200, `
+      ${T(220, 22, "Váhy pozícií v rôznych sústavách", { a: "middle", fs: 13, b: 1, c: A })}
+      ${T(14, 50, "pozícia sprava", { fs: 11, c: MUT })}${["4.", "3.", "2.", "1."].map((t, i) => T(190 + i * 64, 50, t, { a: "middle", fs: 11, b: 1, c: MUT })).join("")}
+      ${[["osmičková", [512, 64, 8, 1]], ["desiatková", [1000, 100, 10, 1]], ["šestnástková", [4096, 256, 16, 1]]].map(([n, W], r) => { const y = 60 + r * 42; return `${T(14, y + 22, n, { fs: 12, b: 1 })}${W.map((w, i) => `${box(160 + i * 64, y, 60, 32, r === 1 ? "#fff" : AS, A, 6)}${T(190 + i * 64, y + 21, String(w), { a: "middle", fs: 13, b: 1, mono: 1 })}`).join("")}`; }).join("")}
+      ${T(220, 192, "Každá ďalšia pozícia doľava = predchádzajúca · základ", { a: "middle", fs: 11.5, c: MUT })}`, "Váhy"),
+      "Váhy sú <b>mocniny základu</b>: 1, z, z², z³ … Napravo je vždy váha 1."),
+    bin22: fig(rozklad("10110₂ do desiatkovej", ["1", "0", "1", "1", "0"], 2, [1, 0, 1, 1, 0], 22, A, AS), "Cifru vynásob jej <b>váhou</b> a všetko <b>sčítaj</b>."),
+    okt: fig(rozklad("352₈ do desiatkovej", ["3", "5", "2"], 8, [3, 5, 2], 234, BL, BLS), "V osmičkovej sústave sú váhy <b>1, 8, 64, 512</b> …"),
+    hex: fig(rozklad("B4₁₆ do desiatkovej", ["B", "4"], 16, [11, 4], 180, A, AS), "Písmeno najprv nahraď hodnotou: <b>B = 11</b>. Potom násob váhou."),
+    del2: fig(rebrik("45 do dvojkovej: deľ dvomi", 45, 2, A, AS), "Opakovane <b>deľ základom</b>, zvyšky čítaj <b>odspodu nahor</b>."),
+    del8: fig(rebrik("45 do osmičkovej: deľ ôsmimi", 45, 8, BL, BLS), "Rovnaký postup, iba deliteľ je <b>8</b>."),
+    del16: fig(rebrik("220 do šestnástkovej: deľ 16", 220, 16, A, AS), "Zvyšky <b>10 – 15</b> zapíš ako písmená <b>A – F</b>."),
+    skup: fig(SV(440, 250, `
+      ${T(220, 22, "Skupiny bitov: 101101₂", { a: "middle", fs: 13, b: 1, c: A })}
+      ${T(14, 56, "po 3 → osmičková", { fs: 11.5, b: 1, c: BL })}
+      ${["101", "101"].map((g, i) => `${box(170 + i * 110, 38, 90, 32, BLS, BL, 6)}${T(215 + i * 110, 60, g, { a: "middle", fs: 17, b: 1, mono: 1 })}${ar(215 + i * 110, 74, 215 + i * 110, 92, 1, BL, 2)}${T(215 + i * 110, 114, "5", { a: "middle", fs: 20, b: 1, mono: 1, c: BL })}`).join("")}
+      ${T(400, 114, "= 55₈", { a: "end", fs: 12, b: 1, c: BL })}
+      ${T(14, 158, "po 4 → šestnástková", { fs: 11.5, b: 1, c: A })}
+      ${["0010", "1101"].map((g, i) => `${box(170 + i * 110, 140, 90, 32, AS, A, 6)}${T(215 + i * 110, 162, g, { a: "middle", fs: 17, b: 1, mono: 1, c: i ? INK : MUT })}${ar(215 + i * 110, 176, 215 + i * 110, 194, 0, A, 2)}${T(215 + i * 110, 216, i ? "D" : "2", { a: "middle", fs: 20, b: 1, mono: 1, c: A })}`).join("")}
+      ${T(400, 216, "= 2D₁₆", { a: "end", fs: 12, b: 1, c: A })}
+      ${T(220, 242, "Skupiny delíme sprava, zľava doplníme nuly (0010 1101).", { a: "middle", fs: 11, c: MUT })}`, "Skupiny bitov"),
+      "Bity rozdeľ <b>sprava</b> po 3 (osmičková) alebo po 4 (šestnástková)."),
+    spat: fig(SV(440, 190, `
+      ${T(220, 22, "Naopak: 7B₁₆ do dvojkovej", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[["7", "0111"], ["B", "1011"]].map(([h, b], i) => { const x = 100 + i * 140; return `${box(x, 40, 100, 40, AS, A, 8)}${T(x + 50, 68, h, { a: "middle", fs: 22, b: 1, mono: 1, c: A })}${ar(x + 50, 84, x + 50, 106, 0, A, 2)}${box(x, 110, 100, 36, "#fff", A, 8)}${T(x + 50, 134, b, { a: "middle", fs: 18, b: 1, mono: 1 })}`; }).join("")}
+      ${T(220, 176, "7B₁₆ = 0111 1011₂ = 1111011₂ (úvodnú nulu vynecháme)", { a: "middle", fs: 11.5, b: 1 })}`, "Hex na bity"),
+      "Každú šestnástkovú cifru nahraď <b>4 bitmi</b>, osmičkovú <b>3 bitmi</b>."),
+    hexokt: fig(SV(440, 200, `
+      ${T(220, 22, "Zo 16 do 8 cez bity: 6C₁₆", { a: "middle", fs: 13, b: 1, c: A })}
+      ${T(14, 60, "1. na bity po 4:", { fs: 11.5, c: MUT })}${T(300, 60, "0110 1100", { a: "middle", fs: 17, b: 1, mono: 1, c: A })}
+      ${T(14, 100, "2. preskup po 3:", { fs: 11.5, c: MUT })}${T(300, 100, "001 101 100", { a: "middle", fs: 17, b: 1, mono: 1, c: BL })}
+      ${T(14, 140, "3. cifry:", { fs: 11.5, c: MUT })}${T(300, 140, "1   5   4", { a: "middle", fs: 17, b: 1, mono: 1, c: BL })}
+      ${box(14, 156, 412, 32, AMS, null, 8)}${T(220, 177, "6C₁₆ = 154₈ (obe = 108 desiatkovo)", { a: "middle", fs: 12.5, b: 1, c: AMT })}`, "16 do 8"),
+      "Medzi osmičkovou a šestnástkovou sústavou prevádzame najľahšie <b>cez bity</b>.")
+  }; })();
 const KEY = "sustavy-n15-v1";
 const LESSON = "1.5 Prevody čísel medzi sústavami 2, 8, 10, 16";
 const BRAND = "1.5 Prevody medzi sústavami";
@@ -214,7 +307,7 @@ const START = {
   ok: 1, yes: "Presne! 1·8 + 0·4 + 1·2 + 0·1 = 10.", no: "1010₂ = 1·8 + 0·4 + 1·2 + 0·1 = 10."
 };
 const DIG = "0123456789ABCDEF";
-function EXTRA_STATE() { return { dr: { q: null, n: 0, ok: 0, m: null, a: "" }, pv: { b: 2, n: "1011" }, bits: [0, 0, 0, 0, 0, 0, 0, 0], bdone: {}, dv: { n: "100", b: 2, k: 0 }, gr: { bin: "1011010", g: 4 }, col: "#1E90FF" }; }
+function EXTRA_STATE() { return { dr: { q: null, n: 0, ok: 0, m: null, a: "" }, pv: { b: 2, n: "1110" }, bits: [0, 0, 0, 0, 0, 0, 0, 0], bdone: {}, dv: { n: "75", b: 2, k: 0 }, gr: { bin: "1101100", g: 4 }, col: "#1E90FF" }; }
 const clean = v => String(v).toUpperCase().replace(/\s|\(.*?\)|_|₂|₈|₁₆|₁₀/g, "").replace(/^#/, "").replace(/^0+(?=.)/, "");
 const eq = (a, b) => clean(a) === clean(b);
 function toBase(n, b) { return n.toString(b).toUpperCase(); }
@@ -319,10 +412,18 @@ const TASKS = {
 const VIEWS = {
   pozicne() {
     return head() + `<h2>Pozičné číselné sústavy</h2>
-    <p>V <b>pozičnej sústave</b> záleží na tom, na ktorom mieste cifra stojí. Každé miesto má <b>váhu</b>, ktorá je mocninou <b>základu</b> sústavy. V desiatkovej sústave: 352 = 3·100 + 5·10 + 2·1.</p>
-    <div class="cards"><div class="pc"><div class="big">2</div><h4>Dvojková (binárna)</h4><p>cifry 0, 1 · jazyk počítača</p></div><div class="pc"><div class="big">8</div><h4>Osmičková (oktálová)</h4><p>cifry 0 až 7</p></div>
-      <div class="pc"><div class="big">10</div><h4>Desiatková (decimálna)</h4><p>cifry 0 až 9 · používame bežne</p></div><div class="pc"><div class="big">16</div><h4>Šestnástková (hexadecimálna)</h4><p>cifry 0 až 9, A = 10, B = 11, C = 12, D = 13, E = 14, F = 15</p></div></div>
-    <p>Základ sústavy píšeme ako malé číslo za číslo: 1010<sub>2</sub>, 17<sub>8</sub>, 255<sub>10</sub>, FF<sub>16</sub>.</p>
+    <div class="theory tsplit"><div>
+      <p>V <b>pozičnej sústave</b> záleží na tom, na ktorom mieste cifra stojí. Každé miesto má <b>váhu</b>, ktorá je mocninou <b>základu</b> sústavy.</p>
+      <p>V desiatkovej sústave: 352 = 3·100 + 5·10 + 2·1.</p>
+      <table class="rtab num"><thead><tr><th>Základ</th><th>Sústava</th><th>Cifry</th></tr></thead><tbody>
+        <tr><td>2</td><td><b>dvojková</b> (binárna)</td><td>0, 1 · jazyk počítača</td></tr>
+        <tr><td>8</td><td><b>osmičková</b> (oktálová)</td><td>0 až 7</td></tr>
+        <tr><td>10</td><td><b>desiatková</b> (decimálna)</td><td>0 až 9 · používame bežne</td></tr>
+        <tr><td>16</td><td><b>šestnástková</b> (hexadecimálna)</td><td>0 až 9, A = 10, B = 11, C = 12, D = 13, E = 14, F = 15</td></tr></tbody></table>
+      <p>Základ sústavy píšeme ako malé číslo za číslo (<b>index</b>): 1101<sub>2</sub>, 36<sub>8</sub>, 409<sub>10</sub>, 7B<sub>16</sub>.</p>
+    </div><div>${LF.styri}</div></div>
+    ${ltfigs(LF.vahy)}
+    ${VEDEL("Kalkulačka vo Windows má režim <b>Programátor</b>. Napíšeš číslo a ona ho hneď ukáže v sústavách 2, 8, 10 aj 16. Na písomke ti však pomôže iba hlava a papier.")}
     <h3>Rozlož si číslo</h3><p>Vyber sústavu a napíš číslo. Uvidíš váhy jednotlivých miest a jeho hodnotu v desiatkovej sústave.</p>
     <div class="task">${pvHTML()}</div>
     <h3>Úloha: otázky</h3><div class="task">${taskHTML("pozq")}</div>` + nextBar();
@@ -330,24 +431,49 @@ const VIEWS = {
   do10() {
     return head() + `<h2>Prevod do desiatkovej sústavy</h2>
     ${guessBox()}
-    <div class="box v"><p><b>Postup:</b> každú cifru vynásob jej váhou (mocninou základu) a všetko sčítaj.<br>
-    <code>1101<sub>2</sub> = 1·8 + 1·4 + 0·2 + 1·1 = 13</code><br><code>2F<sub>16</sub> = 2·16 + 15·1 = 47</code></p></div>
+    <div class="theory tsplit"><div>
+      <p><b>Postup:</b> každú cifru vynásob jej <b>váhou</b> (mocninou základu) a všetko <b>sčítaj</b>.</p>
+      <table class="rtab num"><thead><tr><th>Číslo</th><th>Výpočet</th></tr></thead><tbody>
+        <tr><td>10110<sub>2</sub></td><td>1·16 + 0·8 + 1·4 + 1·2 + 0·1 = <b>22</b></td></tr>
+        <tr><td>352<sub>8</sub></td><td>3·64 + 5·8 + 2·1 = <b>234</b></td></tr>
+        <tr><td>B4<sub>16</sub></td><td>11·16 + 4·1 = <b>180</b></td></tr></tbody></table>
+      <p>V dvojkovej sústave je to ešte jednoduchšie: stačí <b>sčítať váhy</b> pozícií, na ktorých je jednotka. Nuly vynecháš.</p>
+      <p>V šestnástkovej sústave najprv nahraď písmená hodnotami (A = 10 … F = 15).</p>
+    </div><div>${LF.bin22}</div></div>
+    ${ltfigs(LF.okt, LF.hex)}
+    ${VEDEL("Existujú <b>dvojkové hodinky</b>: čas ukazujú svetielkami, kde každý stĺpec je číslo v dvojkovej sústave. Kto pozná váhy 1, 2, 4, 8, vyčíta z nich čas za pár sekúnd.")}
     <h3>Bitové kartičky</h3><p>Každá kartička je jeden bit. Kliknutím ju otočíš (1 = zapnutá). Hodnota čísla je súčet zapnutých kartičiek.</p>
     <div class="task">${bitsHTML()}${S.t.bitgoal ? `<div class="checkbar"><span class="score ${S.t.bitgoal.score < 3 ? "part" : ""}">Splnené: ${S.t.bitgoal.score} z 3</span></div>` : ""}</div>
     <h3>Úloha: preveď do desiatkovej</h3><p>Pomôcť si môžeš rozkladom na zastávke 1.</p><div class="task">${taskHTML("do10in")}</div>` + nextBar();
   },
   z10() {
     return head() + `<h2>Prevod z desiatkovej sústavy</h2>
-    <div class="box v"><p><b>Postup:</b> číslo opakovane <b>celočíselne deľ</b> základom novej sústavy a zapisuj <b>zvyšky</b>. Keď vyjde podiel 0, skonči. Výsledok sú zvyšky čítané <b>odspodu nahor</b>. V šestnástkovej sústave zvyšky 10 až 15 zapíšeš ako A až F.</p></div>
+    <div class="theory tsplit"><div>
+      <p><b>Postup:</b> číslo opakovane <b>celočíselne deľ</b> základom novej sústavy a zapisuj <b>zvyšky</b>.</p>
+      <table class="rtab"><thead><tr><th>Krok</th><th>Čo urobíš</th></tr></thead><tbody>
+        <tr><td>1.</td><td>vydeľ číslo základom (2, 8 alebo 16), zapíš podiel a <b>zvyšok</b></td></tr>
+        <tr><td>2.</td><td>podiel znova vydeľ základom</td></tr>
+        <tr><td>3.</td><td>opakuj, kým nevyjde podiel <b>0</b></td></tr>
+        <tr><td>4.</td><td>zvyšky prečítaj <b>odspodu nahor</b></td></tr></tbody></table>
+      <p>Zvyšok je vždy menší ako základ. V šestnástkovej sústave zvyšky 10 až 15 zapíšeš ako <b>A až F</b>.</p>
+    </div><div>${LF.del2}</div></div>
+    ${ltfigs(LF.del8, LF.del16)}
+    ${VEDEL("Rovnako prevádzame aj čas: 200 minút : 60 = 3, zvyšok 20, teda 3 h 20 min. Je to vlastne prevod do šesťdesiatkovej sústavy Babylončanov.")}
     <h3>Kalkulačka delenia krok za krokom</h3><div class="task">${dvHTML()}</div>
     <h3>Úloha: preveď</h3><p>Rieš na papieri, kalkulačkou si výsledok môžeš overiť.</p><div class="task">${taskHTML("z10in")}</div>
     <h3>Úloha 2: ďalšie prevody</h3><div class="task">${taskHTML("z10b")}</div>` + nextBar();
   },
   skratka() {
     return head() + `<h2>Skratka medzi sústavami 2, 8 a 16</h2>
-    <p>Pretože 8 = 2<sup>3</sup> a 16 = 2<sup>4</sup>, zodpovedajú každej osmičkovej cifre presne <b>3 bity</b> a každej šestnástkovej cifre presne <b>4 bity</b>. Nemusíme preto prevádzať cez desiatkovú sústavu.</p>
-    <div class="two"><div class="box v" style="margin:0"><p><b>2 → 8 alebo 16:</b> rozdeľ bity <b>sprava</b> do skupín po 3 (alebo 4), zľava doplň nuly a každú skupinu nahraď cifrou.</p></div>
-      <div class="box" style="margin:0"><p><b>8 alebo 16 → 2:</b> každú cifru nahraď 3 (alebo 4) bitmi. Úvodné nuly na začiatku môžeš vynechať.</p></div></div>
+    <div class="theory tsplit"><div>
+      <p>Pretože 8 = 2<sup>3</sup> a 16 = 2<sup>4</sup>, zodpovedá každej osmičkovej cifre presne <b>3 bity</b> a každej šestnástkovej cifre presne <b>4 bity</b>. Nemusíme preto prevádzať cez desiatkovú sústavu.</p>
+      <table class="rtab"><thead><tr><th>Smer</th><th>Postup</th></tr></thead><tbody>
+        <tr><td><b>2 → 8 alebo 16</b></td><td>rozdeľ bity <b>sprava</b> do skupín po 3 (alebo 4), zľava doplň nuly a každú skupinu nahraď cifrou</td></tr>
+        <tr><td><b>8 alebo 16 → 2</b></td><td>každú cifru nahraď 3 (alebo 4) bitmi; úvodné nuly na začiatku môžeš vynechať</td></tr>
+        <tr><td><b>8 ↔ 16</b></td><td>najprv na bity, potom bity preskup</td></tr></tbody></table>
+    </div><div>${LF.skup}</div></div>
+    ${ltfigs(LF.spat, LF.hexokt)}
+    ${VEDEL("V Linuxe sa práva k súborom zapisujú osmičkovo. Napríklad 7 = 111 znamená čítať, zapisovať aj spúšťať, 5 = 101 iba čítať a spúšťať. Každá osmičková cifra sú presne 3 bity, teda 3 povolenia.")}
     <h3>Tabuľka štvoríc bitov</h3><div class="nib">${NIB}</div>
     <h3>Zoskupovanie bitov</h3><div class="task">${grHTML()}</div>
     <h3>Úloha: preveď cez skupiny bitov</h3><div class="task">${taskHTML("skin")}</div>
@@ -389,7 +515,23 @@ function CUSTOM_INPUT(e) {
 document.addEventListener("keydown", e => { if (e.target && e.target.id === "dra" && e.key === "Enter") { e.preventDefault(); S.dr.a = e.target.value; drCheck(); save(); document.getElementById("drbox").innerHTML = drHTML(); const i = document.getElementById("dra"); if (i) i.focus(); } });
 
 /* ===== shared lesson engine ===== */
-const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
+  const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
+  T.qs.forEach((q, i) => { if (G.includes(i + 1) && groups.length) groups[groups.length - 1].push(q); else groups.push([q]); });
+  if (groups.length < 2) return T.qs;
+  const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
+  if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
+  return o.flatMap(id => groups.find(g => g[0].id === id)); }
+function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none;padding:8px 14px;border-radius:10px" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
@@ -427,7 +569,7 @@ function checkBar(T, ready, hint) {
 }
 function mcHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
       let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
@@ -463,7 +605,7 @@ function orderHTML(T) {
 }
 function inputHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const v = d[q.id] || "", ok = done ? q.ok(v) : null;
     return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
   }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
@@ -505,12 +647,12 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
   let formBtn = "";
   if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
-    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+    formBtn = sendResults(detail); }
   return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
   <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
   <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
 };
@@ -522,7 +664,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

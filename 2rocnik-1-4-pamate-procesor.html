@@ -193,13 +193,44 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .qimg svg{width:100%;height:auto;display:block}
 .gi.w2{grid-column:span 2}@media (max-width:480px){.gi.w2{grid-column:span 1}}
 
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:14px 0}
+.theory p{margin:8px 0}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Pomalý štart: SSD; veľa programov naraz: viac RAM; hry: grafická karta; renderovanie: viac jadier; plný disk: väčšie úložisko; prehrievanie: čistenie chladenia."], "pamate": ["Hierarchia pamätí: registre → cache → RAM → SSD → HDD → cloud (od najrýchlejšej po najväčšiu).", "<b>Stratová</b> (volatilná) pamäť bez prúdu zabudne (registre, cache, RAM). <b>Nestratová</b> si pamätá (disk, flash)."], "procesor": ["<b>Procesor (CPU)</b> vykonáva inštrukcie. Má riadiacu jednotku, ALU, registre a cache.", "Cyklus: <b>načítanie → dekódovanie → vykonanie</b>.", "Takt v GHz = miliardy taktov za sekundu. Viac jadier = viac úloh naraz."], "ram": ["<b>RAM</b> je operačná pamäť pre spustené programy a otvorené súbory.", "Po vypnutí sa vymaže. Bežne 8 – 32 GB, typy DDR4 a DDR5."], "kde": ["Každá pamäť má svoju úlohu: registre počítajú, RAM drží spustené programy, disk ukladá natrvalo, flash drží BIOS."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"pamate": ["Ideálna pamäť (rýchla, veľká a lacná naraz) neexistuje, preto má počítač <b>hierarchiu pamätí</b>.", "Čím bližšie k procesoru, tým je pamäť <b>rýchlejšia, menšia a drahšia</b>.", "V procesore: <b>registre</b> a <b>cache</b> · na doske: <b>RAM</b> · úložiská: <b>SSD</b>, <b>HDD</b>, <b>cloud</b>.", "<b>Stratová</b> (volatilná) pamäť bez prúdu zabudne, <b>nestratová</b> si pamätá.", "<b>ROM/flash</b> na doske obsahuje firmvér BIOS/UEFI.", "1 s = 1 000 ms, 1 ms = 1 000 µs, 1 µs = 1 000 ns."], "procesor": ["<b>Procesor (CPU)</b> vykonáva inštrukcie programov, obsahuje miliardy tranzistorov.", "<b>Riadiaca jednotka</b> načíta a dekóduje inštrukcie a riadi ostatné časti.", "<b>ALU</b> počíta a porovnáva, <b>registre</b> sú najrýchlejšia pamäť v jadre, <b>cache</b> je zásoba údajov pri jadre.", "Cyklus: <b>načítanie → dekódovanie → vykonanie</b>, opakuje sa stále dokola.", "<b>Takt</b> v GHz = miliardy taktov za sekundu · <b>jadrá</b> = samostatné časti, ktoré pracujú súčasne.", "Architektúra: <b>x64</b> (Intel, AMD) alebo <b>ARM</b> (mobily, niektoré notebooky)."], "ram": ["<b>RAM</b> = operačná (pracovná) pamäť pre spustené programy a otvorené súbory.", "Program sa pri spustení načíta z disku do RAM, lebo RAM je oveľa rýchlejšia.", "RAM je <b>stratová</b>, prácu treba <b>uložiť</b> na disk.", "Pamäť tvoria bunky s <b>adresami</b>, v každej je 1 bajt.", "Bežná kapacita 8 – 32 GB, typy <b>DDR4</b> a <b>DDR5</b> (nie sú zameniteľné).", "Moduly sa zasúvajú do slotov <b>DIMM</b>, zárez zabráni otočeniu naopak."], "kde": ["Každá pamäť má svoju úlohu, údaje medzi nimi počas práce putujú.", "Čo procesor práve potrebuje, je čo najbližšie k nemu (registre, cache).", "Spustené programy a otvorené súbory sú v <b>RAM</b>.", "Natrvalo ukladáme do <b>nestratovej</b> pamäte: disk, flash, cloud.", "Firmvér základnej dosky je vo <b>flash</b> pamäti na doske."], "precvic": ["<b>Úzke hrdlo</b> = najpomalšia časť, ktorá brzdí celý počítač v danej úlohe.", "Vyťaženie častí zistíš v <b>Správcovi úloh</b> (Ctrl + Shift + Esc, karta Výkon).", "Vylepšuj tú časť, ktorá je pri probléme vyťažená takmer na <b>100 %</b>.", "Vylepšenie inej časti počítač nezrýchli, najprv zisti príčinu.", "Každá úloha zaťažuje inú časť: procesor, pamäť, disk, grafiku alebo sieť."]};
 /* ---------- realistic component illustrations ---------- */
 const BG = (w, h) => `<rect width="${w}" height="${h}" rx="14" fill="#F4F6F7"/>`;
 const IMG = {
@@ -273,11 +304,102 @@ const GALLERY = [
 ];
 const LOOK = { reg: ["cpuTop", "Registre nevidno, sú ukryté vo vnútri procesora."], cache: ["cpuTop", "Cache nevidno, je vo vnútri procesora."], ram: ["ram", ""], ssd: ["m2", ""], hdd: ["hdd", ""], cloud: ["cloud", ""] };
 
+/* Pomôcky na ilustrácie k teórii */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+/* Ilustrácie – 2. ročník 1.4 Pamäte, procesor, RAM */
+const TFIG = (() => { const { C, fig, SV, ar, T, TW, box } = PF; const A = "#6A3FD0", AS = "#E9E2FB";
+const pill = (x, y, w, t, f, c) => `${box(x, y, w, 28, f, c, 14)}${T(x + w / 2, y + 19, t, { a: "middle", fs: 12.5, b: 1, c })}`;
+return {
+  troj: fig(SV(440, 260, `
+    ${T(220, 20, "Ideálna pamäť neexistuje", { a: "middle", fs: 13, b: 1, c: A })}
+    <polygon points="220,62 82,214 358,214" fill="${AS}" stroke="${A}" stroke-width="2"/>
+    ${pill(172, 40, 96, "⚡ rýchla", "#fff", C.bad)}${pill(28, 204, 104, "📦 veľká", "#fff", C.blue)}${pill(308, 204, 104, "💰 lacná", "#fff", C.ok)}
+    ${T(220, 150, "vyber si", { a: "middle", fs: 13, b: 1, c: A })}${T(220, 168, "iba dve", { a: "middle", fs: 13, b: 1, c: A })}
+    ${T(138, 120, "rýchla + veľká", { a: "end", fs: 11, b: 1 })}${T(138, 136, "= drahá", { a: "end", fs: 11, c: C.mut })}
+    ${T(302, 120, "rýchla + lacná", { fs: 11, b: 1 })}${T(302, 136, "= malá", { fs: 11, c: C.mut })}
+    ${T(220, 252, "veľká + lacná = pomalá", { a: "middle", fs: 11, b: 1 })}`, "Rýchla, veľká, lacná"),
+    "Pamäť nemôže byť naraz rýchla, veľká aj lacná. Preto počítač kombinuje viac druhov pamätí do <b>hierarchie</b>."),
+  jednotky: fig(SV(440, 230, `
+    ${T(220, 22, "Ako krátka je nanosekunda", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["1 s", "sekunda"], ["1 ms", "milisekunda"], ["1 µs", "mikrosekunda"], ["1 ns", "nanosekunda"]].map(([v, n], i) => { const x = 14 + i * 108; return `${box(x, 44, 88, 64, i === 3 ? AS : "#fff", A, 10)}${T(x + 44, 74, v, { a: "middle", fs: 17, b: 1, c: i === 3 ? A : C.ink })}${T(x + 44, 96, n, { a: "middle", fs: 10.5, c: C.mut })}${i < 3 ? `${ar(x + 90, 76, x + 106, 76, C.mut, 1.8)}${T(x + 98, 128, "÷ 1 000", { a: "middle", fs: 10.5, b: 1, c: C.mut })}` : ""}`; }).join("")}
+    ${box(14, 148, 412, 70, C.ambS, null, 10)}${T(26, 172, "1 sekunda = 1 000 000 000 nanosekúnd (miliarda).", { fs: 12, b: 1, c: "#7A5200" })}
+    ${T(26, 194, "Za 1 ns prejde aj svetlo, najrýchlejšia vec vo vesmíre,", { fs: 11.5, c: "#7A5200" })}${T(26, 210, "iba asi 30 cm.", { fs: 11.5, c: "#7A5200" })}`, "Jednotky času"),
+    "Čas prístupu k pamäti meriame v <b>nanosekundách</b> (ns) a <b>milisekundách</b> (ms)."),
+  cas: fig(SV(440, 262, `
+    ${T(220, 22, "Keby 1 ns trvala 1 sekundu…", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["registre", "menej ako 1 s", "žmurknutie", 0.04], ["cache", "asi 10 s", "nádych a výdych", 0.12], ["RAM", "vyše minúty", "zaviazať si topánky", 0.26], ["SSD", "asi 14 hodín", "noc a pol dňa", 0.55], ["HDD", "asi 3 mesiace", "celé ročné obdobie", 1]].map(([n, t, k, w], i) => { const y = 40 + i * 40; return `${T(20, y + 20, n, { fs: 12, b: 1 })}<rect x="90" y="${y + 6}" width="${Math.max(6, w * 120)}" height="20" rx="4" fill="${A}" opacity="${0.35 + w * 0.65}"/>${T(222, y + 15, t, { fs: 11.5, b: 1, c: A })}${T(222, y + 30, k, { fs: 10.5, c: C.mut })}`; }).join("")}
+    ${T(220, 254, "Teraz je jasné, prečo procesor nechce čakať na disk.", { a: "middle", fs: 11, c: C.mut })}`, "Čas prístupu"),
+    "Prepočet: RAM má prístup asi 80 ns, HDD asi 8 ms, teda <b>100 000-krát</b> pomalší."),
+  cyklus: fig(SV(440, 250, `
+    ${T(220, 22, "Cyklus procesora", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(160, 40, 120, 50, A, null, 12)}${T(220, 62, "1. NAČÍTAJ", { a: "middle", fs: 12, b: 1, c: "#fff" })}${T(220, 79, "inštrukciu z pamäte", { a: "middle", fs: 10.5, c: "#fff" })}
+    ${box(296, 168, 130, 50, AS, A, 12)}${T(361, 190, "2. DEKÓDUJ", { a: "middle", fs: 12, b: 1, c: A })}${T(361, 207, "zisti, čo znamená", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(14, 168, 130, 50, C.ambS, C.amb, 12)}${T(79, 190, "3. VYKONAJ", { a: "middle", fs: 12, b: 1, c: "#7A5200" })}${T(79, 207, "vypočítaj, presuň", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(282, 70, 346, 164, A, 2.5)}${ar(292, 193, 148, 193, A, 2.5)}${ar(94, 164, 158, 70, A, 2.5)}
+    ${T(220, 128, "opakuje sa", { a: "middle", fs: 11.5, b: 1 })}${T(220, 144, "miliardy-krát", { a: "middle", fs: 11.5, b: 1 })}${T(220, 160, "za sekundu", { a: "middle", fs: 11.5, b: 1 })}
+    ${T(220, 240, "Register PC si pamätá adresu ďalšej inštrukcie.", { a: "middle", fs: 11, c: C.mut })}`, "Cyklus procesora"),
+    "Procesor stále dokola <b>načíta</b>, <b>dekóduje</b> a <b>vykoná</b> inštrukcie."),
+  cpuTop: fig(IMG.cpuTop, "Procesor <b>zhora</b>: pod kovovým krytom je malý kremíkový čip."),
+  cpuBottom: fig(IMG.cpuBottom, "Procesor <b>zospodu</b>: stovky kontaktov. Zlatý trojuholník ukazuje, ako ho vložiť do pätice."),
+  tok: fig(SV(440, 240, `
+    ${T(220, 22, "Kde je program, keď ho spustíš", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 50, 118, 90, C.bg, C.mut, 12)}${T(73, 82, "💾", { a: "middle", fs: 22 })}${T(73, 106, "disk", { a: "middle", fs: 12.5, b: 1 })}${T(73, 124, "uložené natrvalo", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(160, 50, 118, 90, AS, A, 12)}${T(219, 82, "🧠", { a: "middle", fs: 22 })}${T(219, 106, "RAM", { a: "middle", fs: 12.5, b: 1, c: A })}${T(219, 124, "spustené programy", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(306, 50, 120, 90, "#fff", C.ink, 12)}${T(366, 82, "⚙️", { a: "middle", fs: 22 })}${T(366, 106, "procesor", { a: "middle", fs: 12.5, b: 1 })}${T(366, 124, "počíta", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(134, 82, 156, 82, A, 2.5)}${ar(156, 112, 134, 112, C.ok, 2.5)}${ar(280, 95, 302, 95, A, 2.5, 1)}
+    ${box(14, 160, 200, 66, C.bg, null, 10)}${T(26, 182, "→ Otvoriť / spustiť", { fs: 11.5, b: 1, c: A })}${T(26, 200, "disk → RAM (pomalšie,", { fs: 11 })}${T(26, 215, "stane sa raz)", { fs: 11 })}
+    ${box(226, 160, 200, 66, C.okS, null, 10)}${T(238, 182, "← Uložiť (Ctrl + S)", { fs: 11.5, b: 1, c: C.ok })}${T(238, 200, "RAM → disk, až potom je", { fs: 11 })}${T(238, 215, "práca v bezpečí", { fs: 11 })}`, "Disk, RAM a procesor"),
+    "Procesor pracuje s údajmi v <b>RAM</b>. Disk je na to príliš pomalý, preto sa program najprv načíta do RAM."),
+  ramMod: fig(IMG.ram, "Modul <b>DDR5</b> s kapacitou 16 GB. Čierne čipy sú pamäťové čipy, zlaté kontakty sa zasúvajú do slotu na doske."),
+  ddr: fig(SV(440, 240, `
+    ${T(220, 22, "Generácie pamätí DDR", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["DDR", "2000", 400], ["DDR2", "2003", 1066], ["DDR3", "2007", 2133], ["DDR4", "2014", 3200], ["DDR5", "2020", 6400]].map(([n, y, v], i) => { const yy = 40 + i * 34, w = v / 6400 * 230; return `${T(20, yy + 15, n, { fs: 12, b: 1 })}${T(20, yy + 28, y, { fs: 10.5, c: C.mut })}<rect x="84" y="${yy + 6}" width="${w}" height="20" rx="4" fill="${i === 4 ? A : "#B9A6EE"}"/>${T(90 + w, yy + 21, "až " + v.toLocaleString("sk-SK") + " MT/s", { fs: 11, b: 1 })}`; }).join("")}
+    ${box(20, 212, 406, 24, C.bg, null, 8)}${T(223, 228, "Každá generácia má zárez inde, DDR4 do slotu DDR5 nezasunieš.", { a: "middle", fs: 11 })}`, "Generácie DDR"),
+    "Každá nová generácia <b>DDR</b> prenáša údaje rýchlejšie. MT/s = milióny prenosov za sekundu."),
+  piesen: fig(SV(440, 250, `
+    ${T(220, 22, "Cesta pesničky počítačom", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["☁️", "server", "služba na internete", C.blueS, C.blue], ["💾", "disk", "stiahnutá offline", C.bg, C.mut], ["🧠", "RAM", "prehrávač ju otvorí", AS, A], ["⚙️", "procesor", "dekóduje zvuk", C.ambS, C.amb], ["🔊", "reproduktor", "počuješ ju", C.okS, C.ok]].map(([e, n, d, f, c], i) => { const x = 10 + i * 86; return `${box(x, 50, 76, 120, f, c, 10)}${T(x + 38, 84, e, { a: "middle", fs: 22 })}${T(x + 38, 112, n, { a: "middle", fs: 11, b: 1 })}${TW(x + 38, 132, d, 12, { a: "middle", fs: 10.5, lh: 13, c: C.mut })}${i < 4 ? ar(x + 77, 110, x + 85, 110, C.mut, 1.6) : ""}`; }).join("")}
+    ${box(10, 190, 420, 50, C.bg, null, 10)}${T(220, 211, "Čo práve treba, je blízko procesora.", { a: "middle", fs: 11.5, b: 1 })}${T(220, 228, "Čo chceš mať aj zajtra, musí byť v nestratovej pamäti.", { a: "middle", fs: 11, c: C.mut })}`, "Cesta pesničky"),
+    "Údaje počas práce <b>putujú</b> medzi pamäťami: z úložiska do RAM a ďalej do procesora."),
+  hrdlo: fig(SV(440, 250, `
+    ${T(220, 22, "Úzke hrdlo", { a: "middle", fs: 13, b: 1, c: A })}
+    <path d="M40 220 V110 Q40 90 60 84 L78 78 V48 h28 V78 L124 84 Q144 90 144 110 V220 Q144 232 132 232 H52 Q40 232 40 220z" fill="${AS}" stroke="${A}" stroke-width="2.5"/>
+    <rect x="44" y="140" width="96" height="88" rx="6" fill="#B9A6EE"/>${T(92, 186, "údaje", { a: "middle", fs: 11, b: 1, c: A })}
+    ${ar(92, 70, 92, 34, A, 2.5)}${T(116, 58, "hrdlo", { fs: 11, b: 1, c: C.bad })}
+    ${T(176, 56, "Stránka sa načítava pomaly:", { fs: 12, b: 1 })}
+    ${[["procesor", 12], ["RAM", 45], ["disk", 3], ["sieť (internet)", 100]].map(([n, v], i) => { const y = 72 + i * 30; return `${T(176, y + 14, n, { fs: 11 })}<rect x="276" y="${y + 2}" width="110" height="16" rx="4" fill="${C.bg}" stroke="${C.line}"/><rect x="276" y="${y + 2}" width="${v * 1.1}" height="16" rx="4" fill="${v === 100 ? C.bad : "#9CC9A8"}"/>${T(392, y + 15, v + " %", { fs: 11, b: 1, c: v === 100 ? C.bad : C.ink })}`; }).join("")}
+    ${TW(176, 206, "Pomôže lepšie pripojenie, nie nový procesor.", 40, { fs: 11.5, b: 1, c: A, lh: 15 })}`, "Úzke hrdlo"),
+    "Počítač je taký rýchly ako jeho <b>najpomalšia časť</b> v danej úlohe. Tej hovoríme <b>úzke hrdlo</b>."),
+  spravca: fig(SV(440, 240, `
+    ${box(14, 14, 412, 214, "#fff", C.line, 10)}<rect x="14" y="14" width="412" height="30" rx="10" fill="#EEF1F6"/><rect x="14" y="34" width="412" height="10" fill="#EEF1F6"/>
+    ${T(28, 34, "Správca úloh  ›  Výkon", { fs: 12, b: 1 })}${T(412, 34, "Ctrl + Shift + Esc", { a: "end", fs: 10.5, c: C.mut, mono: 1 })}
+    ${[["Procesor", "23 %", "3,6 GHz", "#1E6FD9"], ["Pamäť", "61 %", "9,7 / 16 GB", A], ["Disk 0 (C:)", "4 %", "SSD", "#12805A"], ["Wi-Fi", "1 %", "príjem 2 Mb/s", "#B07400"], ["GPU 0", "8 %", "grafika", "#0B7A75"]].map(([n, v, d, c], i) => { const y = 54 + i * 34; return `<rect x="24" y="${y}" width="44" height="26" rx="3" fill="#fff" stroke="${c}"/><polyline points="${[0, 1, 2, 3, 4, 5, 6].map(k => `${26 + k * 6.6},${y + 22 - ((k * 7 + i * 5) % 11 + (parseInt(v) / 8))}`).join(" ")}" fill="none" stroke="${c}" stroke-width="1.5"/>${T(80, y + 12, n, { fs: 11.5, b: 1 })}${T(80, y + 25, d, { fs: 10.5, c: C.mut })}${T(412, y + 18, v, { a: "end", fs: 12, b: 1, c })}`; }).join("")}`, "Správca úloh"),
+    "Vyťaženie súčiastok zistíš v <b>Správcovi úloh</b> na karte Výkon.")
+}; })();
+
 const KEY = "pamate-24-v1";
 const LESSON = "1.4 Druhy pamätí, procesor, operačná pamäť";
 const BRAND = "1.4 Pamäte, procesor, RAM";
 const CLASS_DEFAULT = "II.";
-const WIDE = { pamate: 1, procesor: 1 };
+const WIDE = { pamate: 1, procesor: 1, ram: 1, kde: 1, precvic: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "pamate", title: "Druhy pamätí", min: 9 },
@@ -458,7 +580,18 @@ const VIEWS = {
   pamate() {
     const m = S.exp ? MEM[S.exp] : null, n = S.seen.length;
     return head() + `<h2>Druhy pamätí</h2>
-    <p>Počítač potrebuje pamäť, ktorá je zároveň <b>rýchla</b>, <b>veľká</b> a <b>lacná</b>. Taká neexistuje. Preto má celú <b>hierarchiu</b> pamätí: hore malé a veľmi rýchle, dole veľké a pomalšie. Predstav si kuchyňu:</p>
+    <div class="theory tsplit"><div>
+      <p>Počítač potrebuje pamäť, ktorá je zároveň <b>rýchla</b>, <b>veľká</b> a <b>lacná</b>. Taká neexistuje. Preto má celú <b>hierarchiu</b> pamätí: hore malé a veľmi rýchle, dole veľké a pomalšie.</p>
+      <table class="rtab"><thead><tr><th>Vlastnosť</th><th>Čo znamená</th></tr></thead><tbody>
+        <tr><td><b>čas prístupu</b></td><td>ako dlho trvá získať údaj (ns, ms)</td></tr>
+        <tr><td><b>kapacita</b></td><td>koľko údajov sa zmestí (GB, TB)</td></tr>
+        <tr><td><b>stratová</b> (volatilná)</td><td>bez prúdu všetko zabudne</td></tr>
+        <tr><td><b>nestratová</b></td><td>údaje si pamätá aj bez prúdu</td></tr></tbody></table>
+      <p>Mimo pyramídy je ešte <b>ROM a flash pamäť</b> na základnej doske. Obsahuje firmvér BIOS/UEFI a zachová si ho aj bez prúdu.</p>
+    </div><div>${TFIG.troj}</div></div>
+    ${ltfigs(TFIG.jednotky, ...(S.t.speed ? [TFIG.cas] : []))}
+    ${VEDEL("Prvý pevný disk IBM 350 z roku 1956 bol veľký ako dve chladničky, vážil asi tonu a zmestilo sa naň iba 3,75 MB, teda zhruba jedna fotka z mobilu.")}
+    <p>Hierarchiu si predstav ako kuchyňu:</p>
     <figure class="fig wide-svg">${KITCHEN}</figure>
     <h3>Preskúmaj pyramídu pamätí</h3>
     <div class="lab"><div class="fig" style="margin:0">${pyramidSVG()}</div>
@@ -467,7 +600,6 @@ const VIEWS = {
         : `<h4>Klikni na vrstvu</h4><p class="muted" style="font-size:15px;margin:0">Pri každej pamäti uvidíš, kde je, aká je rýchla a veľká.</p>`}
         <div class="meter"><i style="width:${Math.round(n / 6 * 100)}%"></i></div></div></div>
     <div class="box v"><p><b>ns</b> = nanosekunda, miliardtina sekundy. <b>ms</b> = milisekunda, tisícina sekundy. Pevný disk je teda asi <b>100 000-krát</b> pomalší ako RAM.</p></div>
-    <p>Mimo pyramídy je ešte <b>ROM a flash pamäť</b> na základnej doske. Obsahuje firmvér BIOS/UEFI a zachová si ho aj bez prúdu.</p>
     <h3>Ako vyzerajú?</h3>
     <div class="gal">${GALLERY.map(g => `<figure class="gi ${g[0] === "ram" || g[0] === "m2" ? "w2" : ""}"><div class="wide-svg">${IMG[g[0]]}</div><figcaption><b>${g[1]}</b><span>${g[2]}</span></figcaption></figure>`).join("")}</div>
     <h3>Úloha 1: poznáš ich?</h3><div class="task">${taskHTML("foto")}</div>
@@ -477,9 +609,17 @@ const VIEWS = {
   procesor() {
     const c = S.cexp ? CPUZ[S.cexp] : null;
     return head() + `<h2>Mikroprocesor: mozog počítača</h2>
-    <p><b>Mikroprocesor (CPU)</b> vykonáva inštrukcie programov. Je to jeden čip, v ktorom sú miliardy tranzistorov. Moderný procesor má niekoľko <b>jadier</b> a každé jadro má riadiacu jednotku, ALU, registre a cache.</p>
-    <div class="two" style="margin:14px 0"><figure class="fig" style="margin:0"><div class="wide-svg">${IMG.cpuTop}</div><figcaption>Takto vyzerá procesor zhora. Vo vnútri pod kovovým krytom je malý kremíkový čip.</figcaption></figure>
-      <figure class="fig" style="margin:0"><div class="wide-svg">${IMG.cpuBottom}</div><figcaption>Zospodu má stovky zlatých kontaktov. Zlatý trojuholník v rohu ukazuje, ako ho vložiť do pätice.</figcaption></figure></div>
+    <div class="theory tsplit"><div>
+      <p><b>Mikroprocesor (CPU)</b> vykonáva inštrukcie programov. Je to jeden čip, v ktorom sú miliardy <b>tranzistorov</b>. Moderný procesor má niekoľko <b>jadier</b>.</p>
+      <table class="rtab"><thead><tr><th>Časť jadra</th><th>Úloha</th></tr></thead><tbody>
+        <tr><td><b>riadiaca jednotka</b></td><td>načíta a dekóduje inštrukcie, riadi ostatné časti</td></tr>
+        <tr><td><b>ALU</b></td><td>počíta a porovnáva čísla, logické operácie</td></tr>
+        <tr><td><b>registre</b></td><td>malé a najrýchlejšie pamäte priamo v jadre</td></tr>
+        <tr><td><b>cache</b></td><td>rýchla zásoba údajov blízko jadra</td></tr></tbody></table>
+      <p>Výkon procesora určuje najmä <b>takt</b> (GHz), počet <b>jadier</b> a veľkosť cache.</p>
+    </div><div>${TFIG.cyklus}</div></div>
+    ${ltfigs(TFIG.cpuTop, TFIG.cpuBottom)}
+    ${VEDEL("Prvý mikroprocesor Intel 4004 z roku 1971 mal 2 300 tranzistorov a takt 740 kHz. Dnešné procesory majú desiatky miliárd tranzistorov, každý menší ako vírus.")}
     <p>Keby sme kryt odstránili a čip zväčšili, uvideli by sme toto:</p>
     <div class="lab"><div class="fig" style="margin:0">${cpuSVG()}</div>
       <div class="side">${c ? `<span class="tag">Časť procesora</span><h4>${c.n}</h4><p style="font-size:15.5px;margin:0">${c.i}</p>` : `<h4>Klikni na časť procesora</h4><p class="muted" style="font-size:15px;margin:0">Preskúmaj, z čoho sa procesor skladá.</p>`}</div></div>
@@ -494,9 +634,14 @@ const VIEWS = {
   ram() {
     return head() + `<h2>Operačná pamäť (RAM)</h2>
     ${guessBox()}
-    <p><b>RAM</b> (Random Access Memory) je pracovná pamäť počítača. Keď spustíš program alebo otvoríš súbor, načíta sa z disku do RAM, lebo je oveľa rýchlejšia. Je <b>stratová</b>: bez prúdu všetko zabudne.</p>
-    <figure class="fig"><div class="wide-svg">${IMG.ram}</div><figcaption>Modul DDR5 s kapacitou 16 GB. Čierne čipy sú pamäťové čipy, zlaté kontakty sa zasúvajú do slotu na doske.</figcaption></figure>
+    <div class="theory tsplit"><div>
+      <p><b>RAM</b> (Random Access Memory) je <b>pracovná pamäť</b> počítača. Keď spustíš program alebo otvoríš súbor, načíta sa z disku do RAM, lebo je oveľa rýchlejšia.</p>
+      <p>RAM je <b>stratová</b>: bez prúdu všetko zabudne. Prácu preto treba <b>uložiť</b> na disk.</p>
+      <p>Pamäť je rozdelená na <b>bunky</b>. Každá bunka má svoju <b>adresu</b> a uchová 1 bajt. Procesor sa ku každej bunke dostane rovnako rýchlo.</p>
+    </div><div>${TFIG.tok}</div></div>
+    ${ltfigs(TFIG.ramMod, TFIG.ddr)}
     <figure class="fig wide-svg">${CELLS}</figure>
+    ${VEDEL("„Random Access“ znamená ľubovoľný prístup: ku každej bunke sa dostaneš rovnako rýchlo, nech leží kdekoľvek. Na starej magnetofónovej páske si musel najprv pretočiť pásku na správne miesto.")}
     <div class="cards"><div class="pc"><h4>📏 Kapacita</h4><p>Bežne 8 až 32 GB. Viac RAM = viac programov a kariet naraz.</p></div><div class="pc"><h4>🔢 Typ</h4><p>DDR4 alebo DDR5. Typy nie sú zameniteľné, doska podporuje iba jeden.</p></div>
       <div class="pc"><h4>⚡ Frekvencia</h4><p>Ako rýchlo prenáša údaje, napr. 5600 MT/s.</p></div><div class="pc"><h4>👯 Dvojkanál</h4><p>Dva rovnaké moduly v správnych slotoch sú rýchlejšie ako jeden.</p></div></div>
     <h3>Pokus: vypadol prúd!</h3>
@@ -511,12 +656,23 @@ const VIEWS = {
   },
   kde() {
     return head() + `<h2>Kde je čo uložené?</h2>
-    <p>Teraz už vieš, že každá pamäť má svoju úlohu. Pri každej situácii urči, v ktorej pamäti sú údaje.</p>
+    <div class="theory tsplit"><div>
+      <p>Každá pamäť má svoju <b>úlohu</b>. Údaje počas práce putujú medzi nimi: čo procesor práve potrebuje, musí byť <b>čo najbližšie</b> k nemu.</p>
+      <p>Čo si chceš ponechať aj po vypnutí, musí byť v <b>nestratovej</b> pamäti: na disku, flash pamäti alebo v cloude.</p>
+      <p>Pri každej situácii v úlohe urči, v ktorej pamäti sú údaje práve teraz.</p>
+    </div><div>${TFIG.piesen}</div></div>
+    ${VEDEL("Cloud nie je obláčik. Tvoje súbory ležia na obyčajných diskoch v dátových centrách a veľké dátové centrum spotrebuje toľko elektriny ako menšie mesto.")}
     <figure class="fig wide-svg">${KITCHEN}</figure>
     <div class="task">${taskHTML("kdeq")}</div>` + nextBar();
   },
   precvic() { return head() + `<h2>Precvičovanie: čo vylepšiť?</h2>
-    <div class="theory"><p>Ľudia sa sťažujú na pomalé počítače. Pri každom probléme vyber, ktorý komponent pomôže najviac. Zamysli sa, ktorá pamäť alebo časť je v danej situácii „úzkym hrdlom“.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Počítač je taký rýchly ako jeho <b>najpomalšia časť</b> v danej úlohe. Tej hovoríme <b>úzke hrdlo</b>.</p>
+      <p>Skôr než niečo kúpiš, zisti, ktorá časť je vyťažená. Pomôže <b>Správca úloh</b>. Vylepšovať inú časť je zbytočné.</p>
+      <p>Ľudia sa sťažujú na pomalé počítače. Pri každom probléme vyber, ktorý komponent pomôže najviac. Zamysli sa, ktorá pamäť alebo časť je v danej situácii úzkym hrdlom.</p>
+    </div><div>${TFIG.hrdlo}</div></div>
+    ${ltfigs(TFIG.spravca)}
+    ${VEDEL("Správcu úloh vo Windows otvoríš klávesmi Ctrl + Shift + Esc. Na karte Výkon uvidíš, ako je vyťažený procesor, pamäť, disk aj grafická karta.")}
     ${S.t.g_upg ? `<div class="checkbar"><span class="score ${S.t.g_upg.score < 6 ? "part" : ""}">Správne: ${S.t.g_upg.score} zo 6</span></div>` : ""}<div class="tool">${upgHTML()}</div>` + nextBar(); },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
@@ -552,7 +708,23 @@ document.addEventListener("keydown", e => {
 });
 
 /* ===== shared lesson engine ===== */
-const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
+  const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
+  T.qs.forEach((q, i) => { if (G.includes(i + 1) && groups.length) groups[groups.length - 1].push(q); else groups.push([q]); });
+  if (groups.length < 2) return T.qs;
+  const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
+  if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
+  return o.flatMap(id => groups.find(g => g[0].id === id)); }
+function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none;padding:8px 14px;border-radius:10px" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
@@ -590,7 +762,7 @@ function checkBar(T, ready, hint) {
 }
 function mcHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
       let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
@@ -626,7 +798,7 @@ function orderHTML(T) {
 }
 function inputHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const v = d[q.id] || "", ok = done ? q.ok(v) : null;
     return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
   }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
@@ -668,12 +840,12 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
   let formBtn = "";
   if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
-    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+    formBtn = sendResults(detail); }
   return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
   <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
   <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
 };
@@ -685,7 +857,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

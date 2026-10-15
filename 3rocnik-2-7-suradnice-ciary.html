@@ -217,6 +217,8 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tgt{display:grid;grid-template-columns:230px 1fr;gap:14px;align-items:start;margin:8px 0}
 @media (max-width:700px){.tgt{grid-template-columns:1fr}}
 .tgt .pv svg{border:1px solid var(--border);border-radius:8px}
+.tsplit>div{min-width:0}
+#lxbox{display:grid;gap:8px;margin-top:6px}#lxbox .pcode{margin:0}
 .drawbox{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start}
 @media (max-width:900px){.drawbox{grid-template-columns:1fr}}
 #drawsvg{cursor:crosshair;background:#fff;border:1px solid #BCC6D3;display:block;max-width:100%;height:auto}
@@ -224,13 +226,42 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .fp{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}
 .fp label{font-weight:600;font-size:14px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Ladenie: chybové hlásenie a riadok → súradnice v pároch s čiarkami → porovnanie s náčrtom.", "Uzavretý útvar končí prvým bodom. Menšie y = vyššie na ploche."], "body": ["(0, 0) je vľavo hore, x rastie doprava, y nadol. Vyššie položený bod má menšie y.", "Bod vyznačíme malým krúžkom: create_oval(x − 3, y − 3, x + 3, y + 3)."], "usecka": ["<code>create_line(x1, y1, x2, y2)</code>. Rovnaké y = vodorovná, rovnaké x = zvislá úsečka.", "Parametre: fill (farba), width (hrúbka), dash=(10, 5) (prerušovaná), arrow='first' / 'last' / 'both'."], "lomena": ["Lomená čiara: create_line s viacerými bodmi, počet súradníc je vždy párny.", "Uzavretý útvar: posledný bod = prvý bod."], "obrazky": ["Postup: náčrt, pomenovanie bodov, súradnice, poradie spájania.", "Útvar jedným ťahom = jedna lomená čiara, každá hrana práve raz."], "chyby": ["Nepárny počet súradníc = TclError, chýbajúca čiarka = SyntaxError.", "Obrázok hore nohami: pomýlená os y."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"body": ["Plocha sa skladá z <b>pixelov</b>, každý má súradnice <b>(x, y)</b>.", "Počiatok <b>(0, 0)</b> je v <b>ľavom hornom rohu</b>: x rastie doprava, y nadol.", "Bod, ktorý je <b>vyššie</b>, má <b>menšie y</b>.", "Jeden pixel je takmer neviditeľný, bod vyznačíme <b>krúžkom</b>: <code>create_oval(x − 3, y − 3, x + 3, y + 3)</code>.", "Pred kreslením: <b>náčrt</b> na štvorčekový papier a <b>súradnice</b> všetkých dôležitých bodov. Program je potom len prepis čísel."], "usecka": ["Úsečka: <code>create_line(x1, y1, x2, y2)</code> – (x1, y1) je začiatok, (x2, y2) koniec.", "Rovnaké <b>y</b> → <b>vodorovná</b>, rovnaké <b>x</b> → <b>zvislá</b>, inak <b>šikmá</b> úsečka.", "<b>fill</b> = farba čiary, <b>width</b> = hrúbka v pixeloch (predvolená 1).", "<b>dash</b> = prerušovaná čiara, zadáme dĺžku čiarky a medzery, napr. <code>dash=(6, 3)</code>.", "<b>arrow</b> = šípka: 'first' (hrot na začiatku), 'last' (na konci), 'both' (na oboch)."], "lomena": ["Do <code>create_line</code> môžeme zapísať <b>viac bodov</b> → vznikne <b>lomená čiara</b>.", "Body sa spájajú v <b>poradí</b>, v akom sú zapísané. Iné poradie = iný útvar.", "Každý bod = <b>2 čísla</b> (x, y), preto je počet súradníc vždy <b>párny</b>.", "<b>Uzavretý útvar</b>: ako posledný bod zopakujeme <b>prvý bod</b>.", "Parametre <b>fill</b>, <b>width</b> a <b>dash</b> platia pre celú lomenú čiaru."], "obrazky": ["Zložitejší obrázok skladáme z <b>viacerých čiar</b> (úsečiek aj lomených čiar).", "Postup: <b>náčrt</b> → <b>pomenovanie bodov</b> písmenami → <b>súradnice</b> → <b>poradie</b> spájania.", "Útvar <b>jedným ťahom</b> = jedna lomená čiara, každá čiara sa nakreslí <b>práve raz</b>.", "Jedným ťahom sa dá, ak majú <b>0 alebo 2</b> body nepárny počet čiar; pri dvoch začneme v jednom z nich.", "Čo sa jedným ťahom nedá, nakreslíme <b>viacerými príkazmi</b> <code>create_line</code>."], "chyby": ["<b>Nepárny počet súradníc</b> → <code>TclError: wrong # coordinates</code>.", "<b>Chýbajúca čiarka</b> medzi číslami → <code>SyntaxError</code>.", "<b>Obrázok hore nohami</b> → pomýlený smer <b>osi y</b> (malé y je hore).", "<b>Prehodené x a y</b> → bod je na nesprávnom mieste, niekedy až mimo plochy.", "<b>Neuzavretý útvar</b> → na konci lomenej čiary chýba prvý bod."], "precvic": ["Najprv si prečítaj <b>chybové hlásenie</b>: <b>typ chyby</b> a <b>číslo riadka</b>.", "Skontroluj, či sú súradnice v <b>pároch</b> a oddelené <b>čiarkami</b>.", "Ak chyba nie je hlásená, <b>porovnaj</b> obrázok s náčrtom: je uzavretý? nie je prevrátený (os y)?", "Skontroluj aj <b>farbu</b> (fill) a <b>hrúbku</b> (width) čiary.", "Opravuj vždy <b>jednu vec</b> a program hneď <b>spusti znova</b>."]};
 /* ---------- mini tkinter.Canvas interpreter (subset of Python) ---------- */
 const TKCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
 function tkColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (TKCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
@@ -399,7 +430,7 @@ const KEY = "py3-r27-v1";
 const LESSON = "2.7 Súradnice bodov a kreslenie čiar";
 const BRAND = "2.7 Súradnice a čiary";
 const CLASS_DEFAULT = "III.";
-const WIDE = { body: 1, usecka: 1, lomena: 1, obrazky: 1, chyby: 1 };
+const WIDE = { body: 1, usecka: 1, lomena: 1, obrazky: 1, chyby: 1, precvic: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "body", title: "Súradnice bodov", min: 7 },
@@ -506,44 +537,253 @@ const TASKS = {
   ]}
 };
 
+/* ---------- LENKA: obrázky k teórii ---------- */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#0E7A5C", accS: "#D5EEE5", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, C.ink].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-Fa-f]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  return { C, fig, SV, ar, T, box, num };
+})();
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num } = PF; const A = C.acc, AS = C.accS;
+const M = (x, y, s, o = {}) => T(x, y, s, Object.assign({ mono: 1 }, o));
+const dot = (x, y, c, r) => `<circle cx="${x}" cy="${y}" r="${r || 4}" fill="${c || C.bad}"/>`;
+const pl = (pts, c, w, extra) => `<polyline points="${pts.map(p => p.join(",")).join(" ")}" fill="none" stroke="${c || C.ink}" stroke-width="${w || 3}" stroke-linejoin="round" stroke-linecap="round"${extra || ""}/>`;
+const grid = (x, y, w, h, s) => { let g = ""; for (let i = s; i < w; i += s) g += `<line x1="${x + i}" y1="${y}" x2="${x + i}" y2="${y + h}" stroke="#E6EEF0"/>`; for (let j = s; j < h; j += s) g += `<line x1="${x}" y1="${y + j}" x2="${x + w}" y2="${y + j}" stroke="#E6EEF0"/>`; return g; };
+const dark = (x, y, w, h) => box(x, y, w, h, "#0F1A2E", null, 6);
+const cl = (x, y, s, fs) => `<text x="${x}" y="${y}" font-size="${fs || 11.5}" font-family="Consolas,monospace" fill="#DCE7FF" xml:space="preserve">${s}</text>`;
+return {
+  plocha: fig(SV(440, 280, `
+    ${T(220, 18, "Plocha 300 × 200: kde sú body", { a: "middle", fs: 13.5, b: 1, c: A })}
+    <rect x="70" y="40" width="300" height="200" fill="#fff" stroke="#9FB0C8" stroke-width="1.5"/>${grid(70, 40, 300, 200, 50)}
+    ${ar(70, 40, 412, 40, C.bad, 2)}${T(416, 44, "x", { fs: 13, b: 1, c: C.bad })}${ar(70, 40, 70, 270, C.blue, 2)}${T(80, 272, "y", { fs: 13, b: 1, c: C.blue })}
+    ${[0, 100, 200, 300].map(v => M(70 + v, 256, v, { a: "middle", fs: 10.5, c: C.mut })).join("")}${[100, 200].map(v => M(62, 44 + v, v, { a: "end", fs: 10.5, c: C.mut })).join("")}${M(62, 44, "0", { a: "end", fs: 10.5, c: C.mut })}
+    <line x1="170" y1="80" x2="170" y2="200" stroke="${C.amb}" stroke-width="1.5" stroke-dasharray="4 3"/>
+    ${dot(170, 80, A, 5)}${M(180, 76, "P(100, 40)", { fs: 11.5, b: 1, c: A })}
+    ${dot(170, 200, C.blue, 5)}${M(180, 214, "Q(100, 160)", { fs: 11.5, b: 1, c: C.blue })}
+    ${T(180, 136, "P je vyššie,", { fs: 11.5, b: 1, c: C.amb })}${T(180, 152, "lebo 40 < 160", { fs: 11.5, b: 1, c: C.amb })}
+    ${dot(320, 140, C.bad, 5)}${M(360, 128, "R(250, 100)", { a: "end", fs: 11.5, b: 1, c: C.bad })}`, "Súradnice bodov na ploche"),
+    "Bod <b>(0, 0)</b> je vľavo hore. Bod s <b>menším y</b> je na ploche <b>vyššie</b>."),
+  kruzok: fig(SV(440, 220, `
+    ${T(220, 20, "Ako vyznačiť bod (x, y)", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(14, 34, 150, 150, C.bg, null, 10)}<rect x="34" y="56" width="110" height="100" fill="#fff" stroke="#C9C6D3"/><rect x="88" y="105" width="2" height="2" fill="${C.ink}"/>
+    ${ar(118, 82, 93, 102, C.mut, 1.5)}${T(120, 78, "1 pixel", { fs: 11, c: C.mut })}${T(89, 176, "skoro ho nevidno", { a: "middle", fs: 11.5, b: 1, c: C.mut })}
+    ${box(176, 34, 250, 150, AS, null, 10)}<rect x="266" y="64" width="80" height="80" fill="none" stroke="${C.mut}" stroke-dasharray="4 3"/>
+    <circle cx="306" cy="104" r="40" fill="#FDECEA" stroke="${C.bad}" stroke-width="2.5"/>${dot(306, 104, C.ink, 3)}${M(306, 124, "(x, y)", { a: "middle", fs: 11, b: 1 })}
+    ${dot(266, 64, C.blue, 3.5)}${M(266, 56, "(x − 3, y − 3)", { a: "middle", fs: 10.5, c: C.blue })}${dot(346, 144, C.blue, 3.5)}${M(346, 162, "(x + 3, y + 3)", { a: "middle", fs: 10.5, c: C.blue })}
+    ${T(220, 210, "create_oval(x − 3, y − 3, x + 3, y + 3, fill='red')", { a: "middle", fs: 11.5, b: 1, c: A, mono: 1 })}`, "Vyznačenie bodu krúžkom"),
+    "Okolo bodu nakreslíme malý <b>krúžok</b> – štvorec okolo neho siaha o 3 pixely na každú stranu (zväčšené)."),
+  nacrt: fig(SV(440, 220, `
+    ${T(220, 20, "Od náčrtu k programu", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(10, 34, 128, 150, C.bg, null, 8)}<rect x="18" y="52" width="112" height="112" fill="#fff"/>${grid(18, 52, 112, 112, 14)}
+    ${pl([[50, 68], [114, 100], [50, 132]], C.ink, 2.5)}<line x1="50" y1="68" x2="50" y2="160" stroke="${C.mut}" stroke-width="2.5"/>
+    ${dot(50, 68)}${dot(114, 100)}${dot(50, 132)}${T(40, 72, "A", { a: "end", fs: 11.5, b: 1, c: C.bad })}${T(118, 92, "B", { fs: 11.5, b: 1, c: C.bad })}${T(40, 136, "C", { a: "end", fs: 11.5, b: 1, c: C.bad })}
+    ${T(74, 202, "1. náčrt", { a: "middle", fs: 11.5, b: 1 })}
+    ${ar(140, 109, 156, 109, A, 2)}
+    ${box(158, 34, 112, 150, AS, null, 8)}${[["A", "(40, 20)"], ["B", "(120, 60)"], ["C", "(40, 100)"]].map(([n, p], i) => `${T(172, 70 + i * 36, n, { fs: 12.5, b: 1, c: C.bad })}${M(188, 70 + i * 36, p, { fs: 11.5 })}`).join("")}
+    ${T(214, 202, "2. súradnice", { a: "middle", fs: 11.5, b: 1 })}
+    ${ar(272, 109, 288, 109, A, 2)}
+    ${dark(290, 34, 140, 150)}${cl(298, 72, "canvas.create_line(", 10.5)}${cl(298, 96, "  40, 20,", 10.5)}${cl(298, 116, "  120, 60,", 10.5)}${cl(298, 136, "  40, 100)", 10.5)}
+    ${T(360, 202, "3. program", { a: "middle", fs: 11.5, b: 1 })}`, "Od náčrtu k programu"),
+    "Najprv <b>náčrt</b> na štvorčekovom papieri, potom <b>súradnice</b> bodov a nakoniec ich prepis do <b>programu</b>."),
+  smery: fig(SV(440, 250, `
+    ${T(220, 20, "Vodorovná, zvislá, šikmá", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${[["vodorovná: rovnaké y", "create_line(30, 70, 160, 70)", [[30, 30], [160, 30]]], ["zvislá: rovnaké x", "create_line(90, 20, 90, 140)", [[95, 8], [95, 52]]], ["šikmá: x aj y sa líšia", "create_line(20, 130, 180, 40)", [[30, 52], [160, 8]]]].map(([n, c0, p], i) => { const y = 34 + i * 70; return `${box(14, y, 412, 62, i % 2 ? AS : C.bg, null, 8)}<line x1="${14 + p[0][0]}" y1="${y + p[0][1]}" x2="${14 + p[1][0]}" y2="${y + p[1][1]}" stroke="${C.ink}" stroke-width="3"/>${dot(14 + p[0][0], y + p[0][1], C.bad)}${dot(14 + p[1][0], y + p[1][1], C.bad)}${T(196, y + 26, n, { fs: 12, b: 1, c: A })}${M(196, y + 46, c0, { fs: 11.5 })}`; }).join("")}`, "Druhy úsečiek"),
+    "Ak sa koncové body zhodujú v <b>y</b>, úsečka je <b>vodorovná</b>; ak v <b>x</b>, je <b>zvislá</b>."),
+  hrubka: fig(SV(440, 230, `
+    ${T(220, 20, "Hrúbka width a prerušovaná čiara dash", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${[1, 4, 10].map((w, i) => `<line x1="150" y1="${46 + i * 28}" x2="420" y2="${46 + i * 28}" stroke="${C.ink}" stroke-width="${w}"/>${M(20, 50 + i * 28, "width=" + w, { fs: 12, b: 1, c: A })}`).join("")}
+    <line x1="14" y1="134" x2="426" y2="134" stroke="${C.line}"/>
+    ${M(20, 186, "dash=(10, 5)", { fs: 12, b: 1, c: A })}
+    <line x1="150" y1="182" x2="420" y2="182" stroke="${C.ink}" stroke-width="5" stroke-dasharray="20 10"/>
+    ${ar(150, 160, 170, 160, C.blue, 1.5, 1)}${T(160, 154, "10", { a: "middle", fs: 11, b: 1, c: C.blue })}
+    ${ar(170, 204, 180, 204, C.amb, 1.5, 1)}${T(175, 220, "5", { a: "middle", fs: 11, b: 1, c: C.amb })}
+    ${T(196, 158, "čiarka", { fs: 11, c: C.blue })}${T(188, 220, "medzera (zväčšené 2×)", { fs: 11, c: C.amb })}`, "Hrúbka a prerušovaná čiara"),
+    "<b>width</b> je hrúbka v pixeloch, <b>dash</b> zadáva dĺžku <b>čiarky</b> a <b>medzery</b>."),
+  sipky: fig(SV(440, 210, `
+    ${T(220, 20, "Kam patrí hrot šípky", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${T(170, 44, "začiatok (x1, y1)", { a: "middle", fs: 11, c: C.mut })}${T(380, 44, "koniec (x2, y2)", { a: "middle", fs: 11, c: C.mut })}
+    ${[["arrow='first'", 0], ["arrow='last'", 1], ["arrow='both'", 2]].map(([n, k], i) => { const y = 74 + i * 46; return `${box(14, y - 22, 412, 38, i % 2 ? AS : C.bg, null, 8)}${M(24, y + 2, n, { fs: 12, b: 1, c: A })}${k === 0 ? ar(380, y - 3, 150, y - 3, C.ink, 3) : ar(150, y - 3, 380, y - 3, C.ink, 3, k === 2)}${dot(150, y - 3, C.blue, 3)}${dot(380, y - 3, C.blue, 3)}`; }).join("")}
+    ${T(220, 202, "Bez parametra arrow nemá čiara žiadny hrot.", { a: "middle", fs: 11.5 })}`, "Parameter arrow"),
+    "<b>first</b> = hrot na začiatku, <b>last</b> = na konci, <b>both</b> = na oboch koncoch."),
+  lomena: fig(SV(440, 250, `
+    ${T(220, 20, "Lomená čiara cez 5 bodov", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(14, 32, 412, 128, C.bg, null, 8)}
+    ${pl([[40, 140], [120, 54], [210, 120], [300, 60], [400, 132]], A, 3)}
+    ${[[40, 140], [120, 54], [210, 120], [300, 60], [400, 132]].map((p, i) => num(p[0], p[1], i + 1)).join("")}
+    ${M(14, 182, "canvas.create_line(", { fs: 11.5, c: C.mut })}
+    ${[["20, 150"], ["100, 40"], ["190, 110"], ["280, 50"], ["380, 120"]].map(([s], i) => `${box(14 + i * 83, 190, 77, 26, "#fff", A, 6)}${M(52 + i * 83, 207, s, { a: "middle", fs: 11, b: 1 })}`).join("")}
+    ${T(220, 238, "5 bodov = 10 čísel, každý rámček je jedna dvojica (x, y)", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Lomená čiara"),
+    "Body sa spájajú <b>v poradí</b>, v akom sú zapísané. Každý bod pridá <b>dve</b> čísla."),
+  uzavrety: fig(SV(440, 220, `
+    ${T(220, 20, "Neuzavretý a uzavretý útvar", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(14, 32, 200, 180, C.badS, null, 10)}${pl([[60, 70], [170, 70], [170, 150], [60, 150]], C.ink, 3)}<line x1="60" y1="150" x2="60" y2="70" stroke="${C.bad}" stroke-width="2" stroke-dasharray="5 4"/>
+    ${[[60, 70, "A"], [170, 70, "B"], [170, 150, "C"], [60, 150, "D"]].map(([x, y, n]) => `${dot(x, y, C.ink)}${T(x + (x < 100 ? -8 : 8), y + (y < 100 ? -6 : 16), n, { a: x < 100 ? "end" : "start", fs: 12, b: 1 })}`).join("")}
+    ${T(52, 114, "chýba", { a: "end", fs: 11, c: C.bad })}${M(114, 188, "A, B, C, D", { a: "middle", fs: 11.5, b: 1, c: C.bad })}${T(114, 204, "4 body", { a: "middle", fs: 11 })}
+    ${box(226, 32, 200, 180, AS, null, 10)}${pl([[272, 70], [382, 70], [382, 150], [272, 150], [272, 70]], A, 3)}
+    ${[[272, 70, "A"], [382, 70, "B"], [382, 150, "C"], [272, 150, "D"]].map(([x, y, n]) => `${dot(x, y, A)}${T(x + (x < 320 ? -8 : 8), y + (y < 100 ? -6 : 16), n, { a: x < 320 ? "end" : "start", fs: 12, b: 1 })}`).join("")}
+    ${M(326, 188, "A, B, C, D, A", { a: "middle", fs: 11.5, b: 1, c: A })}${T(326, 204, "posledný bod = prvý", { a: "middle", fs: 11 })}`, "Uzavretý útvar"),
+    "Aby bol útvar <b>uzavretý</b>, na koniec zopakujeme <b>prvý bod</b>."),
+  poradie: fig(SV(440, 220, `
+    ${T(220, 20, "Tie isté body, iné poradie", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(14, 32, 200, 180, C.bg, null, 10)}${pl([[60, 70], [170, 70], [170, 150], [60, 150], [60, 70]], A, 3)}
+    ${box(226, 32, 200, 180, C.bg, null, 10)}${pl([[272, 70], [382, 150], [382, 70], [272, 150], [272, 70]], C.blue, 3)}
+    ${[[60, 70, "A"], [170, 70, "B"], [170, 150, "C"], [60, 150, "D"]].map(([x, y, n]) => `${dot(x, y, C.ink)}${dot(x + 212, y, C.ink)}${T(x + (x < 100 ? -8 : 8), y + (y < 100 ? -6 : 16), n, { a: x < 100 ? "end" : "start", fs: 12, b: 1 })}${T(x + 212 + (x < 100 ? -8 : 8), y + (y < 100 ? -6 : 16), n, { a: x < 100 ? "end" : "start", fs: 12, b: 1 })}`).join("")}
+    ${M(114, 188, "A, B, C, D, A", { a: "middle", fs: 11.5, b: 1, c: A })}${T(114, 204, "obdĺžnik", { a: "middle", fs: 11 })}
+    ${M(326, 188, "A, C, B, D, A", { a: "middle", fs: 11.5, b: 1, c: C.blue })}${T(326, 204, "„presýpacie hodiny“", { a: "middle", fs: 11 })}`, "Poradie bodov"),
+    "Na <b>poradí bodov</b> záleží: z tých istých štyroch bodov vzniknú dva rôzne útvary."),
+  postup: fig(SV(440, 260, `
+    ${T(220, 20, "Postup pri kreslení obrázka", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${[["náčrt na štvorčekovom papieri"], ["pomenuj body písmenami"], ["zapíš súradnice bodov"], ["rozhodni o poradí, píš kód"]].map(([t], i) => { const y = 34 + i * 54; return `${box(14, y, 216, 46, i % 2 ? AS : C.bg, null, 8)}${num(34, y + 23, i + 1)}${T(52, y + 27, t, { fs: 11.5, b: 1 })}`; }).join("")}
+    ${box(242, 34, 184, 208, "#fff", C.line, 8)}${grid(250, 42, 168, 192, 12)}
+    <polygon points="270,170 398,170 380,200 288,200" fill="#FFE0B2" stroke="${C.ink}" stroke-width="2"/><line x1="334" y1="170" x2="334" y2="62" stroke="${C.ink}" stroke-width="2.5"/><polygon points="334,66 334,160 296,160" fill="#E3EEFC" stroke="${C.blue}" stroke-width="2"/>
+    ${[[270, 170, "A", -6, -4, "end"], [398, 170, "B", 6, -4, "start"], [380, 200, "C", 6, 14, "start"], [288, 200, "D", -6, 14, "end"], [334, 62, "E", 8, 4, "start"], [296, 160, "F", -6, -4, "end"]].map(([x, y, n, dx, dy, a]) => `${dot(x, y, C.bad, 3.5)}${T(x + dx, y + dy, n, { a, fs: 11.5, b: 1, c: C.bad })}`).join("")}
+    ${T(334, 228, "loďka: trup, sťažeň, plachta", { a: "middle", fs: 11, c: C.mut })}`, "Postup kreslenia"),
+    "Program píšeme až vtedy, keď máme <b>náčrt</b>, <b>pomenované body</b> a ich <b>súradnice</b>."),
+  tah: fig(SV(440, 250, `
+    ${T(220, 20, "Dá sa to nakresliť jedným ťahom?", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(14, 32, 200, 172, AS, null, 10)}
+    ${pl([[50, 60], [114, 118], [50, 176], [50, 60]], A, 3)}${pl([[178, 60], [114, 118], [178, 176], [178, 60]], A, 3)}
+    ${[[50, 60, 2], [178, 60, 2], [114, 118, 4], [50, 176, 2], [178, 176, 2]].map(([x, y, d]) => `<circle cx="${x}" cy="${y}" r="9" fill="#fff" stroke="${A}" stroke-width="2"/>${T(x, y + 4, d, { a: "middle", fs: 11, b: 1, c: A })}`).join("")}
+    ${T(114, 196, "všetky čísla párne → áno", { a: "middle", fs: 11, b: 1, c: A })}
+    ${box(226, 32, 200, 172, C.ambS, null, 10)}
+    ${pl([[264, 66], [388, 66], [388, 170], [264, 170], [264, 66], [388, 170]], C.amb, 3)}
+    ${[[264, 66, 3], [388, 66, 2], [388, 170, 3], [264, 170, 2]].map(([x, y, d]) => `<circle cx="${x}" cy="${y}" r="9" fill="#fff" stroke="${d % 2 ? C.bad : C.amb}" stroke-width="2"/>${T(x, y + 4, d, { a: "middle", fs: 11, b: 1, c: d % 2 ? C.bad : C.amb })}`).join("")}
+    ${T(326, 196, "2 nepárne → áno, začni v nich", { a: "middle", fs: 11, b: 1, c: C.amb })}
+    ${T(220, 226, "Číslo pri bode = koľko čiar z neho vychádza.", { a: "middle", fs: 11.5 })}${T(220, 243, "Viac ako 2 nepárne body → jedným ťahom sa to nedá.", { a: "middle", fs: 11.5, b: 1, c: C.bad })}`, "Kreslenie jedným ťahom"),
+    "Útvar sa dá nakresliť <b>jedným ťahom</b>, ak má <b>0 alebo 2</b> body s nepárnym počtom čiar."),
+  viac: fig(SV(440, 220, `
+    ${T(220, 20, "Jeden príkaz, alebo viac?", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(14, 32, 200, 180, C.bg, null, 10)}${pl([[50, 160], [50, 60], [114, 120], [178, 60], [178, 160]], A, 4)}
+    ${T(114, 184, "písmeno M", { a: "middle", fs: 11.5, b: 1 })}${T(114, 200, "1 × create_line", { a: "middle", fs: 11.5, c: A, mono: 1 })}
+    ${box(226, 32, 200, 180, C.bg, null, 10)}<rect x="276" y="56" width="100" height="100" fill="none" stroke="${C.blue}" stroke-width="4"/><line x1="326" y1="56" x2="326" y2="156" stroke="${C.amb}" stroke-width="4"/><line x1="276" y1="106" x2="376" y2="106" stroke="${C.bad}" stroke-width="4"/>
+    ${T(326, 184, "okno s krížom", { a: "middle", fs: 11.5, b: 1 })}${T(326, 200, "3 × create_line", { a: "middle", fs: 11.5, c: A, mono: 1 })}`, "Jeden alebo viac príkazov"),
+    "Čo sa nedá jedným ťahom, poskladáme z <b>viacerých príkazov</b> (každá farba = jeden príkaz)."),
+  chyby: fig(SV(440, 260, `
+    ${T(220, 20, "Tri typické chyby", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${[["canvas.create_line(40, 60, 200)", "TclError", "3 čísla: bodu chýba y"], ["canvas.create_line(40, 60 200, 90)", "SyntaxError", "medzi 60 a 200 chýba čiarka"], ["(bez hlásenia)", "zlý obrázok", "útvar je hore nohami: os y"]].map(([c0, e, w], i) => { const y = 34 + i * 74; return `${dark(14, y, 412, 30)}${cl(24, y + 20, c0, 11.5)}${box(14, y + 36, 412, 30, i < 2 ? C.badS : C.ambS, null, 6)}${T(26, y + 56, e, { fs: 12, b: 1, c: i < 2 ? C.bad : C.amb })}${T(130, y + 56, w, { fs: 11.5 })}`; }).join("")}`, "Typické chyby"),
+    "<b>TclError</b> = nepárny počet súradníc, <b>SyntaxError</b> = chýba čiarka, bez hlásenia = chyba v <b>náčrte</b>."),
+  prevratene: fig(SV(440, 220, `
+    ${T(220, 20, "Chcel som horu, mám údolie", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${box(14, 32, 200, 150, AS, null, 10)}${pl([[40, 160], [114, 60], [188, 160]], A, 3)}${dot(114, 60, A)}${M(114, 52, "vrchol: malé y", { a: "middle", fs: 10.5, b: 1, c: A })}
+    ${box(226, 32, 200, 150, C.badS, null, 10)}${pl([[252, 60], [326, 160], [400, 60]], C.bad, 3)}${dot(326, 160, C.bad)}${M(326, 176, "vrchol: veľké y", { a: "middle", fs: 10.5, b: 1, c: C.bad })}
+    ${T(114, 200, "správne", { a: "middle", fs: 11.5, b: 1, c: A })}${T(326, 200, "y meral zdola – chyba", { a: "middle", fs: 11.5, b: 1, c: C.bad })}
+    ${T(220, 216, "Na obrazovke y rastie nadol.", { a: "middle", fs: 11 })}`, "Prevrátený obrázok"),
+    "Ak je obrázok <b>hore nohami</b>, pomýlil si sa v smere <b>osi y</b>."),
+  prehodene: fig(SV(440, 220, `
+    ${T(220, 20, "Prehodené x a y", { a: "middle", fs: 13.5, b: 1, c: A })}
+    <rect x="70" y="36" width="300" height="150" fill="#fff" stroke="#9FB0C8" stroke-width="1.5"/>${grid(70, 36, 300, 150, 30)}
+    ${dot(310, 66, A, 6)}${M(300, 62, "(240, 30) chcel som", { a: "end", fs: 11, b: 1, c: A })}
+    ${dot(100, 156, C.bad, 6)}${M(112, 160, "(30, 240)? mimo plochy!", { fs: 11, b: 1, c: C.bad })}
+    <circle cx="100" cy="156" r="10" fill="none" stroke="${C.bad}" stroke-dasharray="3 2"/>
+    ${T(220, 206, "Najprv vždy x (vodorovne), potom y (zvisle).", { a: "middle", fs: 11.5, b: 1 })}`, "Prehodené súradnice"),
+    "Dvojica je vždy <b>(x, y)</b>: najprv vodorovná, potom zvislá súradnica."),
+  detektiv: fig(SV(440, 250, `
+    ${T(220, 20, "Ladenie ako detektív", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${[["Prečítaj hlásenie a číslo riadka", "TclError, SyntaxError, line 4"], ["Skontroluj páry a čiarky", "(x, y), (x, y), …"], ["Porovnaj obrázok s náčrtom", "uzavretý? os y? farba a hrúbka?"]].map(([t, s], i) => { const y = 32 + i * 58; return `${box(14, y, 340, 48, i % 2 ? AS : C.bg, null, 8)}${num(36, y + 24, i + 1)}${T(56, y + 20, t, { fs: 12, b: 1 })}${T(56, y + 38, s, { fs: 11, c: C.mut })}${i < 2 ? ar(184, y + 48, 184, y + 58, A, 2) : ""}`; }).join("")}
+    ${box(14, 210, 340, 32, A, null, 8)}${T(184, 231, "Oprav jednu vec a hneď spusti znova", { a: "middle", fs: 12, b: 1, c: "#fff" })}
+    <path d="M354 226 H392 V56 H362" fill="none" stroke="${A}" stroke-width="2" marker-end="url(#M${A.slice(1)})"/>${T(398, 146, "znova", { fs: 11, b: 1, c: A })}`, "Postup ladenia"),
+    "Pri ladení postupuj <b>krok za krokom</b> a po každej oprave program <b>spusti znova</b>."),
+  hlasenie: fig(SV(440, 220, `
+    ${T(220, 20, "Ako čítať chybové hlásenie", { a: "middle", fs: 13.5, b: 1, c: A })}
+    ${dark(10, 32, 420, 92)}
+    <text x="18" y="52" font-size="10.5" font-family="Consolas,monospace" fill="#DCE7FF" xml:space="preserve">Traceback (most recent call last):</text>
+    <text x="18" y="70" font-size="10.5" font-family="Consolas,monospace" fill="#DCE7FF" xml:space="preserve">  File "kresba.py", <tspan fill="#FFC857" font-weight="700">line 4</tspan>, in &lt;module&gt;</text>
+    <text x="18" y="88" font-size="10.5" font-family="Consolas,monospace" fill="#8EC5FF" font-weight="700" xml:space="preserve">    canvas.create_line(30, 40, 90)</text>
+    <text x="18" y="110" font-size="10.5" font-family="Consolas,monospace" fill="#FF8A80" font-weight="700" textLength="404" lengthAdjust="spacingAndGlyphs">_tkinter.TclError: wrong # coordinates: expected at least 4, got 3</text>
+    ${[["#B07400", "číslo riadka", "kde chyba je"], ["#1E6FD9", "riadok programu", "čo sa vykonávalo"], ["#C0392B", "typ chyby", "čo je zle"]].map(([c, t, s], i) => { const x = 14 + i * 140; return `${box(x, 138, 132, 56, "#fff", c, 8)}${T(x + 66, 160, t, { a: "middle", fs: 12, b: 1, c })}${T(x + 66, 180, s, { a: "middle", fs: 11, c: C.mut })}`; }).join("")}
+    ${T(220, 212, "Najdôležitejší je posledný riadok a číslo riadka.", { a: "middle", fs: 11.5, b: 1 })}`, "Chybové hlásenie"),
+    "Chybové hlásenie prezradí <b>riadok</b>, kde chyba vznikla, a <b>typ chyby</b>.")
+};
+})();
+
+/* ---------- skúšačka parametrov úsečky (bez bodov) ---------- */
+function lxState() { return S.lx || (S.lx = { fill: "black", width: 3, dash: "", arrow: "" }); }
+function lxCode() { const L = lxState(); let a = "canvas.create_line(40, 60, 360, 60"; if (L.fill !== "black") a += `, fill='${L.fill}'`; if (L.width !== 1) a += `, width=${L.width}`; if (L.dash) a += `, dash=(${L.dash})`; if (L.arrow) a += `, arrow='${L.arrow}'`; return a + ")"; }
+function lxInner() { const env = tkRun("import tkinter\ncanvas = tkinter.Canvas(width=400, height=120, bg='white')\ncanvas.pack()\n" + lxCode()); return `<div class="pv" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff">${tkSVG(env)}</div><div class="pcode" style="white-space:pre-wrap;word-break:break-word">${hl(lxCode())}</div>`; }
+function lxHTML() { const L = lxState(); const sel = (id, lab, opts, v) => `<label>${lab} <select id="${id}">${opts.map(([val, t]) => `<option value="${val}" ${String(v) === String(val) ? "selected" : ""}>${t}</option>`).join("")}</select></label>`;
+  return `<h3>Vyskúšaj si: skúšačka parametrov</h3><p>Meň parametre a sleduj, ako sa mení čiara aj príkaz. Táto časť sa neboduje.</p>
+    <div class="task"><div class="fp">${sel("lxf", "fill", [["black", "black"], ["red", "red"], ["blue", "blue"], ["green", "green"], ["orange", "orange"], ["purple", "purple"]], L.fill)}${sel("lxw", "width", [1, 2, 3, 5, 8, 12].map(w => [w, w]), L.width)}${sel("lxd", "dash", [["", "bez"], ["10, 5", "(10, 5)"], ["4, 4", "(4, 4)"], ["20, 4", "(20, 4)"], ["2, 8", "(2, 8)"]], L.dash)}${sel("lxa", "arrow", [["", "bez"], ["first", "'first'"], ["last", "'last'"], ["both", "'both'"]], L.arrow)}</div>
+    <div id="lxbox">${lxInner()}</div></div>`; }
+function lxInput(t) { const m = { lxf: "fill", lxw: "width", lxd: "dash", lxa: "arrow" }[t.id]; if (!m) return false; const L = lxState(); L[m] = m === "width" ? +t.value : t.value; save(); const b = document.getElementById("lxbox"); if (b) b.innerHTML = lxInner(); return true; }
+
 /* ---------- views ---------- */
 const VIEWS = {
   body() { const C = S.bx, done = S.t.bodin;
     return head() + `<h2>Súradnice bodov</h2>
-    <div class="theory"><p>Pripomeňme si: plocha sa skladá z <b>pixelov</b>, každý má súradnice <b>(x, y)</b>. <b>x</b> rastie zľava doprava, <b>y</b> zhora nadol, počiatok <b>(0, 0)</b> je v <b>ľavom hornom rohu</b>. Bod, ktorý je vyššie, má <b>menšie y</b>.</p>
-      <p>Samotný bod (jeden pixel) je na obrazovke skoro neviditeľný. Keď chceme bod vyznačiť, nakreslíme okolo neho malý krúžok, napríklad <code>canvas.create_oval(x - 3, y - 3, x + 3, y + 3, fill='red')</code>.</p>
-      <p>Pred kreslením si obrázok načrtni na štvorčekový papier a <b>zapíš súradnice všetkých dôležitých bodov</b>. Program je potom iba prepisom týchto čísel.</p></div>
+    <div class="theory tsplit"><div><p>Pripomeňme si: plocha sa skladá z <b>pixelov</b>, každý má súradnice <b>(x, y)</b>. Počiatok <b>(0, 0)</b> je v <b>ľavom hornom rohu</b>.</p>
+      <table class="rtab"><thead><tr><th>Súradnica</th><th>Smer</th><th>Rastie</th></tr></thead><tbody>
+        <tr><td><b>x</b></td><td>vodorovne</td><td>zľava doprava →</td></tr>
+        <tr><td><b>y</b></td><td>zvisle</td><td>zhora nadol ↓</td></tr></tbody></table>
+      <p>Bod, ktorý je vyššie, má preto <b>menšie y</b>.</p>
+      <p>Samotný bod (jeden pixel) je na obrazovke skoro neviditeľný. Keď ho chceme vyznačiť, nakreslíme okolo neho malý krúžok, napríklad <code>canvas.create_oval(x - 3, y - 3, x + 3, y + 3, fill='red')</code>.</p>
+      <p>Pred kreslením si obrázok načrtni na štvorčekový papier a <b>zapíš súradnice všetkých dôležitých bodov</b>. Program je potom iba prepisom týchto čísel.</p></div><div>${TFIG.plocha}</div></div>
+    ${ltfigs(TFIG.kruzok, TFIG.nacrt)}
+    ${VEDEL("Súradnice bodov zaviedol francúzsky filozof a matematik René Descartes v diele <i>Geometria</i> z roku 1637. Preto sa im hovorí <b>karteziánske</b> súradnice (z latinského mena Cartesius).")}
     <h3>Úloha: odčítaj súradnice bodu</h3>
     <div class="ide"><div>${readSVG(Math.min(C.i, BP.length - 1))}</div><div class="task" style="margin:0">${done ? `<b>Hotovo</b><div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} bodov</span></div>` : `<p><b>Aké súradnice má bod ${"ABCDE"[C.i]}?</b> (bod ${C.i + 1} z ${BP.length})</p><div class="fp"><label>x = <input class="in" id="bx" inputmode="numeric" style="max-width:100px"></label><label>y = <input class="in" id="by" inputmode="numeric" style="max-width:100px"></label></div><div class="row"><button class="primary" data-bok>Potvrdiť</button></div>${C.last ? `<div class="fb ${C.last.ok ? "ok" : "bad"}">${C.last.msg}</div>` : ""}`}</div></div>
     <h3>Úloha 2: horná, alebo dolná polovica plochy 400 × 300?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("psort")}</div>` + nextBar(); },
   usecka() { return head() + `<h2>Úsečka a jej vlastnosti</h2>
-    <div class="theory"><p>Úsečku nakreslíme príkazom <code>canvas.create_line(x1, y1, x2, y2)</code>, kde (x1, y1) je začiatok a (x2, y2) koniec. Ak majú oba body rovnaké <b>y</b>, úsečka je <b>vodorovná</b>. Ak majú rovnaké <b>x</b>, je <b>zvislá</b>.</p>
-      <table class="cmdt"><thead><tr><th>Parameter</th><th>Význam</th><th>Príklad</th></tr></thead><tbody>
+    <div class="theory tsplit"><div><p>Úsečku nakreslíme príkazom <code>canvas.create_line(x1, y1, x2, y2)</code>, kde (x1, y1) je <b>začiatok</b> a (x2, y2) <b>koniec</b>.</p>
+      <p>Ak majú oba body rovnaké <b>y</b>, úsečka je <b>vodorovná</b>. Ak majú rovnaké <b>x</b>, je <b>zvislá</b>. Inak je šikmá. Vzhľad čiary menia parametre za súradnicami:</p>
+      <table class="rtab"><thead><tr><th>Parameter</th><th>Význam</th><th>Príklad</th></tr></thead><tbody>
         <tr><td><code>fill</code></td><td>farba čiary</td><td><code>fill='red'</code></td></tr><tr><td><code>width</code></td><td>hrúbka v pixeloch (predvolená 1)</td><td><code>width=5</code></td></tr>
         <tr><td><code>dash</code></td><td>prerušovaná čiara: dĺžka čiarky a medzery</td><td><code>dash=(10, 5)</code></td></tr><tr><td><code>arrow</code></td><td>šípka: <code>'first'</code>, <code>'last'</code>, <code>'both'</code></td><td><code>arrow='last'</code></td></tr></tbody></table>
-      <div class="pcode">${hl("canvas.create_line(50, 50, 350, 50, fill='red', width=5)\ncanvas.create_line(50, 100, 350, 100, dash=(10, 5))\ncanvas.create_line(50, 150, 350, 150, arrow='last', width=3)")}</div></div>
+      <div class="pcode">${hl("canvas.create_line(50, 50, 350, 50, fill='red', width=5)\ncanvas.create_line(50, 100, 350, 100, dash=(10, 5))\ncanvas.create_line(50, 150, 350, 150, arrow='last', width=3)")}</div></div><div>${TFIG.smery}</div></div>
+    ${ltfigs(TFIG.hrubka, TFIG.sipky)}
+    ${VEDEL("Obrazovka nevie nakresliť naozaj šikmú čiaru, iba vybrať pixely, ktoré jej ležia najbližšie. Rýchly spôsob, ako ich vybrať len sčítaním celých čísel, vymyslel v roku 1962 Jack Bresenham v IBM a používa sa dodnes.")}
+    ${lxHTML()}
     <h3>Úloha 1: kresli úsečky</h3><p>Pri každej úlohe si uprav program v editore, spusti ho a daj Skontrolovať. Obrázok vľavo ukazuje, ako má výsledok vyzerať.</p>
     ${chalHTML("c_us", "usecka")}${ideHTML("usecka", D1)}
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("usq")}</div>
     <h3>Úloha 3: aká je úsečka?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("usort")}</div>` + nextBar(); },
   lomena() { const D = S.draw; return head() + `<h2>Lomená čiara</h2>
     ${guessBox()}
-    <div class="theory"><p>Do <code>create_line</code> môžeme zapísať aj <b>viac bodov</b>. tkinter body spojí postupne za sebou a vznikne <b>lomená čiara</b>:</p>
+    <div class="theory tsplit"><div><p>Do <code>create_line</code> môžeme zapísať aj <b>viac bodov</b>. tkinter ich spojí postupne za sebou v zapísanom <b>poradí</b> a vznikne <b>lomená čiara</b>:</p>
       <div class="pcode">${hl("canvas.create_line(x1, y1, x2, y2, x3, y3, x4, y4)")}</div>
-      <p>Každý bod pridá <b>dve</b> čísla, preto je počet súradníc vždy <b>párny</b>. Ak chceme útvar <b>uzavrieť</b> (trojuholník, hviezda), ako posledný bod zopakujeme prvý. Parametre <code>fill</code>, <code>width</code> a <code>dash</code> platia pre celú lomenú čiaru.</p></div>
+      <p>Každý bod pridá <b>dve</b> čísla, preto je počet súradníc vždy <b>párny</b>.</p>
+      <p>Ak chceme útvar <b>uzavrieť</b> (trojuholník, hviezda), ako posledný bod zopakujeme prvý. Parametre <code>fill</code>, <code>width</code> a <code>dash</code> platia pre celú lomenú čiaru.</p></div><div>${TFIG.lomena}</div></div>
+    ${ltfigs(TFIG.uzavrety, TFIG.poradie)}
+    ${VEDEL("Ak do <code>create_line</code> pridáš parameter <code>smooth=True</code>, tkinter lomenú čiaru vyhladí na oblú krivku. Body potom slúžia ako „magnety“, ktoré krivku priťahujú.")}
     <h3>Kresliaci nástroj</h3><p>Klikaj na plochu a nástroj ti vytvorí príkaz <code>create_line</code> s týmito bodmi. Hodí sa na zistenie súradníc.</p>
     <div class="drawbox"><div>${drawSVG()}</div><div><div class="gen" id="gencode">${esc(drawCode())}</div><div class="fp"><label>Farba <select id="dfill">${["black", "red", "blue", "green", "orange", "purple", "gold", "brown"].map(c => `<option ${D.fill === c ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Hrúbka <select id="dwidth">${[1, 2, 3, 5, 8].map(w => `<option ${D.width === w ? "selected" : ""}>${w}</option>`).join("")}</select></label></div>
       <div class="row"><button class="ghost" data-dundo>↶ Späť</button><button class="ghost" data-dclr>Vymazať</button><button class="ghost" data-dclose ${D.pts.length > 2 ? "" : "disabled"}>Uzavrieť útvar</button><button class="primary" data-dcopy>⤵ Vložiť do editora</button></div></div></div>
     <h3>Úlohy</h3>${chalHTML("c_lom", "lomena")}${ideHTML("lomena", D1)}` + nextBar(); },
   obrazky() { return head() + `<h2>Obrázky z čiar</h2>
-    <div class="theory"><p>Zložitejšie obrázky skladáme z viacerých čiar. Niektoré útvary sa dajú nakresliť <b>jedným ťahom</b> (lomenou čiarou), iné potrebujú viac príkazov. Postup: nakresli obrázok na papier, pomenuj body písmenami, zapíš ich súradnice a potom rozhodni, v akom poradí ich spojíš.</p>
-      <p><b>Domček jedným ťahom</b> je známa hádanka: dá sa nakresliť bez zdvihnutia ceruzky, ak začneš v jednom z dolných rohov. Každá čiara sa pritom nakreslí práve raz.</p></div>
+    <div class="theory tsplit"><div><p>Zložitejšie obrázky skladáme z viacerých čiar. Niektoré útvary sa dajú nakresliť <b>jedným ťahom</b> (jednou lomenou čiarou), iné potrebujú <b>viac príkazov</b>.</p>
+      <table class="rtab num"><thead><tr><th>Krok</th><th>Čo urobíš</th></tr></thead><tbody>
+        <tr><td>1</td><td>nakreslíš obrázok na <b>papier</b></td></tr>
+        <tr><td>2</td><td>pomenuješ body <b>písmenami</b></td></tr>
+        <tr><td>3</td><td>zapíšeš ich <b>súradnice</b></td></tr>
+        <tr><td>4</td><td>rozhodneš, v akom <b>poradí</b> ich spojíš</td></tr></tbody></table>
+      <p><b>Domček jedným ťahom</b> je známa hádanka: dá sa nakresliť bez zdvihnutia ceruzky, ak začneš v jednom z dolných rohov. Každá čiara sa pritom nakreslí práve raz.</p></div><div>${TFIG.postup}</div></div>
+    ${ltfigs(TFIG.tah, TFIG.viac)}
+    ${VEDEL("Pravidlo o kreslení jedným ťahom objavil Leonhard Euler v roku 1736, keď riešil hádanku o siedmich mostoch v meste Kráľovec. Dokázal, že prejsť každý most práve raz sa nedá, a tým založil <b>teóriu grafov</b>.")}
     <h3>Úlohy</h3>${chalHTML("c_obr", "obrazky")}${ideHTML("obrazky", D1)}` + nextBar(); },
   chyby() { return head() + `<h2>Časté chyby</h2>
-    <div class="theory"><p><b>Nepárny počet súradníc</b>: Python vypíše <code>TclError: wrong # coordinates</code>. <b>Chýbajúca čiarka</b> medzi číslami: <code>SyntaxError</code>. <b>Prehodené x a y</b> alebo zabudnutý <b>smer osi y</b>: obrázok je zrkadlovo otočený. <b>Neuzavretý útvar</b>: na konci lomenej čiary chýba prvý bod.</p></div>
+    <div class="theory tsplit"><div><p>Niektoré chyby Python <b>ohlási</b> červeným textom, iné uvidíš až na <b>obrázku</b>.</p>
+      <table class="rtab"><thead><tr><th>Chyba</th><th>Čo sa stane</th></tr></thead><tbody>
+        <tr><td><b>Nepárny počet súradníc</b></td><td><code>TclError: wrong # coordinates</code></td></tr>
+        <tr><td><b>Chýbajúca čiarka</b> medzi číslami</td><td><code>SyntaxError</code></td></tr>
+        <tr><td><b>Prehodené x a y</b> alebo zabudnutý <b>smer osi y</b></td><td>obrázok je zrkadlovo otočený alebo na zlom mieste</td></tr>
+        <tr><td><b>Neuzavretý útvar</b></td><td>na konci lomenej čiary chýba prvý bod</td></tr></tbody></table></div><div>${TFIG.chyby}</div></div>
+    ${ltfigs(TFIG.prevratene, TFIG.prehodene)}
+    ${VEDEL("Chybám v programe sa hovorí <i>bug</i> (chrobák). V roku 1947 našiel tím, v ktorom pracovala Grace Hopperová, v počítači Harvard Mark II skutočnú moru zaseknutú v relé a nalepil ju do denníka s poznámkou „prvý skutočný prípad nájdeného chrobáka“.")}
     <h3>Nájdi chybu</h3><div class="task">${taskHTML("chq")}</div>` + nextBar(); },
   precvic: () => head() + `<h2>Precvičovanie: nájdi a oprav</h2>
-    <div class="theory"><p>Keď program nekreslí, čo má, postupuj ako detektív: <b>1.</b> prečítaj chybové hlásenie a číslo riadka, <b>2.</b> skontroluj, či sú súradnice v <b>pároch</b> a oddelené čiarkami, <b>3.</b> ak chyba nie je hlásená, porovnaj obrázok s náčrtom: je útvar <b>uzavretý</b>? Nie je <b>prevrátený</b> (os y)? Má správnu <b>hrúbku a farbu</b>? Opravuj vždy iba jednu vec a hneď program spusti znova.</p><p>Pri každom probléme vyber opravu.</p></div>
+    <div class="theory tsplit"><div><p>Keď program nekreslí, čo má, postupuj ako <b>detektív</b>:</p>
+      <table class="rtab num"><thead><tr><th>Krok</th><th>Čo skontroluješ</th></tr></thead><tbody>
+        <tr><td>1</td><td>prečítaj <b>chybové hlásenie</b> a číslo riadka</td></tr>
+        <tr><td>2</td><td>sú súradnice v <b>pároch</b> a oddelené čiarkami?</td></tr>
+        <tr><td>3</td><td>ak chyba nie je hlásená, porovnaj obrázok s náčrtom: je útvar <b>uzavretý</b>? Nie je <b>prevrátený</b> (os y)? Má správnu <b>hrúbku a farbu</b>?</td></tr></tbody></table>
+      <p>Opravuj vždy iba <b>jednu vec</b> a hneď program spusti znova. Pri každom probléme nižšie vyber opravu.</p></div><div>${TFIG.detektiv}</div></div>
+    ${ltfigs(TFIG.hlasenie)}
+    ${VEDEL("Programátori pri hľadaní chýb niekedy vysvetľujú svoj kód riadok po riadku gumovej kačičke na stole. Pri vysvetľovaní si chybu často všimnú sami. Metóda sa volá <i>rubber duck debugging</i> a preslávila ju kniha <i>The Pragmatic Programmer</i> (1999).")}
     <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 4 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 4</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>` + nextBar(),
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
@@ -564,17 +804,33 @@ function CUSTOM_CLICK(e) {
   return tkClick(e);
 }
 function CUSTOM_INPUT(e) {
-  if (selInput(e)) return true; const t = e.target; if (t.id === "dfill") { S.draw.fill = t.value; save(); drawRefresh(); return true; } if (t.id === "dwidth") { S.draw.width = +t.value; save(); drawRefresh(); return true; } return tkInput(e); }
+  if (selInput(e)) return true; const t = e.target; if (lxInput(t)) return true; if (t.id === "dfill") { S.draw.fill = t.value; save(); drawRefresh(); return true; } if (t.id === "dwidth") { S.draw.width = +t.value; save(); drawRefresh(); return true; } return tkInput(e); }
 document.addEventListener("click", ev => { const s = ev.target.closest && ev.target.closest("#drawsvg"); if (!s) return; const p = s.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; const q = p.matrixTransform(s.getScreenCTM().inverse()); const x = Math.max(0, Math.min(400, Math.round(q.x / 5) * 5)), y = Math.max(0, Math.min(300, Math.round(q.y / 5) * 5)); S.draw.pts.push([x, y]); save(); drawRefresh(); });
 document.addEventListener("keydown", e => { if ((e.target.id === "bx" || e.target.id === "by") && e.key === "Enter") { e.preventDefault(); const b = document.querySelector("[data-bok]"); if (b) b.click(); } });
 
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span style="flex:1 1 260px;min-width:0">${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="flex:0 1 250px;width:250px;min-width:0;max-width:100%;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
   if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
 function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== shared lesson engine ===== */
-const RESULTS_FORM = { url: "", entries: { meno: "", trieda: "", body: "", detail: "" } };
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
+  const G = (typeof QGLUE !== "undefined" && QGLUE[T.id]) || [], groups = [];
+  T.qs.forEach((q, i) => { if (G.includes(i + 1) && groups.length) groups[groups.length - 1].push(q); else groups.push([q]); });
+  if (groups.length < 2) return T.qs;
+  const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
+  if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
+  return o.flatMap(id => groups.find(g => g[0].id === id)); }
+function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none;padding:8px 14px;border-radius:10px" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
@@ -612,7 +868,7 @@ function checkBar(T, ready, hint) {
 }
 function mcHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep);
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">` + o.map(i => {
       let c = "opt"; if (d[q.id] === i) c += " sel"; if (done) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
@@ -648,7 +904,7 @@ function orderHTML(T) {
 }
 function inputHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {};
-  return T.qs.map((q, qi) => {
+  return qOrder(T).map((q, qi) => {
     const v = d[q.id] || "", ok = done ? q.ok(v) : null;
     return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
   }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
@@ -690,12 +946,12 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   const txt = `${LESSON} | ${S.name.trim()} | ${S.cls.trim()} | ${total()}/${MAX} bodov (${pct} %) | ${when} | ${detail}`;
   let formBtn = "";
   if (RESULTS_FORM.url) { const E = RESULTS_FORM.entries, q = new URLSearchParams({ usp: "pp_url" }); if (E.meno) q.set(E.meno, S.name.trim()); if (E.trieda) q.set(E.trieda, S.cls.trim()); if (E.body) q.set(E.body, `${total()}/${MAX}`); if (E.detail) q.set(E.detail, detail);
-    formBtn = `<a class="primary" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(RESULTS_FORM.url + "?" + q.toString())}">Odoslať výsledok učiteľovi</a>`; }
+    formBtn = sendResults(detail); }
   return `<p class="kicker">Cieľ</p><h2>Tvoj výsledok</h2>
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Skopíruj výsledok a vlož ho tam, kam ti povie učiteľ. Môžeš urobiť aj snímku obrazovky tejto stránky.</p>
+  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
   <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
   <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
 };
@@ -707,7 +963,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

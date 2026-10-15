@@ -268,13 +268,47 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
+.theory code,.badm{overflow-wrap:anywhere}
+.calc{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:4px 0}
+.calc label{font-weight:600;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.calc input,.calc select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;font:inherit;background:var(--surface2);color:var(--ink)}
+#mgout{overflow-wrap:anywhere}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"subor": ["Súbor = pomenovaná postupnosť bajtov. OS eviduje meno, veľkosť, dátumy a atribúty (len na čítanie, skrytý, archív, systémový).", "Meno = názov + prípona. Max 255 znakov, zakázané \\ / : * ? \" < > |, vyhradené CON, PRN, AUX, NUL, COM1…"], "typy": ["Prípona určuje typ údajov a asociáciu s programom.", "Textové vs binárne súbory. Spustiteľné (.exe, .bat, .ps1…) sú rizikové, pozor na dvojité prípony."], "strom": ["Priečinky tvoria strom, koreň disku je C:\\.", "Absolútna cesta od koreňa, relatívna od aktuálneho priečinka; .. = nadradený, . = aktuálny."], "sprava": ["Ctrl + C/X/V, F2, Delete (Kôš), Shift + Delete (natrvalo), Ctrl + Shift + N (nový priečinok), Alt + Enter (vlastnosti).", "Ťahanie: rovnaký disk = presun, iný disk = kópia. Vyhľadávanie: * a ?."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"subor": ["<b>Súbor</b> = pomenovaná postupnosť bajtov na pamäťovom médiu.", "Systém eviduje <b>meno</b>, <b>veľkosť</b>, <b>dátumy</b> a <b>atribúty</b> (len na čítanie, skrytý, archív, systémový).", "Meno = <b>názov</b> + <b>prípona</b>, oddelené poslednou bodkou.", "Meno najviac 255 znakov, s cestou 260.", "Zakázané znaky: <code>\\ / : * ? \" &lt; &gt; |</code> · vyhradené mená: CON, PRN, AUX, NUL, COM1…, LPT1…", "V jednom priečinku nemôžu byť dva súbory s rovnakým menom. Windows nerozlišuje veľké a malé písmená.", "Dobré meno: výstižné, bez diakritiky a medzier, dátum RRRR-MM-DD na začiatku."], "typy": ["<b>Prípona</b> určuje typ údajov v súbore.", "<b>Asociácia</b> = priradenie prípony k programu, ktorý súbor otvorí.", "<b>Textové</b> súbory obsahujú iba znaky, <b>binárne</b> ľubovoľné bajty.", "Zmena prípony nezmení obsah súboru.", "<b>Spustiteľné</b> súbory (.exe, .msi, .bat, .cmd, .ps1, .vbs, .scr) sú od neznámych odosielateľov nebezpečné.", "Pozor na <b>dvojitú príponu</b>, zapni si zobrazovanie prípon."], "strom": ["Priečinky tvoria <b>stromovú štruktúru</b>, na vrchu je <b>koreň</b> disku (C:\\).", "Priečinok, ktorý obsahuje iný priečinok, je preň <b>nadradený</b>.", "<b>Absolútna cesta</b> začína koreňom disku.", "<b>Relatívna cesta</b> vychádza z aktuálneho priečinka.", "<code>..</code> = nadradený priečinok, <code>.</code> = aktuálny priečinok.", "Systémové priečinky (Windows, Program Files) nemeníme, používateľské sú v C:\\Používatelia\\meno."], "sprava": ["Prieskumník: <b>Win + E</b>.", "Kopírovať <b>Ctrl + C</b>, vystrihnúť <b>Ctrl + X</b>, vložiť <b>Ctrl + V</b>, premenovať <b>F2</b>.", "<b>Delete</b> = do Koša, <b>Shift + Delete</b> = natrvalo.", "Nový priečinok <b>Ctrl + Shift + N</b>, vlastnosti <b>Alt + Enter</b>.", "Ťahanie myšou: na rovnakom disku presun, na iný disk kópia.", "Zástupné znaky: <code>*</code> ľubovoľný počet znakov, <code>?</code> práve jeden znak."]};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -411,9 +445,65 @@ const PF = (() => {
 })();
 
 /* Ilustrácie – 2. ročník 2.1 Súbory */
-const TFIG = (() => { const { C, fig, SV, T, box } = PF; const A = "#0B7A75", AS = "#DDF2F0";
+const TFIG = (() => { const { C, fig, SV, ar, T, TW, box } = PF; const A = "#6A3FD0", AS = "#E9E2FB";
 const np = (x, y, w, h, title, lines, mono) => `${box(x, y, w, h, "#fff", "#C9CED6", 6)}<rect x="${x}" y="${y}" width="${w}" height="24" rx="6" fill="#F3F3F3"/>${T(x + 8, y + 16, "📝 " + title, { fs: 10.5, b: 1 })}${lines.map((l, i) => T(x + 10, y + 44 + i * 17, l, { fs: 11, mono: 1 })).join("")}`;
 return {
+  meno: fig(SV(440, 230, `
+    ${T(220, 22, "Z čoho sa skladá meno súboru", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(30, 54, 238, 46, AS, A, 8)}${box(272, 54, 22, 46, C.ambS, C.amb, 6)}${box(298, 54, 112, 46, C.okS, C.ok, 8)}
+    ${T(149, 84, "referat.final", { a: "middle", fs: 19, b: 1, mono: 1 })}${T(283, 84, ".", { a: "middle", fs: 19, b: 1, mono: 1, c: C.amb })}${T(354, 84, "docx", { a: "middle", fs: 19, b: 1, mono: 1, c: C.ok })}
+    ${T(149, 124, "NÁZOV", { a: "middle", fs: 12, b: 1, c: A })}${T(149, 140, "bodka vnútri názvu nevadí", { a: "middle", fs: 10.5, c: C.mut })}
+    ${T(283, 124, "posledná", { a: "middle", fs: 10.5, b: 1, c: C.amb })}${T(283, 138, "bodka", { a: "middle", fs: 10.5, b: 1, c: C.amb })}
+    ${T(354, 124, "PRÍPONA", { a: "middle", fs: 12, b: 1, c: C.ok })}${T(354, 140, "typ údajov", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(30, 164, 380, 52, C.bg, null, 10)}${T(220, 186, "meno: najviac 255 znakov", { a: "middle", fs: 11.5, b: 1 })}${T(220, 204, "celá cesta aj s menom: najviac 260 znakov", { a: "middle", fs: 11, c: C.mut })}`, "Názov a prípona"),
+    "Meno súboru = <b>názov</b> + <b>prípona</b>, oddelené <b>poslednou bodkou</b>."),
+  vlastnosti: fig(SV(440, 250, `
+    ${box(20, 14, 400, 226, "#fff", "#C9CED6", 8)}<rect x="20" y="14" width="400" height="28" rx="8" fill="#F3F3F3"/><rect x="20" y="34" width="400" height="8" fill="#F3F3F3"/>${T(34, 33, "Vlastnosti: vylet.jpg", { fs: 11.5, b: 1 })}${T(406, 33, "✕", { a: "end", fs: 11 })}
+    ${[["Typ súboru:", "Obrázok JPG (.jpg)"], ["Umiestnenie:", "C:\\Používatelia\\Eva\\Obrázky"], ["Veľkosť:", "2,4 MB (2 516 582 bajtov)"], ["Vytvorený:", "12. 5. 2026 9:14"], ["Zmenený:", "12. 5. 2026 9:20"], ["Otvorený:", "3. 9. 2026 18:02"]].map(([a, b], i) => `${T(40, 66 + i * 22, a, { fs: 11, c: C.mut })}${T(140, 66 + i * 22, b, { fs: 11 })}`).join("")}
+    <line x1="36" y1="196" x2="404" y2="196" stroke="${C.line}"/>${T(40, 220, "Atribúty:", { fs: 11, c: C.mut })}
+    ${[["Len na čítanie", 1], ["Skrytý", 0], ["Archív", 1]].map(([n, on], i) => `<rect x="${118 + i * 100}" y="208" width="14" height="14" rx="3" fill="${on ? A : "#fff"}" stroke="${A}"/>${on ? T(125 + i * 100, 219, "✓", { a: "middle", fs: 10.5, b: 1, c: "#fff" }) : ""}${T(138 + i * 100, 220, n, { fs: 11 })}`).join("")}`, "Vlastnosti súboru"),
+    "Okrem obsahu eviduje systém o súbore <b>typ, veľkosť, dátumy</b> a <b>atribúty</b>."),
+  asoc: fig(SV(440, 240, `
+    ${T(220, 22, "Asociácia: prípona → program", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[[".txt", "📝", "Poznámkový blok"], [".xlsx", "📊", "Excel"], [".pptx", "📙", "PowerPoint"], [".jpg", "🖼️", "Fotky"]].map(([e, i, p], k) => { const y = 40 + k * 46; return `${box(30, y, 96, 36, AS, A, 8)}${T(78, y + 23, e, { a: "middle", fs: 13, b: 1, mono: 1, c: A })}${ar(130, y + 18, 196, y + 18, C.mut, 2)}${box(200, y, 210, 36, "#fff", C.line, 8)}${T(222, y + 24, i, { a: "middle", fs: 15 })}${T(240, y + 23, p, { fs: 12, b: 1 })}`; }).join("")}
+    ${T(220, 230, "Zmeníš príponu? Obsah ostane rovnaký, otvorí sa iný program.", { a: "middle", fs: 11, c: C.mut })}`, "Asociácia súborov"),
+    "Podľa <b>prípony</b> systém vyberie program, ktorým súbor otvorí."),
+  strom2: fig(SV(440, 304, `
+    ${T(220, 22, "Strom priečinkov na disku D:", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(170, 36, 100, 30, A, null, 8)}${T(220, 56, "D:\\  koreň", { a: "middle", fs: 12, b: 1, c: "#fff" })}
+    ${[["📁 Hry", 70], ["📁 Fotky", 220], ["📁 Projekty", 370]].map(([n, x]) => `<line x1="220" y1="66" x2="${x}" y2="92" stroke="${C.mut}" stroke-width="1.5"/>${box(x - 52, 92, 104, 28, "#fff", C.line, 6)}${T(x, 111, n, { a: "middle", fs: 11.5, b: 1 })}`).join("")}
+    ${[["📁 2025", 160], ["📁 2026", 280]].map(([n, x]) => `<line x1="220" y1="120" x2="${x}" y2="146" stroke="${C.mut}" stroke-width="1.5"/>${box(x - 46, 146, 92, 28, "#fff", C.line, 6)}${T(x, 165, n, { a: "middle", fs: 11.5, b: 1 })}`).join("")}
+    <line x1="160" y1="174" x2="160" y2="196" stroke="${C.mut}" stroke-width="1.5"/>${box(108, 196, 104, 26, AS, A, 6)}${T(160, 214, "🖼️ leto.jpg", { a: "middle", fs: 11.5, b: 1 })}
+    ${box(14, 232, 412, 64, C.bg, null, 8)}${[["absolútna cesta:", "D:\\Fotky\\2025\\leto.jpg", A], ["relatívna z Fotky:", "2025\\leto.jpg", C.ink], ["relatívna z 2026:", "..\\2025\\leto.jpg", C.ink]].map(([l, p, c], i) => T(26, 252 + i * 18, l, { fs: 11, b: 1, c }) + T(150, 252 + i * 18, p, { fs: 11, mono: 1, c })).join("")}`, "Strom priečinkov"),
+    "Strom rastie z <b>koreňa</b> disku. <b>Absolútna</b> cesta začína koreňom, <b>relatívna</b> aktuálnym priečinkom."),
+  cesta: fig(SV(440, 200, `
+    ${T(220, 22, "Ako čítať cestu", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["C:\\", 52, C.ambS, C.amb, "koreň disku"], ["Používatelia\\", 112, "#fff", C.line, ""], ["Peter\\", 64, "#fff", C.line, ""], ["Hudba\\", 66, "#fff", C.line, ""], ["song.mp3", 88, C.okS, C.ok, "súbor"]].reduce((acc, [t, w, f, s, l]) => { const x = acc.x; acc.out += `${box(x, 50, w, 36, f, s, 6)}${T(x + w / 2, 73, t, { a: "middle", fs: 11.5, b: 1, mono: 1 })}${l ? T(x + w / 2, 116, l, { a: "middle", fs: 10.5, b: 1, c: s === C.line ? A : s }) : ""}`; acc.x += w + 4; return acc; }, { x: 14, out: "" }).out}
+    <path d="M72 92 v6 h250 v-6" fill="none" stroke="${A}" stroke-width="1.5"/>${T(197, 116, "priečinky", { a: "middle", fs: 10.5, b: 1, c: A })}
+    ${box(14, 130, 412, 56, C.bg, null, 10)}${T(26, 152, "Každé \\ znamená „vojdi do priečinka“.", { fs: 11.5 })}${T(26, 172, "Čítaj zľava doprava ako adresu: disk → priečinky → súbor.", { fs: 11.5 })}`, "Časti cesty"),
+    "Cesta je ako adresa: <b>disk</b>, potom <b>priečinky</b> a na konci <b>súbor</b>."),
+  kopia: fig(SV(440, 240, `
+    ${T(220, 22, "Kopírovať, alebo presunúť", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["Kopírovať", "Ctrl + C, Ctrl + V", 40, 1], ["Presunúť", "Ctrl + X, Ctrl + V", 140, 0]].map(([n, k, y, keep]) => `${T(20, y + 20, n, { fs: 12.5, b: 1, c: A })}${T(20, y + 38, k, { fs: 10.5, mono: 1, c: C.mut })}
+      ${box(150, y, 100, 60, "#fff", C.line, 8)}${T(200, y + 18, "📁 A", { a: "middle", fs: 11, b: 1 })}${keep ? `${T(200, y + 44, "📄 úloha.docx", { a: "middle", fs: 10.5 })}` : `<rect x="160" y="${y + 30}" width="80" height="20" rx="4" fill="none" stroke="${C.line}" stroke-dasharray="4 3"/>`}
+      ${ar(256, y + 30, 296, y + 30, A, 2.5)}
+      ${box(302, y, 120, 60, AS, A, 8)}${T(362, y + 18, "📁 B", { a: "middle", fs: 11, b: 1 })}${T(362, y + 44, "📄 úloha.docx", { a: "middle", fs: 10.5 })}`).join("")}
+    ${T(200, 116, "originál ostal", { a: "middle", fs: 10.5, b: 1, c: C.ok })}${T(200, 216, "originál zmizol", { a: "middle", fs: 10.5, b: 1, c: C.bad })}`, "Kopírovanie a presun"),
+    "Pri <b>kopírovaní</b> originál ostane, pri <b>presune</b> sa súbor iba premiestni."),
+  zast: fig(SV(440, 230, `
+    ${T(220, 22, "Zástupné znaky pri hľadaní", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["*.mp3", "* = ľubovoľne veľa znakov", [["leto.mp3", 1], ["hit_2026.mp3", 1], ["leto.wav", 0]]], ["foto?.png", "? = práve jeden znak", [["foto1.png", 1], ["fotoA.png", 1], ["foto12.png", 0]]]].map(([p, d, L], i) => { const y = 40 + i * 92; return `${box(14, y, 140, 80, AS, A, 10)}${T(84, y + 34, p, { a: "middle", fs: 15, b: 1, mono: 1, c: A })}${T(84, y + 56, d, { a: "middle", fs: 10.5, c: C.mut })}${L.map(([n, ok], k) => `${T(176, y + 20 + k * 24, (ok ? "✅ " : "❌ ") + n, { fs: 12, mono: 1, c: ok ? C.ink : C.mut })}`).join("")}`; }).join("")}`, "Zástupné znaky"),
+    "Hviezdička <b>*</b> nahradí ľubovoľný počet znakov, otáznik <b>?</b> práve jeden znak."),
+  kos: fig(SV(440, 220, `
+    ${T(220, 22, "Kôš: druhá šanca", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(20, 50, 110, 60, "#fff", C.line, 8)}${T(75, 78, "📄 súbor", { a: "middle", fs: 12, b: 1 })}${T(75, 98, "v priečinku", { a: "middle", fs: 10.5, c: C.mut })}
+    ${ar(134, 70, 196, 70, A, 2.5)}${T(165, 60, "Delete", { a: "middle", fs: 10.5, b: 1, mono: 1, c: A })}
+    ${box(200, 40, 110, 80, AS, A, 8)}${T(255, 76, "🗑️ Kôš", { a: "middle", fs: 14, b: 1 })}${T(255, 98, "dá sa obnoviť", { a: "middle", fs: 10.5, c: C.ok, b: 1 })}
+    ${ar(196, 98, 134, 98, C.ok, 2)}${T(165, 116, "Obnoviť", { a: "middle", fs: 10.5, c: C.ok, b: 1 })}
+    ${ar(75, 114, 75, 160, C.bad, 2.5)}${T(85, 144, "Shift + Delete", { fs: 10.5, b: 1, mono: 1, c: C.bad })}
+    ${box(20, 164, 230, 44, C.badS, C.bad, 8)}${T(135, 191, "❌ natrvalo, bez Koša", { a: "middle", fs: 12, b: 1, c: C.bad })}
+    ${TW(270, 158, "Pozor: súbory z USB kľúča a sieťových diskov idú rovno preč, nie do Koša.", 26, { fs: 10.5, lh: 14, c: C.mut })}`, "Kôš"),
+    "Kláves <b>Delete</b> presunie súbor do Koša, <b>Shift + Delete</b> ho vymaže natrvalo."),
   textbin: fig(SV(440, 250, `
     ${T(111, 20, "TEXTOVÝ súbor", { a: "middle", fs: 13, b: 1, c: A })}${np(8, 30, 206, 150, "zoznam.csv – Poznámkový blok", ["meno;trieda;body", "Jana;II.A;45", "Peter;II.A;41", "Eva;II.B;44"])}
     ${T(111, 200, "čitateľné znaky", { a: "middle", fs: 11.5, b: 1, c: C.ok })}${T(111, 218, ".txt .csv .html .py", { a: "middle", fs: 11, mono: 1, c: C.mut })}
@@ -428,6 +518,14 @@ return {
     ${T(420, 230, "skutočný typ určuje posledná prípona", { a: "end", fs: 10.5, c: C.mut })}`, "Dvojitá prípona"),
     "Útočník pomenuje program <b>foto.jpg.exe</b>. So skrytými príponami vidíš iba „foto.jpg“. Preto si prípony zapni.")
 }; })();
+
+/* ---------- generátor dobrého mena súboru (bez bodov) ---------- */
+const slug = v => String(v || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+function genName() { const G = S.mgen || {}; return [G.d || "", slug(G.p), slug(G.t)].filter(Boolean).join("_") + "." + (G.e || "docx"); }
+function genHTML() { const G = S.mgen; return `<div class="calc"><label>Dátum<input type="date" id="mgd" value="${esc(G.d)}"></label><label>Predmet<input type="text" id="mgp" value="${esc(G.p)}" placeholder="napr. biológia"></label><label>Téma<input type="text" id="mgt" value="${esc(G.t)}" placeholder="napr. moja téma"></label><label>Prípona<select id="mge">${["docx", "pptx", "xlsx", "pdf", "jpg"].map(x => `<option ${x === G.e ? "selected" : ""}>${x}</option>`).join("")}</select></label></div>
+    <p style="margin:10px 0 0">Navrhované meno: <code class="pathbar" id="mgout" style="display:inline-block">${esc(genName())}</code></p>
+    <p class="muted" style="font-size:14px;margin:6px 0 0">Diakritika zmizne, medzery a zvláštne znaky nahradí podčiarkovník, dátum na začiatku zoradí súbory podľa času.</p>`; }
+function genInput(e) { const id = e.target.id; if (!["mgd", "mgp", "mgt", "mge"].includes(id)) return false; S.mgen[{ mgd: "d", mgp: "p", mgt: "t", mge: "e" }[id]] = e.target.value; save(); const o = document.getElementById("mgout"); if (o) o.textContent = genName(); return true; }
 
 const KEY = "subory-m21-v1";
 const LESSON = "2.1 Súbor, priečinok, mená a typy súborov";
@@ -452,7 +550,7 @@ const START = {
   guesses: ["Je príliš krátky", "CON je vyhradené meno systému", "Prípona .txt je zakázaná", "Dá sa vytvoriť, to je mýtus"],
   ok: 1, yes: "Presne tak! CON, PRN, AUX, NUL, COM1… sú vyhradené mená zariadení ešte z čias systému MS-DOS.", no: "CON je vyhradené meno: Windows ním označuje konzolu. Podobne PRN, AUX, NUL, COM1 až COM9, LPT1 až LPT9."
 };
-function EXTRA_STATE() { return { files: [{ n: "Dokument1.docx", s: "24 kB" }, { n: "IMG_2034.jpg", s: "3,2 MB" }, { n: "Nový textový dokument.txt", s: "1 kB" }], edit: null, err: null, rg: {}, tsel: null, fs: { dirs: [""], files: Object.assign({}, FILES0), cur: "", sel: null, msg: null, nf: "" } }; }
+function EXTRA_STATE() { return { files: [{ n: "Dokument1.docx", s: "24 kB" }, { n: "IMG_2034.jpg", s: "3,2 MB" }, { n: "Nový textový dokument.txt", s: "1 kB" }], edit: null, err: null, rg: {}, tsel: null, mgen: { d: new Date().toISOString().slice(0, 10), p: "informatika", t: "projekt školská sieť", e: "pptx" }, fs: { dirs: [""], files: Object.assign({}, FILES0), cur: "", sel: null, msg: null, nf: "" } }; }
 
 const Q = (q, opts, a, why) => ({ q, opts, a, why });
 const TASKS = {
@@ -500,30 +598,48 @@ const TASKS = {
 const VIEWS = {
   subor() { return head() + `<h2>Súbor a jeho meno</h2>
     ${guessBox()}
-    <div class="theory"><p><b>Súbor</b> je pomenovaná postupnosť bajtov uložená na pamäťovom médiu (disk, USB kľúč, cloud). Operačný systém o ňom okrem obsahu eviduje <b>meno</b>, <b>veľkosť</b>, <b>dátumy</b> (vytvorenia, poslednej zmeny, posledného prístupu) a <b>atribúty</b>: <i>len na čítanie</i>, <i>skrytý</i>, <i>archív</i>, <i>systémový</i>.</p>
+    <div class="theory tsplit"><div>
+      <p><b>Súbor</b> je pomenovaná postupnosť bajtov uložená na pamäťovom médiu (disk, USB kľúč, cloud). Operačný systém o ňom okrem obsahu eviduje <b>meno</b>, <b>veľkosť</b>, <b>dátumy</b> (vytvorenia, poslednej zmeny, posledného prístupu) a <b>atribúty</b>: <i>len na čítanie</i>, <i>skrytý</i>, <i>archív</i>, <i>systémový</i>.</p>
       <p><b>Meno</b> súboru sa skladá z <b>názvu</b> a <b>prípony</b>, oddelených poslednou bodkou (<code>referat.final.docx</code> má príponu docx). Pravidlá vo Windows:</p>
-      <ul><li>celé meno aj s cestou má najviac 260 znakov, samotné meno najviac 255,</li><li>zakázané znaky: <code>\\ / : * ? " &lt; &gt; |</code>,</li><li>vyhradené mená: <code>CON, PRN, AUX, NUL, COM1–COM9, LPT1–LPT9</code>,</li><li>Windows nerozlišuje veľké a malé písmená (<code>Foto.JPG</code> = <code>foto.jpg</code>), Linux áno,</li><li>v jednom priečinku nemôžu byť dva súbory s rovnakým menom.</li></ul>
-      <p>Dobré meno je výstižné a bez diakritiky a medzier, ak súbor posielaš na web: <code>2026-09-27_referat_vtaky.docx</code>. Dátum v tvare RRRR-MM-DD zoradí súbory chronologicky.</p></div>
+      <table class="rtab"><thead><tr><th>Pravidlo</th><th>Podrobnosti</th></tr></thead><tbody>
+        <tr><td>dĺžka</td><td>meno najviac 255 znakov, celé meno aj s cestou najviac 260</td></tr>
+        <tr><td><b>zakázané znaky</b></td><td><code>\\ / : * ? " &lt; &gt; |</code></td></tr>
+        <tr><td><b>vyhradené mená</b></td><td><code>CON, PRN, AUX, NUL, COM1–COM9, LPT1–LPT9</code></td></tr>
+        <tr><td>veľké a malé písmená</td><td>Windows ich nerozlišuje (<code>Foto.JPG</code> = <code>foto.jpg</code>), Linux áno</td></tr>
+        <tr><td>jedinečnosť</td><td>v jednom priečinku nemôžu byť dva súbory s rovnakým menom</td></tr></tbody></table>
+      <p>Dobré meno je výstižné a bez diakritiky a medzier, ak súbor posielaš na web: <code>2026-09-27_referat_vtaky.docx</code>. Dátum v tvare RRRR-MM-DD zoradí súbory chronologicky.</p>
+    </div><div>${TFIG.meno}</div></div>
+    ${ltfigs(TFIG.vlastnosti)}
+    ${VEDEL("V systéme MS-DOS mohol mať názov súboru najviac 8 znakov a prípona 3 znaky. Preto dodnes stretneš krátke prípony ako .jpg, .htm či .exe.")}
+    <h3>Vyskúšaj: generátor dobrého mena</h3><p>Vyplň údaje a pozri, ako by mal vyzerať názov súboru, ktorý odovzdáš učiteľovi. Za túto časť sa body nedávajú.</p><div class="tool">${genHTML()}</div>
     <h3>Úloha 1: premenuj súbory</h3><p>Klikni na Premenovať, napíš nové meno a potvrď Enterom alebo tlačidlom OK.</p>
     <div class="task">${expHTML()}${S.t.ren ? `<div class="checkbar"><span class="score ${S.t.ren.score < 3 ? "part" : ""}">Splnené: ${S.t.ren.score} z 3</span></div>` : ""}</div>
     <h3>Úloha 2: platné, alebo neplatné meno?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("msort")}</div>` + nextBar(); },
   typy() { return head() + `<h2>Typy súborov</h2>
-    <div class="theory"><p><b>Prípona</b> hovorí, aký je v súbore <b>typ údajov</b>. Operačný systém podľa nej vyberie program, ktorý súbor otvorí: tomu sa hovorí <b>asociácia</b>. Zmenou prípony sa obsah súboru nezmení, iba ho Windows otvorí iným (často nesprávnym) programom.</p>
+    <div class="theory tsplit"><div><p><b>Prípona</b> hovorí, aký je v súbore <b>typ údajov</b>. Operačný systém podľa nej vyberie program, ktorý súbor otvorí: tomu sa hovorí <b>asociácia</b>. Zmenou prípony sa obsah súboru nezmení, iba ho Windows otvorí iným (často nesprávnym) programom.</p>
       <p>Súbory delíme na <b>textové</b> (obsahujú iba znaky: .txt, .csv, .html, .py) a <b>binárne</b> (ľubovoľné bajty: obrázky, zvuk, programy, dokumenty Word). Textový súbor otvoríš aj v Poznámkovom bloku, binárny by tam bol nečitateľný.</p>
-      <p><b>Spustiteľné</b> súbory (.exe, .msi, .bat, .cmd, .ps1, .vbs, .scr) obsahujú príkazy pre počítač. Preto sú nebezpečné, ak prídu od neznámeho odosielateľa. Útočníci ich maskujú <b>dvojitou príponou</b> (<code>foto.jpg.exe</code>), preto si v Prieskumníkovi zapni <i>Zobraziť → Prípony názvov súborov</i>.</p></div>
-    ${tfigs(TFIG.textbin, TFIG.dvojita)}
+      <p><b>Spustiteľné</b> súbory (.exe, .msi, .bat, .cmd, .ps1, .vbs, .scr) obsahujú príkazy pre počítač. Preto sú nebezpečné, ak prídu od neznámeho odosielateľa. Útočníci ich maskujú <b>dvojitou príponou</b> (<code>foto.jpg.exe</code>), preto si v Prieskumníkovi zapni <i>Zobraziť → Prípony názvov súborov</i>.</p>
+    </div><div>${TFIG.asoc}</div></div>
+    ${ltfigs(TFIG.textbin, TFIG.dvojita)}
+    ${VEDEL("Mnohé súbory prezradia svoj typ aj bez prípony. Na ich začiatku je „podpis“: každý súbor PNG začína bajtmi so slovom PNG a súbory ZIP písmenami PK podľa autora formátu Phila Katza.")}
     <h3>Úloha 1: roztrieď prípony</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("tsort")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("typq")}</div>` + nextBar(); },
   strom() { return head() + `<h2>Priečinky a cesty</h2>
-    <div class="theory"><p><b>Priečinok</b> (adresár, zložka) je evidencia súborov a ďalších priečinkov. Priečinky tvoria <b>stromovú štruktúru</b>. Na vrchu je <b>koreň</b> disku (<code>C:\\</code>), pod ním podpriečinky. Priečinok, v ktorom je iný priečinok, je <b>nadradený</b>.</p>
+    <div class="theory tsplit"><div><p><b>Priečinok</b> (adresár, zložka) je evidencia súborov a ďalších priečinkov. Priečinky tvoria <b>stromovú štruktúru</b>. Na vrchu je <b>koreň</b> disku (<code>C:\\</code>), pod ním podpriečinky. Priečinok, v ktorom je iný priečinok, je <b>nadradený</b>.</p>
       <p><b>Absolútna cesta</b> začína koreňom disku a vedie až k súboru: <code>C:\\Používatelia\\Jana\\Dokumenty\\referat.docx</code>. <b>Relatívna cesta</b> vychádza z priečinka, v ktorom práve si: <code>Dejepis\\rimania.pptx</code>. Znak <code>..</code> znamená nadradený priečinok, <code>.</code> aktuálny priečinok.</p>
-      <p>Windows má <b>systémové</b> priečinky (<code>Windows</code>, <code>Program Files</code>), do ktorých nezasahujeme, a <b>používateľské</b> (Dokumenty, Obrázky, Stiahnuté, Plocha) v <code>C:\\Používatelia\\meno</code>. Ďalšie disky majú vlastné písmená: D:, USB kľúč napr. E:.</p></div>
+      <p>Windows má <b>systémové</b> priečinky (<code>Windows</code>, <code>Program Files</code>), do ktorých nezasahujeme, a <b>používateľské</b> (Dokumenty, Obrázky, Stiahnuté, Plocha) v <code>C:\\Používatelia\\meno</code>. Ďalšie disky majú vlastné písmená: D:, USB kľúč napr. E:.</p>
+    </div><div>${TFIG.strom2}</div></div>
+    ${ltfigs(TFIG.cesta)}
+    ${VEDEL("Windows oddeľuje priečinky v ceste spätnou lomkou \\. Linux, macOS aj internetové adresy používajú obyčajnú lomku /, napríklad /home/jana/dokumenty.")}
     <h3>Strom priečinkov</h3>
     <div class="two"><div class="tree">${treeSVG()}</div><div><div class="task" style="margin:0"><p style="margin:0 0 6px"><b>Klikni na položku v strome</b> a uvidíš jej absolútnu cestu:</p><div class="pathbar">${S.tsel ? esc(tpath(S.tsel)) : "…"}</div></div></div></div>
     <h3>Úloha: cesty</h3><p>Pri zápise nezáleží na veľkých písmenách, diakritike ani na type lomky.</p><div class="task">${taskHTML("stin")}</div>` + nextBar(); },
   sprava() { const g = uprGoals(), G = (ok, t) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`; return head() + `<h2>Správa súborov</h2>
-    <div class="theory"><p>Súbory spravujeme v <b>Prieskumníkovi</b> (Win + E). Základné operácie: <b>kopírovanie</b> (Ctrl + C, Ctrl + V, originál zostane), <b>presun</b> (Ctrl + X, Ctrl + V), <b>premenovanie</b> (F2), <b>odstránenie</b> (Delete, do Koša; Shift + Delete natrvalo) a <b>vytvorenie priečinka</b> (Ctrl + Shift + N).</p>
-      <p>Pri ťahaní myšou v rámci jedného disku sa súbor <b>presúva</b>, na iný disk <b>kopíruje</b>. Pri <b>vyhľadávaní</b> pomáhajú zástupné znaky: <code>*</code> ľubovoľný počet znakov (<code>*.docx</code>), <code>?</code> jeden znak (<code>foto?.jpg</code>). <b>Vlastnosti</b> súboru otvoríš cez Alt + Enter.</p></div>
+    <div class="theory tsplit"><div><p>Súbory spravujeme v <b>Prieskumníkovi</b> (Win + E). Základné operácie: <b>kopírovanie</b> (Ctrl + C, Ctrl + V, originál zostane), <b>presun</b> (Ctrl + X, Ctrl + V), <b>premenovanie</b> (F2), <b>odstránenie</b> (Delete, do Koša; Shift + Delete natrvalo) a <b>vytvorenie priečinka</b> (Ctrl + Shift + N).</p>
+      <p>Pri ťahaní myšou v rámci jedného disku sa súbor <b>presúva</b>, na iný disk <b>kopíruje</b>. Pri <b>vyhľadávaní</b> pomáhajú zástupné znaky: <code>*</code> ľubovoľný počet znakov (<code>*.docx</code>), <code>?</code> jeden znak (<code>foto?.jpg</code>). <b>Vlastnosti</b> súboru otvoríš cez Alt + Enter.</p>
+    </div><div>${TFIG.kopia}</div></div>
+    ${ltfigs(TFIG.zast, ...(S.t.opq ? [TFIG.kos] : []))}
+    ${VEDEL("Kôš mal počítač Apple Macintosh už v roku 1984. Do Windows sa dostal až vo Windows 95. Súbory z USB kľúča však do Koša nejdú, mažú sa hneď.")}
     <h3>Úloha 1: uprac plochu</h3><p>Vytvor priečinky a presuň súbory tak, aby vznikla štruktúra: <b>Škola</b> (s podpriečinkami <b>Matematika</b> a <b>Informatika</b>), <b>Fotky</b>, <b>Hudba</b>.</p>
     <div class="task"><ul class="goals">${G(g.dirs, "Všetkých 5 priečinkov")}${G(g["skola/matematika"], "Matematika: zlomky, rovnice")}${G(g["skola/informatika"], "Informatika: python, prezentácia")}${G(g.fotky, "Fotky: 3 obrázky")}${G(g.hudba, "Hudba: 2 pesničky")}</ul>${S.t.upr ? `<div class="checkbar"><span class="score ${S.t.upr.score < 5 ? "part" : ""}">Splnené: ${S.t.upr.score} z 5</span></div>` : ""}</div>
     ${fxHTML()}<div class="row"><button class="ghost" data-fx="reset">↺ Začať upratovanie odznova</button></div>
@@ -536,7 +652,7 @@ function CUSTOM_CLICK(e) {
   if (el && el.dataset.rok !== undefined) { doRename(+el.dataset.rok); save(); render(false); const i = document.getElementById("rn"); if (i) i.focus(); return true; }
   return s13Click(e);
 }
-function CUSTOM_INPUT(e) { return s13Input(e); }
+function CUSTOM_INPUT(e) { return genInput(e) || s13Input(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
@@ -688,7 +804,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
