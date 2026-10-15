@@ -210,13 +210,49 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"navrh": ["Veličina v stĺpci, v záhlaví značka a jednotka: m [g]. Jedno meranie = jeden riadok, v bunkách iba čísla s čiarkou.", "Vypočítané hodnoty vzorcami, konštanty v samostatnej bunke."], "vypocty": ["F = m · g (m v kg): =A2/1000*$F$2; k = F ÷ Δl: =B2/C2; priemer: =PRIEMER(D2:D7)."], "format": ["Tučné záhlavie, orámovanie, rovnaký počet desatinných miest v stĺpci.", "Desatinné miesta menia iba zobrazenie; skutočné zaokrúhlenie: =ZAOKRÚHLIŤ(číslo;počet)."], "kyvadlo": ["T = t₁₀ ÷ 10; výsledok = priemer opakovaných meraní; rozptyl = MAX − MIN."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {
+  navrh: ["Každá <b>veličina</b> má vlastný stĺpec, v záhlaví <b>značka a jednotka</b> v hranatých zátvorkách, napr. t [s].", "Poradie stĺpcov: <b>nezávislá</b> veličina (meníme ju), potom <b>namerané</b> a <b>vypočítané</b> hodnoty.", "Jedno meranie = <b>jeden riadok</b>.", "V bunkách sú iba <b>čísla</b> s desatinnou <b>čiarkou</b>, jednotky nepíšeme.", "Vypočítané hodnoty počítame <b>vzorcami</b>, konštanty dáme do <b>samostatnej bunky</b>.", "Meranie opakujeme a spracujeme <b>priemerom</b>, rozdiely ukazujú <b>chybu merania</b>."],
+  vypocty: ["Hmotnosť v gramoch premeníme na kilogramy: <b>m [g] ÷ 1000</b>.", "Sila: <b>F = m · g</b>, m v kg, g = 10 N/kg, jednotka newton (N).", "<b>Tuhosť pružiny</b>: k = F ÷ Δl, jednotka N/cm.", "<b>Hookov zákon</b>: predĺženie je priamo úmerné sile, k je pri všetkých meraniach takmer rovnaké.", "Konštantu (g) zapíšeme do jednej bunky a vo vzorci ju zamkneme <b>absolútnou adresou</b> ($).", "Vzorec napíšeme raz a skopírujeme ho <b>vyplnením nadol</b>."],
+  format: ["Záhlavie zvýrazníme <b>tučným písmom</b>, prípadne výplňou.", "Tabuľke pridáme <b>orámovanie</b> (Domov → Písmo → Orámovanie).", "V stĺpci majú všetky čísla rovnaký <b>počet desatinných miest</b>, podľa presnosti meradla.", "Počet desatinných miest mení iba <b>zobrazenie</b>, Excel počíta s presnou hodnotou.", "Skutočné zaokrúhlenie: <b>=ZAOKRÚHLIŤ(číslo;počet)</b>."],
+  kyvadlo: ["<b>Perióda T</b> = čas jedného kmitu (tam aj späť).", "Meriame čas <b>10 kmitov</b> a delíme ho 10, chyba stopiek sa tak zmenší.", "Meranie <b>opakujeme</b>, výsledok je <b>priemer</b>: funkcia PRIEMER.", "<b>Rozptyl</b> = najväčšia − najmenšia hodnota: MAX − MIN.", "<b>Náhodné chyby</b> zmenší priemer, meranie s <b>hrubou chybou</b> zopakujeme."]
+};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -348,42 +384,125 @@ const PF = (() => {
 })();
 
 /* Ilustrácie – Tercia 5.2 Tvorba tabuľky (meranie na fyzike) */
-const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = C.acc, AS = C.accS, G = "#217346";
-const sheet = (x, y, cols, rows, cw, hl = {}) => { let o = `<rect x="${x}" y="${y}" width="${24 + cols.length * cw}" height="${20 * (rows.length + 2)}" fill="#fff" stroke="#C8C8C8"/>`;
-  cols.forEach((_, j) => { o += `<rect x="${x + 24 + j * cw}" y="${y}" width="${cw}" height="20" fill="#F0F0F0" stroke="#D0D0D0"/>${T(x + 24 + j * cw + cw / 2, y + 14, "ABCDEFG"[j], { a: "middle", fs: 9.5, c: C.mut })}`; });
-  [...Array(rows.length + 1)].forEach((_, i) => { o += `<rect x="${x}" y="${y + 20 + i * 20}" width="24" height="20" fill="#F0F0F0" stroke="#D0D0D0"/>${T(x + 12, y + 34 + i * 20, String(i + 1), { a: "middle", fs: 9.5, c: C.mut })}`; });
-  [cols, ...rows].forEach((r, i) => r.forEach((v, j) => { const k = i + "," + j; o += `<rect x="${x + 24 + j * cw}" y="${y + 20 + i * 20}" width="${cw}" height="20" fill="${hl[k] || (i ? "#fff" : "#E2EFDA")}" stroke="#D0D0D0"/>${T(x + 24 + j * cw + (i && typeof v === "number" ? cw - 5 : 5), y + 34 + i * 20, typeof v === "number" ? String(v).replace(".", ",") : v, { a: i && typeof v === "number" ? "end" : "start", fs: 10, b: !i, mono: typeof v === "number" })}`; })); return o; };
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = C.acc, AS = C.accS, G = "#217346", GS = "#E2EFDA", HD = "#F0F0F0";
+/* mriežka hárka: x, y, záhlavia stĺpcov, riadky, šírka stĺpca, zvýraznenie {"r,c": farba}, voľby */
+const sheet = (x, y, cols, rows, cw, hl = {}, o = {}) => { const rh = o.rh || 22, hw = 24; let s = "";
+  cols.forEach((_, j) => { s += `<rect x="${x + hw + j * cw}" y="${y}" width="${cw}" height="${rh}" fill="${HD}" stroke="#D0D0D0"/>${T(x + hw + j * cw + cw / 2, y + rh / 2 + 4, "ABCDEFG"[j], { a: "middle", fs: 11, b: 1, c: C.mut })}`; });
+  [...Array(rows.length + 1)].forEach((_, i) => { s += `<rect x="${x}" y="${y + rh + i * rh}" width="${hw}" height="${rh}" fill="${HD}" stroke="#D0D0D0"/>${T(x + hw / 2, y + rh + i * rh + rh / 2 + 4, String(i + 1), { a: "middle", fs: 11, b: 1, c: C.mut })}`; });
+  [cols, ...rows].forEach((r, i) => r.forEach((v, j) => { const k = i + "," + j, num = i && typeof v === "number", xx = x + hw + j * cw, yy = y + rh + i * rh;
+    s += `<rect x="${xx}" y="${yy}" width="${cw}" height="${rh}" fill="${hl[k] || (i ? "#fff" : (o.hf || GS))}" stroke="#D0D0D0"/>`;
+    if (v !== "") s += T(num ? xx + cw - 5 : xx + 5, yy + rh / 2 + 4, num ? String(v).replace(".", ",") : v, { a: num ? "end" : null, fs: 11.5, b: !i && !o.nb, c: o.tc && o.tc[k] || C.ink }); })); return s; };
+const Y = "#FFF2CC";
 return {
-  dobra: fig(SV(440, 270, `
-    ${T(220, 18, "Ohrievanie vody: dobre navrhnutá tabuľka", { a: "middle", fs: 12, b: 1 })}
-    ${sheet(16, 30, ["t [min]", "T [°C]", "ΔT [°C]"], [[0, 20.5, 0], [1, 27.0, 6.5], [2, 33.5, 13], [3, 39.0, 18.5], [4, 45.5, 25]], 82, { "1,2": "#FFF2CC", "2,2": "#FFF2CC", "3,2": "#FFF2CC", "4,2": "#FFF2CC", "5,2": "#FFF2CC" })}
-    ${ar(300, 50, 276, 50, A, 1.5)}${T(304, 47, "značka a jednotka", { fs: 10, b: 1, c: A })}${T(304, 60, "v záhlaví", { fs: 10, c: A })}
-    ${ar(70, 176, 70, 164, A, 1.5)}${T(30, 190, "nezávislá veličina", { fs: 10, b: 1, c: A })}${T(30, 203, "v 1. stĺpci", { fs: 10, c: A })}
-    ${ar(300, 112, 276, 112, A, 1.5)}${T(304, 109, "vypočítané vzorcom", { fs: 10, b: 1, c: A })}<text x="304" y="123" font-size="10" font-family="Consolas,monospace" fill="${G}">=B3-B$2</text>
-    ${ar(300, 152, 276, 152, A, 1.5)}${T(304, 149, "1 meranie = 1 riadok", { fs: 10, b: 1, c: A })}${T(304, 163, "čísla s čiarkou", { fs: 10, c: A })}
-    ${box(16, 220, 408, 42, C.bg, C.line, 8)}${T(28, 238, "Konštanta do samostatnej bunky:", { fs: 10.5, b: 1 })}<rect x="210" y="226" width="60" height="20" fill="#fff" stroke="#C8C8C8"/>${T(216, 240, "c [J/kg°C]", { fs: 8.5, b: 1 })}<rect x="270" y="226" width="54" height="20" fill="#FFF2CC" stroke="#C8C8C8"/>${T(318, 240, "4200", { a: "end", fs: 10, mono: 1 })}${T(334, 240, "vo vzorci $F$1", { fs: 9.5, c: G, mono: 1 })}${T(28, 254, "keď sa zmení, prepočíta sa celá tabuľka", { fs: 9.5, c: C.mut })}`, "Dobre navrhnutá tabuľka merania"),
+  dobra: fig(SV(440, 286, `
+    ${T(220, 20, "Ohrievanie vody: dobre navrhnutá tabuľka", { a: "middle", fs: 13, b: 1, c: A })}
+    ${sheet(14, 32, ["t [min]", "T [°C]", "ΔT [°C]"], [[0, 20.5, 0], [1, 27, 6.5], [2, 33.5, 13], [3, 39, 18.5], [4, 45.5, 25]], 74, { "1,2": Y, "2,2": Y, "3,2": Y, "4,2": Y, "5,2": Y })}
+    ${ar(290, 65, 264, 65, A, 1.6)}${T(294, 62, "značka a jednotka", { fs: 11, b: 1, c: A })}${T(294, 76, "v záhlaví", { fs: 11, c: A })}
+    ${ar(290, 109, 264, 109, A, 1.6)}${T(294, 106, "vypočítané vzorcom", { fs: 11, b: 1, c: A })}<text x="294" y="122" font-size="11" font-family="Consolas,monospace" fill="${G}">=B3-B$2</text>
+    ${ar(290, 153, 264, 153, A, 1.6)}${T(294, 150, "1 meranie = 1 riadok", { fs: 11, b: 1, c: A })}${T(294, 164, "v bunkách iba čísla", { fs: 11, c: A })}
+    ${ar(75, 204, 75, 190, A, 1.6)}${T(90, 206, "nezávislá veličina (meníme ju) v 1. stĺpci", { fs: 11, b: 1, c: A })}
+    ${box(14, 216, 412, 62, C.bg, C.line, 8)}${T(26, 238, "Konštanta v samostatnej bunke:", { fs: 11.5, b: 1 })}<rect x="236" y="223" width="100" height="22" fill="#fff" stroke="#C8C8C8"/>${T(242, 238, "c [J/(kg·°C)]", { fs: 11, b: 1 })}<rect x="336" y="223" width="60" height="22" fill="${Y}" stroke="#C8C8C8"/>${T(390, 238, "4200", { a: "end", fs: 11.5 })}
+    ${T(26, 266, "Vo vzorci ju zapíšeš ako $F$1. Keď ju zmeníš, prepočíta sa celá tabuľka.", { fs: 11 })}`, "Dobre navrhnutá tabuľka merania"),
     "V záhlaví je <b>značka a jednotka</b>, v prvom stĺpci veličina, ktorú meníme, a každé meranie má <b>vlastný riadok</b>."),
-  priemer: fig(SV(440, 230, `
-    ${T(220, 18, "Opakované meranie: čas, za ktorý zbehne autíčko z naklonenej dosky", { a: "middle", fs: 11, b: 1 })}
-    ${[2.31, 2.18, 2.42, 2.25, 2.29].map((v, i) => { const x = 60 + (v - 2.1) * 800; return `<circle cx="${x}" cy="90" r="7" fill="${A}"/>${T(x, v === 2.29 ? 58 : 74, String(v).replace(".", ","), { a: "middle", fs: 9.5, mono: 1 })}`; }).join("")}
-    <line x1="40" y1="110" x2="400" y2="110" stroke="${C.mut}"/>${[2.1, 2.2, 2.3, 2.4, 2.5].map(v => { const x = 60 + (v - 2.1) * 800; return `<line x1="${x}" y1="106" x2="${x}" y2="114" stroke="${C.mut}"/>${T(x, 128, String(v.toFixed(1)).replace(".", ",") + " s", { a: "middle", fs: 9.5, c: C.mut })}`; }).join("")}
+  stlpce: fig(SV(440, 250, `
+    ${T(220, 20, "Poradie stĺpcov: Ohmov zákon", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["meníme", "nezávislá", "U [V]", ["1,5", "3,0", "4,5"], C.blue, C.blueS], ["meriame", "nameraná", "I [A]", ["0,10", "0,20", "0,30"], C.ok, C.okS], ["vypočítame", "vzorcom", "R [Ω]", ["15", "15", "15"], C.amb, C.ambS]].map(([n, d, h, v, c, cs], i) => { const x = 14 + i * 142;
+      return `${box(x, 32, 128, 132, cs, c, 10)}${T(x + 64, 50, n, { a: "middle", fs: 12.5, b: 1, c })}${T(x + 64, 64, d, { a: "middle", fs: 11, c: C.mut })}<rect x="${x + 19}" y="72" width="90" height="22" fill="${GS}" stroke="#C8C8C8"/>${T(x + 64, 87, h, { a: "middle", fs: 12, b: 1 })}${v.map((t, k) => `<rect x="${x + 19}" y="${94 + k * 22}" width="90" height="22" fill="#fff" stroke="#D0D0D0"/>${T(x + 103, 109 + k * 22, t, { a: "end", fs: 11.5 })}`).join("")}${i < 2 ? ar(x + 130, 98, x + 140, 98, C.mut, 1.8) : ""}`; }).join("")}
+    ${box(14, 176, 412, 66, "#fff", C.line, 8)}${T(28, 216, "U [V]", { fs: 22, b: 1, mono: 1, c: A })}
+    ${T(122, 198, "U = značka veličiny (napätie)", { fs: 11.5 })}${T(122, 216, "[V] = jednotka v hranatých zátvorkách", { fs: 11.5 })}${T(122, 234, "Hneď vidíš, v čom sú čísla v stĺpci.", { fs: 11, c: C.mut })}`, "Poradie stĺpcov"),
+    "Najprv veličina, ktorú <b>meníme</b>, potom <b>nameraná</b> a nakoniec <b>vypočítaná</b>."),
+  zla: fig(SV(440, 220, `
+    ${T(220, 20, "Takto nie", { a: "middle", fs: 13, b: 1, c: C.bad })}
+    ${sheet(14, 32, ["čas", "teplota"], [["0 min", "20.5"], ["1, 2, 3", "27; 33,5; 39"], ["", "45,5 °C"]], 96, {}, { hf: HD })}
+    ${["bez jednotky v záhlaví", "jednotka v bunke = text", "bodka namiesto čiarky", "viac meraní v 1 bunke", "chýba údaj v riadku"].map((t, i) => T(240, 50 + i * 22, "✘ " + t, { fs: 11, b: 1, c: C.bad })).join("")}
+    ${box(14, 160, 412, 50, C.badS, null, 8)}${T(220, 181, "S textom „45,5 °C“ ani „20.5“ Excel nepočíta.", { a: "middle", fs: 11.5, b: 1, c: C.bad })}${T(220, 199, "Vzorec s takou bunkou skončí chybou #HODNOTA!", { a: "middle", fs: 11 })}`, "Zle navrhnutá tabuľka"),
+    "Chyby, pre ktoré tabuľka nepočíta: <b>jednotky v bunkách</b>, desatinná bodka a viac hodnôt v jednej bunke."),
+  sila: fig(SV(440, 250, `
+    ${T(220, 20, "Ako vypočítať silu zo závažia", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="20" y="34" width="120" height="8" fill="${C.mut}"/>
+    <polyline points="80,42 80,52 66,58 94,66 66,74 94,82 66,90 94,98 66,106 94,114 80,120 80,128" fill="none" stroke="${C.ink}" stroke-width="2"/>
+    ${box(56, 128, 48, 40, A, null, 4)}${T(80, 153, "400 g", { a: "middle", fs: 11.5, b: 1, c: "#fff" })}
+    ${ar(80, 172, 80, 210, C.bad, 2.4)}${T(90, 202, "F", { fs: 14, b: 1, i: 1, c: C.bad })}
+    <line x1="112" y1="96" x2="136" y2="96" stroke="${C.mut}" stroke-dasharray="3 3"/><line x1="112" y1="128" x2="136" y2="128" stroke="${C.mut}" stroke-dasharray="3 3"/>${ar(124, 100, 124, 124, C.mut, 1.5)}${T(130, 116, "Δl", { fs: 11.5, b: 1, c: C.mut })}
+    ${[["m = 400 g", "hmotnosť v gramoch"], ["m = 0,4 kg", "÷ 1000 (gramy na kilogramy)"], ["F = 0,4 · 10 = 4 N", "· g, kde g = 10 N/kg"]].map(([a, b], i) => { const y = 36 + i * 62; return `${box(172, y, 254, 48, i === 2 ? C.badS : AS, i === 2 ? C.bad : A, 8)}${T(186, y + 21, a, { fs: 13, b: 1 })}${T(186, y + 39, b, { fs: 11, c: C.mut })}${i < 2 ? ar(300, y + 50, 300, y + 60, C.mut, 1.6) : ""}`; }).join("")}
+    ${T(220, 238, "Sila v newtonoch: F = m · g (m musí byť v kilogramoch)", { a: "middle", fs: 11.5, b: 1 })}`, "Výpočet sily"),
+    "Hmotnosť najprv premeníme na <b>kilogramy</b>, potom vynásobíme <b>g = 10 N/kg</b>."),
+  hooke: fig(SV(440, 250, `
+    ${T(220, 20, "Hookov zákon: sila a predĺženie", { a: "middle", fs: 13, b: 1, c: A })}
+    <line x1="56" y1="206" x2="270" y2="206" stroke="${C.ink}"/><line x1="56" y1="206" x2="56" y2="40" stroke="${C.ink}"/>
+    ${[0, 2, 4, 6, 8].map(v => { const x = 56 + v * 24; return `<line x1="${x}" y1="206" x2="${x}" y2="210" stroke="${C.ink}"/>${T(x, 224, v, { a: "middle", fs: 11, c: C.mut })}`; }).join("")}
+    ${[0, 1, 2, 3, 4].map(v => { const y = 206 - v * 36; return `<line x1="52" y1="${y}" x2="56" y2="${y}" stroke="${C.ink}"/>${T(46, y + 4, v, { a: "end", fs: 11, c: C.mut })}`; }).join("")}
+    ${T(160, 242, "Δl [cm]", { a: "middle", fs: 11.5, b: 1 })}${T(20, 34, "F [N]", { fs: 11.5, b: 1 })}
+    <line x1="56" y1="206" x2="260" y2="53" stroke="${A}" stroke-width="2.5"/>
+    ${[[2, 1], [4, 2], [6, 3], [8, 4]].map(([x, y]) => `<circle cx="${56 + x * 24}" cy="${206 - y * 36}" r="5" fill="${A}"/>`).join("")}
+    <line x1="152" y1="206" x2="152" y2="134" stroke="${C.mut}" stroke-dasharray="3 3"/><line x1="56" y1="134" x2="152" y2="134" stroke="${C.mut}" stroke-dasharray="3 3"/>
+    ${box(290, 40, 136, 112, AS, A, 10)}${T(358, 62, "tuhosť pružiny", { a: "middle", fs: 12, b: 1, c: A })}${T(358, 88, "k = F ÷ Δl", { a: "middle", fs: 14, b: 1 })}${T(358, 112, "2 N ÷ 4 cm", { a: "middle", fs: 11.5 })}${T(358, 134, "= 0,5 N/cm", { a: "middle", fs: 13, b: 1, c: A })}
+    ${T(290, 176, "dvojnásobná sila", { fs: 11 })}${T(290, 192, "→ dvojnásobné predĺženie", { fs: 11 })}${T(290, 214, "k je pri všetkých", { fs: 11, c: C.mut })}${T(290, 230, "meraniach takmer rovnaké", { fs: 11, c: C.mut })}`, "Hookov zákon"),
+    "Predĺženie je <b>priamo úmerné</b> sile. Podiel F ÷ Δl je <b>tuhosť pružiny k</b>."),
+  konstanta: fig(SV(440, 246, `
+    ${T(220, 20, "Ako ďaleko udrel blesk?", { a: "middle", fs: 13, b: 1, c: A })}
+    ${sheet(14, 32, ["t [s]", "s [m]", "", "v [m/s]"], [[1, 340, "", 340], [2.5, 850, "", ""], [4, 1360, "", ""]], 62, { "1,3": Y, "0,2": "#fff" })}
+    ${T(14 + 24 + 3 * 62 + 31, 160, "🔒 D2", { a: "middle", fs: 12, b: 1, c: C.amb })}
+    ${[["B2", "=A2*$D$2"], ["B3", "=A3*$D$2"], ["B4", "=A4*$D$2"]].map(([r, f], i) => `${T(300, 66 + i * 22, r + ":", { fs: 11.5, b: 1, c: G })}${T(328, 66 + i * 22, f, { fs: 11.5, mono: 1 })}`).join("")}
+    ${box(14, 172, 412, 64, C.ambS, null, 8)}${T(220, 194, "Rýchlosť zvuku je konštanta: jedna bunka D2.", { a: "middle", fs: 11.5, b: 1 })}${T(220, 212, "Vo vzorci ju zamkneš znakom $, pri vyplnení nadol sa neposunie.", { a: "middle", fs: 11 })}${T(220, 228, "Čas od blesku po hrom × 340 m/s = vzdialenosť búrky.", { a: "middle", fs: 11, c: C.mut })}`, "Konštanta v bunke"),
+    "<b>Konštanta</b> má vlastnú bunku. Vzorce na ňu odkazujú <b>absolútnou adresou</b>."),
+  formatovanie: fig(SV(440, 230, `
+    ${T(220, 20, "Pred formátovaním a po ňom", { a: "middle", fs: 13, b: 1, c: A })}
+    ${T(110, 46, "pred", { a: "middle", fs: 12, b: 1, c: C.bad })}${T(330, 46, "po", { a: "middle", fs: 12, b: 1, c: C.ok })}
+    ${[["t [s]", "v [m/s]"], ["1,5", "1,3333333"], ["3", "2,5"], ["4,25", "3,1415927"]].map((r, i) => r.map((v, j) => { const x = 20 + j * 90, y = 56 + i * 26; return `<rect x="${x}" y="${y}" width="90" height="26" fill="#fff" stroke="#E4E4E4"/>${T(i ? x + 84 : x + 6, y + 17, v, { fs: 11.5, a: i ? "end" : null })}`; }).join("")).join("")}
+    ${[["t [s]", "v [m/s]"], ["1,50", "1,33"], ["3,00", "2,50"], ["4,25", "3,14"]].map((r, i) => r.map((v, j) => { const x = 240 + j * 90, y = 56 + i * 26; return `<rect x="${x}" y="${y}" width="90" height="26" fill="${i ? "#fff" : GS}" stroke="${C.ink}" stroke-width="1.2"/>${T(i ? x + 84 : x + 45, y + 17, v, { fs: 11.5, b: !i, a: i ? "end" : "middle" })}`; }).join("")).join("")}
+    ${ar(206, 108, 232, 108, C.ok, 2)}
+    ${box(14, 176, 412, 46, C.okS, null, 8)}${T(220, 196, "tučné záhlavie s výplňou · orámovanie · rovnaký počet", { a: "middle", fs: 11.5, b: 1, c: C.ok })}${T(220, 213, "desatinných miest v celom stĺpci", { a: "middle", fs: 11.5, b: 1, c: C.ok })}`, "Formátovanie tabuľky"),
+    "Naformátovaná tabuľka má <b>zvýraznené záhlavie</b>, <b>orámovanie</b> a rovnako zaokrúhlené čísla."),
+  zaokruhlit: fig(SV(440, 240, `
+    ${T(220, 20, "Prečo súčet „nesedí“?", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 34, 200, 158, C.badS, C.bad, 10)}${T(114, 54, "iba formát (1 des. miesto)", { a: "middle", fs: 11.5, b: 1, c: C.bad })}
+    ${[["0,4", "0,44"], ["0,4", "0,44"], ["0,4", "0,44"], ["1,3", "1,32"]].map(([v, s], i) => `<rect x="44" y="${64 + i * 26}" width="70" height="26" fill="#fff" stroke="#BDBDBD"${i === 3 ? ` stroke-width="2"` : ""}/>${T(108, 81 + i * 26, v, { a: "end", fs: 12, b: i === 3 })}${T(124, 81 + i * 26, "v pamäti " + s, { fs: 11, c: C.mut })}`).join("")}
+    ${T(114, 184, "0,4 + 0,4 + 0,4 ≠ 1,3 ?!", { a: "middle", fs: 11.5, b: 1, c: C.bad })}
+    ${box(226, 34, 200, 158, C.okS, C.ok, 10)}${T(326, 54, "funkcia ZAOKRÚHLIŤ", { a: "middle", fs: 11.5, b: 1, c: C.ok })}
+    ${[["0,4", "0,4"], ["0,4", "0,4"], ["0,4", "0,4"], ["1,2", "1,2"]].map(([v, s], i) => `<rect x="256" y="${64 + i * 26}" width="70" height="26" fill="#fff" stroke="#BDBDBD"${i === 3 ? ` stroke-width="2"` : ""}/>${T(320, 81 + i * 26, v, { a: "end", fs: 12, b: i === 3 })}${T(336, 81 + i * 26, "v pamäti " + s, { fs: 11, c: C.mut })}`).join("")}
+    ${T(326, 184, "hodnota je naozaj 0,4", { a: "middle", fs: 11.5, b: 1, c: C.ok })}
+    <text x="220" y="222" text-anchor="middle" font-size="12" font-family="Consolas,monospace" fill="${G}">=ZAOKRÚHLIŤ(A1;1)  →  0,44 sa zmení na 0,4</text>`, "Zaokrúhlenie"),
+    "Formát mení iba <b>zobrazenie</b>. Hodnotu naozaj zmení až funkcia <b>ZAOKRÚHLIŤ</b>."),
+  presnost: fig(SV(440, 228, `
+    ${T(220, 20, "Koľko desatinných miest? Podľa meradla", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["📏", "pravítko s milimetrami", "12,3 cm", "1 desatinné miesto v cm"], ["⏱️", "stopky na stotiny", "14,27 s", "2 desatinné miesta"], ["⚖️", "váha na gramy", "152 g", "0 desatinných miest"]].map(([e, n, v, d], i) => { const y = 34 + i * 58; return `${box(14, y, 412, 50, i % 2 ? "#fff" : AS, A, 8)}${T(40, y + 33, e, { a: "middle", fs: 22 })}${T(66, y + 21, n, { fs: 12, b: 1 })}${T(66, y + 39, d, { fs: 11, c: C.mut })}${T(412, y + 32, v, { a: "end", fs: 16, b: 1, c: A })}`; }).join("")}
+    ${T(220, 220, "Viac desatinných miest, ako meradlo zmeria, nemá zmysel.", { a: "middle", fs: 11.5 })}`, "Presnosť merania"),
+    "Počet desatinných miest volíme podľa <b>presnosti meradla</b>."),
+  kmity: fig(SV(440, 250, `
+    ${T(220, 20, "Perióda kyvadla", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="40" y="34" width="140" height="8" fill="${C.mut}"/>
+    <line x1="110" y1="42" x2="62" y2="160" stroke="${C.line}" stroke-width="2"/><circle cx="62" cy="160" r="12" fill="${C.accS}" stroke="${A}"/>
+    <line x1="110" y1="42" x2="158" y2="160" stroke="${C.line}" stroke-width="2"/><circle cx="158" cy="160" r="12" fill="${C.accS}" stroke="${A}"/>
+    <line x1="110" y1="42" x2="110" y2="170" stroke="${C.ink}" stroke-width="2"/><circle cx="110" cy="170" r="13" fill="${A}"/>
+    <path d="M62 186 Q110 212 158 186" fill="none" stroke="${C.ok}" stroke-width="2" marker-end="url(#M${C.ok.slice(1)})" marker-start="url(#M${C.ok.slice(1)})"/>
+    ${T(110, 232, "1 kmit = tam aj späť", { a: "middle", fs: 12, b: 1, c: C.ok })}
+    ${box(206, 36, 220, 54, "#fff", C.line, 8)}${T(220, 58, "10 kmitov stopkami:", { fs: 11.5 })}${T(220, 78, "t₁₀ = 18,6 s", { fs: 14, b: 1 })}
+    ${ar(316, 92, 316, 108, C.mut, 1.6)}
+    ${box(206, 112, 220, 54, AS, A, 8)}${T(220, 134, "perióda (čas 1 kmitu):", { fs: 11.5 })}${T(220, 154, "T = 18,6 ÷ 10 = 1,86 s", { fs: 14, b: 1, c: A })}
+    ${T(206, 190, "Prečo 10 kmitov? Chyba pri stlačení", { fs: 11 })}${T(206, 206, "stopiek (asi 0,2 s) sa rozdelí", { fs: 11 })}${T(206, 222, "na 10 kmitov, teda iba 0,02 s.", { fs: 11 })}`, "Perióda kyvadla"),
+    "<b>Perióda T</b> je čas jedného kmitu. Presnejšie ju zistíme z času <b>10 kmitov</b>."),
+  priemer: fig(SV(440, 240, `
+    ${T(220, 20, "Autíčko z naklonenej dosky: 5 meraní času", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[2.31, 2.18, 2.42, 2.25, 2.29].map((v, i) => { const x = 60 + (v - 2.1) * 800; return `<circle cx="${x}" cy="90" r="7" fill="${A}"/>${T(x, v === 2.29 ? 60 : 76, String(v).replace(".", ","), { a: "middle", fs: 11 })}`; }).join("")}
+    <line x1="40" y1="110" x2="400" y2="110" stroke="${C.mut}"/>${[2.1, 2.2, 2.3, 2.4, 2.5].map(v => { const x = 60 + (v - 2.1) * 800; return `<line x1="${x}" y1="106" x2="${x}" y2="114" stroke="${C.mut}"/>${T(x, 130, v.toFixed(1).replace(".", ",") + " s", { a: "middle", fs: 11, c: C.mut })}`; }).join("")}
     <line x1="${60 + (2.29 - 2.1) * 800}" y1="80" x2="${60 + (2.29 - 2.1) * 800}" y2="112" stroke="${C.ok}" stroke-width="2.5" stroke-dasharray="4 3"/>
-    ${box(16, 146, 200, 74, C.okS, C.ok, 8)}${T(116, 168, "priemer ≈ 2,29 s", { a: "middle", fs: 12, b: 1, c: C.ok })}${T(116, 186, "výsledok merania", { a: "middle", fs: 10 })}<text x="116" y="206" text-anchor="middle" font-size="9.5" font-family="Consolas,monospace" fill="${G}">=PRIEMER(B2:B6)</text>
-    ${box(224, 146, 200, 74, C.ambS, C.amb, 8)}${T(324, 168, "rozptyl 2,42 − 2,18 = 0,24 s", { a: "middle", fs: 11, b: 1, c: C.amb })}${T(324, 186, "ako veľmi sa merania líšia", { a: "middle", fs: 10 })}<text x="324" y="206" text-anchor="middle" font-size="9.5" font-family="Consolas,monospace" fill="${G}">=MAX(…)-MIN(…)</text>`, "Opakované meranie a priemer"),
+    ${box(14, 146, 202, 84, C.okS, C.ok, 8)}${T(115, 168, "priemer ≈ 2,29 s", { a: "middle", fs: 12.5, b: 1, c: C.ok })}${T(115, 188, "výsledok merania", { a: "middle", fs: 11 })}<text x="115" y="212" text-anchor="middle" font-size="11" font-family="Consolas,monospace" fill="${G}">=PRIEMER(C2:C6)</text>
+    ${box(224, 146, 202, 84, C.ambS, C.amb, 8)}${T(325, 168, "rozptyl 2,42 − 2,18 = 0,24 s", { a: "middle", fs: 11.5, b: 1, c: C.amb })}${T(325, 188, "ako veľmi sa merania líšia", { a: "middle", fs: 11 })}<text x="325" y="212" text-anchor="middle" font-size="11" font-family="Consolas,monospace" fill="${G}">=MAX(…)-MIN(…)</text>`, "Opakované meranie a priemer"),
     "Každé meranie dopadne trochu inak. Výsledkom je <b>priemer</b>, rozdiely ukazujú <b>chybu merania</b>."),
-  zla: fig(SV(440, 210, `
-    ${T(220, 18, "Takto nie", { a: "middle", fs: 12, b: 1, c: C.bad })}
-    ${sheet(16, 28, ["čas", "teplota"], [["0 min", "20.5"], ["1, 2, 3", "27; 33,5; 39"], ["", "45,5 °C"]], 110)}
-    ${[["bez jednotky v záhlaví", 50], ["jednotka v bunke = text", 70], ["bodka namiesto čiarky", 70], ["viac meraní v jednej bunke", 90], ["chýba údaj v riadku", 110]].map(([t, y], i) => `${T(270, 50 + i * 22, "✘ " + t, { fs: 10.5, b: 1, c: C.bad })}`).join("")}
-    ${box(16, 160, 408, 40, C.badS, null, 8)}${T(220, 185, "S textom „45,5 °C“ ani „20.5“ Excel nepočíta.", { a: "middle", fs: 11, b: 1, c: C.bad })}`, "Zle navrhnutá tabuľka"),
-    "Chyby, pre ktoré tabuľka nepočíta: jednotky v bunkách, desatinná bodka a viac hodnôt v jednej bunke.")
+  chyby: fig(SV(440, 220, `
+    ${T(220, 20, "Náhodná a hrubá chyba", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["1.", "2,31"], ["2.", "2,28"], ["3.", "3,10"], ["4.", "2,30"], ["5.", "2,29"]].map(([n, v], i) => { const x = 18 + i * 82, bad = i === 2; return `${box(x, 36, 74, 50, bad ? C.badS : C.okS, bad ? C.bad : C.ok, 8)}${T(x + 37, 54, n + " meranie", { a: "middle", fs: 11, c: C.mut })}${T(x + 37, 76, v + " s", { a: "middle", fs: 13, b: 1, c: bad ? C.bad : C.ink })}`; }).join("")}
+    ${box(14, 100, 200, 108, C.okS, null, 8)}${T(114, 122, "náhodná chyba", { a: "middle", fs: 12, b: 1, c: C.ok })}${T(114, 144, "malé rozdiely okolo 2,3 s", { a: "middle", fs: 11 })}${T(114, 164, "sú vždy, zmenší ich", { a: "middle", fs: 11 })}${T(114, 184, "priemer viacerých meraní", { a: "middle", fs: 11, b: 1 })}
+    ${box(226, 100, 200, 108, C.badS, null, 8)}${T(326, 122, "hrubá chyba", { a: "middle", fs: 12, b: 1, c: C.bad })}${T(326, 144, "3,10 s je úplne mimo,", { a: "middle", fs: 11 })}${T(326, 164, "napr. neskoro stlačené stopky", { a: "middle", fs: 11 })}${T(326, 184, "meranie zopakuj", { a: "middle", fs: 11, b: 1 })}`, "Chyby merania"),
+    "<b>Náhodné chyby</b> zmenší priemer. Meranie s <b>hrubou chybou</b> treba zopakovať.")
 }; })();
 
 const KEY = "meranie-t52-v1";
 const LESSON = "5.2 Tvorba tabuľky (meranie na fyzike)";
 const BRAND = "5.2 Tabuľka merania";
 const CLASS_DEFAULT = "Tercia";
-const WIDE = { vypocty: 1, format: 1, kyvadlo: 1 };
+const WIDE = { navrh: 1, vypocty: 1, format: 1, kyvadlo: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "navrh", title: "Návrh tabuľky merania", min: 6 },
@@ -443,25 +562,65 @@ const TASKS = {
 };
 const VIEWS = {
   navrh: () => head() + `<h2>Návrh tabuľky merania</h2>${guessBox()}
-    <div class="theory"><ul><li>Každá <b>veličina</b> má svoj stĺpec a v záhlaví <b>značku a jednotku</b>: <code>m [g]</code>, <code>Δl [cm]</code>.</li><li><b>Nezávislá veličina</b> (ktorú meníme) je v prvom stĺpci, <b>namerané</b> a <b>vypočítané</b> hodnoty za ňou.</li><li>Jedno meranie = <b>jeden riadok</b>. V bunkách sú iba <b>čísla</b> s desatinnou <b>čiarkou</b>.</li><li>Vypočítané hodnoty počítame <b>vzorcami</b>, konštanty (g = 10 N/kg) dáme do <b>samostatnej bunky</b>.</li><li>Opakované merania spracujeme <b>priemerom</b>, ich rozdiely ukazujú <b>chybu merania</b>.</li></ul></div>
-    ${tfigs(TFIG.dobra, TFIG.priemer)}
+    <div class="theory tsplit"><div>
+      <p>Pred meraním si navrhni tabuľku. Každá <b>veličina</b> má svoj stĺpec a v záhlaví <b>značku a jednotku</b> v hranatých zátvorkách, napríklad <code>m [g]</code> alebo <code>Δl [cm]</code>.</p>
+      <table class="rtab"><thead><tr><th>Pravidlo</th><th>Prečo</th></tr></thead><tbody>
+        <tr><td><b>Nezávislá veličina</b> (ktorú meníme) v prvom stĺpci, za ňou <b>namerané</b> a <b>vypočítané</b> hodnoty</td><td>tabuľka sa číta zľava doprava</td></tr>
+        <tr><td>jedno meranie = <b>jeden riadok</b></td><td>vzorec sa dá vyplniť nadol</td></tr>
+        <tr><td>v bunkách iba <b>čísla</b> s desatinnou <b>čiarkou</b></td><td>s textom sa nedá počítať</td></tr>
+        <tr><td>vypočítané hodnoty <b>vzorcami</b>, konštanty (g = 10 N/kg) v <b>samostatnej bunke</b></td><td>pri zmene sa všetko prepočíta</td></tr></tbody></table>
+      <p>Meranie opakujeme viackrát a spracujeme ho <b>priemerom</b>. Rozdiely medzi meraniami ukazujú <b>chybu merania</b>.</p>
+    </div><div>${TFIG.dobra}</div></div>
+    ${ltfigs(TFIG.stlpce, ...(S.t.nsort ? [TFIG.zla] : []))}
+    ${VEDEL("Medzinárodná sústava jednotiek SI má 7 základných jednotiek: meter, kilogram, sekunda, ampér, kelvin, mól a kandela. Všetky ostatné, napríklad newton, sa z nich dajú odvodiť.")}
     <h3>Úloha 1: správne, alebo nie?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>
-    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("nq")}</div>${S.t.nsort ? tfigs(TFIG.zla) : ""}` + nextBar(),
+    <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("nq")}</div>` + nextBar(),
   vypocty: () => { XLS("pr", PR0); return head() + `<h2>Pružina: výpočty</h2>
-    <div class="theory"><p>Na pružinu sme vešali závažia s hmotnosťou <i>m</i> a merali predĺženie Δl. Sila, ktorou závažie ťahá pružinu, je <b>F = m · g</b> (m v kilogramoch, g = 10 N/kg). <b>Tuhosť pružiny</b> k = F ÷ Δl udáva, akou silou treba pružinu natiahnuť o 1 cm. Podľa Hookovho zákona by mala byť pri všetkých meraniach približne rovnaká.</p><p>Postup: klikni na bunku, napíš vzorec do riadku vzorcov a stlač Enter. Potom daj <b>Vyplniť nadol</b>.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Na pružinu sme vešali závažia s hmotnosťou <i>m</i> a merali jej predĺženie Δl. Sila, ktorou závažie ťahá pružinu, je <b>F = m · g</b>, pričom hmotnosť musí byť v <b>kilogramoch</b> a g = 10 N/kg.</p>
+      <table class="rtab"><thead><tr><th>Veličina</th><th>Výpočet</th><th>Jednotka</th></tr></thead><tbody>
+        <tr><td>hmotnosť v kg</td><td>m [g] ÷ 1000</td><td>kg</td></tr>
+        <tr><td><b>sila</b> F</td><td>m [kg] · g</td><td>N (newton)</td></tr>
+        <tr><td><b>tuhosť pružiny</b> k</td><td>F ÷ Δl</td><td>N/cm</td></tr></tbody></table>
+      <p>Tuhosť udáva, akou silou treba pružinu natiahnuť o 1 cm. Podľa <b>Hookovho zákona</b> by mala byť pri všetkých meraniach približne rovnaká.</p>
+      <p>Postup: klikni na bunku, napíš vzorec do riadku vzorcov a stlač Enter. Potom daj <b>Vyplniť nadol</b>.</p>
+    </div><div>${TFIG.sila}</div></div>
+    ${ltfigs(TFIG.hooke, TFIG.konstanta)}
+    ${VEDEL("Robert Hooke zverejnil svoj zákon v roku 1676 najprv ako šifru „ceiiinosssttuv“. Až o dva roky neskôr prezradil riešenie: latinsky „ut tensio, sic vis“, teda aké predĺženie, taká sila.")}
     <div class="task" id="goals-${S.cur}">${goalsFor("vypocty")}</div>
     ${xSheetHTML("pr", { tools: true, tab: "Pružina" })}` + nextBar(); },
-  format: () => head() + `<h2>Formátovanie tabuľky</h2>
-    <div class="theory"><p>Prehľadná tabuľka má <b>zvýraznené záhlavie</b> (tučné písmo, prípadne výplň), <b>orámovanie</b> a rovnaký <b>počet desatinných miest</b> v stĺpci (podľa presnosti merania). Počet desatinných miest mení iba <b>zobrazenie</b>, vo výpočtoch sa používa presná hodnota. Ak chceš hodnotu naozaj zaokrúhliť, použi funkciu <code>=ZAOKRÚHLIŤ(číslo;počet)</code>.</p></div>
+  format: () => { const d = S.dpd == null ? 2 : S.dpd, v = 22 / 7; return head() + `<h2>Formátovanie tabuľky</h2>
+    <div class="theory tsplit"><div>
+      <p>Prehľadná tabuľka má <b>zvýraznené záhlavie</b>, <b>orámovanie</b> a v každom stĺpci rovnaký <b>počet desatinných miest</b>. Ten volíme podľa presnosti merania.</p>
+      <table class="rtab"><thead><tr><th>Úprava</th><th>Kde ju nájdeš</th></tr></thead><tbody>
+        <tr><td>tučné písmo, výplň záhlavia</td><td>Domov → Písmo</td></tr>
+        <tr><td>orámovanie buniek</td><td>Domov → Písmo → Orámovanie</td></tr>
+        <tr><td>pridať/ubrať desatinné miesto</td><td>Domov → Číslo</td></tr></tbody></table>
+      <p>Počet desatinných miest mení iba <b>zobrazenie</b>, vo výpočtoch sa používa presná hodnota. Ak chceš hodnotu naozaj zaokrúhliť, použi funkciu <code>=ZAOKRÚHLIŤ(číslo;počet)</code>.</p>
+    </div><div>${TFIG.formatovanie}</div></div>
+    ${ltfigs(TFIG.zaokruhlit, TFIG.presnost)}
+    <h3>Vyskúšaj: desatinné miesta</h3><div class="task"><p style="margin:0 0 8px">V bunke je vzorec <code>=22/7</code>. Klikaj na tlačidlá a sleduj, čo ukáže bunka a čo je v nej naozaj uložené.</p>
+      <div class="row" style="flex-wrap:wrap;gap:8px;align-items:center"><button class="ghost" data-dpd="-1" ${d <= 0 ? "disabled" : ""}>,00 → ,0 ubrať</button><button class="ghost" data-dpd="1" ${d >= 6 ? "disabled" : ""}>,0 → ,00 pridať</button><span class="tag">desatinné miesta: ${d}</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:16px"><div><span class="muted">bunka ukazuje:</span> <b style="font-family:var(--mono);font-size:20px;padding:2px 10px;border:2px solid #217346;background:#fff;color:#1A1530;display:inline-block;min-width:110px;text-align:right">${v.toFixed(d).replace(".", ",")}</b></div><div><span class="muted">v pamäti je:</span> <code>3,14285714285714</code></div></div></div>
+    ${VEDEL("Excel si pamätá čísla s presnosťou na 15 platných číslic. Aj keď bunka ukazuje iba 3,14, vo výpočtoch sa používa celé uložené číslo.")}
     <div class="task" id="goals-${S.cur}">${goalsFor("format")}</div>
-    ${xSheetHTML("pr", { tools: true, tab: "Pružina" })}` + nextBar(),
+    ${xSheetHTML("pr", { tools: true, tab: "Pružina" })}` + nextBar(); },
   kyvadlo: () => { XLS("ky", KY0); return head() + `<h2>Kyvadlo: opakované meranie</h2>
-    <div class="theory"><p>Jeden kmit kyvadla je krátky, preto meriame čas <b>10 kmitov</b> t₁₀ a periódu vypočítame ako <b>T = t₁₀ ÷ 10</b>. Meranie sme zopakovali 5-krát. Výsledok zapíšeme ako <b>priemer</b>. <b>Rozptyl</b> (najväčšia − najmenšia hodnota) ukazuje, ako veľmi sa merania líšili.</p></div>
+    <div class="theory tsplit"><div>
+      <p><b>Perióda T</b> je čas jedného kmitu kyvadla (tam aj späť). Jeden kmit je krátky, preto meriame čas <b>10 kmitov</b> t₁₀ a periódu vypočítame ako <b>T = t₁₀ ÷ 10</b>.</p>
+      <p>Meranie sme zopakovali 5-krát, lebo každé dopadne trochu inak. Výsledok spracujeme funkciami:</p>
+      <table class="rtab"><thead><tr><th>Čo zisťujeme</th><th>Funkcia</th></tr></thead><tbody>
+        <tr><td><b>priemer</b> = výsledok merania</td><td><code>PRIEMER</code></td></tr>
+        <tr><td><b>rozptyl</b> = najväčšia − najmenšia hodnota</td><td><code>MAX</code> − <code>MIN</code></td></tr></tbody></table>
+      <p>Rozptyl ukazuje, ako veľmi sa merania líšili. Hodnotu, ktorá je úplne mimo (<b>hrubá chyba</b>), meraním znova over.</p>
+    </div><div>${TFIG.kmity}</div></div>
+    ${ltfigs(TFIG.priemer, TFIG.chyby)}
+    ${VEDEL("Perióda kyvadla nezávisí od hmotnosti závažia, pri malých výchylkách iba od dĺžky závesu. Kyvadlo dlhé asi 1 meter má periódu takmer presne 2 sekundy.")}
     <div class="task" id="goals-${S.cur}">${goalsFor("kyvadlo")}</div>
     ${xSheetHTML("ky", { tools: true, tab: "Kyvadlo" })}` + nextBar(); },
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
-function CUSTOM_CLICK(e) { return xClick(e); }
+function CUSTOM_CLICK(e) { const b = e.target.closest && e.target.closest("[data-dpd]"); if (b) { S.dpd = Math.max(0, Math.min(6, (S.dpd == null ? 2 : S.dpd) + +b.dataset.dpd)); save(); render(false); return true; } return xClick(e); }
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
@@ -613,7 +772,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

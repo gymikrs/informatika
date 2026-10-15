@@ -267,19 +267,50 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .trc pre .cur{background:#FFD43B;color:#111;border-radius:4px;display:inline-block;width:100%}
 .trc pre .done{color:#9FB3D1}
 .mem{display:flex;gap:10px;flex-wrap:wrap}
-.box{min-width:110px;border:2px solid var(--border);border-radius:12px;background:var(--surface);text-align:center;padding:6px 8px}
-.box b{display:block;font-family:var(--mono);color:var(--acc)}.box .v{font-family:var(--mono);font-size:20px;font-weight:800;min-height:30px}
-.box.ch{border-color:#E0A100;background:#FFF8E1}
+.mem .box{min-width:110px;border:2px solid var(--border);border-radius:12px;background:var(--surface);text-align:center;padding:6px 8px;border-left-width:2px;margin:0}
+.mem .box b{display:block;font-family:var(--mono);color:var(--acc)}.mem .box .v{font-family:var(--mono);font-size:20px;font-weight:800;min-height:30px}
+.mem .box.ch{border-color:#E0A100;background:#FFF8E1}
 .fruit{font-size:34px}.lost{color:#C0392B;font-weight:700}
 .swb{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.swb button{font-family:var(--mono)}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"premenna": ["Premenná = meno odkazujúce na hodnotu; vzniká priradením meno = hodnota.", "Meno: písmeno alebo _, potom písmená, číslice, _; bez medzier; nie kľúčové slovo; rozlišuje veľkosť písmen; snake_case."], "volanie": ["Volanie = použitie premennej, Python dosadí aktuálnu hodnotu; nepriradená premenná → NameError.", "x = x + 1 (x += 1) prepíše hodnotu; a, b, c = 1, 2, 3."], "krokovanie": ["Krokovanie: riadok po riadku zapisuj hodnoty premenných, najprv odhadni, potom over."], "vymena": ["Výmena: pom = a; a = b; b = pom. Chybne: a = b; b = a (stratí a).", "Paralelné priradenie a, b = b, a: najprv sa vyhodnotí pravá strana."], "programy": ["Výmena troch: x, y, z = y, z, x. Bez tretej premennej: a = a + b; b = a − b; a = a − b."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"premenna": ["<b>Premenná</b> je meno, ktoré odkazuje na hodnotu v pamäti.", "Vzniká <b>priradením</b> <code>meno = hodnota</code>; znak = znamená „ulož“, nie „rovná sa“.", "Meno začína <b>písmenom alebo _</b>, ďalej môžu byť písmená, číslice a _.", "Meno nesmie obsahovať <b>medzery ani pomlčky</b> a nesmie byť <b>kľúčovým slovom</b> (if, for, while…).", "Python <b>rozlišuje veľké a malé písmená</b>: <code>Body</code> a <code>body</code> sú dve premenné.", "Používame výstižné mená v štýle <b>snake_case</b>, napr. <code>dlzka_strany</code>."], "volanie": ["<b>Volanie</b> premennej = použitie jej mena vo výraze alebo v print; Python dosadí <b>aktuálnu hodnotu</b>.", "Premennú, ktorej sme nič nepriradili, nemožno zavolať: <b>NameError</b>.", "Nové priradenie <b>prepíše</b> starú hodnotu.", "<code>x = x + 1</code>: vezme starú hodnotu, pripočíta 1 a uloží späť; skrátene <code>x += 1</code>.", "Viac premenných naraz: <code>a, b, c = 1, 2, 3</code>."], "krokovanie": ["<b>Krokovanie</b> (trasovanie) = prechádzanie programu riadok po riadku.", "Po každom riadku si zapíš hodnoty <b>všetkých premenných</b> (tabuľka).", "Pri priradení najprv vypočítaj <b>pravú stranu</b> so starými hodnotami, potom ulož vľavo.", "Výsledok najprv <b>odhadni</b> na papieri, potom ho over krokovačom.", "Krokovanie pomáha nájsť <b>chyby</b> v programe."], "vymena": ["Na výmenu obsahu dvoch premenných treba <b>pomocnú premennú</b> (ako tretí prázdny pohár).", "Postup: <code>pom = a</code>, <code>a = b</code>, <code>b = pom</code>.", "Chybná výmena <code>a = b</code>, <code>b = a</code> <b>stratí</b> pôvodnú hodnotu a.", "<b>Paralelné priradenie</b> <code>a, b = b, a</code> vymení obsah jedným príkazom.", "Pri paralelnom priradení sa najprv vyhodnotí <b>celá pravá strana</b>, až potom sa priraďuje."], "programy": ["Programy sa kontrolujú <b>viacerými vstupmi</b>, dodrž tvar výstupu z ukážky.", "<b>f-reťazec</b>: <code>print(f'x = {x}')</code> – Python nahradí <code>{x}</code> hodnotou.", "Výmena cez <b>pomocnú premennú</b> funguje vždy (3 príkazy).", "<b>Paralelné priradenie</b> zvládne aj viac premenných naraz, treba premyslieť poradie na pravej strane.", "Pri <b>číslach</b> sa dá vymeniť aj bez tretej premennej: <code>a = a + b</code>, <code>b = a − b</code>, <code>a = a − b</code>."]};
 /* ===================== mini Python interpreter (subset) ===================== */
 const PY = (() => {
 class PyErr { constructor(type, msg, line) { this.type = type; this.msg = msg; this.line = line; } }
@@ -637,7 +668,7 @@ const KEY = "premenne2-r213-v1";
 const LESSON = "2.13 Premenné, volanie premennej, výmena obsahu dvoch premenných";
 const BRAND = "2.13 Premenné a výmena";
 const CLASS_DEFAULT = "III.";
-const WIDE = { volanie: 1, krokovanie: 1, vymena: 1, programy: 1 };
+const WIDE = { premenna: 1, volanie: 1, krokovanie: 1, vymena: 1, programy: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "premenna", title: "Premenná a jej meno", min: 7 },
@@ -711,26 +742,186 @@ const TASKS = {
     { id: "6", ...Q("x, y, z = 1, 2, 3 priradí:", ["x = 1, y = 2, z = 3", "všetkým 1", "chybu", "x = (1, 2, 3)"], 0) }
   ]}
 };
+/* ---------- LENKA: obrázky k teórii ---------- */
+/* ---------- LENKA: obrázky k teórii ---------- */
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#0E7A5C", accS: "#D5EEE5", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, C.ink].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}><rect width="${w}" height="${h}" fill="#fff"/>${d}${body.replace(/url\(#M([0-9A-Fa-f]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  return { C, fig, SV, ar, T, box, num };
+})();
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num } = PF; const A = C.acc, AS = C.accS;
+const M = (x, y, s, o = {}) => T(x, y, s, Object.assign({ mono: 1 }, o));
+const dot = (x, y, c, r) => `<circle cx="${x}" cy="${y}" r="${r || 4}" fill="${c || C.bad}"/>`;
+const R = (x1, y1, x2, y2, f, s, w, ex) => `<rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" fill="${f || "none"}"${s === "" ? "" : ` stroke="${s || C.ink}" stroke-width="${w || 2}"`}${ex || ""}/>`;
+const O = (x1, y1, x2, y2, f, s, w, ex) => `<ellipse cx="${(x1 + x2) / 2}" cy="${(y1 + y2) / 2}" rx="${(x2 - x1) / 2}" ry="${(y2 - y1) / 2}" fill="${f || "none"}"${s === "" ? "" : ` stroke="${s || C.ink}" stroke-width="${w || 2}"`}${ex || ""}/>`;
+const DS = ` stroke-dasharray="5 4"`;
+const grid = (x, y, w, h, s) => { let g = ""; for (let i = s; i < w; i += s) g += `<line x1="${x + i}" y1="${y}" x2="${x + i}" y2="${y + h}" stroke="#E6EEF0"/>`; for (let j = s; j < h; j += s) g += `<line x1="${x}" y1="${y + j}" x2="${x + w}" y2="${y + j}" stroke="#E6EEF0"/>`; return g; };
+const dark = (x, y, w, h) => box(x, y, w, h, "#0F1A2E", null, 6);
+const cl = (x, y, s, fs) => `<text x="${x}" y="${y}" font-size="${fs || 11.5}" font-family="Consolas,monospace" fill="#DCE7FF" xml:space="preserve">${s}</text>`;
+const H = (s) => T(220, 20, s, { a: "middle", fs: 13.5, b: 1, c: A });
+const cp = (x, y, s, c, fs) => `<text x="${x}" y="${y}" font-size="${fs || 11.5}" font-family="Consolas,monospace" fill="${c || "#DCE7FF"}" style="white-space:pre" xml:space="preserve">${s}</text>`;
+const VB = (x, y, n, v, c, w) => { w = w || 96; c = c || A; return `${box(x, y, w, 58, "#fff", c, 8)}${box(x, y, w, 20, c, null, 8)}<rect x="${x}" y="${y + 12}" width="${w}" height="8" fill="${c}"/>${M(x + w / 2, y + 15, n, { a: "middle", fs: 12, b: 1, c: "#fff" })}${M(x + w / 2, y + 46, v, { a: "middle", fs: 16, b: 1 })}`; };
+const cup = (x, y, lbl, fill, txt) => `<path d="M${x} ${y} L${x + 8} ${y + 64} L${x + 52} ${y + 64} L${x + 60} ${y} Z" fill="#fff" stroke="${C.mut}" stroke-width="2"/>${fill ? `<path d="M${x + 4} ${y + 22} L${x + 8} ${y + 62} L${x + 52} ${y + 62} L${x + 56} ${y + 22} Z" fill="${fill}"/>` : ""}${txt ? T(x + 30, y + 48, txt, { a: "middle", fs: 11, b: 1, c: C.ink }) : ""}${M(x + 30, y + 82, lbl, { a: "middle", fs: 12.5, b: 1, c: A })}`;
+const JU = "#FFC56B", MI = "#E8EEF5";
+return {
+  menovka: fig(SV(440, 236, `
+    ${H("Premenná = meno, ktoré ukazuje na hodnotu")}
+    ${dark(14, 34, 190, 32)}${cp(28, 55, "skore = 12", "#DCE7FF", 13)}
+    ${T(109, 92, "znak = znamená „ulož“", { a: "middle", fs: 11.5, b: 1, c: C.amb })}
+    ${box(250, 34, 176, 150, C.bg, C.line, 10)}${T(338, 54, "pamäť", { a: "middle", fs: 11.5, c: C.mut })}
+    <rect x="300" y="96" width="76" height="46" rx="8" fill="#fff" stroke="${A}" stroke-width="2"/>${M(338, 126, "12", { a: "middle", fs: 18, b: 1 })}
+    <rect x="40" y="110" width="110" height="32" rx="16" fill="${AS}" stroke="${A}" stroke-width="2"/>${M(95, 131, "skore", { a: "middle", fs: 13, b: 1, c: A })}
+    ${ar(152, 126, 296, 120, A, 2.5)}
+    ${T(220, 212, "Kde napíšeš skore, Python použije hodnotu 12.", { a: "middle", fs: 11.5 })}`, "Premenná ako menovka"),
+    "<b>Priradenie</b> spojí meno s hodnotou v pamäti."),
+  pravidla: fig(SV(440, 248, `
+    ${H("Pravidlá pre meno premennej")}
+    ${box(14, 32, 204, 28, C.okS, null, 6)}${T(116, 51, "✔ platné", { a: "middle", fs: 12.5, b: 1, c: C.ok })}
+    ${box(222, 32, 204, 28, C.badS, null, 6)}${T(324, 51, "✘ neplatné", { a: "middle", fs: 12.5, b: 1, c: C.bad })}
+    ${[["skore", ""], ["max_body", ""], ["a1", ""], ["_temp", ""]].map(([n], i) => `${box(14, 66 + i * 40, 204, 34, C.bg, null, 6)}${M(116, 88 + i * 40, n, { a: "middle", fs: 13, b: 1 })}`).join("")}
+    ${[["1a", "začína číslicou"], ["moje meno", "medzera"], ["if", "kľúčové slovo"], ["dlzka-sirka", "pomlčka"]].map(([n, w], i) => `${box(222, 66 + i * 40, 204, 34, C.bg, null, 6)}${M(232, 88 + i * 40, n, { fs: 13, b: 1, c: C.bad })}${T(416, 88 + i * 40, w, { a: "end", fs: 11 })}`).join("")}
+    ${T(220, 240, "Začiatok: písmeno alebo _, potom písmená, číslice, _", { a: "middle", fs: 11.5 })}`, "Platné a neplatné mená"),
+    "Meno začína <b>písmenom alebo _</b> a nesmie byť <b>kľúčovým slovom</b>."),
+  styly: fig(SV(440, 200, `
+    ${H("Ako písať dlhšie mená")}
+    ${[["dlzka_strany", "snake_case – odporúča sa v Pythone", C.ok, C.okS, "✔"], ["dlzkaStrany", "camelCase – zvyk z iných jazykov", C.amb, C.ambS, "~"], ["ds", "príliš krátke, nič nehovorí", C.bad, C.badS, "✘"]].map(([n, t, c, f, s], i) => { const y = 32 + i * 50; return `${box(14, y, 412, 42, f, null, 8)}${T(30, y + 27, s, { fs: 15, b: 1, c })}${M(54, y + 27, n, { fs: 13.5, b: 1 })}${T(416, y + 27, t, { a: "end", fs: 11.5 })}`; }).join("")}
+    ${T(220, 192, "Body a body sú pre Python dve rôzne premenné.", { a: "middle", fs: 11.5 })}`, "Štýly mien"),
+    "Mená píš <b>výstižne</b>, malými písmenami a slová spájaj <b>_</b>."),
+  dosad: fig(SV(440, 220, `
+    ${H("Volanie premennej")}
+    ${dark(14, 34, 412, 30)}${cp(28, 54, "cena = 4", "#DCE7FF", 13)}
+    ${dark(14, 76, 412, 30)}${cp(28, 96, "print(cena * 3)", "#DCE7FF", 13)}
+    ${ar(220, 110, 220, 132, A, 2)}${T(232, 126, "Python dosadí aktuálnu hodnotu", { fs: 11.5, b: 1, c: A })}
+    ${box(14, 136, 412, 30, AS, null, 6)}${M(28, 156, "print(4 * 3)", { fs: 13, b: 1, c: A })}
+    ${M(28, 198, "12", { fs: 15, b: 1, c: C.blue })}${T(416, 198, "výstup", { a: "end", fs: 11.5, c: C.mut })}`, "Volanie premennej"),
+    "<b>Volanie</b> = použitie mena; Python ho nahradí hodnotou."),
+  prepis: fig(SV(440, 210, `
+    ${H("Nové priradenie prepíše hodnotu")}
+    ${dark(14, 34, 190, 30)}${cp(26, 54, "body = 10", "#DCE7FF", 12.5)}
+    ${dark(14, 76, 190, 30)}${cp(26, 96, "body = body * 2", "#DCE7FF", 12.5)}
+    ${VB(250, 30, "body", "10", C.mut)}<line x1="276" y1="66" x2="320" y2="82" stroke="${C.bad}" stroke-width="3"/>
+    ${VB(250, 100, "body", "20")}${ar(298, 90, 298, 98, A, 2)}
+    ${box(14, 170, 412, 30, C.bg, null, 6)}${T(220, 190, "Pravá strana sa vypočíta so STAROU hodnotou: 10 * 2 = 20", { a: "middle", fs: 11.5 })}
+    ${T(360, 70, "stará", { fs: 11.5, c: C.mut })}${T(360, 140, "nová", { fs: 11.5, b: 1, c: A })}`, "Prepísanie hodnoty"),
+    "Stará hodnota sa <b>prepíše</b>, premenná si pamätá iba poslednú."),
+  nameerr: fig(SV(440, 220, `
+    ${H("Najprv priraď, potom volaj")}
+    ${box(14, 34, 204, 160, C.badS, null, 8)}${T(116, 54, "✘ zlé poradie", { a: "middle", fs: 12.5, b: 1, c: C.bad })}
+    ${dark(24, 64, 184, 50)}${cp(32, 84, "print(bonus)", "#DCE7FF", 12)}${cp(32, 104, "bonus = 3", "#DCE7FF", 12)}
+    ${M(116, 138, "NameError:", { a: "middle", fs: 12, b: 1, c: C.bad })}${M(116, 156, "name 'bonus'", { a: "middle", fs: 11.5, c: C.bad })}${M(116, 174, "is not defined", { a: "middle", fs: 11.5, c: C.bad })}
+    ${box(222, 34, 204, 160, C.okS, null, 8)}${T(324, 54, "✔ správne poradie", { a: "middle", fs: 12.5, b: 1, c: C.ok })}
+    ${dark(232, 64, 184, 50)}${cp(240, 84, "bonus = 3", "#DCE7FF", 12)}${cp(240, 104, "print(bonus)", "#DCE7FF", 12)}
+    ${M(324, 150, "3", { a: "middle", fs: 18, b: 1, c: C.blue })}
+    ${T(220, 212, "Program sa vykonáva zhora nadol.", { a: "middle", fs: 11.5 })}`, "NameError"),
+    "Premennú, ktorej ešte nič <b>nebolo priradené</b>, nemožno zavolať: <b>NameError</b>."),
+  stopa: fig(SV(440, 236, `
+    ${H("Tabuľka krokovania")}
+    ${dark(14, 34, 170, 108)}${["a = 4", "b = a * 2", "a = b - 1", "b = a + b"].map((l, i) => cp(24, 58 + i * 24, (i + 1) + "  " + l, "#DCE7FF", 12.5)).join("")}
+    ${box(198, 34, 228, 26, C.bg, null, 6)}${T(222, 52, "riadok", { a: "middle", fs: 12, b: 1 })}${M(318, 52, "a", { a: "middle", fs: 13, b: 1, c: A })}${M(392, 52, "b", { a: "middle", fs: 13, b: 1, c: C.blue })}
+    ${[["1", "4", "–", 1, 0], ["2", "4", "8", 0, 1], ["3", "7", "8", 1, 0], ["4", "7", "15", 0, 1]].map(([r, a, b, ca, cb], i) => { const y = 64 + i * 30; return `<rect x="198" y="${y}" width="228" height="26" rx="4" fill="#fff" stroke="${C.line}"/>${ca ? `<rect x="290" y="${y + 2}" width="56" height="22" rx="4" fill="${AS}"/>` : ""}${cb ? `<rect x="364" y="${y + 2}" width="56" height="22" rx="4" fill="${C.blueS}"/>` : ""}${T(222, y + 18, r, { a: "middle", fs: 12 })}${M(318, y + 18, a, { a: "middle", fs: 13, b: ca })}${M(392, y + 18, b, { a: "middle", fs: 13, b: cb })}`; }).join("")}
+    ${T(220, 210, "Po každom riadku zapíš hodnoty, zmenenú zvýrazni.", { a: "middle", fs: 11.5 })}
+    ${T(220, 228, "Na konci: a = 7, b = 15", { a: "middle", fs: 12, b: 1, c: A })}`, "Krokovanie"),
+    "Pri <b>krokovaní</b> si po každom riadku zapíšeš hodnoty premenných."),
+  postup: fig(SV(440, 170, `
+    ${H("Ako krokovať jeden riadok")}
+    ${[["1. Pravá strana", "dosaď súčasné hodnoty"], ["2. Vypočítaj", "výsledok výrazu"], ["3. Ulož vľavo", "zapíš novú hodnotu"]].map(([t, s], i) => { const x = 14 + i * 142; return `${box(x, 36, 128, 62, i % 2 ? AS : C.bg, null, 8)}${T(x + 64, 62, t, { a: "middle", fs: 12, b: 1, c: A })}${T(x + 64, 82, s, { a: "middle", fs: 11 })}` + (i < 2 ? ar(x + 130, 67, x + 140, 67, A, 2) : ""); }).join("")}
+    ${dark(14, 112, 412, 30)}${cp(28, 132, "a = b - 1   →   a = 8 - 1   →   a = 7", "#DCE7FF", 12.5)}
+    ${T(220, 162, "Najprv odhadni, potom over krokovačom.", { a: "middle", fs: 11.5 })}`, "Postup krokovania"),
+    "Každý riadok: <b>dosaď</b>, <b>vypočítaj</b>, <b>ulož</b>."),
+  pohare: fig(SV(440, 250, `
+    ${H("Výmena s pomocným pohárom")}
+    ${[["začiatok", [JU, MI, null]], ["pom = a", [null, MI, JU]], ["a = b", [MI, null, JU]], ["b = pom", [MI, JU, null]]].map(([t, f], r) => { const y = 34 + r * 54, F = { [JU]: "džús", [MI]: "mlieko" }; return `${box(14, y, 412, 48, r % 2 ? C.bg : "#fff", C.line, 8)}${M(26, y + 29, t, { fs: 12.5, b: 1, c: r ? A : C.mut })}` + ["a", "b", "pom"].map((n, k) => { const x = 160 + k * 98; return `${M(x, y + 29, n + ":", { a: "end", fs: 12, b: 1, c: C.mut })}${f[k] ? `<rect x="${x + 4}" y="${y + 12}" width="62" height="26" rx="6" fill="${f[k]}" stroke="${C.mut}"/>${T(x + 35, y + 30, F[f[k]], { a: "middle", fs: 11.5, b: 1 })}` : `<rect x="${x + 4}" y="${y + 12}" width="62" height="26" rx="6" fill="#fff" stroke="${C.line}" stroke-dasharray="4 3"/>`}`; }).join(""); }).join("")}`, "Výmena cez pomocnú premennú"),
+    "Tri kroky: odlož <b>a</b> do <b>pom</b>, prelej <b>b</b> do <b>a</b>, vráť <b>pom</b> do <b>b</b>."),
+  zla: fig(SV(440, 200, `
+    ${H("Chybná výmena: a = b, b = a")}
+    ${[["začiatok", "3", "9", 0], ["a = b", "9", "9", 1], ["b = a", "9", "9", 2]].map(([t, a, b, s], i) => { const x = 14 + i * 142; return `${box(x, 34, 128, 120, s === 2 ? C.badS : C.bg, null, 8)}${M(x + 64, 54, t, { a: "middle", fs: 12.5, b: 1, c: s ? C.bad : C.mut })}${VB(x + 6, 66, "a", a, s ? C.bad : A, 56)}${VB(x + 66, 66, "b", b, C.blue, 56)}` + (i < 2 ? ar(x + 130, 94, x + 140, 94, C.mut, 2) : ""); }).join("")}
+    ${T(220, 176, "Po a = b sa pôvodná 3 stratila – už ju nič neobsahuje.", { a: "middle", fs: 12, b: 1, c: C.bad })}
+    ${T(220, 194, "(príklad: a = 3, b = 9)", { a: "middle", fs: 11.5, c: C.mut })}`, "Chybná výmena"),
+    "Bez pomocnej premennej sa jedna hodnota <b>stratí</b>."),
+  paralel: fig(SV(440, 200, `
+    ${H("Paralelné priradenie a, b = b, a")}
+    ${dark(14, 34, 412, 32)}${cp(140, 56, "a, b  =  b, a", "#DCE7FF", 15)}
+    ${box(14, 80, 412, 40, C.ambS, null, 8)}${T(26, 105, "1. pravá strana:", { fs: 12, b: 1, c: C.amb })}${M(160, 105, "b, a  →  'káva', 'čaj'", { fs: 13, b: 1 })}
+    ${box(14, 128, 412, 40, AS, null, 8)}${T(26, 153, "2. priradenie:", { fs: 12, b: 1, c: A })}${M(160, 153, "a = 'káva',  b = 'čaj'", { fs: 13, b: 1 })}
+    ${T(220, 190, "Na začiatku: a = 'čaj', b = 'káva'. Obe staré hodnoty sa najprv odložia.", { a: "middle", fs: 11.5 })}`, "Paralelné priradenie"),
+    "Python najprv vyhodnotí <b>celú pravú stranu</b>, až potom priradí."),
+  fstr: fig(SV(440, 210, `
+    ${H("f-reťazec vo výpise")}
+    ${dark(14, 34, 412, 34)}${cp(26, 57, "print(f'meno = {meno}, vek = {vek}')", "#DCE7FF", 13)}
+    ${T(64, 92, "f pred úvodzovkou", { a: "middle", fs: 11.5, b: 1, c: C.amb })}${ar(64, 80, 80, 66, C.amb, 2)}
+    ${T(300, 92, "{premenná} → jej hodnota", { a: "middle", fs: 11.5, b: 1, c: A })}${ar(260, 80, 230, 66, A, 2)}${ar(330, 80, 360, 66, A, 2)}
+    ${VB(60, 108, "meno", "'Eva'", A, 110)}${VB(270, 108, "vek", "17", A, 110)}
+    ${box(14, 176, 412, 28, AS, null, 6)}${M(26, 195, "meno = Eva, vek = 17", { fs: 13, b: 1, c: C.blue })}${T(416, 195, "výstup", { a: "end", fs: 11.5, c: C.mut })}`, "f-reťazec"),
+    "V <b>f-reťazci</b> Python nahradí <b>{meno}</b> hodnotou premennej."),
+  sposoby: fig(SV(440, 226, `
+    ${H("Tri spôsoby výmeny")}
+    ${[["pomocná premenná", "pom = a; a = b; b = pom", "funguje vždy, 3 príkazy"], ["paralelné priradenie", "a, b = b, a", "typicky pythonovské, 1 príkaz"], ["súčet a rozdiel", "a = a + b; b = a - b; a = a - b", "iba pre čísla"]].map(([t, c, n], i) => { const y = 32 + i * 64; return `${box(14, y, 412, 58, i % 2 ? AS : C.bg, null, 8)}${T(26, y + 22, t, { fs: 12.5, b: 1, c: A })}${T(416, y + 22, n, { a: "end", fs: 11.5, c: C.mut })}${cp(26, y + 45, c, C.ink, 12.5)}`; }).join("")}`, "Spôsoby výmeny"),
+    "Výmenu urobíš <b>pomocnou premennou</b>, <b>paralelným priradením</b> alebo (pri číslach) súčtom a rozdielom."),
+  sucet: fig(SV(440, 210, `
+    ${H("Výmena súčtom a rozdielom")}
+    ${box(14, 32, 412, 26, C.bg, null, 6)}${T(120, 50, "príkaz", { a: "middle", fs: 12, b: 1 })}${M(300, 50, "a", { a: "middle", fs: 13, b: 1, c: A })}${M(380, 50, "b", { a: "middle", fs: 13, b: 1, c: C.blue })}
+    ${[["na začiatku", "3", "10"], ["a = a + b", "13", "10"], ["b = a - b", "13", "3"], ["a = a - b", "10", "3"]].map(([c, a, b], i) => { const y = 64 + i * 32; return `<rect x="14" y="${y}" width="412" height="28" rx="4" fill="${i === 3 ? C.okS : "#fff"}" stroke="${C.line}"/>${(i ? M : T)(40, y + 19, c, { fs: 12.5, c: i ? C.ink : C.mut })}${M(300, y + 19, a, { a: "middle", fs: 13, b: 1 })}${M(380, y + 19, b, { a: "middle", fs: 13, b: 1 })}`; }).join("")}
+    ${T(220, 202, "Súčet 13 si „pamätá“ obe čísla naraz.", { a: "middle", fs: 11.5 })}`, "Výmena bez pomocnej premennej"),
+    "Trik bez tretej premennej funguje iba pre <b>čísla</b>.")
+};
+})();
+
 const VIEWS = {
   premenna: () => head() + `<h2>Premenná a jej meno</h2>
-    <div class="theory"><p><b>Premenná</b> je meno, ktoré odkazuje na hodnotu v pamäti. Vzniká <b>priradením</b> <code>meno = hodnota</code> (znak = neznamená „rovná sa“, ale „ulož“). Pravidlá mien: začína <b>písmenom alebo _</b>, obsahuje písmená, číslice a _, <b>bez medzier a pomlčiek</b>, nesmie to byť <b>kľúčové slovo</b> (if, for, while, print radšej tiež nie). Python <b>rozlišuje veľké a malé písmená</b>. Používame výstižné mená v štýle <code>snake_case</code>.</p></div>
+    <div class="theory tsplit"><div><p><b>Premenná</b> je meno, ktoré odkazuje na hodnotu v pamäti. Vzniká <b>priradením</b> <code>meno = hodnota</code> (znak = neznamená „rovná sa“, ale „ulož“).</p>
+      <table class="rtab"><thead><tr><th>Pravidlo pre meno</th><th>Podrobnosti</th></tr></thead><tbody>
+        <tr><td>začiatok</td><td><b>písmeno alebo _</b></td></tr>
+        <tr><td>ďalšie znaky</td><td>písmená, číslice a _, <b>bez medzier a pomlčiek</b></td></tr>
+        <tr><td>zakázané</td><td><b>kľúčové slová</b> (if, for, while; print radšej tiež nie)</td></tr>
+        <tr><td>veľkosť písmen</td><td>Python <b>rozlišuje veľké a malé písmená</b></td></tr></tbody></table>
+      <p>Používame výstižné mená v štýle <code>snake_case</code>.</p></div><div>${TFIG.menovka}</div></div>
+    ${ltfigs(TFIG.pravidla, TFIG.styly)}
+    ${VEDEL("Python má asi 35 <b>kľúčových slov</b>. Celý zoznam vypíšeš príkazmi <code>import keyword</code> a <code>print(keyword.kwlist)</code>.")}
     <h3>Úloha 1: platné, alebo neplatné?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
   volanie: () => head() + `<h2>Volanie a zmena premennej</h2>
-    <div class="theory"><p>Keď meno premennej použijeme vo výraze alebo v <code>print</code>, hovoríme, že premennú <b>voláme</b>: Python dosadí jej aktuálnu hodnotu. Premennú, ktorej sme ešte nič nepriradili, zavolať nemôžeme, Python ohlási <b>NameError</b>. Novým priradením sa pôvodná hodnota <b>prepíše</b>: <code>x = x + 1</code> vezme starú hodnotu, pripočíta 1 a uloží späť (skrátene <code>x += 1</code>). Viac premenných naraz: <code>a, b, c = 1, 2, 3</code>.</p>
-      <p>Vyskúšaj v Shelli: <code>body = 10</code>, <code>body + 5</code>, <code>body = body * 2</code>, <code>body</code>, <code>bonus</code> (chyba), <code>a, b = 1, 2</code>.</p></div>
+    <div class="theory tsplit"><div><p>Keď meno premennej použijeme vo výraze alebo v <code>print</code>, hovoríme, že premennú <b>voláme</b>: Python dosadí jej aktuálnu hodnotu. Premennú, ktorej sme ešte nič nepriradili, zavolať nemôžeme, Python ohlási <b>NameError</b>.</p>
+      <table class="rtab"><thead><tr><th>Zápis</th><th>Význam</th></tr></thead><tbody>
+        <tr><td style="white-space:nowrap"><code>x = x + 1</code></td><td>vezme starú hodnotu, pripočíta 1 a uloží späť – pôvodná hodnota sa <b>prepíše</b></td></tr>
+        <tr><td style="white-space:nowrap"><code>x += 1</code></td><td>skrátený zápis toho istého</td></tr>
+        <tr><td style="white-space:nowrap"><code>a, b, c = 1, 2, 3</code></td><td>viac premenných naraz</td></tr></tbody></table>
+      <p>Vyskúšaj v Shelli: <code>body = 10</code>, <code>body + 5</code>, <code>body = body * 2</code>, <code>body</code>, <code>bonus</code> (chyba), <code>a, b = 1, 2</code>.</p></div><div>${TFIG.dosad}</div></div>
+    ${ltfigs(TFIG.prepis, TFIG.nameerr)}
+    ${VEDEL("Python 3 dovoľuje v menách premenných aj diakritiku: <code>počet = 5</code> funguje. Programátori sa jej však vyhýbajú, lebo nie každý má na klávesnici slovenské písmená.")}
     ${replHTML()}<h3>Otázky</h3><div class="task">${taskHTML("vq")}</div>` + nextBar(),
   krokovanie: () => head() + `<h2>Krokovanie programu</h2>
-    <div class="theory"><p><b>Krokovanie</b> (trasovanie) znamená prechádzať program riadok po riadku a zapisovať si hodnoty premenných. Najprv výsledok <b>odhadni</b> na papieri, potom ho over krokovačom. Zmenené premenné sú zvýraznené.</p></div>
+    <div class="theory tsplit"><div><p><b>Krokovanie</b> (trasovanie) znamená prechádzať program riadok po riadku a zapisovať si hodnoty premenných do <b>tabuľky</b>.</p>
+      <p>Pri každom priradení najprv vypočítaj <b>pravú stranu</b> so súčasnými hodnotami a až potom výsledok ulož do premennej vľavo.</p>
+      <p>Najprv výsledok <b>odhadni</b> na papieri, potom ho over krokovačom. Zmenené premenné sú zvýraznené.</p></div><div>${TFIG.stopa}</div></div>
+    ${ltfigs(TFIG.postup)}
+    ${VEDEL("Niektorí programátori krokujú program tak, že ho riadok po riadku vysvetľujú <b>gumenej kačičke</b>. Metóda <i>rubber duck debugging</i> pochádza z knihy The Pragmatic Programmer – pri vysvetľovaní si chybu často všimneš sám.")}
     <div class="tool" id="trbox">${trHTML()}</div>
     <h3>Úloha: aké sú hodnoty na konci?</h3><div class="task">${taskHTML("kin")}</div>` + nextBar(),
   vymena: () => { const W = SW(); return head() + `<h2>Výmena obsahu dvoch premenných</h2>${guessBox()}
-    <div class="theory"><p>Predstav si dva poháre: v jednom džús, v druhom mlieko. Ako ich vymeniť? Potrebuješ <b>tretí, prázdny pohár</b>. V programe je to <b>pomocná premenná</b>:</p><div class="pcode">pom = a
+    <div class="theory tsplit"><div><p>Predstav si dva poháre: v jednom džús, v druhom mlieko. Ako ich vymeniť? Potrebuješ <b>tretí, prázdny pohár</b>. V programe je to <b>pomocná premenná</b>:</p><div class="pcode">pom = a
 a = b
-b = pom</div><p>Chybná výmena <code>a = b</code>, <code>b = a</code> stratí pôvodnú hodnotu a. Python má aj elegantné <b>paralelné priradenie</b> <code>a, b = b, a</code>: najprv vyhodnotí pravú stranu (obe staré hodnoty) a až potom priradí.</p></div>
+b = pom</div><p>Chybná výmena <code>a = b</code>, <code>b = a</code> <b>stratí</b> pôvodnú hodnotu a.</p>
+      <p>Python má aj elegantné <b>paralelné priradenie</b> <code>a, b = b, a</code>: najprv vyhodnotí pravú stranu (obe staré hodnoty) a až potom priradí.</p></div><div>${TFIG.pohare}</div></div>
+    ${ltfigs(TFIG.zla, TFIG.paralel)}
+    ${VEDEL("Programátori poznajú aj trik s operáciou <b>XOR</b> (v Pythone <code>^</code>): <code>a ^= b</code>, <code>b ^= a</code>, <code>a ^= b</code> vymení dve celé čísla bez pomocnej premennej. Kedysi sa tak šetrila pamäť.")}
     <h3>Vyskúšaj s ovocím</h3><div class="task"><ul class="goals" style="list-style:none;padding:0"><li>${W.ok.pom ? "✅" : "⬜"} vymeň obsah pomocou premennej pom (3 príkazy)</li><li>${W.ok.par ? "✅" : "⬜"} vymeň obsah paralelným priradením</li></ul></div>
     <div class="tool" id="swbox">${swHTML()}</div>` + nextBar(); },
-  programy: () => head() + `<h2>Programy</h2><div class="theory"><p>Programy skontrolujem viacerými vstupmi. Dodrž tvar výstupu z ukážky. Na výpis sa hodí f-reťazec: <code>print(f'a = {a}, b = {b}')</code>.</p></div>
+  programy: () => head() + `<h2>Programy</h2>
+    <div class="theory tsplit"><div><p>Programy skontrolujem viacerými vstupmi. Dodrž <b>tvar výstupu</b> z ukážky.</p>
+      <p>Na výpis sa hodí <b>f-reťazec</b>: <code>print(f'a = {a}, b = {b}')</code>. Písmeno f pred úvodzovkou povie Pythonu, aby mená v zložených zátvorkách nahradil hodnotami.</p>
+      <table class="rtab"><thead><tr><th>Výmena</th><th>Kedy</th></tr></thead><tbody>
+        <tr><td>pomocná premenná</td><td>vždy, 3 príkazy</td></tr>
+        <tr><td>paralelné priradenie</td><td>jedným príkazom, aj pre viac premenných</td></tr>
+        <tr><td>súčet a rozdiel</td><td>iba pre čísla</td></tr></tbody></table></div><div>${TFIG.fstr}</div></div>
+    ${ltfigs(TFIG.sposoby, TFIG.sucet)}
+    ${VEDEL("f-reťazce pribudli v Pythone 3.6 v roku 2016. Do zložených zátvoriek môžeš písať aj výpočty: <code>print(f'{2 * 21}')</code> vypíše 42.")}
     ${Object.keys(EXE).map((id, i) => exHTML(id, i + 1)).join("")}${S.t.ex3 ? `<div class="checkbar"><span class="score ${S.t.ex3.score < 4 ? "part" : ""}">Úlohy: ${S.t.ex3.score} zo 4</span></div>` : ""}` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
@@ -892,7 +1083,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

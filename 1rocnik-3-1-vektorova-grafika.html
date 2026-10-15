@@ -188,7 +188,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
 .dg{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:760px){.dg{grid-template-columns:1fr}}
 .dg canvas{width:100%;image-rendering:pixelated;border:1px solid var(--border);border-radius:8px;background:#fff}
-.sl{display:grid;grid-template-columns:130px 1fr 90px;gap:8px;align-items:center;margin:6px 0}.sl input{accent-color:var(--acc)}.sl b{font-family:var(--mono)}
+.sl{display:grid;grid-template-columns:130px 1fr 90px;gap:8px;align-items:center;margin:6px 0}@media (max-width:640px){.sl{grid-template-columns:84px minmax(0,1fr) 52px}}.sl input{accent-color:var(--acc)}.sl b{font-family:var(--mono)}
 .big{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--acc)}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.two{grid-template-columns:1fr}}
@@ -202,18 +202,153 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .zz{display:grid;grid-template-columns:1fr 1fr;gap:12px}.zz div{background:#fff;border:1px solid var(--border);border-radius:10px;padding:6px;text-align:center}
 .zz canvas,.zz svg{width:100%;height:200px;display:block;image-rendering:pixelated}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["SVG prvky: rect, circle, line, text a path (krivky). Vzhľad: fill, stroke, stroke-width.", "Bod (0, 0) je vľavo hore, y rastie nadol. Zväčšenie vektora nemení veľkosť súboru."], "princip": ["Vektor = matematicky opísané objekty (body, čiary, krivky, tvary, text) s vlastnosťami; pri zväčšení zostáva ostrý.", "Použitie: logá, ikony, písma, mapy. Formáty SVG, AI, EPS, PDF; programy Inkscape, Illustrator, Figma."], "svg": ["SVG = textový zápis: rect, circle, line, text; fill, stroke, stroke-width.", "Súradnice: [0, 0] vľavo hore, x doprava, y nadol."], "krivky": ["Kubická Bézierova krivka: 2 koncové body + 2 riadiace body; nástroj Pero."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"princip": ["<b>Vektorová grafika</b> ukladá <b>objekty</b> opísané matematicky: body (súradnice), úsečky, krivky, kruhy, mnohouholníky a text.", "Každý objekt má <b>vlastnosti</b>: farbu výplne, farbu a hrúbku obrysu, priehľadnosť.", "Pri zobrazení počítač objekty <b>vypočíta a vykreslí</b> v potrebnej veľkosti, preto sú ostré pri každom zväčšení.", "Objekty sa dajú kedykoľvek presúvať, prefarbiť aj zväčšiť bez straty kvality.", "Použitie: logá, ikony, písma, mapy, technické výkresy, infografiky. Na fotografie sa vektor nehodí.", "Formáty: <b>SVG</b>, AI, EPS, PDF. Programy: Inkscape (zadarmo), Adobe Illustrator, Figma, CorelDRAW."], "svg": ["<b>SVG</b> je vektorový formát zapísaný ako <b>text</b>, každý riadok je jeden prvok.", "Bod <b>[0, 0]</b> je v ľavom hornom rohu, <b>x</b> rastie doprava, <b>y</b> rastie nadol.", "<b>&lt;rect&gt;</b> obdĺžnik: ľavý horný roh x, y a rozmery width, height.", "<b>&lt;circle&gt;</b> kruh: stred cx, cy a polomer r.", "<b>&lt;line&gt;</b> úsečka z bodu [x1, y1] do bodu [x2, y2]; <b>&lt;text&gt;</b> text na pozícii x, y.", "Vzhľad: <b>fill</b> = farba výplne, <b>stroke</b> = farba obrysu, <b>stroke-width</b> = hrúbka obrysu."], "krivky": ["Oblé tvary (písmená, logá) sa opisujú <b>Bézierovými krivkami</b>.", "Kubická Bézierova krivka má <b>2 koncové body</b> (začiatok a koniec) a <b>2 riadiace body</b>.", "Koncové body určujú, kde krivka začína a končí, riadiace body ju <b>ohýbajú</b> ako magnety.", "Posunom riadiacich bodov vznikne oblúk, plochá krivka aj slučka.", "Zložité tvary sa skladajú z viacerých kriviek, ktoré na seba nadväzujú v kotviacich bodoch.", "V grafických programoch kreslí krivky nástroj <b>Pero</b>."], "precvic": ["Obrázok v SVG je poskladaný z prvkov: <b>rect, circle, line, text, path</b>.", "Prvok <b>&lt;path&gt;</b> (cesta) opisuje tvar postupnosťou príkazov.", "Príkazy cesty: <b>M</b> presuň sa, <b>L</b> úsečka, <b>C</b> Bézierova krivka, <b>Z</b> uzavri tvar.", "Z ciest sa skladajú písmená, logá a iné zložité tvary. Nástroj Pero zapisuje práve &lt;path&gt;.", "Vzhľad každého prvku určujú <b>fill</b> (výplň), <b>stroke</b> (obrys) a <b>stroke-width</b> (hrúbka obrysu)."]};
+/* Ilustrácie – 1. ročník 3.1 Vektorová grafika */
+const TFIG = (() => { const A = "#6A3FD0", AS = "#E9E2FB", INK = "#1A1530", MUT = "#5E5877", OK = "#12805A", BAD = "#C0392B", BLUE = "#1E6FD9", RED = "#D93636", LINE = "#DAD6E6";
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}"${o.a ? ` text-anchor="${o.a}"` : ""} fill="${o.c || INK}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}>${s}</text>`;
+  const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const fig = (h, body, label, cap) => `<figure class="tfig"><svg viewBox="0 0 440 ${h}" role="img" aria-label="${label}" ${FF}><rect width="440" height="${h}" fill="#fff"/>${body}</svg><figcaption>${cap}</figcaption></figure>`;
+  const ar = (x1, y1, x2, y2, c = MUT, w = 2) => { const a = Math.atan2(y2 - y1, x2 - x1), p = t => [(x2 - 9 * Math.cos(a + t)).toFixed(1), (y2 - 9 * Math.sin(a + t)).toFixed(1)], [ax, ay] = p(0.45), [bx, by] = p(-0.45);
+    return `<line x1="${x1}" y1="${y1}" x2="${(x2 - 6 * Math.cos(a)).toFixed(1)}" y2="${(y2 - 6 * Math.sin(a)).toFixed(1)}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2}L${ax} ${ay}L${bx} ${by}Z" fill="${c}"/>`; };
+  const num = (x, y, n, c = A) => `<circle cx="${x}" cy="${y}" r="10" fill="${c}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const star = (cx, cy, R, r) => [...Array(10)].map((_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r : R; return (i ? "L" : "M") + (cx + q * Math.cos(a)).toFixed(1) + " " + (cy + q * Math.sin(a)).toFixed(1); }).join("") + "Z";
+  const dash = (x1, y1, x2, y2, c = MUT) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  const anc = (x, y) => `<rect x="${x - 6}" y="${y - 6}" width="12" height="12" fill="${BLUE}" stroke="#fff" stroke-width="1.5"/>`;
+  const ctl = (x, y) => `<circle cx="${x}" cy="${y}" r="6.5" fill="${RED}" stroke="#fff" stroke-width="1.5"/>`;
+return {
+  zoom: fig(250, `
+    ${T(220, 20, "Ten istý prstenec zväčšený 10-krát", { a: "middle", fs: 12.5, b: 1 })}
+    ${box(10, 32, 204, 166, "#fff", LINE)}${box(226, 32, 204, 166, "#fff", LINE)}
+    ${(() => { let o = ""; for (let r = 0; r < 14; r++) for (let c = 0; c < 14; c++) { const d = Math.hypot(c - 6.5, r - 6.5); if (d > 4.3 && d < 6.7) o += `<rect x="${35 + c * 11}" y="${38 + r * 11}" width="11" height="11" fill="${A}" stroke="#fff" stroke-width=".5"/>`; } return o; })()}
+    <circle cx="328" cy="115" r="60" fill="none" stroke="${A}" stroke-width="24"/>
+    ${T(112, 220, "rastrový", { a: "middle", fs: 12.5, b: 1, c: BAD })}${T(112, 238, "pixely, zubatý okraj", { a: "middle", fs: 11, c: MUT })}
+    ${T(328, 220, "vektorový", { a: "middle", fs: 12.5, b: 1, c: OK })}${T(328, 238, "vypočítaný tvar, hladký okraj", { a: "middle", fs: 11, c: MUT })}`, "Raster a vektor pri zväčšení",
+    "Pri zväčšení <b>rastra</b> sa zväčšujú pixely a okraj je zubatý. <b>Vektor</b> sa vypočíta nanovo a ostane hladký."),
+  objekty: fig(250, `
+    <circle cx="165" cy="72" r="20" fill="#FDD835"/>
+    <path d="M30 200 L105 80 L180 200 Z" fill="#66BB6A" stroke="#1B5E20" stroke-width="4" stroke-linejoin="round"/>
+    ${[[30, 200], [105, 80], [180, 200]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="${A}"/>`).join("")}
+    ${T(14, 222, "[30, 200]", { fs: 11, b: 1, c: A })}${T(105, 66, "[105, 80]", { a: "middle", fs: 11, b: 1, c: A })}${T(200, 222, "[180, 200]", { a: "end", fs: 11, b: 1, c: A })}
+    ${box(214, 30, 216, 190, AS, null, 10)}
+    ${T(226, 52, "▲ mnohouholník", { fs: 12, b: 1, c: A })}
+    ${T(226, 72, "3 body (vrcholy)", { fs: 11 })}${T(226, 90, "výplň: zelená", { fs: 11 })}${T(226, 108, "obrys: tmavozelený, hrúbka 4", { fs: 11 })}
+    ${T(226, 138, "● kruh", { fs: 12, b: 1, c: A })}
+    ${T(226, 158, "stred: [165, 72]", { fs: 11 })}${T(226, 176, "polomer: 20", { fs: 11 })}${T(226, 194, "výplň: žltá, bez obrysu", { fs: 11 })}
+    ${T(220, 244, "Súbor si pamätá objekty a ich vlastnosti, nie pixely.", { a: "middle", fs: 11, c: MUT })}`, "Objekty a vlastnosti",
+    "Vektorový obrázok je zoznam <b>objektov</b> (body, tvary) a ich <b>vlastností</b> (výplň, obrys)."),
+  uprava: fig(210, `
+    ${[["pôvodný", 47, 82, 30, A], ["posunutý", 62, 108, 30, A], ["iná farba", 47, 82, 30, "#E0A800"], ["zväčšený", 47, 86, 44, A]].map(([t, dx, cy, R, c], i) => { const x0 = 14 + i * 106;
+      return `${box(x0, 30, 94, 120, "#fff", LINE, 8)}<path d="${star(x0 + dx, cy, R, R * 0.45)}" fill="${c}"/>${T(x0 + 47, 172, t, { a: "middle", fs: 11.5, b: 1 })}`; }).join("")}
+    ${T(220, 18, "Úpravy objektu bez straty kvality", { a: "middle", fs: 12.5, b: 1 })}
+    ${T(220, 198, "Mení sa iba popis objektu, tvar sa vždy vykreslí nanovo.", { a: "middle", fs: 11, c: MUT })}`, "Úpravy vektorového objektu",
+    "Vektorový objekt môžeš kedykoľvek <b>posunúť</b>, <b>prefarbiť</b> či <b>zväčšiť</b> a ostane ostrý."),
+  suradnice: fig(250, `
+    ${[1, 2, 3, 4].map(i => `<line x1="${40 + i * 80}" y1="30" x2="${40 + i * 80}" y2="236" stroke="#EEF0F5"/>`).join("")}${[1, 2].map(i => `<line x1="40" y1="${30 + i * 80}" x2="424" y2="${30 + i * 80}" stroke="#EEF0F5"/>`).join("")}
+    ${ar(40, 30, 428, 30, INK, 2)}${ar(40, 30, 40, 244, INK, 2)}
+    ${T(36, 22, "[0, 0]", { a: "end", fs: 11, b: 1, c: A })}${T(420, 48, "x", { fs: 13, b: 1 })}${T(50, 246, "y", { fs: 13, b: 1 })}
+    ${[50, 100, 150].map(v => T(40 + v * 1.6, 22, v, { a: "middle", fs: 11, c: MUT })).join("")}${[50, 100].map(v => T(32, 34 + v * 1.6, v, { a: "end", fs: 11, c: MUT })).join("")}
+    ${dash(280, 30, 280, 78, A)}${dash(40, 78, 280, 78, A)}<circle cx="280" cy="78" r="5" fill="${A}"/>${T(290, 82, "bod [150, 30]", { fs: 11, b: 1, c: A })}${T(32, 82, "30", { a: "end", fs: 11, c: A })}
+    <rect x="104" y="142" width="128" height="64" fill="#FFE9A8" stroke="#B07400" stroke-width="2"/><circle cx="104" cy="142" r="4.5" fill="#B07400"/>
+    ${T(108, 136, "x = 40, y = 70", { fs: 11, b: 1, c: "#8A5A00" })}${T(168, 224, "width = 80", { a: "middle", fs: 11, b: 1, c: "#8A5A00" })}${T(240, 178, "height = 40", { fs: 11, b: 1, c: "#8A5A00" })}`, "Súradnice v SVG",
+    "<b>[0, 0]</b> je vľavo hore, <b>x</b> rastie doprava a <b>y nadol</b>. Obdĺžnik určuje ľavý horný roh <b>x, y</b> a rozmery <b>width, height</b>."),
+  kod: fig(256, `
+    ${box(14, 10, 412, 92, "#1E2230", null, 8)}
+    ${[["&lt;rect x=\"10\" y=\"10\" width=\"90\" height=\"50\" fill=\"gold\"/&gt;", "#E0A800"], ["&lt;circle cx=\"150\" cy=\"35\" r=\"25\" fill=\"orchid\"/&gt;", "#C060C8"], ["&lt;line x1=\"10\" y1=\"80\" x2=\"190\" y2=\"80\" stroke=\"teal\"/&gt;", "#1A9A9A"], ["&lt;text x=\"115\" y=\"112\" font-size=\"20\"&gt;Ahoj&lt;/text&gt;", "#9AA4B8"]].map(([s, c], i) => `<circle cx="28" cy="${28 + i * 19}" r="5" fill="${c}"/>${T(40, 32 + i * 19, s, { fs: 10.5, mono: 1, c: "#E6EDF3" })}`).join("")}
+    ${ar(220, 106, 220, 122, MUT, 2)}
+    <rect x="120" y="126" width="200" height="124" fill="#fff" stroke="${LINE}" stroke-width="1.5"/>
+      <rect x="130" y="136" width="90" height="50" fill="gold"/><circle cx="270" cy="161" r="25" fill="orchid"/><line x1="130" y1="206" x2="310" y2="206" stroke="teal" stroke-width="3"/>
+      <text x="235" y="238" font-size="20" fill="${INK}">Ahoj</text>`, "Kód SVG a výsledný obrázok",
+    "Každý riadok kódu SVG je jeden <b>prvok</b>. Prehliadač ho prečíta a vykreslí."),
+  fillstroke: fig(200, `
+    ${[["výplň", "fill=\"gold\"", `fill="gold"`], ["obrys", "stroke=\"teal\"", `fill="none" stroke="teal" stroke-width="3"`], ["hrubý obrys", "stroke-width=\"10\"", `fill="gold" stroke="teal" stroke-width="10"`]].map(([t, c, at], i) => { const x0 = 14 + i * 142;
+      return `${box(x0, 10, 130, 128, "#fff", LINE, 8)}<circle cx="${x0 + 65}" cy="74" r="40" ${at}/>${T(x0 + 65, 160, t, { a: "middle", fs: 12, b: 1, c: A })}${T(x0 + 65, 180, c, { a: "middle", fs: 11, mono: 1 })}`; }).join("")}`, "fill, stroke a stroke-width",
+    "<b>fill</b> = farba výplne, <b>stroke</b> = farba obrysu, <b>stroke-width</b> = hrúbka obrysu."),
+  bezier: fig(250, `
+    ${dash(40, 200, 90, 50)}${dash(400, 200, 330, 40)}
+    <path d="M40 200 C90 50, 330 40, 400 200" fill="none" stroke="${A}" stroke-width="4"/>
+    ${anc(40, 200)}${anc(400, 200)}${ctl(90, 50)}${ctl(330, 40)}
+    ${T(26, 226, "koncový bod (začiatok)", { fs: 11, b: 1, c: BLUE })}${T(414, 226, "koncový bod (koniec)", { a: "end", fs: 11, b: 1, c: BLUE })}
+    ${T(104, 40, "riadiaci bod 1", { fs: 11, b: 1, c: RED })}${T(316, 28, "riadiaci bod 2", { a: "end", fs: 11, b: 1, c: RED })}
+    ${T(220, 165, "kubická Bézierova krivka", { a: "middle", fs: 12, b: 1, c: A })}`, "Časti Bézierovej krivky",
+    "<b>Koncové body</b> (modré) určujú, kde krivka začína a končí. <b>Riadiace body</b> (červené) ju ohýbajú."),
+  pismeno: fig(250, `
+    ${T(220, 20, "Písmeno D vo fonte", { a: "middle", fs: 12.5, b: 1 })}
+    <path d="M60 40 V210 H130 C250 210, 250 40, 130 40 Z" fill="${AS}" stroke="${A}" stroke-width="3"/>
+    <path d="M90 74 V176 H128 C196 176, 196 74, 128 74 Z" fill="#fff" stroke="${A}" stroke-width="3"/>
+    ${dash(130, 210, 250, 210)}${dash(130, 40, 250, 40)}
+    ${anc(60, 40)}${anc(60, 210)}${anc(130, 210)}${anc(130, 40)}${ctl(250, 210)}${ctl(250, 40)}
+    ${anc(296, 70)}${T(312, 74, "kotviaci bod", { fs: 11.5, b: 1, c: BLUE })}
+    ${ctl(296, 100)}${T(312, 104, "riadiaci bod", { fs: 11.5, b: 1, c: RED })}
+    ${T(288, 140, "vonkajší obrys:", { fs: 11.5, b: 1 })}${T(288, 158, "3 úsečky", { fs: 11 })}${T(288, 176, "+ 1 Bézierova krivka", { fs: 11 })}
+    ${T(220, 240, "Obrys písmena je cesta z úsečiek a kriviek.", { a: "middle", fs: 11, c: MUT })}`, "Písmeno z kriviek",
+    "Písmená vo fontoch sú obrysy zložené z <b>úsečiek</b> a <b>Bézierových kriviek</b>."),
+  tvary: fig(200, `
+    ${T(220, 18, "Rovnaké koncové body, iné riadiace body", { a: "middle", fs: 12.5, b: 1 })}
+    ${[["vysoko → oblúk", [36, 42], [114, 42]], ["nízko → plochá", [40, 105], [110, 105]], ["prekrížené → slučka", [122, 42], [8, 42]]].map(([t, c1, c2], i) => { const x0 = 14 + i * 142, P0 = [x0 + 20, 128], P3 = [x0 + 110, 128], C1 = [x0 + c1[0] - 10 + 10, c1[1]], C2 = [x0 + c2[0], c2[1]];
+      return `${box(x0, 28, 130, 122, "#fff", LINE, 8)}${dash(P0[0], P0[1], C1[0], C1[1])}${dash(P3[0], P3[1], C2[0], C2[1])}<path d="M${P0} C${C1}, ${C2}, ${P3}" fill="none" stroke="${A}" stroke-width="3.5"/>${anc(P0[0], P0[1])}${anc(P3[0], P3[1])}${ctl(C1[0], C1[1])}${ctl(C2[0], C2[1])}${T(x0 + 65, 174, t, { a: "middle", fs: 11, b: 1 })}`; }).join("")}`, "Tvary Bézierovej krivky",
+    "Posunom <b>riadiacich bodov</b> vznikne z tej istej krivky oblúk, plochá krivka aj slučka."),
+  path: fig(256, `
+    <path d="M30 210 L30 110 C30 30, 220 30, 220 110 L220 210 Z" fill="${AS}" stroke="${A}" stroke-width="3"/>
+    ${dash(30, 110, 30, 34)}${dash(220, 110, 220, 34)}${ctl(30, 34)}${ctl(220, 34)}
+    ${num(30, 210, 1)}${num(30, 160, 2)}${num(125, 50, 3)}${num(220, 160, 4)}${num(125, 210, 5)}
+    ${[["M = presuň sa do bodu"], ["L = nakresli úsečku"], ["C = nakresli krivku"], ["L = nakresli úsečku"], ["Z = uzavri tvar"]].map(([s], i) => `${num(270, 52 + i * 36, i + 1)}${T(286, 56 + i * 36, s, { fs: 11.5 })}`).join("")}
+    ${T(220, 246, "&lt;path d=\"M30 210 L30 110 C30 30 220 30 220 110 L220 210 Z\"/&gt;", { a: "middle", fs: 10.5, mono: 1, c: A })}`, "Príkazy prvku path",
+    "Prvok <b>&lt;path&gt;</b> kreslí tvar podľa príkazov: <b>M</b> presun, <b>L</b> úsečka, <b>C</b> krivka, <b>Z</b> uzavretie."),
+  scena: fig(250, `
+    ${T(220, 20, "Obrázok poskladaný z 5 prvkov SVG", { a: "middle", fs: 12.5, b: 1 })}
+    <circle cx="210" cy="64" r="22" fill="#FDD835"/>
+    <path d="M50 120 L115 66 L180 120 Z" fill="#E57373"/>
+    <rect x="62" y="120" width="106" height="78" fill="#F5D7A1"/><rect x="100" y="150" width="28" height="48" fill="#8D6E63"/>
+    <line x1="14" y1="199" x2="250" y2="199" stroke="#2E7D32" stroke-width="4"/>
+    <text x="115" y="234" text-anchor="middle" font-size="18" font-weight="700" fill="${INK}">Dom</text>
+    ${num(210, 64, 1)}${num(115, 100, 2)}${num(82, 160, 3)}${num(36, 186, 4)}${num(160, 228, 5)}
+    ${[["&lt;circle&gt;", "slnko"], ["&lt;path&gt;", "strecha"], ["&lt;rect&gt;", "stena a dvere"], ["&lt;line&gt;", "zem"], ["&lt;text&gt;", "nápis"]].map(([e, d], i) => `${num(276, 60 + i * 36, i + 1)}${T(292, 64 + i * 36, e, { fs: 11.5, b: 1, mono: 1, c: A })}${T(362, 64 + i * 36, d, { fs: 11 })}`).join("")}`, "Obrázok zložený z prvkov",
+    "Každá časť obrázka je samostatný <b>prvok</b> SVG so svojimi súradnicami a vlastnosťami.")
+}; })();
+
 const KEY = "vektor-n31-v1";
 const LESSON = "3.1 Princíp vektorovej grafiky";
 const BRAND = "3.1 Vektorová grafika";
 const CLASS_DEFAULT = "I.";
-const WIDE = { princip: 1, svg: 1, krivky: 1 };
+const WIDE = { princip: 1, svg: 1, krivky: 1, precvic: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "princip", title: "Vektor verzus raster", min: 8 },
@@ -286,25 +421,63 @@ const TASKS = {
 };
 const VIEWS = {
   princip: () => head() + `<h2>Vektor verzus raster</h2>${guessBox()}
-    <div class="theory"><p><b>Vektorová grafika</b> neukladá pixely, ale <b>objekty</b> opísané matematicky: body (súradnice), úsečky, krivky, kruhy, mnohouholníky a text. Každý objekt má <b>vlastnosti</b>: farbu výplne, farbu a hrúbku obrysu, priehľadnosť. Pri zobrazení počítač objekty <b>vykreslí</b> v potrebnej veľkosti, preto zostanú <b>ostré pri každom zväčšení</b>. Objekty sa dajú kedykoľvek presúvať a meniť.</p>
-      <p>Použitie: <b>logá, ikony, písma, mapy, technické výkresy, infografiky</b>. Formáty: <b>SVG</b>, AI, EPS, PDF. Programy: <b>Inkscape</b> (zadarmo), Adobe Illustrator, Figma, CorelDRAW. Na fotografie sa vektor nehodí.</p></div>
+    <div class="theory tsplit"><div>
+      <p><b>Vektorová grafika</b> neukladá pixely, ale <b>objekty</b> opísané matematicky. Každý objekt má svoje <b>vlastnosti</b>.</p>
+      <table class="rtab"><tbody>
+        <tr><td style="white-space:nowrap"><b>objekty</b></td><td>body (súradnice), úsečky, krivky, kruhy, mnohouholníky, text</td></tr>
+        <tr><td style="white-space:nowrap"><b>vlastnosti</b></td><td>farba výplne, farba a hrúbka obrysu, priehľadnosť</td></tr>
+        <tr><td style="white-space:nowrap"><b>použitie</b></td><td>logá, ikony, písma, mapy, technické výkresy, infografiky</td></tr>
+        <tr><td style="white-space:nowrap"><b>formáty</b></td><td><b>SVG</b>, AI, EPS, PDF</td></tr>
+        <tr><td style="white-space:nowrap"><b>programy</b></td><td><b>Inkscape</b> (zadarmo), Adobe Illustrator, Figma, CorelDRAW</td></tr></tbody></table>
+      <p>Pri zobrazení počítač objekty <b>vykreslí</b> v potrebnej veľkosti, preto zostanú <b>ostré pri každom zväčšení</b>. Objekty sa dajú kedykoľvek presúvať a meniť. Na fotografie sa vektor nehodí.</p>
+    </div><div>${TFIG.zoom}</div></div>
+    ${ltfigs(TFIG.objekty, TFIG.uprava)}
+    ${VEDEL("Hrací automat Asteroids (1979) mal vektorovú obrazovku: elektrónový lúč nekreslil pixely, ale priamo svietiace čiary. Preto boli lode a asteroidy ostré, no iba obrysové.")}
     <h3>Porovnaj pri zväčšení</h3><div class="tool" id="zbox">${zoomHTML()}</div>
     <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>
     <h3>Úloha 2: vektor, alebo raster?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("usort")}</div>
     <h3>Úloha 3: aký je to formát?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>` + nextBar(),
   svg: () => head() + `<h2>Kreslím kódom SVG</h2>
-    <div class="theory"><p><b>SVG</b> je vektorový formát zapísaný ako text. Súradnice začínajú v ľavom hornom rohu, <b>x rastie doprava, y nadol</b>. Základné prvky:</p>
-      <ul><li><code>&lt;rect x="10" y="10" width="80" height="40" fill="blue"/&gt;</code> obdĺžnik</li><li><code>&lt;circle cx="100" cy="75" r="30" fill="red"/&gt;</code> kruh (stred a polomer)</li><li><code>&lt;line x1="0" y1="0" x2="200" y2="150" stroke="black"/&gt;</code> úsečka</li><li><code>&lt;text x="20" y="140" font-size="24"&gt;GIK&lt;/text&gt;</code> text</li></ul>
-      <p>Vlastnosti: <code>fill</code> (výplň), <code>stroke</code> (farba obrysu), <code>stroke-width</code> (hrúbka).</p></div>
+    <div class="theory tsplit"><div>
+      <p><b>SVG</b> je vektorový formát zapísaný ako <b>text</b>. Súradnice začínajú v ľavom hornom rohu, <b>x rastie doprava, y nadol</b>.</p>
+      <table class="rtab"><thead><tr><th>Zápis</th><th>Čo nakreslí</th></tr></thead><tbody>
+        <tr><td><code>&lt;rect x="10" y="10" width="80" height="40" fill="blue"/&gt;</code></td><td>obdĺžnik (roh a rozmery)</td></tr>
+        <tr><td><code>&lt;circle cx="100" cy="75" r="30" fill="red"/&gt;</code></td><td>kruh (stred a polomer)</td></tr>
+        <tr><td><code>&lt;line x1="0" y1="0" x2="200" y2="150" stroke="black"/&gt;</code></td><td>úsečka (dva body)</td></tr>
+        <tr><td><code>&lt;text x="20" y="140" font-size="24"&gt;GIK&lt;/text&gt;</code></td><td>text</td></tr></tbody></table>
+      <p>Vlastnosti: <code>fill</code> (výplň), <code>stroke</code> (farba obrysu), <code>stroke-width</code> (hrúbka obrysu).</p>
+    </div><div>${TFIG.suradnice}</div></div>
+    ${ltfigs(TFIG.kod, TFIG.fillstroke)}
+    ${VEDEL("SVG je otvorený štandard organizácie W3C od roku 2001. Súbor SVG si môžeš otvoriť v Poznámkovom bloku a čítať ho ako text, prehliadač z neho vykreslí obrázok.")}
+    <h3>Vyskúšaj: kde je bod?</h3><div class="tool">${crdHTML()}</div>
     <h3>Úloha: uprav kód</h3><div class="task" id="svgg">${gl([["circ", "pridaj červený kruh so stredom [100, 75] a polomerom aspoň 20"], ["rect", "zmeň výplň obdĺžnika na modrú (blue)"], ["line", "pridaj úsečku (line)"], ["text", "pridaj text GIK"]], svgGoals())}</div>
     <div class="sv"><textarea id="svgc" spellcheck="false" aria-label="Kód SVG">${esc(S.code)}</textarea><div class="pv" id="svgp">${svgPrev()}</div></div><div class="row"><button class="ghost" data-svgr>↺ Pôvodný kód</button></div>
     <h3>Úloha 2: počítaj so súradnicami</h3><div class="task">${taskHTML("sin")}</div>` + nextBar(),
   krivky: () => head() + `<h2>Bézierove krivky</h2>
-    <div class="theory"><p>Oblé tvary (písmená, logá) sa v grafike opisujú <b>Bézierovými krivkami</b>. Kubická krivka má dva <b>koncové body</b> (modré), cez ktoré prechádza, a dva <b>riadiace body</b> (červené), ktoré ju ohýbajú ako magnety. V grafických programoch s nimi pracuje nástroj <b>Pero</b>.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Oblé tvary (písmená, logá) sa v grafike opisujú <b>Bézierovými krivkami</b>. Kubická krivka má štyri body:</p>
+      <table class="rtab"><thead><tr><th>Bod</th><th>Čo robí</th></tr></thead><tbody>
+        <tr><td><b>2 koncové body</b> (modré)</td><td>krivka cez ne prechádza, určujú jej začiatok a koniec</td></tr>
+        <tr><td><b>2 riadiace body</b> (červené)</td><td>ohýbajú krivku ako magnety</td></tr></tbody></table>
+      <p>Zložité tvary sa skladajú z viacerých kriviek, ktoré na seba nadväzujú. V grafických programoch s nimi pracuje nástroj <b>Pero</b>: klikneš bod a ťahaním myši vytiahneš riadiace body.</p>
+    </div><div>${TFIG.bezier}</div></div>
+    ${ltfigs(TFIG.tvary, TFIG.pismeno)}
+    ${VEDEL("Krivky sú pomenované po Pierrovi Bézierovi, inžinierovi automobilky Renault, ktorý nimi v 60. rokoch navrhoval tvary karosérií. Podobný postup nezávisle objavil Paul de Casteljau v automobilke Citroën.")}
     <h3>Vyskúšaj: ťahaj body myšou</h3><div class="task"><ul class="goals"><li>${S.t.g_bez ? "✅" : "⬜"} Pohni riadiacimi bodmi a vytvor krivku v tvare písmena S.</li></ul></div><div class="bez" id="bezbox">${bezHTML()}</div>
     <h3>Otázky</h3><div class="task">${taskHTML("kq")}</div>` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: kreslím vektorovo</h2>
-    <div class="theory"><p>Okrem obdĺžnika, kruhu, úsečky a textu má SVG aj univerzálny prvok <b>&lt;path&gt;</b> (cesta). Opisuje tvar ako postupnosť príkazov: presuň sa do bodu, nakresli úsečku, nakresli <b>Bézierovu krivku</b>. Z ciest sa skladajú zložité tvary, napríklad písmená a logá. Keď grafik v Inkscape kreslí nástrojom Pero, program na pozadí zapisuje práve prvok &lt;path&gt;. Vzhľad každého prvku určujú vlastnosti <b>fill</b>, <b>stroke</b> a <b>stroke-width</b>.</p><p>Pri každej úlohe vyber prvok alebo vlastnosť SVG a potom odpovedz na otázky.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Okrem obdĺžnika, kruhu, úsečky a textu má SVG aj univerzálny prvok <b>&lt;path&gt;</b> (cesta). Opisuje tvar ako postupnosť <b>príkazov</b>:</p>
+      <table class="rtab num"><thead><tr><th>Príkaz</th><th>Čo urobí</th></tr></thead><tbody>
+        <tr><td>M x y</td><td>presunie sa do bodu (nekreslí)</td></tr>
+        <tr><td>L x y</td><td>nakreslí úsečku do bodu</td></tr>
+        <tr><td>C …</td><td>nakreslí <b>Bézierovu krivku</b> (2 riadiace body a koncový bod)</td></tr>
+        <tr><td>Z</td><td>uzavrie tvar späť do začiatku</td></tr></tbody></table>
+      <p>Z ciest sa skladajú zložité tvary, napríklad písmená a logá. Keď grafik v Inkscape kreslí nástrojom Pero, program na pozadí zapisuje práve prvok &lt;path&gt;. Vzhľad každého prvku určujú vlastnosti <b>fill</b>, <b>stroke</b> a <b>stroke-width</b>.</p>
+      <p>Pri každej úlohe vyber prvok alebo vlastnosť SVG a potom odpovedz na otázky.</p>
+    </div><div>${TFIG.path}</div></div>
+    ${ltfigs(TFIG.scena)}
+    ${VEDEL("Každé písmeno vo fonte, ktorým čítaš tento text, je uložené ako obrys z úsečiek a Bézierových kriviek. Preto je písmo ostré na mobile aj na obrovskom billboarde.")}
     <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
     <h3>Otázky</h3><div class="task">${taskHTML("pxq")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
@@ -317,6 +490,17 @@ function CUSTOM_INPUT(e) {
   if (t.id === "svgc") { S.code = t.value; save(); document.getElementById("svgp").innerHTML = svgPrev(); svgScore(); document.getElementById("svgg").innerHTML = gl([["circ", "pridaj červený kruh so stredom [100, 75] a polomerom aspoň 20"], ["rect", "zmeň výplň obdĺžnika na modrú (blue)"], ["line", "pridaj úsečku (line)"], ["text", "pridaj text GIK"]], svgGoals()); return true; }
   if (t.dataset && t.dataset.zm !== undefined) { S.zm = +t.value; save(); document.getElementById("zbox").innerHTML = zoomHTML(); drawZ(); const n = document.querySelector("[data-zm]"); if (n) n.focus(); return true; }
   return false; }
+/* interaktívne: súradnice bodu v SVG (bez bodov) */
+function crdHTML() { let g = ""; for (let x = 0; x <= 200; x += 10) g += `<line x1="${x}" y1="0" x2="${x}" y2="150" stroke="${x % 50 ? "#EEF1F6" : "#CDD3E0"}" stroke-width=".6"/>`; for (let y = 0; y <= 150; y += 10) g += `<line x1="0" y1="${y}" x2="200" y2="${y}" stroke="${y % 50 ? "#EEF1F6" : "#CDD3E0"}" stroke-width=".6"/>`;
+  [50, 100, 150].forEach(v => g += `<text x="${v + 1.5}" y="7" font-size="6" fill="#5E5877">${v}</text>`); [50, 100].forEach(v => g += `<text x="1.5" y="${v - 1.5}" font-size="6" fill="#5E5877">${v}</text>`);
+  return `<p style="margin:0 0 8px">Pohni myšou (alebo prstom) po mriežke s rozmermi 200 × 150. Uvidíš súradnice bodu v SVG. Všimni si, že <b>y rastie smerom nadol</b>.</p>
+  <svg id="crd" viewBox="0 0 200 150" style="width:100%;max-width:520px;background:#fff;border:1px solid var(--border);border-radius:10px;touch-action:none;display:block;cursor:crosshair" font-family="Rubik,Segoe UI,Arial,sans-serif">${g}<text x="1.5" y="7" font-size="6" font-weight="700" fill="#6A3FD0">0, 0</text>
+  <line id="crdh" x1="0" y1="75" x2="100" y2="75" stroke="#6A3FD0" stroke-width=".8" stroke-dasharray="3 2"/><line id="crdv" x1="100" y1="0" x2="100" y2="75" stroke="#6A3FD0" stroke-width=".8" stroke-dasharray="3 2"/><circle id="crdp" cx="100" cy="75" r="2.6" fill="#6A3FD0"/></svg>
+  <p id="crdo" style="font-family:var(--mono);font-weight:700;font-size:18px;margin:8px 0 0">x = 100, y = 75</p>`; }
+function crdMove(e) { const sv = e.target.closest && e.target.closest("#crd"); if (!sv) return; const r = sv.getBoundingClientRect(), x = Math.round(Math.max(0, Math.min(200, (e.clientX - r.left) / r.width * 200))), y = Math.round(Math.max(0, Math.min(150, (e.clientY - r.top) / r.height * 150)));
+  const P = document.getElementById("crdp"), H = document.getElementById("crdh"), V = document.getElementById("crdv"), O = document.getElementById("crdo"); if (!P) return;
+  P.setAttribute("cx", x); P.setAttribute("cy", y); H.setAttribute("y1", y); H.setAttribute("y2", y); H.setAttribute("x2", x); V.setAttribute("x1", x); V.setAttribute("x2", x); V.setAttribute("y2", y); O.textContent = `x = ${x}, y = ${y}`; }
+document.addEventListener("pointermove", crdMove); document.addEventListener("pointerdown", crdMove);
 let BD = null;
 document.addEventListener("pointerdown", e => { const h = e.target.closest && e.target.closest("[data-bh]"); if (h) { BD = +h.dataset.bh; e.preventDefault(); } });
 document.addEventListener("pointermove", e => { if (BD === null) return; const sv = document.getElementById("bsv"); if (!sv) return; const r = sv.getBoundingClientRect(); S.bz[BD] = [Math.round(Math.max(0, Math.min(480, (e.clientX - r.left) / r.width * 480))), Math.round(Math.max(0, Math.min(260, (e.clientY - r.top) / r.height * 260)))]; document.getElementById("bezbox").innerHTML = bezHTML(); });
@@ -479,7 +663,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

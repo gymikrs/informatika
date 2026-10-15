@@ -236,13 +236,51 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
+.task code{overflow-wrap:anywhere;word-break:break-all}
+@media (max-width:520px){.tool>div[style*="grid-template-columns"]{grid-template-columns:1fr!important}}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["PDF na čítanie a tlač, .docx na úpravy, .dotx šablóna, OneDrive pre prácu odkiaľkoľvek, Uložiť ako pre novú verziu."], "teoria": ["Nový: Ctrl + N (prázdny dokument alebo šablóna). Uložiť: Ctrl + S. Otvoriť: Ctrl + O, Nedávne.", "Prvé uloženie = Uložiť ako: miesto, názov, formát. Uložiť ako vytvorí nový súbor, pôvodný zostane."], "praca": ["Postup: nový dokument → písanie → uložiť (miesto, názov, formát) → priebežne Ctrl + S → zavrieť → otvoriť z Nedávne."], "formaty": [".docx (Word), .pdf (odoslanie, tlač), .odt (LibreOffice), .txt (čistý text).", "Automatické ukladanie v OneDrive, Obnovenie dokumentov po páde Wordu."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {
+  teoria: ["<b>Nový dokument</b>: po spustení Wordu Prázdny dokument alebo Súbor › Nový (<b>Ctrl + N</b>), prípadne <b>šablóna</b>.", "<b>Uložiť</b> (<b>Ctrl + S</b>) zapíše zmeny do toho istého súboru.", "Pri <b>prvom uložení</b> sa otvorí okno <b>Uložiť ako</b>: vyberieš <b>miesto</b>, <b>názov</b> a <b>formát</b>.", "<b>Uložiť ako</b> vytvorí nový súbor (iné meno, miesto alebo formát), pôvodný zostane.", "<b>Otvoriť</b> (<b>Ctrl + O</b>): Súbor › Otvoriť, zoznam <b>Nedávne</b> alebo dvojklik v Prieskumníkovi.", "Názov súboru má byť <b>výstižný</b> (čo a kto). Ukladaj priebežne.", "Cesta k súboru: <b>disk</b> › <b>priečinky</b> › <b>názov.prípona</b>."],
+  praca: ["Postup: <b>nový dokument</b> → písanie → <b>prvé uloženie</b> → priebežné ukladanie → <b>zavretie</b> → <b>otvorenie</b>.", "V okne Uložiť ako otváraj priečinky postupne, kým nie si v <b>správnom priečinku</b>.", "Potom napíš <b>názov súboru</b> a vyber <b>formát</b> v poli Uložiť vo formáte.", "Kópia v inom formáte (napr. PDF) vznikne cez <b>Uložiť ako</b>, pôvodný .docx zostane.", "Pri zatváraní si pozorne prečítaj otázku, ktorú Word položí."],
+  formaty: ["<b>.docx</b>: štandardný dokument Wordu, dá sa ďalej upravovať.", "<b>.pdf</b>: na odoslanie a tlač, vyzerá všade rovnako, ťažko sa upravuje.", "<b>.odt</b>: otvorený formát (LibreOffice Writer). <b>.txt</b>: iba čistý text bez formátovania.", "Dokument v <b>OneDrive</b> ukladá <b>Automatické ukladanie</b> priebežne a otvoríš ho z každého zariadenia.", "Po páde Wordu pomôže <b>Obnovenie dokumentov</b> alebo Súbor › Informácie › Spravovať dokument › Obnoviť neuložené dokumenty."],
+  precvic: ["Pred uložením si polož otázky: <b>kto</b> bude dokument čítať, či sa bude ešte <b>meniť</b>, <b>kde</b> s ním budeš pracovať.", "<b>.pdf</b> na čítanie a tlač, <b>.docx</b> na ďalšie úpravy, <b>.txt</b> pre čistý text.", "<b>.dotx</b> je <b>šablóna</b>: predloha pre nové dokumenty s rovnakým vzhľadom.", "<b>OneDrive</b>: súbor máš k dispozícii na každom zariadení.", "Starú aj novú verziu zachováš cez <b>Uložiť ako</b> s iným názvom.", "Ukladaj často (<b>Ctrl + S</b>), po páde Wordu skús <b>obnovenie</b>."]
+};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -293,12 +331,14 @@ const PF = (() => {
 })();
 
 /* Ilustrácie – Sekunda 2.2 Vytvorenie, uloženie, otvorenie dokumentu */
-const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#C2560C", AS = "#FBE3D2", W = "#2B579A";
-const doc = (x, y, n, c = W, v = "") => `<path d="M${x} ${y} h40 l12 12 v52 h-52z" fill="#fff" stroke="${c}" stroke-width="2"/>${[0, 1, 2].map(i => `<rect x="${x + 8}" y="${y + 18 + i * 9}" width="${30 - i * 6}" height="4" rx="2" fill="${C.line}"/>`).join("")}${v ? T(x + 26, y + 56, v, { a: "middle", fs: 9.5, b: 1, c }) : ""}${T(x + 26, y + 80, n, { a: "middle", fs: 9.5, mono: 1 })}`;
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num } = PF; const A = "#C2560C", AS = "#FBE3D2", W = "#2B579A";
+const doc = (x, y, n, c = W, v = "") => `<path d="M${x} ${y} h40 l12 12 v52 h-52z" fill="#fff" stroke="${c}" stroke-width="2"/>${[0, 1, 2].map(i => `<rect x="${x + 8}" y="${y + 18 + i * 9}" width="${30 - i * 6}" height="4" rx="2" fill="${C.line}"/>`).join("")}${v ? T(x + 26, y + 56, v, { a: "middle", fs: 10.5, b: 1, c }) : ""}${T(x + 26, y + 80, n, { a: "middle", fs: 10.5, mono: 1 })}`;
+const chip = (x, y, w, t, f, s, c, o = {}) => `${box(x, y, w, 30, f, s, 6)}${T(x + w / 2, y + 20, t, { a: "middle", fs: o.fs || 12, b: 1, c, mono: o.mono })}`;
+const brace = (x1, x2, y, t, c) => `<path d="M${x1} ${y} v6 h${x2 - x1} v-6" fill="none" stroke="${c}" stroke-width="2"/>${T((x1 + x2) / 2, y + 22, t, { a: "middle", fs: 11.5, b: 1, c })}`;
 return {
   ulozit: fig(SV(440, 240, `
     ${box(8, 8, 206, 224, "#fff", W, 12)}${T(111, 30, "💾 Uložiť  (Ctrl + S)", { a: "middle", fs: 12.5, b: 1, c: W })}
-    ${doc(40, 50, "basen.docx", W, "verzia 1")}${ar(98, 82, 126, 82, W, 2.5)}${doc(132, 50, "basen.docx", W, "verzia 2")}
+    ${doc(40, 50, "basen.docx", W, "verzia 1")}${ar(98, 82, 126, 82, C.blue, 2.5)}${doc(132, 50, "basen.docx", W, "verzia 2")}
     ${T(111, 170, "ten istý súbor", { a: "middle", fs: 11.5, b: 1 })}${T(111, 188, "sa prepíše novou verziou", { a: "middle", fs: 11 })}${T(111, 214, "stále 1 súbor", { a: "middle", fs: 10.5, c: C.mut })}
     ${box(226, 8, 206, 224, AS, A, 12)}${T(329, 30, "📑 Uložiť ako", { a: "middle", fs: 12.5, b: 1, c: A })}
     ${doc(248, 50, "basen.docx", W)}${ar(304, 82, 326, 82, A, 2.5)}${doc(334, 50, "basen.pdf", C.bad)}
@@ -306,21 +346,88 @@ return {
     "<b>Uložiť</b> zapíše zmeny do toho istého súboru. <b>Uložiť ako</b> vytvorí nový súbor a pôvodný nechá tak."),
   okno: fig(SV(440, 250, `
     ${box(8, 8, 424, 234, "#fff", "#C9CED6", 8)}<rect x="8" y="8" width="424" height="30" rx="8" fill="#F3F3F3"/><rect x="8" y="28" width="424" height="10" fill="#F3F3F3"/>${T(20, 28, "Uložiť ako", { fs: 12, b: 1 })}${T(420, 28, "✕", { a: "end", fs: 12, c: C.mut })}
-    ${PF.num(30, 60, "1", A)}<rect x="46" y="48" width="374" height="24" rx="4" fill="#fff" stroke="#C9CED6"/>${T(56, 65, "📁 Dokumenty › Slovenčina", { fs: 11 })}
+    ${num(30, 60, "1", A)}<rect x="46" y="48" width="374" height="24" rx="4" fill="#fff" stroke="#C9CED6"/>${T(56, 65, "📁 Dokumenty › Slovenčina", { fs: 11 })}
     <rect x="46" y="80" width="374" height="70" fill="#FAFAFA" stroke="${C.line}"/>${[["📁", "Slohy"], ["📘", "Diktat_Oktober.docx"], ["📘", "Basne_Jesen.docx"]].map(([e, n], i) => T(56, 98 + i * 20, e + " " + n, { fs: 10.5 })).join("")}
-    ${PF.num(30, 176, "2", A)}${T(46, 180, "Názov súboru:", { fs: 10.5, c: C.mut })}<rect x="130" y="164" width="290" height="24" rx="4" fill="#fff" stroke="${A}" stroke-width="2"/>${T(140, 181, "Sloh_Moj_Pes_Kovac", { fs: 11, mono: 1 })}
-    ${PF.num(30, 212, "3", A)}${T(46, 216, "Typ:", { fs: 10.5, c: C.mut })}<rect x="80" y="200" width="200" height="24" rx="4" fill="#fff" stroke="#C9CED6"/>${T(90, 217, "Dokument Wordu (*.docx) ▾", { fs: 10.5 })}
+    ${num(30, 176, "2", A)}${T(46, 180, "Názov súboru:", { fs: 10.5, c: C.mut })}<rect x="130" y="164" width="290" height="24" rx="4" fill="#fff" stroke="${A}" stroke-width="2"/>${T(140, 181, "Sloh_Moj_Pes_Kovac", { fs: 11, mono: 1 })}
+    ${num(30, 212, "3", A)}${T(46, 216, "Typ:", { fs: 10.5, c: C.mut })}<rect x="80" y="200" width="200" height="24" rx="4" fill="#fff" stroke="#C9CED6"/>${T(90, 217, "Dokument Wordu (*.docx) ▾", { fs: 10.5 })}
     <rect x="320" y="200" width="100" height="26" rx="5" fill="${W}"/>${T(370, 218, "Uložiť", { a: "middle", fs: 11.5, b: 1, c: "#fff" })}`, "Okno Uložiť ako"),
     "V okne <b>Uložiť ako</b> vyberieš ① <b>miesto</b>, ② výstižný <b>názov</b> a ③ <b>formát</b>."),
+  cesta: fig(SV(440, 230, `
+    ${T(220, 22, "Cesta k súboru", { a: "middle", fs: 13, b: 1, c: A })}
+    ${chip(14, 40, 36, "C:", C.blueS, C.blue, C.blue)}${T(57, 61, "\\", { a: "middle", fs: 14, b: 1, c: C.mut })}
+    ${[[64, 100, "Používatelia"], [178, 56, "Peter"], [248, 58, "Hudba"]].map(([x, w, t], i) => `${chip(x, 40, w, t, C.ambS, C.amb, "#7A5200")}${T(x + w + 7, 61, "\\", { a: "middle", fs: 14, b: 1, c: C.mut })}`).join("")}
+    ${chip(320, 40, 106, "piesen.mp3", AS, A, A)}
+    ${brace(14, 50, 76, "disk", C.blue)}${brace(64, 306, 76, "priečinky", "#7A5200")}${brace(320, 426, 76, "súbor", A)}
+    ${box(8, 122, 424, 100, C.bg, null, 10)}
+    ${chip(96, 140, 110, "piesen", "#fff", A, A, { fs: 14, mono: 1 })}${T(220, 162, ".", { a: "middle", fs: 22, b: 1, c: C.ink })}${chip(234, 140, 80, "mp3", "#fff", C.ok, C.ok, { fs: 14, mono: 1 })}
+    ${T(151, 190, "názov súboru", { a: "middle", fs: 11.5, b: 1, c: A })}${T(274, 190, "prípona = typ", { a: "middle", fs: 11.5, b: 1, c: C.ok })}
+    ${T(220, 212, "Súbor leží priamo v poslednom priečinku: Hudba.", { a: "middle", fs: 11, c: C.mut })}`, "Rozbor cesty k súboru"),
+    "Cesta ukazuje <b>disk</b>, <b>priečinky</b> a nakoniec <b>súbor</b>. Za bodkou je <b>prípona</b>, ktorá prezradí typ súboru."),
+  postup: fig(SV(440, 250, `
+    ${T(220, 20, "Postup práce s dokumentom", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["📄", "Nový dokument", "prázdny či šablóna"], ["✏️", "Píšeš text", "nadpis, odseky"], ["💾", "Prvé uloženie", "miesto, názov, typ"], ["🔁", "Ukladaj často", "nečakaj na koniec"], ["✕", "Zavrieť", "keď skončíš"], ["📂", "Otvoriť znova", "a pokračuješ"]].map(([e, t, d], i) => { const r = i < 3 ? 0 : 1, c = r ? 2 - (i - 3) : i, x = 8 + c * 150, y = 34 + r * 116; return `${box(x, y, 124, 92, i === 2 ? AS : "#fff", i === 2 ? A : C.line, 10)}${num(x + 16, y + 16, String(i + 1), A)}${T(x + 62, y + 40, e, { a: "middle", fs: 18 })}${T(x + 62, y + 64, t, { a: "middle", fs: 11.5, b: 1 })}${T(x + 62, y + 81, d, { a: "middle", fs: 10.5, c: C.mut })}`; }).join("")}
+    ${ar(134, 80, 156, 80, A, 2.5)}${ar(284, 80, 306, 80, A, 2.5)}${ar(370, 128, 370, 148, A, 2.5)}${ar(306, 196, 284, 196, A, 2.5)}${ar(156, 196, 134, 196, A, 2.5)}`, "Postup práce s dokumentom"),
+    "Dokument <b>vytvoríš</b>, píšeš, <b>prvýkrát uložíš</b> (miesto, názov, typ), ukladáš priebežne, <b>zavrieš</b> a neskôr znova <b>otvoríš</b>."),
+  priecinky: fig(SV(440, 230, `
+    ${T(220, 20, "Kam uložiť: klikaj po priečinkoch", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(8, 32, 236, 190, "#fff", "#C9CED6", 8)}
+    ${[[0, "📁 Dokumenty", 0], [1, "📁 Škola", 0], [2, "📁 Dejepis", 1], [3, "📘 Referat_Hrady.docx", 2], [2, "📁 Matematika", 0], [0, "📁 Plocha", 0], [0, "☁️ OneDrive", 0]].map(([l, t, on], i) => { const y = 42 + i * 25; return `${on === 1 ? `<rect x="14" y="${y}" width="224" height="22" rx="4" fill="${AS}"/>` : ""}${T(22 + l * 18, y + 16, t, { fs: on === 2 ? 10.5 : 11.5, b: on === 1, c: on === 1 ? A : C.ink, mono: on === 2 })}`; }).join("")}
+    ${num(270, 56, "1", A)}${T(286, 60, "Dokumenty", { fs: 11.5, b: 1 })}${num(270, 92, "2", A)}${T(286, 96, "Škola", { fs: 11.5, b: 1 })}${num(270, 128, "3", A)}${T(286, 132, "Dejepis", { fs: 11.5, b: 1, c: A })}
+    ${ar(270, 68, 270, 80, C.mut, 1.5)}${ar(270, 104, 270, 116, C.mut, 1.5)}
+    ${box(256, 156, 176, 60, C.bg, null, 8)}${T(344, 178, "súbor uložíš do", { a: "middle", fs: 11 })}${T(344, 198, "Dokumenty › Škola › Dejepis", { a: "middle", fs: 10.5, b: 1, c: A })}`, "Priečinky v okne Uložiť ako"),
+    "V okne Uložiť ako otváraj priečinky postupne, kým nie si v tom <b>správnom</b>. Až potom napíš názov a klikni na Uložiť."),
+  zavriet: fig(SV(440, 220, `
+    ${box(40, 14, 360, 120, "#fff", "#C9CED6", 8)}<rect x="40" y="14" width="360" height="26" rx="8" fill="${W}"/><rect x="40" y="30" width="360" height="10" fill="${W}"/>${T(52, 32, "Microsoft Word", { fs: 11.5, b: 1, c: "#fff" })}
+    ${T(56, 64, "Chcete uložiť zmeny v dokumente", { fs: 12, b: 1 })}${T(56, 82, "„Sloh_Jesen“?", { fs: 12, b: 1 })}
+    ${[["Uložiť", W, "#fff"], ["Neukladať", "#fff", C.ink], ["Zrušiť", "#fff", C.ink]].map(([t, f, c], i) => `<rect x="${86 + i * 100}" y="98" width="88" height="26" rx="5" fill="${f}" stroke="${W}" stroke-width="1.5"/>${T(130 + i * 100, 116, t, { a: "middle", fs: 11.5, b: 1, c })}`).join("")}
+    ${[["uloží a zavrie", C.ok], ["zmeny sa stratia", C.bad], ["späť k písaniu", C.blue]].map(([t, c], i) => `${ar(130 + i * 100, 130, 130 + i * 100, 158, c, 2)}${T(130 + i * 100, 178, t, { a: "middle", fs: 11, b: 1, c })}`).join("")}
+    ${T(220, 206, "Pred kliknutím si otázku vždy prečítaj.", { a: "middle", fs: 11, c: C.mut })}`, "Otázka pri zatváraní"),
+    "Pri zatváraní neuloženého dokumentu: <b>Uložiť</b> zmeny zachová, <b>Neukladať</b> ich zahodí, <b>Zrušiť</b> ťa vráti k dokumentu."),
   formaty: fig(SV(440, 250, `
     ${T(220, 20, "Ten istý list uložený v štyroch formátoch", { a: "middle", fs: 12, b: 1 })}
-    ${[[".docx", W, "✏️ ďalej upravíš", 1, 1], [".pdf", C.bad, "🔒 všade rovnaký", 1, 0], [".odt", "#1B78C4", "✏️ LibreOffice", 1, 1], [".txt", "#6B7280", "iba holý text", 0, 0]].map(([e, c, d, rich, cur], i) => { const x = 8 + i * 108; return `${box(x, 32, 100, 160, "#fff", c, 8)}<rect x="${x}" y="32" width="100" height="22" rx="8" fill="${c}"/><rect x="${x}" y="44" width="100" height="10" fill="${c}"/>${T(x + 50, 48, e, { a: "middle", fs: 12, b: 1, c: "#fff" })}
+    ${[[".docx", W, "✏️ upravíš", 1, 1], [".pdf", C.bad, "🔒 nezmení sa", 1, 0], [".odt", "#1B78C4", "✏️ LibreOffice", 1, 1], [".txt", "#6B7280", "len holý text", 0, 0]].map(([e, c, d, rich, cur], i) => { const x = 8 + i * 108; return `${box(x, 32, 100, 160, "#fff", c, 8)}<rect x="${x}" y="32" width="100" height="22" rx="8" fill="${c}"/><rect x="${x}" y="44" width="100" height="10" fill="${c}"/>${T(x + 50, 48, e, { a: "middle", fs: 12, b: 1, c: "#fff" })}
       ${T(x + 8, 74, "Pozvánka", { fs: rich ? 11.5 : 10.5, b: rich, c: rich ? A : C.ink, mono: !rich })}${rich ? `<rect x="${x + 72}" y="60" width="22" height="22" rx="4" fill="#F8CFB1"/>${T(x + 83, 76, "🎈", { a: "middle", fs: 11 })}` : ""}
-      ${T(x + 10, 104, "Pozývam ťa", { fs: 10, i: rich, mono: !rich })}${T(x + 10, 120, "na oslavu", { fs: 10, b: rich, mono: !rich })}${T(x + 10, 136, "v sobotu.", { fs: 10, mono: !rich })}
-      ${cur ? `<line x1="${x + 58}" y1="128" x2="${x + 58}" y2="140" stroke="${C.ink}" stroke-width="1.5"/>` : ""}
-      ${T(x + 50, 178, d, { a: "middle", fs: 9.5, b: 1, c })}`; }).join("")}
-    ${box(8, 204, 424, 38, C.ambS, C.amb, 8)}${T(220, 227, "Word spadol? Po spustení ponúkne Obnovenie dokumentov.", { a: "middle", fs: 11, b: 1, c: "#7A5200" })}`, "Porovnanie formátov dokumentu"),
-    "<b>.docx</b> a <b>.odt</b> sa dajú ďalej upravovať, <b>.pdf</b> vyzerá všade rovnako, <b>.txt</b> stratí písmo, farby aj obrázky.")
+      ${T(x + 8, 104, "Pozývam ťa", { fs: 10.5, i: rich, mono: !rich })}${T(x + 8, 120, "na oslavu", { fs: 10.5, b: rich, mono: !rich })}${T(x + 8, 136, "v sobotu.", { fs: 10.5, mono: !rich })}
+      ${cur ? `<line x1="${x + 62}" y1="128" x2="${x + 62}" y2="140" stroke="${C.ink}" stroke-width="1.5"/>` : ""}
+      ${T(x + 50, 178, d, { a: "middle", fs: 10.5, b: 1, c })}`; }).join("")}
+    ${box(8, 204, 424, 38, C.ambS, C.amb, 8)}${T(220, 227, "Formát vyberieš v okne Uložiť ako › Uložiť vo formáte.", { a: "middle", fs: 11, b: 1, c: "#7A5200" })}`, "Porovnanie formátov dokumentu"),
+    "<b>.docx</b> a <b>.odt</b> sa dajú ďalej upravovať, <b>.pdf</b> vyzerá všade rovnako, <b>.txt</b> stratí písmo, farby aj obrázky."),
+  pdf: fig(SV(440, 220, `
+    ${T(220, 20, "Ako uložiť dokument ako PDF", { a: "middle", fs: 13, b: 1, c: A })}
+    ${T(14, 50, "Uložiť vo formáte:", { fs: 11, c: C.mut })}
+    <rect x="14" y="58" width="260" height="24" rx="4" fill="#fff" stroke="#C9CED6"/>${T(22, 75, "Dokument programu Word (*.docx) ▾", { fs: 10.5 })}
+    ${box(14, 84, 260, 126, "#fff", "#9FB0C8", 4)}
+    ${["Dokument programu Word (*.docx)", "Šablóna programu Word (*.dotx)", "PDF (*.pdf)", "Text OpenDocument (*.odt)", "Obyčajný text (*.txt)"].map((t, i) => `${i === 2 ? `<rect x="18" y="${90 + i * 23}" width="252" height="21" rx="3" fill="${AS}"/>` : ""}${T(26, 105 + i * 23, t, { fs: 10.5, b: i === 2, c: i === 2 ? A : C.ink })}`).join("")}
+    ${ar(278, 145, 300, 145, A, 2.5)}
+    ${doc(330, 92, "Plagat.pdf", C.bad)}
+    ${T(356, 196, "nový súbor", { a: "middle", fs: 11, b: 1 })}${T(356, 212, ".docx ostane", { a: "middle", fs: 10.5, c: C.mut })}`, "Uloženie do PDF"),
+    "PDF vytvoríš cez <b>Uložiť ako</b> a typ <b>PDF</b> (alebo Súbor › Exportovať). Pôvodný .docx zostane na ďalšie úpravy."),
+  obnova: fig(SV(440, 220, `
+    ${T(220, 20, "Word spadol? Obnovenie dokumentov", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(8, 32, 236, 180, "#fff", "#C9CED6", 6)}<rect x="8" y="32" width="236" height="26" rx="6" fill="#F3F3F3"/>${T(18, 50, "Obnovenie dokumentov", { fs: 11.5, b: 1 })}
+    ${T(18, 76, "Word obnovil tieto súbory.", { fs: 10.5, c: C.mut })}${T(18, 92, "Ponechaj tie najlepšie.", { fs: 10.5, c: C.mut })}
+    ${[["Sloh_Jesen.docx", "automaticky uložené 10:42", 1], ["Sloh_Jesen.docx", "pôvodné 10:12", 0]].map(([n, d, on], i) => { const y = 104 + i * 50; return `<rect x="16" y="${y}" width="220" height="44" rx="4" fill="${on ? AS : "#fff"}" stroke="${on ? A : C.line}"/>${T(26, y + 18, "📘 " + n, { fs: 11, b: 1 })}${T(46, y + 35, d, { fs: 10.5, c: on ? A : C.mut })}`; }).join("")}
+    ${[["1", "Word znova spusti."], ["2", "Vľavo vyber najnovšiu"], ["", "verziu."], ["3", "Hneď ju ulož."]].map(([n, t], i) => `${n ? num(270, 66 + i * 34, n, A) : ""}${T(288, 70 + i * 34 - (n ? 0 : 14), t, { fs: 11.5, b: !!n })}`).join("")}
+    ${T(262, 196, "Ukladaj však radšej sám!", { fs: 11, c: C.mut })}`, "Obnovenie dokumentov"),
+    "Po páde Wordu sa pri ďalšom spustení zobrazí tabla <b>Obnovenie dokumentov</b>. Vyber najnovšiu verziu a hneď ju ulož."),
+  otazky: fig(SV(440, 250, `
+    ${T(220, 20, "Tri otázky pred uložením", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["👀", "Kto ho bude čítať?", "ja, učiteľ, kamarát, celá trieda", C.blue, C.blueS], ["✏️", "Bude sa ešte meniť?", "dopisovať, opravovať, alebo je hotový", A, AS], ["📍", "Kde s ním budem pracovať?", "jeden počítač, alebo viac zariadení", C.ok, C.okS]].map(([e, q, d, c, f], i) => { const y = 34 + i * 72; return `${box(8, y, 424, 62, f, c, 10)}${T(38, y + 39, e, { a: "middle", fs: 22 })}${T(66, y + 27, q, { fs: 15, b: 1, c })}${T(66, y + 48, d, { fs: 12.5, c: C.ink })}`; }).join("")}`, "Otázky pred uložením"),
+    "Než vyberieš formát alebo miesto, polož si tri otázky: <b>kto</b> bude dokument čítať, či sa bude <b>meniť</b> a <b>kde</b> s ním budeš pracovať."),
+  ikony: fig(SV(440, 220, `
+    ${T(220, 20, "Prípona prezradí, čo súbor otvorí", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[[".docx", W, "Word", "dokument"], [".dotx", "#4A7BC4", "Word", "šablóna"], [".pdf", C.bad, "prehliadač", "PDF"], [".odt", "#1B78C4", "LibreOffice", "Writer"], [".txt", "#6B7280", "Poznámkový", "blok"]].map(([e, c, p1, p2], i) => { const x = 10 + i * 86; return `<path d="M${x + 14} 40 h40 l14 14 v70 h-54z" fill="#fff" stroke="${c}" stroke-width="2"/><rect x="${x + 8}" y="92" width="66" height="22" rx="4" fill="${c}"/>${T(x + 41, 108, e, { a: "middle", fs: 12, b: 1, c: "#fff", mono: 1 })}${[0, 1, 2].map(k => `<rect x="${x + 22}" y="${58 + k * 9}" width="${30 - k * 6}" height="4" rx="2" fill="${C.line}"/>`).join("")}${T(x + 41, 156, p1, { a: "middle", fs: 11, b: 1 })}${T(x + 41, 172, p2, { a: "middle", fs: 11, c: C.mut })}`; }).join("")}
+    ${T(220, 206, "Ikona aj program sa vyberú podľa prípony.", { a: "middle", fs: 11, c: C.mut })}`, "Prípony a programy"),
+    "Podľa <b>prípony</b> Windows vie, akým programom súbor otvorí, napríklad .docx vo <b>Worde</b>."),
+  sablona: fig(SV(440, 230, `
+    ${T(220, 20, "Šablóna: predloha pre nové dokumenty", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 40, 120, 150, AS, A, 8)}<rect x="24" y="50" width="100" height="22" rx="4" fill="${A}"/>${T(74, 66, "🎓 LOGO TRIEDY", { a: "middle", fs: 10.5, b: 1, c: "#fff" })}
+    ${[0, 1, 2, 3].map(i => `<rect x="26" y="${86 + i * 14}" width="${92 - (i % 2) * 22}" height="6" rx="3" fill="#F2B48C"/>`).join("")}${T(74, 168, "Pozvanka.dotx", { a: "middle", fs: 10.5, b: 1, mono: 1, c: A })}
+    ${T(74, 210, "šablóna ostane", { a: "middle", fs: 11, b: 1 })}
+    ${ar(140, 115, 180, 60, A, 2)}${ar(140, 115, 180, 115, A, 2)}${ar(140, 115, 180, 170, A, 2)}
+    ${["Jana", "Tomas", "Eva"].map((n, i) => { const y = 36 + i * 58; return `${box(186, y, 240, 48, "#fff", W, 6)}<rect x="194" y="${y + 8}" width="56" height="12" rx="3" fill="${A}"/><rect x="194" y="${y + 26}" width="44" height="5" rx="2" fill="${C.line}"/><rect x="194" y="${y + 35}" width="34" height="5" rx="2" fill="${C.line}"/>${T(262, y + 30, "Pozvanka_" + n + ".docx", { fs: 10.5, mono: 1 })}`; }).join("")}
+    ${T(306, 222, "nové dokumenty, rovnaký vzhľad", { a: "middle", fs: 11, b: 1 })}`, "Šablóna a nové dokumenty"),
+    "Zo <b>šablóny</b> (.dotx) vzniká vždy nový dokument (.docx) s rovnakým vzhľadom. Samotná šablóna sa nezmení.")
 }; })();
 
 const KEY = "worddoc-s22-v1";
@@ -409,25 +516,59 @@ const TASKS = {
 };
 const VIEWS = {
   teoria: () => head() + `<h2>Nový, uložiť, otvoriť</h2>${guessBox()}
-    <div class="theory"><ul><li><b>Nový dokument</b>: po spustení Wordu <i>Prázdny dokument</i>, alebo Súbor › Nový (Ctrl + N). Môžeš vybrať aj <b>šablónu</b> (list, životopis, leták).</li><li><b>Uložiť</b> (Ctrl + S) zapíše zmeny do toho istého súboru. Pri <b>prvom uložení</b> sa otvorí okno <b>Uložiť ako</b>: vyberieš <b>miesto</b> (priečinok, OneDrive), <b>názov</b> súboru a <b>formát</b>.</li><li><b>Uložiť ako</b> vytvorí nový súbor (iné meno, miesto alebo formát). Pôvodný zostane.</li><li><b>Otvoriť</b> (Ctrl + O): Súbor › Otvoriť, zoznam <b>Nedávne</b> alebo dvojklik na súbor v Prieskumníkovi.</li><li><b>Zavrieť</b>: ak máš neuložené zmeny, Word sa opýta, či ich chceš uložiť.</li></ul>
-      <p>Meno súboru vyber <b>výstižné</b> (čo, kto): <code>Referat_Vtaky_Novakova.docx</code>. Ukladaj priebežne, nie až na konci.</p></div>
-    ${tfigs(TFIG.ulozit, TFIG.okno)}
+    <div class="theory tsplit"><div>
+      <p>Každá práca vo Worde sa začína <b>novým dokumentom</b> a končí <b>uložením</b>. Tieto príkazy nájdeš na karte <b>Súbor</b>:</p>
+      <table class="rtab"><thead><tr><th>Príkaz</th><th>Čo robí</th></tr></thead><tbody>
+        <tr><td><b>Nový</b> (Ctrl + N)</td><td>po spustení Wordu <i>Prázdny dokument</i>, alebo Súbor › Nový. Môžeš vybrať aj <b>šablónu</b> (list, životopis, leták).</td></tr>
+        <tr><td><b>Uložiť</b> (Ctrl + S)</td><td>zapíše zmeny do toho istého súboru</td></tr>
+        <tr><td><b>Uložiť ako</b></td><td>vytvorí nový súbor (iné meno, miesto alebo formát), pôvodný zostane</td></tr>
+        <tr><td><b>Otvoriť</b> (Ctrl + O)</td><td>Súbor › Otvoriť, zoznam <b>Nedávne</b> alebo dvojklik na súbor v Prieskumníkovi</td></tr>
+        <tr><td><b>Zavrieť</b></td><td>ak máš neuložené zmeny, Word sa opýta, či ich chceš uložiť</td></tr></tbody></table>
+      <p>Pri <b>prvom uložení</b> sa otvorí okno <b>Uložiť ako</b>: vyberieš <b>miesto</b> (priečinok, OneDrive), <b>názov</b> súboru a <b>formát</b>.</p>
+      <p>Meno súboru vyber <b>výstižné</b> (čo, kto): <code>Sloh_Moj_Pes_Kovac.docx</code>. Ukladaj priebežne, nie až na konci.</p>
+    </div><div>${TFIG.ulozit}</div></div>
+    ${ltfigs(TFIG.okno, TFIG.cesta)}
+    ${VEDEL("Ikona <b>Uložiť</b> má tvar <b>diskety</b>, hoci diskety sa už takmer nepoužívajú. Na bežnú 3,5-palcovú disketu sa zmestilo iba 1,44 MB.")}
     <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>
     <h3>Úloha 2: povolený názov?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>
     <h3>Úloha 3: cesta k súboru</h3><div class="task">${taskHTML("pin")}</div>` + nextBar(),
   praca: () => { const G = S.wg; return head() + `<h2>Vyskúšaj vo Worde</h2>
+    <div class="theory tsplit"><div>
+      <p>V tejto <b>simulácii Wordu</b> si vyskúšaš celý postup práce s dokumentom. Nič sa neuloží do tvojho počítača, všetko prebieha len na tejto stránke.</p>
+      <table class="rtab"><thead><tr><th>Krok</th><th>Na čo dať pozor</th></tr></thead><tbody>
+        <tr><td><b>nový dokument</b></td><td>v ponuke Domov alebo Nový vyber prázdny dokument</td></tr>
+        <tr><td><b>prvé uloženie</b></td><td>klikni po priečinkoch až do správneho, napíš názov a vyber formát</td></tr>
+        <tr><td><b>kópia v PDF</b></td><td>Súbor › Uložiť ako a iný formát, pôvodný .docx zostane</td></tr>
+        <tr><td><b>zavretie</b></td><td>tlačidlo ✕ Zavrieť, prečítaj si otázku, ktorú Word položí</td></tr>
+        <tr><td><b>otvorenie</b></td><td>dokument nájdeš v ponuke Súbor</td></tr></tbody></table>
+      <p>Neuložené zmeny označuje v titulnom pruhu simulácie znak <b>•</b>.</p>
+    </div><div>${TFIG.postup}</div></div>
+    ${ltfigs(TFIG.priecinky, ...(S.t.wq ? [TFIG.zavriet] : []))}
+    ${VEDEL("Prvá verzia programu <b>Word</b> vyšla v roku <b>1983</b> pre systém MS-DOS. Ovládala sa najmä klávesnicou, myš mal vtedy málokto.")}
     <div class="task"><ul class="goals">${[["new", "Vytvor nový prázdny dokument a napíš doň nadpis <b>Vtáky Slovenska</b>."], ["save", "Ulož ho do priečinka <b>Dokumenty › Škola › Biológia</b> s názvom <b>Referat_vtaky</b> vo formáte .docx."], ["pdf", "Ulož jeho kópiu vo formáte <b>PDF</b> do toho istého priečinka."], ["close", "Dopíš vetu, zavri dokument a pri otázke zvoľ <b>Uložiť</b>."], ["open", "Dokument znova otvor (zo zoznamu Nedávne alebo cez Otvoriť)."]].map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>${S.t.g_w ? `<div class="checkbar"><span class="score ${S.t.g_w.score < 5 ? "part" : ""}">Splnené: ${S.t.g_w.score} z 5</span></div>` : ""}</div>
     <div id="wbox">${wHTML()}</div><div class="row"><button class="ghost" data-wreset>↺ Začať znova</button></div>
     <h3>Otázky</h3><div class="task">${taskHTML("wq")}</div>` + nextBar(); },
   formaty: () => head() + `<h2>Formáty a obnovenie</h2>
-    <div class="theory"><table><thead><tr><th>Formát</th><th>Kedy</th></tr></thead><tbody><tr><td><b>.docx</b></td><td>štandardný dokument Wordu, dá sa ďalej upravovať</td></tr><tr><td><b>.pdf</b></td><td>na odoslanie a tlač, vyzerá všade rovnako, ťažko sa upravuje</td></tr><tr><td><b>.odt</b></td><td>otvorený formát (LibreOffice Writer)</td></tr><tr><td><b>.txt</b></td><td>iba čistý text bez formátovania</td></tr></tbody></table>
-      <p>Ak je dokument v <b>OneDrive</b>, <b>Automatické ukladanie</b> ho ukladá priebežne a máš k nemu prístup z každého zariadenia. Keď Word nečakane spadne, po opätovnom spustení ponúkne <b>Obnovenie dokumentov</b>. Neuložené súbory nájdeš aj cez Súbor › Informácie › Spravovať dokument › Obnoviť neuložené dokumenty.</p></div>
-    ${tfigs(TFIG.formaty)}
+    <div class="theory tsplit"><div>
+      <p>Formát súboru vyberáš pri ukladaní. Podľa neho sa súbor dá (alebo nedá) ďalej upravovať:</p>
+      <table class="rtab"><thead><tr><th>Formát</th><th>Kedy</th></tr></thead><tbody><tr><td><b>.docx</b></td><td>štandardný dokument Wordu, dá sa ďalej upravovať</td></tr><tr><td><b>.pdf</b></td><td>na odoslanie a tlač, vyzerá všade rovnako, ťažko sa upravuje</td></tr><tr><td><b>.odt</b></td><td>otvorený formát (LibreOffice Writer)</td></tr><tr><td><b>.txt</b></td><td>iba čistý text bez formátovania</td></tr></tbody></table>
+      <p>Ak je dokument v <b>OneDrive</b>, <b>Automatické ukladanie</b> ho ukladá priebežne a máš k nemu prístup z každého zariadenia.</p>
+      <p>Keď Word nečakane spadne, po opätovnom spustení ponúkne <b>Obnovenie dokumentov</b>. Neuložené súbory nájdeš aj cez Súbor › Informácie › Spravovať dokument › Obnoviť neuložené dokumenty.</p>
+    </div><div>${TFIG.pdf}</div></div>
+    ${ltfigs(TFIG.formaty, ...(S.t.fq ? [TFIG.obnova] : []))}
+    ${VEDEL("Formát <b>PDF</b> vymyslela firma Adobe v roku <b>1993</b>. Od roku 2008 je to medzinárodná norma ISO, preto ho dnes otvorí takmer každé zariadenie.")}
     <h3>Otázky</h3><div class="task">${taskHTML("fq")}</div>
     <h3>Úloha 2: ukladanie vo Worde 365</h3><div class="task">${taskHTML("aq")}</div>` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: kam a ako uložiť?</h2>
-    <div class="theory"><p>Pri každej situácii vyber najvhodnejší spôsob uloženia alebo formát. Myslí sa na to, kto dokument bude čítať, či ho má upravovať a kde s ním budeš pracovať.</p></div>
-    ${S.t.g_sv ? `<div class="checkbar"><span class="score ${S.t.g_sv.score < 8 ? "part" : ""}">Správne: ${S.t.g_sv.score} z 8</span></div>` : ""}<div class="tool">${selBlock("sv", SVI, SVO)}</div>` + nextBar(),
+    <div class="theory tsplit"><div>
+      <p>Pri každej situácii vyber najvhodnejší <b>spôsob uloženia</b> alebo <b>formát</b>.</p>
+      <p>Mysli na to, <b>kto</b> bude dokument čítať, či ho bude treba ešte <b>upravovať</b> a <b>kde</b> s ním budeš pracovať.</p>
+      <p>Niekedy nejde o formát, ale o to, <b>ako</b> uložiť: pod iným názvom, do cloudu, alebo ako zachrániť neuloženú prácu.</p>
+    </div><div>${TFIG.otazky}</div></div>
+    ${ltfigs(TFIG.ikony, ...(S.t.g_sv ? [TFIG.sablona] : []))}
+    ${VEDEL("Súbor <b>.docx</b> je v skutočnosti zbalený archív ZIP. Písmeno <b>x</b> v prípone znamená XML, jazyk, v ktorom je obsah dokumentu zapísaný.")}
+    ${S.t.g_sv ? `<div class="checkbar"><span class="score ${S.t.g_sv.score < 8 ? "part" : ""}">Správne: ${S.t.g_sv.score} z 8</span></div>` : ""}<div class="tool">${selBlock("sv", SVI, SVO)}</div>
+    <h3>Vyskúšaj: tester názvu súboru</h3>${fnHTML()}` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function syncText() { const t = document.getElementById("wtext"); if (t) { if (t.value !== S.W.text) { S.W.text = t.value; S.W.dirty = true; } } }
@@ -443,6 +584,19 @@ function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { con
 
 const SVI = [["Posielaš hotový referát učiteľke, ktorá ho má iba prečítať a vytlačiť.", "pdf", "PDF vyzerá všade rovnako a nedá sa ľahko meniť."], ["Na referáte chceš pracovať v škole aj doma.", "od", "Na OneDrive ho otvoríš odkiaľkoľvek."], ["Chceš, aby každý nový list mal rovnakú hlavičku a štýly.", "dotx", "Šablóna .dotx je predloha pre nové dokumenty."], ["Dokument má zostať upraviteľný vo Worde.", "docx", ""], ["Chceš mať starú aj novú verziu dokumentu.", "ako", "Uložiť ako s iným názvom vytvorí kópiu."], ["Potrebuješ čistý text bez formátovania pre iný program.", "txt", ""], ["Word spadol skôr, ako si uložil.", "obn", "Po spustení Word ponúkne obnovenie neuloženého dokumentu."], ["Píšeš dlhú prácu a bojíš sa, že niečo stratíš.", "ctrl", "Ukladaj často (Ctrl + S) alebo zapni Automatické ukladanie."]];
 const SVO = [["", "— vyber —"], ["docx", "Uložiť ako .docx"], ["pdf", "Uložiť ako PDF"], ["dotx", "Uložiť ako šablónu .dotx"], ["txt", "Uložiť ako obyčajný text .txt"], ["od", "Uložiť na OneDrive"], ["ako", "Uložiť ako s iným názvom"], ["obn", "Obnoviť neuložený dokument"], ["ctrl", "Často Ctrl + S / AutoSave"]];
+/* tester názvu súboru (bez bodov) */
+function fnCheck(v) { const n = String(v || "").trim(); if (!n) return `<p class="muted" style="margin:0;font-size:14.5px">Napíš názov a hneď uvidíš, čo na neho povie Windows.</p>`;
+  const bad = [...new Set(n.match(/[\\/:*?"<>|]/g) || [])], base = n.replace(/\.(docx|pdf|odt|txt|dotx)$/i, ""), R = [];
+  if (bad.length) R.push(["⛔", `Windows tento názov <b>nepovolí</b>, obsahuje znak ${bad.map(c => `<code>${esc(c)}</code>`).join(" ")}.`]);
+  else R.push(["✅", "Názov je <b>povolený</b>."]);
+  if (/^(dokument\d*|document\d*|nov[yý]( dokument)?|a+|aaa+|asdf|qwer|test|s[uú]bor\d*|bez n[aá]zvu|x+)$/i.test(base) || base.length < 4) R.push(["⚠️", "Názov <b>nie je výstižný</b>. O týždeň nebudeš vedieť, čo v súbore je. Pridaj čo a kto."]);
+  else R.push(["👍", "Názov je dosť dlhý na to, aby prezradil obsah. Je v ňom aj <b>čo</b> a <b>kto</b>?"]);
+  if (base.length > 60) R.push(["⚠️", "Názov je <b>príliš dlhý</b>, skráť ho."]);
+  if (/[^\x20-\x7E]/.test(base) || / /.test(base)) R.push(["ℹ️", "Medzery a diakritika sú povolené. Pri posielaní na web je však istejšie písať bez nich, napr. s podčiarkovníkom."]);
+  if (!/\.\w{2,4}$/.test(n)) R.push(["📎", "Príponu <b>.docx</b> doplní Word sám."]);
+  return R.map(([i, t]) => `<div style="display:flex;gap:8px;align-items:flex-start;margin:4px 0;font-size:15px"><span>${i}</span><span>${t}</span></div>`).join("") + (bad.length ? "" : `<div style="margin-top:8px;font-family:var(--mono);font-size:14px;background:var(--surface2);border-radius:8px;padding:6px 10px;overflow-wrap:anywhere">📘 ${esc(/\.\w{2,4}$/.test(n) ? n : n + ".docx")}</div>`); }
+function fnHTML() { if (!S.t.nsort) return `<div class="task"><p class="muted" style="margin:0;font-size:14.5px">🔒 Tester sa odomkne, keď na 1. zastávke vyriešiš úlohu 2 (povolený názov).</p></div>`;
+  return `<div class="task"><p class="muted" style="margin:0 0 8px;font-size:14.5px">Napíš ľubovoľný názov súboru a pozri sa, či by ho Windows povolil a či je výstižný. Za toto nie sú body.</p><input id="fntest" type="text" value="${esc(S.fn || "")}" placeholder="napr. Projekt_Rieky_Horvath" autocomplete="off" style="width:100%;max-width:460px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:16px;background:var(--surface2);color:var(--ink)"><div id="fnout" style="margin-top:10px">${fnCheck(S.fn)}</div></div>`; }
 function CUSTOM_CLICK(e) {
   if (selClick(e, { sv: [SVI, "g_sv"] })) return true;
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, W = S.W, G = S.wg;
@@ -465,6 +619,7 @@ function CUSTOM_CLICK(e) {
   return false;
 }
 function CUSTOM_INPUT(e) {
+  if (e.target.id === "fntest") { S.fn = e.target.value; save(); const o = document.getElementById("fnout"); if (o) { o.innerHTML = fnCheck(S.fn); typo(o); } return true; }
   if (selInput(e)) return true; if (e.target.id === "wtext") { S.W.text = e.target.value; if (!S.W.dirty) { S.W.dirty = true; save(); const tt = document.querySelector(".wapp .ttl span"); if (tt && S.W.doc) tt.textContent = "W " + S.W.doc.n + " •"; } else save(); if (/vt[aá]ky slovenska/i.test(S.W.text) && !S.wg.new) { S.wg.new = true; wScore(); } return true; } return false; }
 document.addEventListener("keydown", e => { if (e.target.id === "wtext" && e.ctrlKey && e.key.toLowerCase() === "s") { e.preventDefault(); const b = document.querySelector('[data-w="save"]'); if (b) b.click(); } });
 
@@ -618,7 +773,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

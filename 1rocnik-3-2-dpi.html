@@ -188,7 +188,7 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tool{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 16px;margin:12px 0}
 .dg{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:760px){.dg{grid-template-columns:1fr}}
 .dg canvas{width:100%;image-rendering:pixelated;border:1px solid var(--border);border-radius:8px;background:#fff}
-.sl{display:grid;grid-template-columns:130px 1fr 90px;gap:8px;align-items:center;margin:6px 0}.sl input{accent-color:var(--acc)}.sl b{font-family:var(--mono)}
+.sl{display:grid;grid-template-columns:130px 1fr 90px;gap:8px;align-items:center;margin:6px 0}@media (max-width:640px){.sl{grid-template-columns:70px minmax(0,1fr) 52px}}.sl input{accent-color:var(--acc)}.sl b{font-family:var(--mono)}
 .big{font-family:var(--mono);font-size:22px;font-weight:800;color:var(--acc)}
 .goals{list-style:none;padding:0;margin:8px 0 0}.goals li{padding:3px 0}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:760px){.two{grid-template-columns:1fr}}
@@ -204,13 +204,44 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"pojmy": ["DPI = body na palec (tlač, skenovanie), PPI = pixely na palec (displej). 1 palec = 2,54 cm.", "cm = px ÷ DPI × 2,54; px = cm ÷ 2,54 × DPI. Fotka 300 DPI."], "tlac": ["Málo pixelov na danú veľkosť = kockatý výtlačok. Zmena DPI v programe pixely nepridá."], "displej": ["PPI = √(šírka² + výška²) ÷ uhlopriečka. Monitor ~90–110 PPI, mobil ~400–500 PPI."], "sken": ["Skenovanie: 150–200 DPI obrazovka, 300 text a OCR, 600 fotky, 2400+ negatívy.", "2× DPI = 4× viac pixelov."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {"pojmy": ["Digitálny obrázok má iba <b>pixely</b>. Fyzickú veľkosť dostane až pri tlači alebo na displeji.", "<b>DPI</b> (dots per inch) = počet bodov na palec pri <b>tlači</b> a <b>skenovaní</b>.", "<b>PPI</b> (pixels per inch) = počet pixelov na palec na <b>displeji</b> alebo v obrázku.", "1 palec (inch) = <b>2,54 cm</b>.", "Veľkosť výtlačku: <b>cm = px ÷ DPI × 2,54</b>. Potrebné pixely: <b>px = cm ÷ 2,54 × DPI</b>.", "Na kvalitnú tlač fotky sa odporúča <b>300 DPI</b>."], "tlac": ["Počet bodov na šírku výtlačku = <b>cm ÷ 2,54 × DPI</b>.", "Ak má obrázok na danú veľkosť výtlačku <b>málo pixelov</b>, tlač má nízke DPI a výtlačok je <b>kockatý</b>.", "Pri vysokom DPI sú body také malé, že ich oko nerozozná a výtlačok je ostrý.", "Tlačiareň skladá farby z drobných bodov 4 atramentov: <b>CMYK</b> (azúrová, purpurová, žltá, čierna)."], "displej": ["Veľkosť displeja sa udáva <b>uhlopriečkou v palcoch</b> (napr. 27\").", "<b>PPI = √(šírka² + výška²) ÷ uhlopriečka</b>, šírka a výška sú v pixeloch.", "Počet pixelov na uhlopriečke vypočítaš <b>Pytagorovou vetou</b>.", "Bežný monitor má okolo 90 – 110 PPI, mobil 400 – 500 PPI.", "Každý pixel displeja tvoria 3 <b>subpixely</b>: červený, zelený a modrý (RGB).", "<b>Retina</b> = taká hustota, že voľným okom nevidíš jednotlivé pixely."], "sken": ["Pri skenovaní volíš, koľko bodov na palec skener zosníma (<b>DPI</b>).", "<b>150 – 200 DPI</b>: dokument na obrazovku, e-mail.", "<b>300 DPI</b>: text na tlač a rozpoznanie textu (<b>OCR</b>).", "<b>600 DPI</b>: fotografie, ktoré chceš zväčšiť. <b>2400 DPI a viac</b>: negatívy a diapozitívy.", "Vyššie DPI pridá pixely na šírku aj na výšku, preto súbor rastie oveľa rýchlejšie ako DPI.", "<b>OCR</b> urobí z naskenovaného obrázka upraviteľný text."]};
 /* Spoločné pomôcky na ilustrácie k teórii (Prima) */
 const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
 const PF = (() => {
@@ -243,25 +274,97 @@ const PF = (() => {
 /* Ilustrácie – 1. ročník 3.2 DPI */
 const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#B4235A", AS = "#FBE4EC";
 const grid = (x, y, s, n, c) => `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="#fff" stroke="${c}" stroke-width="2"/>${[...Array(n - 1)].map((_, i) => `<line x1="${x + (i + 1) * s / n}" y1="${y}" x2="${x + (i + 1) * s / n}" y2="${y + s}" stroke="${c}" stroke-opacity=".45"/><line x1="${x}" y1="${y + (i + 1) * s / n}" x2="${x + s}" y2="${y + (i + 1) * s / n}" stroke="${c}" stroke-opacity=".45"/>`).join("")}`;
+const heart = (x0, y0, s, n, c) => { let o = ""; const k = s / n; for (let r = 0; r < n; r++) for (let q = 0; q < n; q++) { const x = ((q + 0.5) / n - 0.5) * 2.6, y = (0.5 - (r + 0.5) / n) * 2.6 + 0.15; if (Math.pow(x * x + y * y - 1, 3) - x * x * y * y * y < 0) o += `<rect x="${(x0 + q * k).toFixed(2)}" y="${(y0 + r * k).toFixed(2)}" width="${(k + 0.15).toFixed(2)}" height="${(k + 0.15).toFixed(2)}" fill="${c}"/>`; } return o; };
+const BM = { A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"], H: ["10001", "10001", "10001", "11111", "10001", "10001", "10001"], O: ["01110", "10001", "10001", "10001", "10001", "10001", "01110"], J: ["00111", "00010", "00010", "00010", "00010", "10010", "01100"] };
 return {
-  uhlopriecka: fig(SV(440, 240, `
-    ${T(220, 18, "Monitor 27\" s rozlíšením 2560 × 1440", { a: "middle", fs: 12, b: 1 })}
-    <rect x="40" y="40" width="256" height="144" rx="4" fill="#E3EEFC" stroke="${C.ink}" stroke-width="3"/><line x1="40" y1="184" x2="296" y2="40" stroke="${A}" stroke-width="2.5" stroke-dasharray="6 4"/>
-    ${T(168, 202, "šírka 2560 px", { a: "middle", fs: 11, b: 1 })}<text x="24" y="112" font-size="11" font-weight="700" transform="rotate(-90 24 112)" text-anchor="middle">výška 1440 px</text>${T(180, 104, "uhlopriečka", { fs: 11, b: 1, c: A })}${T(180, 118, "27 palcov", { fs: 10.5, c: A })}
-    ${box(310, 40, 122, 144, AS, A, 10)}${T(371, 62, "1. uhlopriečka", { a: "middle", fs: 10, b: 1 })}${T(371, 78, "v pixeloch:", { a: "middle", fs: 10 })}${T(371, 98, "√(2560²+1440²)", { a: "middle", fs: 9.5, mono: 1 })}${T(371, 114, "≈ 2937 px", { a: "middle", fs: 11, b: 1, mono: 1 })}${T(371, 140, "2. delenie:", { a: "middle", fs: 10, b: 1 })}${T(371, 158, "2937 ÷ 27", { a: "middle", fs: 10, mono: 1 })}${T(371, 176, "≈ 109 PPI", { a: "middle", fs: 12, b: 1, c: A })}
-    ${T(220, 230, "Pytagorova veta: pixely na uhlopriečke ÷ dĺžka uhlopriečky v palcoch", { a: "middle", fs: 10, c: C.mut })}`, "Výpočet PPI monitora"),
+  palec: fig(SV(440, 210, `
+    ${T(220, 18, "Palec (inch) na pravítku", { a: "middle", fs: 12.5, b: 1 })}
+    <line x1="40" y1="44" x2="344.8" y2="44" stroke="${A}" stroke-width="2.5"/><line x1="40" y1="36" x2="40" y2="52" stroke="${A}" stroke-width="2.5"/><line x1="344.8" y1="36" x2="344.8" y2="52" stroke="${A}" stroke-width="2.5"/>
+    ${box(124, 30, 136, 26, "#fff", null, 4)}${T(192, 48, "1 palec = 2,54 cm", { a: "middle", fs: 12.5, b: 1, c: A })}
+    ${box(24, 60, 404, 54, C.ambS, C.amb, 6)}
+    ${[...Array(31)].map((_, i) => { const x = 40 + i * 12, h = i % 10 === 0 ? 22 : i % 5 === 0 ? 14 : 8; return `<line x1="${x}" y1="60" x2="${x}" y2="${60 + h}" stroke="${C.ink}" stroke-width="${i % 10 ? 1 : 1.8}"/>`; }).join("")}
+    ${[0, 1, 2, 3].map(i => T(40 + i * 120 + (i ? 0 : 4), 106, i + " cm", { a: i ? "middle" : "start", fs: 11, b: 1 })).join("")}
+    <line x1="344.8" y1="52" x2="344.8" y2="114" stroke="${A}" stroke-width="2" stroke-dasharray="4 3"/>
+    ${[...Array(10)].map((_, i) => `<circle cx="${(55.2 + i * 30.48).toFixed(1)}" cy="140" r="9" fill="${A}"/>`).join("")}
+    ${T(220, 176, "10 DPI = 10 bodov na jeden palec", { a: "middle", fs: 11.5, b: 1 })}
+    ${T(220, 196, "300 DPI = 300 bodov na palec, každý tenší ako desatina milimetra", { a: "middle", fs: 11, c: C.mut })}`, "Palec a DPI"),
+    "<b>1 palec = 2,54 cm</b>. <b>DPI</b> hovorí, koľko bodov sa zmestí do jedného palca."),
+  prepocet: fig(SV(440, 200, `
+    ${T(220, 20, "Príklad: obrázok 1200 px vytlačený pri 200 DPI", { a: "middle", fs: 12.5, b: 1 })}
+    ${[["1200 px", "šírka obrázka"], ["6 palcov", "šírka výtlačku"], ["15,24 cm", "šírka výtlačku"]].map(([v, d], i) => `${box(14 + i * 151, 40, 110, 56, i === 2 ? AS : "#fff", i === 2 ? A : C.line, 10)}${T(69 + i * 151, 66, v, { a: "middle", fs: 14, b: 1, c: i === 2 ? A : C.ink })}${T(69 + i * 151, 84, d, { a: "middle", fs: 10.5, c: C.mut })}`).join("")}
+    ${ar(126, 68, 163, 68, C.mut, 2)}${ar(277, 68, 314, 68, C.mut, 2)}
+    ${T(145, 116, "÷ 200 DPI", { a: "middle", fs: 11.5, b: 1, c: A })}${T(296, 116, "× 2,54", { a: "middle", fs: 11.5, b: 1, c: A })}
+    ${T(220, 146, "Opačne: koľko pixelov treba na 10 cm pri 300 DPI?", { a: "middle", fs: 11.5, b: 1 })}
+    ${box(60, 158, 320, 32, AS, null, 8)}${T(220, 179, "10 ÷ 2,54 × 300 ≈ 1181 px", { a: "middle", fs: 12.5, b: 1, mono: 1, c: A })}`, "Prepočet pixelov na centimetre"),
+    "<b>cm = px ÷ DPI × 2,54</b> a opačne <b>px = cm ÷ 2,54 × DPI</b>."),
+  dpippi: fig(SV(440, 220, `
+    ${box(10, 10, 204, 160, "#fff", C.line, 10)}${box(226, 10, 204, 160, "#fff", C.line, 10)}
+    ${(() => { let o = ""; for (let r = 0; r < 9; r++) for (let q = 0; q < 11; q++) { const v = q / 10; o += `<circle cx="${30 + q * 16.5}" cy="${26 + r * 16}" r="${(1 + v * 6.6).toFixed(1)}" fill="${C.ink}"/>`; } return o; })()}
+    ${(() => { let o = ""; for (let r = 0; r < 8; r++) for (let q = 0; q < 10; q++) o += `<rect x="${244 + q * 17}" y="${22 + r * 17}" width="16" height="16" fill="hsl(${200 + q * 12} 75% ${78 - r * 5 - q * 2}%)"/>`; return o; })()}
+    ${T(112, 192, "DPI: tlač", { a: "middle", fs: 12.5, b: 1, c: A })}${T(112, 210, "body atramentu na papieri", { a: "middle", fs: 11, c: C.mut })}
+    ${T(328, 192, "PPI: displej", { a: "middle", fs: 12.5, b: 1, c: C.blue })}${T(328, 210, "svietiace pixely", { a: "middle", fs: 11, c: C.mut })}`, "DPI a PPI"),
+    "<b>DPI</b> sa týka bodov pri tlači a skenovaní, <b>PPI</b> pixelov na displeji alebo v obrázku."),
+  kvalita: fig(SV(440, 220, `
+    ${T(220, 18, "Ten istý výtlačok pri rôznom DPI (výrez)", { a: "middle", fs: 12.5, b: 1 })}
+    ${[[6, "30 DPI", "kockatý", C.bad], [20, "100 DPI", "zubaté okraje", C.amb], [60, "300 DPI", "ostrý", C.ok]].map(([n, d, t, c], i) => { const x0 = 14 + i * 142; return `${box(x0, 30, 130, 130, "#fff", C.line, 6)}${heart(x0 + 10, 40, 110, n, A)}${T(x0 + 65, 182, d, { a: "middle", fs: 12.5, b: 1, c })}${T(x0 + 65, 200, t, { a: "middle", fs: 11, c: C.mut })}`; }).join("")}`, "Kvalita tlače pri rôznom DPI"),
+    "Čím menej bodov na palec, tým sú na výtlačku viditeľnejšie <b>štvorčeky</b>."),
+  cmyk: fig(SV(440, 220, `
+    ${T(220, 18, "Tlačiareň skladá farby z bodov atramentu", { a: "middle", fs: 12.5, b: 1 })}
+    ${box(24, 32, 160, 130, "#fff", C.line, 10)}
+    ${(() => { let o = ""; for (let r = 0; r < 8; r++) for (let q = 0; q < 10; q++) { o += `<circle cx="${36 + q * 15.5}" cy="${44 + r * 15.5}" r="5.2" fill="#00AEEF" fill-opacity=".9"/>`; if (q < 9 && r < 7) o += `<circle cx="${43.75 + q * 15.5}" cy="${51.75 + r * 15.5}" r="5.2" fill="#FFE600" fill-opacity=".9"/>`; } return o; })()}
+    ${ar(196, 97, 246, 97, C.mut, 2.5)}
+    <rect x="258" y="47" width="100" height="100" rx="8" fill="#5DBB63"/>
+    ${T(104, 182, "zblízka: azúrové a žlté body", { a: "middle", fs: 11, b: 1 })}${T(308, 182, "z diaľky: zelená", { a: "middle", fs: 11, b: 1 })}
+    ${[["#00AEEF", "C azúrová"], ["#EC008C", "M purpurová"], ["#FFE600", "Y žltá"], ["#1A1A1A", "K čierna"]].map(([c, t], i) => `<rect x="${22 + i * 104}" y="197" width="14" height="14" rx="3" fill="${c}" stroke="#999" stroke-width=".6"/>${T(42 + i * 104, 209, t, { fs: 11 })}`).join("")}`, "Farby CMYK z bodov"),
+    "Tlačiareň používa 4 atramenty <b>CMYK</b>. Drobné body sa v oku zmiešajú do výslednej farby."),
+  uhlopriecka: fig(SV(440, 250, `
+    ${T(220, 18, "Monitor 27\" s rozlíšením 2560 × 1440", { a: "middle", fs: 12.5, b: 1 })}
+    <rect x="20" y="40" width="240" height="135" rx="4" fill="#E3EEFC" stroke="${C.ink}" stroke-width="3"/><line x1="20" y1="175" x2="260" y2="40" stroke="${A}" stroke-width="2.5" stroke-dasharray="6 4"/>
+    ${T(140, 194, "šírka 2560 px", { a: "middle", fs: 11, b: 1 })}${T(30, 62, "výška", { fs: 11, b: 1 })}${T(30, 77, "1440 px", { fs: 11, b: 1 })}
+    ${T(150, 140, "uhlopriečka", { fs: 11, b: 1, c: A })}${T(150, 155, "27 palcov", { fs: 11, c: A })}
+    ${box(276, 36, 156, 156, AS, A, 10)}
+    ${T(354, 58, "1. uhlopriečka v px", { a: "middle", fs: 11, b: 1 })}${T(354, 78, "√(2560² + 1440²)", { a: "middle", fs: 11, mono: 1 })}${T(354, 98, "≈ 2937 px", { a: "middle", fs: 11.5, b: 1, mono: 1 })}
+    ${T(354, 128, "2. delenie", { a: "middle", fs: 11, b: 1 })}${T(354, 148, "2937 ÷ 27", { a: "middle", fs: 11, mono: 1 })}${T(354, 176, "≈ 109 PPI", { a: "middle", fs: 13, b: 1, c: A })}
+    ${T(220, 220, "PPI = pixely na uhlopriečke ÷ uhlopriečka v palcoch", { a: "middle", fs: 11, c: C.mut })}${T(220, 238, "(pixely na uhlopriečke vypočítaš Pytagorovou vetou)", { a: "middle", fs: 11, c: C.mut })}`, "Výpočet PPI monitora"),
     "<b>PPI</b> = počet pixelov na uhlopriečke ÷ uhlopriečka v palcoch. Pixely na uhlopriečke vypočítaš Pytagorovou vetou."),
   hustota: fig(SV(440, 220, `
-    ${T(220, 18, "Ten istý 1 palec na displeji (zväčšené)", { a: "middle", fs: 12, b: 1 })}
-    ${grid(50, 34, 130, 6, C.mut)}<circle cx="115" cy="99" r="40" fill="none" stroke="${C.blue}" stroke-width="0"/>${[...Array(36)].map((_, i) => { const x = i % 6, y = Math.floor(i / 6), d = Math.hypot(x - 2.5, y - 2.5); return d < 2.4 ? `<rect x="${50 + x * 130 / 6}" y="${34 + y * 130 / 6}" width="${130 / 6}" height="${130 / 6}" fill="${C.blue}"/>` : ""; }).join("")}
-    ${T(115, 186, "monitor ~ 100 PPI", { a: "middle", fs: 11, b: 1 })}${T(115, 202, "vidno schodíky", { a: "middle", fs: 10, c: C.mut })}
+    ${T(220, 18, "Ten istý 1 palec na displeji (zväčšené)", { a: "middle", fs: 12.5, b: 1 })}
+    ${grid(50, 34, 130, 6, C.mut)}${[...Array(36)].map((_, i) => { const x = i % 6, y = Math.floor(i / 6), d = Math.hypot(x - 2.5, y - 2.5); return d < 2.4 ? `<rect x="${50 + x * 130 / 6}" y="${34 + y * 130 / 6}" width="${130 / 6}" height="${130 / 6}" fill="${C.blue}"/>` : ""; }).join("")}
+    ${T(115, 186, "monitor ~ 100 PPI", { a: "middle", fs: 11.5, b: 1 })}${T(115, 204, "vidno schodíky", { a: "middle", fs: 11, c: C.mut })}
     ${grid(260, 34, 130, 26, "#BBB")}<circle cx="325" cy="99" r="52" fill="${C.blue}"/>
-    ${T(325, 186, "mobil ~ 450 PPI", { a: "middle", fs: 11, b: 1 })}${T(325, 202, "pixely oko nerozozná", { a: "middle", fs: 10, c: C.mut })}`, "Hustota pixelov na displeji"),
+    ${T(325, 186, "mobil ~ 450 PPI", { a: "middle", fs: 11.5, b: 1 })}${T(325, 204, "pixely oko nerozozná", { a: "middle", fs: 11, c: C.mut })}`, "Hustota pixelov na displeji"),
     "Čím viac pixelov na palec, tým jemnejší obraz. Pri vysokej hustote (Retina) oko jednotlivé pixely nevidí."),
+  subpix: fig(SV(440, 190, `
+    ${T(220, 18, "Pixely displeja pod lupou", { a: "middle", fs: 12.5, b: 1 })}
+    <rect x="14" y="32" width="212" height="134" rx="6" fill="#111"/>
+    ${[[1, 1, 1], [1, 0, 0], [1, 1, 0], [0, 0, 0], [0, 0, 1], [1, 1, 0], [1, 1, 1], [0, 1, 0], [1, 0, 1], [1, 1, 1], [0, 0, 0], [1, 0, 0], [0, 1, 1], [1, 1, 1], [0, 0, 1]].map((p, i) => { const x = 22 + (i % 5) * 40, y = 40 + Math.floor(i / 5) * 40; return p.map((on, k) => `<rect x="${x + k * 12}" y="${y}" width="10" height="36" rx="2" fill="${["#FF2A2A", "#2AE02A", "#2A6BFF"][k]}" fill-opacity="${on ? 1 : 0.15}"/>`).join(""); }).join("")}
+    ${T(244, 46, "1 pixel = 3 subpixely:", { fs: 11.5, b: 1 })}${T(244, 64, "červený, zelený, modrý (RGB)", { fs: 11 })}
+    ${[["všetky svietia", "biela", "#fff"], ["červený + zelený", "žltá", "#FFE600"], ["iba modrý", "modrá", "#2A6BFF"], ["nič nesvieti", "čierna", "#111"]].map(([a, b, c], i) => `<rect x="244" y="${82 + i * 22}" width="14" height="14" rx="3" fill="${c}" stroke="#999" stroke-width=".8"/>${T(264, 94 + i * 22, a + " → " + b, { fs: 11 })}`).join("")}`, "Subpixely RGB"),
+    "Každý pixel displeja tvoria tri <b>subpixely</b> R, G, B. Ich jas určuje výslednú farbu pixela."),
+  skener: fig(SV(440, 230, `
+    ${T(220, 18, "Ako skener sníma dokument", { a: "middle", fs: 12.5, b: 1 })}
+    <rect x="14" y="32" width="236" height="186" rx="10" fill="#4A4458"/><rect x="26" y="44" width="212" height="162" rx="4" fill="#CFE6F5"/>
+    <rect x="58" y="54" width="148" height="142" fill="#fff"/>${[0, 1, 2, 3, 4, 5, 6].map(i => `<rect x="70" y="${68 + i * 17}" width="${[110, 124, 96, 120, 104, 124, 70][i]}" height="6" rx="3" fill="#9AA1B2"/>`).join("")}
+    <rect x="26" y="118" width="212" height="10" fill="${A}"/><rect x="26" y="112" width="212" height="22" fill="${A}" fill-opacity=".18"/>
+    ${ar(262, 110, 262, 180, C.mut, 2.5)}${T(258, 206, "pohyb lišty", { fs: 11, b: 1, c: C.mut })}
+    ${T(358, 48, "snímacia lišta", { a: "middle", fs: 11.5, b: 1, c: A })}${T(358, 64, "(svetlo + senzor)", { a: "middle", fs: 11, c: C.mut })}${ar(318, 72, 244, 116, A, 2)}
+    ${T(362, 102, "naraz zosníma", { a: "middle", fs: 11, b: 1 })}${T(362, 117, "1 riadok bodov", { a: "middle", fs: 11, b: 1 })}
+    ${[245, 250, 140, 120, 235, 250, 150, 245].map((g, i) => `<rect x="${298 + i * 16}" y="126" width="16" height="16" fill="rgb(${g},${g},${g})" stroke="#888" stroke-width=".6"/>`).join("")}
+    ${T(362, 164, "pri 300 DPI:", { a: "middle", fs: 11 })}${T(362, 180, "300 bodov na palec", { a: "middle", fs: 11, b: 1, c: A })}`, "Skenovanie po riadkoch"),
+    "Snímacia lišta skenera prechádza pod sklom a <b>riadok po riadku</b> zaznamenáva body. DPI určuje, koľko bodov na palec zosníma."),
+  ocr: fig(SV(440, 200, `
+    ${T(220, 18, "OCR: rozpoznanie textu v naskenovanom obrázku", { a: "middle", fs: 12.5, b: 1 })}
+    ${box(14, 34, 180, 110, "#fff", C.line, 10)}
+    ${["A", "H", "O", "J"].map((ch, li) => BM[ch].map((row, r) => [...row].map((v, q) => v === "1" ? `<rect x="${30 + li * 42 + q * 7}" y="${64 + r * 7}" width="7" height="7" fill="#333"/>` : "").join("")).join("")).join("")}
+    ${ar(204, 89, 240, 89, A, 2.5)}${T(222, 78, "OCR", { a: "middle", fs: 11.5, b: 1, c: A })}
+    ${box(250, 34, 176, 110, "#fff", A, 10)}${T(270, 99, "Ahoj", { fs: 24, mono: 1 })}<line x1="331" y1="78" x2="331" y2="104" stroke="${A}" stroke-width="2"/>
+    ${T(104, 166, "obrázok: iba pixely", { a: "middle", fs: 11.5, b: 1, c: C.bad })}${T(104, 184, "text sa nedá upraviť", { a: "middle", fs: 11, c: C.mut })}
+    ${T(338, 166, "text: písmená", { a: "middle", fs: 11.5, b: 1, c: C.ok })}${T(338, 184, "dá sa upravovať aj hľadať", { a: "middle", fs: 11, c: C.mut })}`, "OCR"),
+    "Program <b>OCR</b> rozpozná v naskenovanom obrázku písmená a urobí z nich upraviteľný text."),
   sken: fig(SV(440, 220, `
-    ${T(220, 18, "Kúsok papiera 1 × 1 palec naskenovaný pri", { a: "middle", fs: 12, b: 1 })}
-    ${[[150, "150 DPI", 3], [300, "300 DPI", 6], [600, "600 DPI", 12]].map(([d, n, k], i) => `${grid(30 + i * 140, 40, 110, k, A)}${T(85 + i * 140, 172, n, { a: "middle", fs: 12, b: 1, c: A })}${T(85 + i * 140, 190, (d * d).toLocaleString("sk") + " px", { a: "middle", fs: 10, c: C.mut })}${i < 2 ? `${T(155 + i * 140, 100, "×4", { a: "middle", fs: 11, b: 1, c: A })}` : ""}`).join("")}
-    ${T(220, 212, "(mriežka zobrazuje každý 50. pixel)", { a: "middle", fs: 9.5, c: C.mut })}`, "Počet pixelov pri skenovaní"),
+    ${T(220, 18, "Kúsok papiera 1 × 1 palec naskenovaný pri", { a: "middle", fs: 12.5, b: 1 })}
+    ${[[150, "150 DPI", 3], [300, "300 DPI", 6], [600, "600 DPI", 12]].map(([d, n, k], i) => `${grid(30 + i * 140, 40, 110, k, A)}${T(85 + i * 140, 172, n, { a: "middle", fs: 12, b: 1, c: A })}${T(85 + i * 140, 190, (d * d).toLocaleString("sk") + " px", { a: "middle", fs: 11, c: C.mut })}${i < 2 ? `${T(155 + i * 140, 100, "×4", { a: "middle", fs: 11, b: 1, c: A })}` : ""}`).join("")}
+    ${T(220, 212, "(mriežka zobrazuje každý 50. pixel)", { a: "middle", fs: 10.5, c: C.mut })}`, "Počet pixelov pri skenovaní"),
     "Dvojnásobné DPI znamená dvojnásobok pixelov na šírku aj na výšku, teda <b>štyrikrát viac</b> pixelov.")
 }; })();
 
@@ -269,7 +372,7 @@ const KEY = "dpi-n32-v1";
 const LESSON = "3.2 DPI";
 const BRAND = "3.2 DPI a PPI";
 const CLASS_DEFAULT = "I.";
-const WIDE = { tlac: 1 };
+const WIDE = { pojmy: 1, tlac: 1, displej: 1, sken: 1 };
 const STEPS = [
   { id: "start", title: "Štart", min: 3 },
   { id: "pojmy", title: "DPI a PPI", min: 9 },
@@ -288,10 +391,16 @@ const START = {
   guesses: ["1", "2,54", "10", "0,5"],
   ok: 1, yes: "Presne tak! 1 palec (inch) = 2,54 cm.", no: "1 palec (inch) = 2,54 cm. Z palcov sa počíta DPI aj uhlopriečka displeja."
 };
-function EXTRA_STATE() { return { pw: 3000, ph: 2000, pd: 300, dpi: 72, pg: {} }; }
+function EXTRA_STATE() { return { pw: 2400, ph: 1800, pd: 300, dpi: 72, pg: {}, myd: "" }; }
 const f1 = x => (Math.round(x * 10) / 10).toString().replace(".", ",");
 function calcHTML() { const w = S.pw, h = S.ph, d = S.pd; return `<div class="calc"><label>Šírka (px)<input type="number" id="cw" value="${w}"></label><label>Výška (px)<input type="number" id="ch" value="${h}"></label><label>DPI<input type="number" id="cd" value="${d}"></label></div>
   <p>Veľkosť výtlačku: <span class="big">${f1(w / d * 2.54)} × ${f1(h / d * 2.54)} cm</span> (${f1(w / d)} × ${f1(h / d)} palcov)</p>`; }
+/* interaktívne: PPI tvojho displeja (bez bodov, až po úlohe din) */
+function mydVals() { const r = window.devicePixelRatio || 1; return [Math.round(screen.width * r), Math.round(screen.height * r)]; }
+function mydOut() { const [w, h] = mydVals(), d = parseNum(S.myd); return d > 0 ? `Tvoj displej: √(${w}² + ${h}²) ≈ ${Math.round(Math.hypot(w, h))} px ÷ ${f1(d)}" ≈ <span class="big">${Math.round(Math.hypot(w, h) / d)} PPI</span>` : "Zadaj uhlopriečku a uvidíš výsledok."; }
+function mydHTML() { if (!S.t.din) return `<p>Keď vyriešiš úlohu vyššie, vypočítaš si tu PPI svojho vlastného displeja.</p>`; const [w, h] = mydVals();
+  return `<p>Prehliadač hlási, že tvoj displej má približne <b>${w} × ${h} px</b>. Uhlopriečku nájdeš v technických údajoch zariadenia (mobil často 6 – 7", notebook 13 – 16").</p>
+  <div class="calc"><label>Uhlopriečka (palce)<input type="number" id="myd" step="0.1" min="1" value="${String(S.myd || "").replace(/[^0-9.,]/g, "")}"></label></div><p id="mydo">${mydOut()}</p>`; }
 let IMG = null;
 function src() { if (IMG) return IMG; const c = document.createElement("canvas"); c.width = 600; c.height = 400; const g = c.getContext("2d"); const gr = g.createLinearGradient(0, 0, 0, 400); gr.addColorStop(0, "#4FC3F7"); gr.addColorStop(1, "#E1F5FE"); g.fillStyle = gr; g.fillRect(0, 0, 600, 400); g.fillStyle = "#FFB300"; g.beginPath(); g.arc(470, 90, 55, 0, 7); g.fill(); g.fillStyle = "#388E3C"; g.beginPath(); g.moveTo(0, 400); g.lineTo(0, 280); g.quadraticCurveTo(200, 180, 360, 290); g.quadraticCurveTo(480, 230, 600, 280); g.lineTo(600, 400); g.fill(); g.fillStyle = "#222"; g.font = "bold 44px Arial"; g.fillText("Plagát 2026", 150, 370); IMG = c; return c; }
 function drawPr() { const c = document.getElementById("prc"); if (!c) return; const W = Math.max(4, Math.round(5 / 2.54 * S.dpi)), H = Math.round(W * 2 / 3); c.width = W; c.height = H; const g = c.getContext("2d"); g.imageSmoothingEnabled = true; g.drawImage(src(), 0, 0, W, H); }
@@ -331,27 +440,65 @@ const TASKS = {
 };
 const VIEWS = {
   pojmy: () => head() + `<h2>DPI a PPI</h2>${guessBox()}
-    <div class="theory"><p>Digitálny obrázok má iba <b>pixely</b>, nemá centimetre. Fyzickú veľkosť dostane až pri tlači alebo na displeji. Určuje ju <b>hustota</b>:</p><ul><li><b>DPI</b> (dots per inch): počet bodov na <b>palec</b> pri tlači a skenovaní,</li><li><b>PPI</b> (pixels per inch): počet pixelov na palec na displeji alebo v obrázku.</li></ul>
-      <p>1 palec = <b>2,54 cm</b>. Veľkosť výtlačku: <b>cm = px ÷ DPI × 2,54</b>. Potrebné pixely: <b>px = cm ÷ 2,54 × DPI</b>. Na fotku sa odporúča <b>300 DPI</b>, na plagát z diaľky stačí menej.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Digitálny obrázok má iba <b>pixely</b>, nemá centimetre. Fyzickú veľkosť dostane až pri tlači alebo na displeji. Určuje ju <b>hustota</b>:</p>
+      <table class="rtab"><thead><tr><th>Skratka</th><th>Význam</th><th>Kde</th></tr></thead><tbody>
+        <tr><td><b>DPI</b></td><td>dots per inch, počet bodov na <b>palec</b></td><td>tlač, skenovanie</td></tr>
+        <tr><td><b>PPI</b></td><td>pixels per inch, počet pixelov na palec</td><td>displej, obrázok</td></tr></tbody></table>
+      <p>1 palec = <b>2,54 cm</b>. Veľkosť výtlačku: <b>cm = px ÷ DPI × 2,54</b>. Potrebné pixely: <b>px = cm ÷ 2,54 × DPI</b>.</p>
+      <p>Na fotku sa odporúča <b>300 DPI</b>, na plagát pozeraný z diaľky stačí menej.</p>
+    </div><div>${TFIG.palec}</div></div>
+    ${ltfigs(TFIG.prepocet, TFIG.dpippi)}
+    ${VEDEL("Palec meria presne 2,54 cm od roku 1959, keď sa na tom dohodli USA, Veľká Británia a ďalšie krajiny. Pôvodne sa odvodzoval od šírky ľudského palca.")}
     <h3>Kalkulačka výtlačku</h3><div class="tool" id="cbox">${calcHTML()}</div>
     <h3>Úloha: počítaj</h3><div class="task">${taskHTML("pin")}</div>` + nextBar(),
   tlac: () => { const G = S.pg; return head() + `<h2>Simulácia tlače</h2>
-    <div class="theory"><p>Obrázok vytlačíme na šírku <b>5 cm</b>. Posuvníkom meníš, koľko bodov na palec má tlač k dispozícii. Pri nízkom DPI je bodov málo a obraz je kockatý.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Obrázok vytlačíme na šírku <b>5 cm</b>. Posuvníkom meníš, koľko bodov na palec má tlač k dispozícii. Pri nízkom DPI je bodov málo a obraz je <b>kockatý</b>.</p>
+      <p>Počet bodov na šírku výtlačku: <b>cm ÷ 2,54 × DPI</b>.</p>
+      <table class="rtab num"><thead><tr><th>DPI</th><th>Bodov na 5 cm</th><th>Výsledok</th></tr></thead><tbody>
+        <tr><td>30</td><td>asi 59</td><td>kockatý</td></tr>
+        <tr><td>100</td><td>asi 197</td><td>zubaté okraje</td></tr>
+        <tr><td>300</td><td>asi 591</td><td>ostrý</td></tr></tbody></table>
+      <p>Farby skladá tlačiareň z drobných bodov štyroch atramentov <b>CMYK</b>: azúrovej, purpurovej, žltej a čiernej.</p>
+    </div><div>${TFIG.kvalita}</div></div>
+    ${ltfigs(TFIG.cmyk)}
+    ${VEDEL("Atramentová tlačiareň strieka kvapky s objemom iba niekoľko pikolitrov. Taká kvapka je tenšia ako ľudský vlas.")}
     <div class="task"><ul class="goals"><li>${G.low ? "✅" : "⬜"} nastav 30 DPI alebo menej a pozri sa na kvalitu</li><li>${G.hi ? "✅" : "⬜"} nastav 300 DPI</li></ul></div>
     <div class="tool"><div class="sl"><span>DPI</span><input type="range" min="10" max="300" step="10" value="${S.dpi}" data-dpi aria-label="DPI"><b id="dpiv">${S.dpi}</b></div><p id="dpip">Na 5 cm pripadá <b>${Math.round(5 / 2.54 * S.dpi)}</b> bodov.</p>
       <div class="paper"><canvas id="prc"></canvas><div class="ruler"></div><small>0 — 5 cm</small></div></div>
     <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>` + nextBar(); },
   displej: () => head() + `<h2>Hustota displeja</h2>
-    <div class="theory"><p>Veľkosť displeja sa udáva <b>uhlopriečkou v palcoch</b> (napr. 24"). Hustota: <b>PPI = √(šírka² + výška²) ÷ uhlopriečka</b>, kde šírka a výška sú v pixeloch. Bežný monitor má okolo 90 až 110 PPI, mobil 400 až 500 PPI. Displeje s takou hustotou, že voľným okom nevidíš jednotlivé pixely, Apple nazýva <b>Retina</b>.</p></div>
-    ${tfigs(TFIG.uhlopriecka, TFIG.hustota)}
-    <h3>Úloha: vypočítaj PPI</h3><div class="task">${taskHTML("din")}</div>` + nextBar(),
+    <div class="theory tsplit"><div>
+      <p>Veľkosť displeja sa udáva <b>uhlopriečkou v palcoch</b> (napr. 24"). Hustotu pixelov vypočítaš takto:</p>
+      <p style="text-align:center;font-size:1.1em"><b>PPI = √(šírka² + výška²) ÷ uhlopriečka</b></p>
+      <p>Šírka a výška sú v pixeloch, ich odmocnina zo súčtu štvorcov je počet pixelov na uhlopriečke (<b>Pytagorova veta</b>).</p>
+      <table class="rtab"><thead><tr><th>Zariadenie</th><th>Bežná hustota</th></tr></thead><tbody>
+        <tr><td>monitor</td><td>90 – 110 PPI</td></tr>
+        <tr><td>mobil</td><td>400 – 500 PPI</td></tr></tbody></table>
+      <p>Displeje s takou hustotou, že voľným okom nevidíš jednotlivé pixely, Apple nazýva <b>Retina</b>. Každý pixel tvoria tri <b>subpixely</b>: červený, zelený a modrý.</p>
+    </div><div>${TFIG.hustota}</div></div>
+    ${ltfigs(TFIG.uhlopriecka, TFIG.subpix)}
+    ${VEDEL("Označenie Retina predstavil Apple v roku 2010 s iPhonom 4, ktorého displej mal 326 PPI. Dnešné mobily majú často ešte viac.")}
+    <h3>Úloha: vypočítaj PPI</h3><div class="task">${taskHTML("din")}</div>
+    <h3>Vyskúšaj: PPI tvojho displeja</h3><div class="tool" id="mydbox">${mydHTML()}</div>` + nextBar(),
   sken: () => head() + `<h2>Skenovanie</h2>
-    <div class="theory"><p>Pri skenovaní volíš, koľko bodov na palec skener zosníma:</p><ul><li><b>150 až 200 DPI</b>: dokument na obrazovku, e-mail,</li><li><b>300 DPI</b>: text na tlač a rozpoznanie textu (OCR),</li><li><b>600 DPI</b>: fotografie, ktoré chceš zväčšiť,</li><li><b>2400 DPI a viac</b>: negatívy a diapozitívy.</li></ul><p>Dvojnásobné DPI znamená <b>štvornásobný</b> počet pixelov a oveľa väčší súbor.</p></div>
-    ${tfigs(TFIG.sken)}
+    <div class="theory tsplit"><div>
+      <p>Pri skenovaní volíš, koľko bodov na palec skener zosníma:</p>
+      <table class="rtab num"><thead><tr><th>DPI</th><th>Na čo</th></tr></thead><tbody>
+        <tr><td>150 – 200</td><td>dokument na obrazovku, e-mail</td></tr>
+        <tr><td>300</td><td>text na tlač a rozpoznanie textu (<b>OCR</b>)</td></tr>
+        <tr><td>600</td><td>fotografie, ktoré chceš zväčšiť</td></tr>
+        <tr><td>2400 a viac</td><td>negatívy a diapozitívy</td></tr></tbody></table>
+      <p>Vyššie DPI pridá pixely na šírku <b>aj</b> na výšku, preto počet pixelov aj veľkosť súboru rastú <b>oveľa rýchlejšie</b> ako samotné DPI.</p>
+    </div><div>${TFIG.skener}</div></div>
+    ${S.t.sin ? ltfigs(TFIG.ocr, TFIG.sken) : ltfigs(TFIG.ocr)}
+    ${VEDEL("Prvý naskenovaný obrázok vznikol v roku 1957. Russell Kirsch v ňom naskenoval fotku svojho malého syna v rozlíšení iba 176 × 176 pixelov.")}
     <h3>Úloha: počítaj</h3><div class="task">${taskHTML("sin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
 };
 function CUSTOM_INPUT(e) { const t = e.target;
+  if (t.id === "myd") { S.myd = t.value; save(); document.getElementById("mydo").innerHTML = mydOut(); return true; }
   if (["cw", "ch", "cd"].includes(t.id)) { S.pw = Math.max(1, +document.getElementById("cw").value || 1); S.ph = Math.max(1, +document.getElementById("ch").value || 1); S.pd = Math.max(1, +document.getElementById("cd").value || 1); save(); document.querySelector("#cbox p").innerHTML = `Veľkosť výtlačku: <span class="big">${f1(S.pw / S.pd * 2.54)} × ${f1(S.ph / S.pd * 2.54)} cm</span> (${f1(S.pw / S.pd)} × ${f1(S.ph / S.pd)} palcov)`; return true; }
   if (t.dataset && t.dataset.dpi !== undefined) { S.dpi = +t.value; if (S.dpi <= 30) S.pg.low = true; if (S.dpi === 300) S.pg.hi = true; const n = Object.keys(S.pg).length; if (n) award("g_pr", n); save(); document.getElementById("dpiv").textContent = S.dpi; document.getElementById("dpip").innerHTML = `Na 5 cm pripadá <b>${Math.round(5 / 2.54 * S.dpi)}</b> bodov.`; drawPr(); return true; }
   return false; }
@@ -508,7 +655,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

@@ -228,13 +228,50 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tabdoc .ln span{position:absolute;white-space:nowrap}
 .tabdoc .ld{position:absolute;overflow:hidden;white-space:nowrap;color:#666}
 
+@media (max-width:520px){.tool>div[style*="grid-template-columns"]{grid-template-columns:1fr!important}.tool [data-sel]{width:100%;min-width:0}}
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"precvic": ["Postup: strana → písmo a odsek → tabulátory.", "Šírka textu = šírka papiera − ľavý okraj − pravý okraj (A4: 21 − 2,5 − 2,5 = 16 cm)."], "stranka": ["Rozloženie › Nastavenie strany: okraje (normálne 2,5 cm), orientácia, veľkosť (A4 = 21 × 29,7 cm)."], "pismo": ["Písmo: typ (pätkové/bezpätkové), veľkosť v bodoch, rez (B, I, U).", "Odsek: zarovnanie (aj do bloku), riadkovanie, medzery. Enter = nový odsek, Shift + Enter = nový riadok."], "tabulatory": ["Tab posunie text na zarážku. Zarážky: ľavá, stredová, pravá, desatinná; vodiaci znak (bodky).", "Nastavenie: klik na pravítko alebo Domov › Odsek › Tabulátory. Nikdy nezarovnávaj medzerami."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {
+  stranka: ["Stranu nastavíš na karte <b>Rozloženie</b> v skupine <b>Nastavenie strany</b>.", "<b>Okraje</b> = vzdialenosť textu od kraja papiera: normálne 2,5 cm, úzke 1,27 cm, široké 5,08 cm.", "<b>Orientácia</b>: na výšku alebo na šírku.", "<b>Veľkosť</b> papiera: u nás <b>A4</b> = 21 × 29,7 cm, polovica A4 je A5.", "Stranu nastav <b>hneď na začiatku</b>, lebo mení rozloženie celého textu."],
+  pismo: ["<b>Písmo</b> (Domov › Písmo): <b>typ</b>, <b>veľkosť</b> v bodoch, <b>rez</b> (tučné, kurzíva, podčiarknuté), farba.", "<b>Pätkové</b> písmo sa dobre číta v dlhom tlačenom texte, <b>bezpätkové</b> pôsobí moderne a hodí sa na obrazovku.", "<b>Odsek</b> je text medzi dvoma stlačeniami klávesu <b>Enter</b>.", "Odseku nastavíš <b>zarovnanie</b> (vľavo, na stred, vpravo, do bloku) a <b>riadkovanie</b> (1,0; 1,15; 1,5; 2,0).", "Ďalej medzery pred odsekom a za ním a zarážky odseku (Domov › Odsek).", "Nový riadok bez nového odseku: <b>Shift + Enter</b>."],
+  tabulatory: ["Kláves <b>Tab</b> posunie text na najbližšiu <b>zarážku tabulátora</b>.", "Zarážku pridáš kliknutím na <b>pravítko</b>, presne ju nastavíš cez Domov › Odsek › Tabulátory.", "Druhy zarážok: <b>ľavý</b>, <b>stredový</b>, <b>pravý</b> a <b>desatinný</b> tabulátor.", "<b>Vodiaci znak</b> (bodky, čiara) vyplní miesto pred zarážkou.", "Text <b>nikdy nezarovnávaj medzerami</b>."],
+  precvic: ["Formátuj <b>od celku k detailom</b>: strana → písmo a odseky → tabulátory.", "<b>Šírka textu</b> = šírka papiera − ľavý okraj − pravý okraj.", "Ak sa obsah nezmestí na šírku, pomôžu <b>užšie okraje</b> alebo <b>orientácia na šírku</b>.", "<b>Skryté znaky</b> (¶ na karte Domov) ukážu Enter, Tab a medzery. Netlačia sa.", "Hotové formátovanie prenesieš na iný text nástrojom <b>Kopírovať formát</b> (štetec)."]
+};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -262,6 +299,133 @@ document.addEventListener("keydown", e => { const z = e.target.closest && e.targ
 const T_ = (x, y, t, s = 12, c = "#1B1B1F", w = 400, a = "start") => `<text x="${x}" y="${y}" font-family="Segoe UI,Rubik,sans-serif" font-size="${s}" font-weight="${w}" fill="${c}" text-anchor="${a}" pointer-events="none">${t}</text>`;
 const IC_ = (x, y, e, bg, sz = 34) => `<rect x="${x}" y="${y}" width="${sz}" height="${sz}" rx="${sz / 4.5}" fill="${bg}"/><text x="${x + sz / 2}" y="${y + sz * 0.7}" text-anchor="middle" font-size="${sz * 0.55}" pointer-events="none">${e}</text>`;
 
+/* Spoločné pomôcky na ilustrácie k teórii (Prima) */
+const tfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+const PF = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+  const C = { ink: "#1A1530", mut: "#5E5877", acc: "#6A3FD0", accS: "#E9E2FB", ok: "#12805A", okS: "#E6F4EE", bad: "#C0392B", badS: "#FDECEA", amb: "#B07400", ambS: "#FFF6E0", blue: "#1E6FD9", blueS: "#E3EEFC", line: "#DAD6E6", bg: "#F6F5FA" };
+  const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+  let uid = 0;
+  const SV = (w, h, body, label) => { const id = "pf" + (++uid); const d = `<defs>${[C.mut, C.ok, C.acc, C.bad, C.blue, C.amb, "#C2560C", "#B4235A", "#0B7A75"].map(c => `<marker id="${id}${c.slice(1)}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join("")}</defs>`; return `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${d}${body.replace(/url\(#M([0-9A-F]{6})\)/g, `url(#${id}$1)`)}</svg>`; };
+  const ar = (x1, y1, x2, y2, c, w, both) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${w || 2.5}" marker-end="url(#M${c.slice(1)})"${both ? ` marker-start="url(#M${c.slice(1)})"` : ""}/>`;
+  const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || C.ink}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,monospace"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+  /* zalomenie textu na riadky podľa počtu znakov */
+  const TW = (x, y, s, n, o = {}) => { const w = s.split(" "), L = []; let l = ""; w.forEach(x2 => { if ((l + " " + x2).trim().length > n) { L.push(l.trim()); l = x2; } else l += " " + x2; }); L.push(l.trim()); return L.map((t, i) => T(x, y + i * (o.lh || (o.fs || 12) * 1.35), t, o)).join(""); };
+  const box = (x, y, w, h, f, s, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r == null ? 10 : r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.5"` : ""}/>`;
+  const pc = (x, y, on = 1, inner = "") => `<rect x="${x}" y="${y}" width="64" height="42" rx="4" fill="${C.ink}"/><rect x="${x + 4}" y="${y + 4}" width="56" height="34" rx="2" fill="${on ? "#E8F0FE" : "#3A3355"}"/>${inner}<rect x="${x + 26}" y="${y + 42}" width="12" height="7" fill="${C.mut}"/><rect x="${x + 16}" y="${y + 49}" width="32" height="5" rx="2" fill="${C.mut}"/>`;
+  const phone = (x, y, inner = "") => `<rect x="${x}" y="${y}" width="40" height="70" rx="7" fill="${C.ink}"/><rect x="${x + 3}" y="${y + 7}" width="34" height="54" rx="3" fill="#E8F0FE"/>${inner}`;
+  const server = (x, y) => `<rect x="${x}" y="${y}" width="46" height="62" rx="5" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 7 + i * 18}" width="34" height="12" rx="2" fill="#3A3355"/><circle cx="${x + 34}" cy="${y + 13 + i * 18}" r="2.5" fill="#3CCB8E"/>`).join("")}`;
+  const av = (x, y, t, c, r = 15) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/><text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="${r * 0.8}" font-weight="700" fill="#fff">${t}</text>`;
+  const num = (x, y, n, c) => `<circle cx="${x}" cy="${y}" r="10" fill="${c || C.acc}"/>${T(x, y + 4, n, { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  const win = (x, y, w, h, url, lock = 1) => `${box(x, y, w, h, "#fff", "#C9D1DF", 8)}<rect x="${x}" y="${y}" width="${w}" height="28" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="10" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="18" rx="9" fill="#fff"/>${lock ? T(x + 15, y + 18, "🔒", { fs: 9 }) : ""}${T(x + (lock ? 29 : 16), y + 18, url, { fs: 10.5 })}`;
+  return { C, fig, SV, ar, T, TW, box, pc, phone, server, av, num, win };
+})();
+
+/* Ilustrácie – Sekunda 2.3 Formátovanie dokumentu */
+const TFIG = (() => { const { C, fig, SV, ar, T, box, num } = PF; const A = "#C2560C", AS = "#FBE3D2", W = "#2B579A";
+const lines = (x, y, w, n, gap, c = "#CBD2DC", al = "l") => Array.from({ length: n }, (_, i) => { const lw = i === n - 1 && al !== "j" ? w * 0.55 : w * (al === "j" ? 1 : [1, 0.86, 0.94, 0.78][i % 4]); const lx = al === "c" ? x + (w - lw) / 2 : al === "r" ? x + w - lw : x; return `<rect x="${lx}" y="${y + i * gap}" width="${lw}" height="5" rx="2" fill="${c}"/>`; }).join("");
+return {
+  okraje: fig(SV(440, 250, `
+    ${T(220, 18, "Okraje strany", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="30" y="30" width="150" height="212" fill="${AS}" stroke="#9AA3B2" stroke-width="1.5"/>
+    <rect x="54" y="54" width="102" height="164" fill="#fff" stroke="${A}" stroke-width="1.5" stroke-dasharray="5 4"/>
+    ${lines(62, 66, 86, 10, 14)}
+    ${ar(32, 150, 52, 150, A, 1.8, 1)}${ar(105, 32, 105, 52, A, 1.8, 1)}
+    ${T(200, 52, "okraj", { fs: 12.5, b: 1, c: A })}${T(200, 70, "voľný pás okolo textu", { fs: 11 })}
+    ${T(200, 98, "plocha na text", { fs: 12.5, b: 1 })}${T(200, 116, "vnútri čiarkovaného rámu", { fs: 11 })}
+    ${box(196, 134, 236, 108, C.bg, null, 8)}${T(208, 154, "Rozloženie › Okraje", { fs: 11.5, b: 1, c: W })}
+    ${[["normálne", "2,5 cm"], ["úzke", "1,27 cm"], ["široké", "5,08 cm"]].map(([n, v], i) => `${T(208, 180 + i * 22, n, { fs: 11.5 })}${T(420, 180 + i * 22, v, { a: "end", fs: 11.5, b: 1, c: A })}`).join("")}`, "Okraje strany"),
+    "<b>Okraj</b> je voľný pás medzi krajom papiera a textom. Text sa píše iba do <b>plochy na text</b>."),
+  orient: fig(SV(440, 230, `
+    ${T(220, 18, "Orientácia strany", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="50" y="34" width="120" height="160" fill="#fff" stroke="${W}" stroke-width="2"/>${T(110, 58, "Jeseň", { a: "middle", fs: 12, b: 1, c: A })}${lines(70, 72, 80, 4, 12)}${lines(70, 130, 80, 4, 12)}
+    ${T(110, 214, "📄 na výšku: básnička", { a: "middle", fs: 11.5, b: 1 })}
+    <rect x="214" y="58" width="200" height="136" fill="#fff" stroke="${W}" stroke-width="2"/>${T(314, 80, "Časová os", { a: "middle", fs: 12, b: 1, c: A })}
+    <line x1="230" y1="130" x2="398" y2="130" stroke="${C.ink}" stroke-width="2"/>${[0, 1, 2, 3, 4].map(i => `<circle cx="${238 + i * 38}" cy="130" r="5" fill="${A}"/>${T(238 + i * 38, 156, String(1800 + i * 50), { a: "middle", fs: 10.5 })}`).join("")}
+    ${T(314, 214, "📃 na šírku: časová os", { a: "middle", fs: 11.5, b: 1 })}`, "Na výšku a na šírku"),
+    "<b>Na výšku</b> je bežná strana. <b>Na šírku</b> sa hodí, keď je obsah viac široký ako vysoký."),
+  papier: fig(SV(440, 240, `
+    ${T(220, 18, "Formáty papiera radu A", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="40" y="34" width="134" height="190" fill="#fff" stroke="${W}" stroke-width="2"/>
+    <line x1="40" y1="129" x2="174" y2="129" stroke="${W}" stroke-width="1.5" stroke-dasharray="5 4"/><line x1="107" y1="34" x2="107" y2="129" stroke="${C.mut}" stroke-width="1.2" stroke-dasharray="3 3"/>
+    ${T(107, 184, "A5", { a: "middle", fs: 16, b: 1, c: W })}${T(73, 87, "A6", { a: "middle", fs: 12, b: 1, c: C.mut })}${T(140, 87, "A6", { a: "middle", fs: 12, b: 1, c: C.mut })}
+    ${T(184, 132, "A4", { fs: 16, b: 1, c: A })}
+    ${[["A3", "29,7 × 42 cm", C.ink], ["A4", "21 × 29,7 cm", A], ["A5", "14,8 × 21 cm", W], ["A6", "10,5 × 14,8 cm", C.mut]].map(([n, v, c], i) => `${T(250, 60 + i * 28, n, { fs: 13, b: 1, c })}${T(286, 60 + i * 28, v, { fs: 12 })}`).join("")}
+    ${box(236, 172, 196, 52, C.bg, null, 8)}${T(334, 194, "prekrojíš na polovicu", { a: "middle", fs: 11 })}${T(334, 212, "= o číslo menší formát", { a: "middle", fs: 11, b: 1 })}`, "Formáty papiera A3 až A6"),
+    "Hárok <b>A4</b> prekrojený na polovicu dá dva hárky <b>A5</b>, z polovice A5 vznikne A6."),
+  patky: fig(SV(440, 230, `
+    ${T(220, 18, "Pätky na koncoch písmen", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 30, 200, 190, "#fff", A, 12)}
+    <rect x="100" y="56" width="28" height="104" fill="${C.ink}"/><rect x="74" y="50" width="80" height="12" rx="2" fill="${A}"/><rect x="74" y="154" width="80" height="12" rx="2" fill="${A}"/>
+    ${ar(184, 70, 158, 58, A, 1.8)}${T(162, 86, "pätka", { fs: 11.5, b: 1, c: A })}
+    ${T(114, 194, "pätkové", { a: "middle", fs: 13, b: 1, c: A })}${T(114, 211, "má pätky", { a: "middle", fs: 11, c: C.mut })}
+    ${box(226, 30, 200, 190, "#fff", W, 12)}
+    <rect x="312" y="50" width="28" height="116" fill="${C.ink}"/>
+    ${T(326, 194, "bezpätkové", { a: "middle", fs: 13, b: 1, c: W })}${T(326, 211, "rovné konce", { a: "middle", fs: 11, c: C.mut })}`, "Pätkové a bezpätkové písmo"),
+    "<b>Pätky</b> sú malé priečne ťahy na koncoch písmen. <b>Bezpätkové</b> písmo má konce rovné."),
+  riadky: fig(SV(440, 220, `
+    ${T(220, 18, "Riadkovanie", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 30, 200, 150, "#fff", C.line, 10)}${lines(30, 46, 168, 6, 12)}${T(114, 166, "riadkovanie 1,0", { a: "middle", fs: 12, b: 1 })}
+    ${box(226, 30, 200, 150, "#fff", A, 10)}${lines(242, 46, 168, 4, 26, "#F2B48C")}${T(326, 166, "riadkovanie 2,0", { a: "middle", fs: 12, b: 1, c: A })}
+    ${T(220, 204, "Väčšie riadkovanie: ľahšie čítanie, miesto na poznámky.", { a: "middle", fs: 11, c: C.mut })}`, "Riadkovanie 1,0 a 2,0"),
+    "<b>Riadkovanie</b> určuje medzeru medzi riadkami. Pri 2,0 je medzera dvojnásobná."),
+  velkost: fig(SV(440, 180, `
+    ${T(220, 18, "Veľkosť písma v bodoch", { a: "middle", fs: 13, b: 1, c: A })}
+    <line x1="14" y1="100" x2="426" y2="100" stroke="${C.line}" stroke-width="1.5"/>
+    ${[[9, 40], [12, 110], [20, 200], [36, 330]].map(([pt, x]) => `${T(x, 100, "Aa", { a: "middle", fs: pt * 1.3, b: pt >= 20, c: pt === 36 ? A : C.ink })}${T(x, 126, pt + " b", { a: "middle", fs: 12, b: 1, c: C.mut })}`).join("")}
+    ${box(14, 140, 412, 30, C.bg, null, 8)}${T(220, 160, "Domov › Písmo › Veľkosť písma: čím väčšie číslo, tým väčšie písmo", { a: "middle", fs: 11, b: 1 })}`, "Veľkosti písma"),
+    "<b>Veľkosť písma</b> sa udáva v <b>bodoch</b>. Bežný text má okolo 11 – 12 bodov, nadpisy viac."),
+  pravitko: fig(SV(440, 230, `
+    ${T(220, 18, "Kláves Tab skočí na zarážku", { a: "middle", fs: 13, b: 1, c: A })}
+    <rect x="20" y="40" width="400" height="22" fill="#F3F3F3" stroke="#C9CED6"/>${Array.from({ length: 13 }, (_, i) => `<line x1="${30 + i * 30}" y1="54" x2="${30 + i * 30}" y2="62" stroke="#888"/>${i % 2 ? "" : T(30 + i * 30, 52, String(i), { a: "middle", fs: 10.5, c: C.mut })}`).join("")}
+    <path d="M206 56 v10 h10" fill="none" stroke="${A}" stroke-width="3"/>${T(250, 34, "zarážka 6 cm", { fs: 11, b: 1, c: A })}
+    <line x1="210" y1="66" x2="210" y2="160" stroke="${A}" stroke-width="1.2" stroke-dasharray="4 3"/>
+    ${[["Peter", "Sekunda A"], ["Zuzana", "Sekunda B"], ["Ema", "Tercia"]].map(([a, b], i) => { const y = 94 + i * 28; return `${T(34, y, a, { fs: 13 })}${ar(34 + a.length * 8 + 6, y - 4, 204, y - 4, "#B4235A", 1.5)}${T(212, y, b, { fs: 13, b: 1 })}`; }).join("")}
+    <rect x="34" y="178" width="70" height="36" rx="6" fill="#fff" stroke="${C.ink}" stroke-width="1.5"/>${T(69, 201, "Tab ⇥", { a: "middle", fs: 13, b: 1 })}
+    ${T(118, 194, "Každé stlačenie Tab posunie text", { fs: 11 })}${T(118, 210, "na najbližšiu zarážku vpravo.", { fs: 11 })}`, "Tabulátor a pravítko"),
+    "Po stlačení <b>Tab</b> skočí kurzor na <b>zarážku</b> na pravítku. Druhý stĺpec je preto vždy rovno."),
+  druhy: fig(SV(440, 230, `
+    ${T(220, 18, "Tri druhy zarážok", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["⌊", "ľavý", "start", "začína na zarážke"], ["⊥", "stredový", "middle", "stred je na zarážke"], ["⌋", "pravý", "end", "končí na zarážke"]].map(([s, n, a, d], i) => { const y = 32 + i * 64, dx = [4, 0, -4][i]; return `${box(10, y, 420, 56, i % 2 ? C.bg : "#fff", C.line, 8)}${T(30, y + 25, s + " " + n, { fs: 13, b: 1, c: A })}${T(30, y + 44, d, { fs: 10.5, c: C.mut })}${T(270 + dx, y + 25, "ceruzka", { a, fs: 12.5 })}${T(270 + dx, y + 44, "pravítko", { a, fs: 12.5 })}`; }).join("")}
+    <line x1="270" y1="30" x2="270" y2="222" stroke="${A}" stroke-width="1.5" stroke-dasharray="4 3"/>`, "Ľavý, stredový a pravý tabulátor"),
+    "Pri <b>ľavej</b> zarážke text začína, pri <b>stredovej</b> je vycentrovaný, pri <b>pravej</b> končí."),
+  medzery: fig(SV(440, 210, `
+    ${T(220, 18, "Medzery verzus tabulátor", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(10, 30, 206, 172, C.badS, C.bad, 10)}${T(113, 52, "⛔ medzerami", { a: "middle", fs: 12.5, b: 1, c: C.bad })}
+    ${[["Pero", 120], ["Zošit A4", 136], ["Guma", 112], ["Pravítko", 132]].map(([a, x], i) => `${T(24, 84 + i * 28, a, { fs: 12.5 })}${T(x + 30, 84 + i * 28, "2 €", { fs: 12.5, b: 1 })}`).join("")}
+    ${box(224, 30, 206, 172, C.okS, C.ok, 10)}${T(327, 52, "✅ tabulátorom", { a: "middle", fs: 12.5, b: 1, c: C.ok })}
+    ${["Pero", "Zošit A4", "Guma", "Pravítko"].map((a, i) => `${T(238, 84 + i * 28, a, { fs: 12.5 })}${T(370, 84 + i * 28, "2 €", { fs: 12.5, b: 1 })}`).join("")}
+    <line x1="365" y1="64" x2="365" y2="188" stroke="${C.ok}" stroke-dasharray="3 3"/>`, "Zarovnanie medzerami a tabulátorom"),
+    "Stĺpec zarovnaný <b>medzerami</b> sa pri inom písme rozíde. <b>Tabulátor</b> drží stĺpec na zarážke."),
+  postup: fig(SV(440, 210, `
+    ${T(220, 18, "Formátuj od celku k detailom", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["📄", "Strana", "veľkosť, orientácia,", "okraje"], ["🔤", "Písmo a odseky", "typ, veľkosť, rez,", "zarovnanie, riadky"], ["⇥", "Tabulátory", "stĺpce, cenníky,", "obsah"]].map(([e, t, d1, d2], i) => { const x = 8 + i * 148; return `${box(x, 32, 128, 126, i ? "#fff" : AS, i ? C.line : A, 10)}${num(x + 16, 48, String(i + 1), A)}${T(x + 64, 78, e, { a: "middle", fs: 22 })}${T(x + 64, 106, t, { a: "middle", fs: 12, b: 1 })}${T(x + 64, 126, d1, { a: "middle", fs: 10.5, c: C.mut })}${T(x + 64, 142, d2, { a: "middle", fs: 10.5, c: C.mut })}`; }).join("")}
+    ${ar(138, 95, 154, 95, A, 2.5)}${ar(286, 95, 302, 95, A, 2.5)}
+    ${box(60, 170, 320, 30, C.bg, null, 8)}${T(220, 190, "najprv celok, potom detaily", { a: "middle", fs: 11.5, b: 1 })}`, "Poradie formátovania"),
+    "Najprv nastav <b>stranu</b>, potom <b>písmo a odseky</b> a nakoniec <b>tabulátory</b>."),
+  sirka: fig(SV(440, 210, `
+    ${T(220, 18, "Šírka plochy na text (hárok A5)", { a: "middle", fs: 13, b: 1, c: A })}
+    ${ar(35, 42, 405, 42, C.ink, 1.5, 1)}${box(170, 30, 100, 22, "#fff", null, 4)}${T(220, 46, "14,8 cm", { a: "middle", fs: 12, b: 1 })}
+    <rect x="35" y="62" width="370" height="80" fill="#fff" stroke="${W}" stroke-width="2"/><rect x="35" y="62" width="50" height="80" fill="${AS}"/><rect x="355" y="62" width="50" height="80" fill="${AS}"/>
+    ${lines(95, 76, 250, 4, 16)}
+    ${T(60, 160, "2 cm", { a: "middle", fs: 11.5, b: 1, c: A })}${T(380, 160, "2 cm", { a: "middle", fs: 11.5, b: 1, c: A })}${ar(87, 156, 353, 156, C.ok, 1.5, 1)}${box(180, 147, 80, 18, "#fff", null, 4)}${T(220, 160, "10,8 cm", { a: "middle", fs: 11.5, b: 1, c: C.ok })}
+    ${box(60, 174, 320, 28, C.bg, null, 8)}${T(220, 193, "14,8 − 2 − 2 = 10,8 cm", { a: "middle", fs: 13, b: 1 })}`, "Výpočet šírky plochy na text"),
+    "<b>Šírka textu</b> = šírka papiera − ľavý okraj − pravý okraj."),
+  znaky: fig(SV(440, 200, `
+    ${T(220, 18, "Skryté znaky (tlačidlo ¶ na karte Domov)", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(10, 32, 210, 156, "#fff", C.line, 8)}
+    ${["Ulica·Lipová·5↵", "Rimavská·Sobota¶", "¶", "Spolu→12,50·€¶"].map((t, i) => T(22, 62 + i * 32, t.replace(/([·↵¶→])/g, `<tspan fill="${C.blue}" font-weight="700">$1</tspan>`), { fs: 13, mono: 1 })).join("")}
+    ${[["¶", "Enter: nový odsek"], ["↵", "Shift + Enter: nový riadok"], ["→", "Tab"], ["·", "medzera"]].map(([s, d], i) => `${T(240, 62 + i * 32, s, { fs: 16, b: 1, c: C.blue })}${T(262, 62 + i * 32, d, { fs: 11.5 })}`).join("")}`, "Skryté znaky"),
+    "Skryté znaky sa netlačia. Ukážu, kde si stlačil <b>Enter</b>, <b>Shift + Enter</b>, <b>Tab</b> alebo medzeru.")
+}; })();
+const MFONTS = ["Courier New", "Calibri", "Georgia", "Comic Sans MS"];
+function mdemoHTML() { if (!S.t.tq) return `<div class="task"><p class="muted" style="margin:0;font-size:14.5px">🔒 Ukážka sa odomkne, keď skontroluješ otázky na tejto zastávke.</p></div>`;
+  const f = S.mf || "Courier New", L = [["Pero", "2,00 €"], ["Zošit A4", "0,90 €"], ["Guma", "0,50 €"], ["Pravítko", "1,20 €"]];
+  return `<div class="task"><p class="muted" style="margin:0 0 8px;font-size:14.5px">Ten istý zoznam je raz zarovnaný medzerami a raz tabulátorom. Prepni písmo a sleduj stĺpec s cenami. Za toto nie sú body.</p>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${MFONTS.map(x => `<button class="${x === f ? "primary" : "ghost"}" data-mf="${x}" style="font-family:'${x}'">${x}</button>`).join("")}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px">
+      <div style="background:#FDECEA;border:1px solid #E7A39B;border-radius:10px;padding:10px 12px;color:#1A1530"><b>⛔ medzerami</b><pre style="margin:6px 0 0;font-family:'${f}';font-size:17px;line-height:1.3;white-space:pre;overflow-x:auto">${L.map(([a, b]) => a + " ".repeat(12 - a.length) + b).join("\n")}</pre></div>
+      <div style="background:#E6F4EE;border:1px solid #8CCBB0;border-radius:10px;padding:10px 12px;color:#1A1530"><b>✅ tabulátorom</b><div style="margin-top:6px;font-family:'${f}';font-size:17px;display:grid;grid-template-columns:140px auto;line-height:1.3">${L.map(([a, b]) => `<span>${a}</span><span>${b}</span>`).join("")}</div></div></div></div>`; }
 const KEY = "wordfmt-s23-v1";
 const LESSON = "2.3 Nastavenie stránky, typu písma, riadkovanie, tabulátory";
 const BRAND = "2.3 Formátovanie dokumentu";
@@ -353,29 +517,65 @@ const TASKS = {
 };
 const VIEWS = {
   stranka: () => head() + `<h2>Nastavenie stránky</h2>
-    <div class="theory"><p>Na karte <b>Rozloženie</b> v skupine <b>Nastavenie strany</b> nastavíš: <b>okraje</b> (vzdialenosť textu od kraja papiera, normálne 2,5 cm), <b>orientáciu</b> (na výšku alebo na šírku) a <b>veľkosť</b> papiera (u nás <b>A4</b> = 21 × 29,7 cm). Strana sa nastavuje najlepšie hneď na začiatku, lebo mení rozloženie celého textu.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Na karte <b>Rozloženie</b> v skupine <b>Nastavenie strany</b> nastavíš tri veci:</p>
+      <table class="rtab"><thead><tr><th>Nastavenie</th><th>Čo znamená</th></tr></thead><tbody>
+        <tr><td><b>okraje</b></td><td>vzdialenosť textu od kraja papiera, normálne 2,5 cm</td></tr>
+        <tr><td><b>orientácia</b></td><td>na výšku alebo na šírku</td></tr>
+        <tr><td><b>veľkosť</b></td><td>rozmer papiera, u nás <b>A4</b> = 21 × 29,7 cm</td></tr></tbody></table>
+      <p>Stranu nastav najlepšie <b>hneď na začiatku</b>, lebo mení rozloženie celého textu.</p>
+    </div><div>${TFIG.okraje}</div></div>
+    ${ltfigs(TFIG.orient, TFIG.papier)}
+    ${VEDEL("Formáty radu A sú vymyslené tak, že po prekrojení na polovicu má menší hárok <b>rovnaký pomer strán</b>. Najväčší hárok A0 má plochu presne 1 m².")}
     <h3>Úloha: priprav stranu na referát</h3><div class="task">${gl([["a4", "Veľkosť A4, orientácia na výšku"], ["mg", "Okraje normálne (2,5 cm)"]], strGoals())}${S.t.g_str ? `<div class="checkbar"><span class="score ${S.t.g_str.score < 2 ? "part" : ""}">Splnené: ${S.t.g_str.score} z 2</span></div>` : ""}<p class="muted" style="font-size:13.5px">Najprv si pozri, ako vyzerá strana na šírku, s úzkymi aj širokými okrajmi.</p></div>
     <div class="fmt"><div>${ctlStr()}</div><div class="desk" id="pgbox">${pageHTML()}</div></div>
     <h3>Otázky</h3><div class="task">${taskHTML("sq")}</div>
     <h3>Úloha 3: na výšku, alebo na šírku?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("osort")}</div>` + nextBar(),
   pismo: () => head() + `<h2>Písmo a odsek</h2>
-    <div class="theory"><p><b>Písmo</b> (Domov › Písmo): <b>typ</b> (pätkové ako Times New Roman sa dobre číta v dlhom texte, bezpätkové ako Calibri a Arial je moderné a vhodné na obrazovku), <b>veľkosť</b> v bodoch, <b>rez</b> (tučné, kurzíva, podčiarknuté), farba.</p>
-      <p><b>Odsek</b> (Domov › Odsek) je text medzi dvoma stlačeniami Enter. Nastavuje sa jeho <b>zarovnanie</b> (vľavo, na stred, vpravo, do bloku), <b>riadkovanie</b> (1,0; 1,15; 1,5; 2,0), medzery pred a za odsekom a zarážky. Nový riadok bez nového odseku vložíš cez Shift + Enter.</p></div>
+    <div class="theory tsplit"><div>
+      <table class="rtab"><thead><tr><th>Písmo (Domov › Písmo)</th><th>Čo nastavíš</th></tr></thead><tbody>
+        <tr><td><b>typ</b></td><td>pätkové ako Times New Roman sa dobre číta v dlhom texte, bezpätkové ako Calibri a Arial je moderné a vhodné na obrazovku</td></tr>
+        <tr><td><b>veľkosť</b></td><td>v bodoch</td></tr>
+        <tr><td><b>rez</b></td><td>tučné, kurzíva, podčiarknuté, ďalej farba</td></tr></tbody></table>
+      <p><b>Odsek</b> (Domov › Odsek) je text medzi dvoma stlačeniami Enter. Nastavuje sa jeho:</p>
+      <table class="rtab"><tbody>
+        <tr><td><b>zarovnanie</b></td><td>vľavo, na stred, vpravo, do bloku</td></tr>
+        <tr><td><b>riadkovanie</b></td><td>1,0; 1,15; 1,5; 2,0</td></tr>
+        <tr><td><b>medzery a zarážky</b></td><td>medzery pred odsekom a za ním, odsadenie prvého riadka</td></tr></tbody></table>
+      <p>Nový riadok bez nového odseku vložíš cez <b>Shift + Enter</b>.</p>
+    </div><div>${TFIG.velkost}</div></div>
+    ${ltfigs(TFIG.riadky, ...(S.t.pq ? [TFIG.patky] : []))}
+    ${VEDEL("Písmo <b>Times New Roman</b> vzniklo v roku <b>1932</b> pre londýnske noviny The Times. Malo byť úzke, aby sa do stĺpca zmestilo viac textu.")}
     <h3>Úloha: naformátuj referát podľa pravidiel školy</h3><div class="task">${gl([["font", "Písmo Times New Roman, veľkosť 12"], ["al", "Zarovnanie do bloku"], ["ls", "Riadkovanie 1,5"]], pisGoals())}${S.t.g_pis ? `<div class="checkbar"><span class="score ${S.t.g_pis.score < 3 ? "part" : ""}">Splnené: ${S.t.g_pis.score} z 3</span></div>` : ""}</div>
     <div class="fmt"><div>${ctlPis()}</div><div class="desk" id="pgbox">${pageHTML()}</div></div>
     <h3>Otázky</h3><div class="task">${taskHTML("pq")}</div>
     <h3>Úloha 3: pätkové, alebo bezpätkové?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>` + nextBar(),
   tabulatory: () => head() + `<h2>Tabulátory</h2>${guessBox()}
-    <div class="theory"><p><b>Tabulátor</b> (kláves <b>Tab</b>) posunie text na najbližšiu <b>zarážku tabulátora</b>. Zarážky sa pridávajú kliknutím na <b>pravítko</b> alebo presne cez Domov › Odsek › Tabulátory. Druhy zarážok:</p>
-      <ul><li><b>ľavý</b>: text začína na zarážke,</li><li><b>stredový</b>: text je na zarážke vycentrovaný,</li><li><b>pravý</b>: text na zarážke končí,</li><li><b>desatinný</b>: čísla sú zarovnané podľa desatinnej čiarky.</li></ul>
-      <p><b>Vodiaci znak</b> vyplní miesto pred zarážkou bodkami alebo čiarou, ako v obsahu knihy. Text sa nikdy nezarovnáva medzerami.</p></div>
+    <div class="theory tsplit"><div>
+      <p><b>Tabulátor</b> (kláves <b>Tab</b>) posunie text na najbližšiu <b>zarážku tabulátora</b>. Zarážky pridáš kliknutím na <b>pravítko</b> alebo presne cez Domov › Odsek › Tabulátory.</p>
+      <table class="rtab"><thead><tr><th>Zarážka</th><th>Ako zarovná text</th></tr></thead><tbody>
+        <tr><td><b>ľavý</b></td><td>text začína na zarážke</td></tr>
+        <tr><td><b>stredový</b></td><td>text je na zarážke vycentrovaný</td></tr>
+        <tr><td><b>pravý</b></td><td>text na zarážke končí</td></tr>
+        <tr><td><b>desatinný</b></td><td>čísla sú zarovnané podľa desatinnej čiarky</td></tr></tbody></table>
+      <p><b>Vodiaci znak</b> vyplní miesto pred zarážkou bodkami alebo čiarou, ako v obsahu knihy. Text sa nikdy nezarovnáva medzerami.</p>
+    </div><div>${TFIG.pravitko}</div></div>
+    ${ltfigs(TFIG.druhy, ...(S.t.tq ? [TFIG.medzery] : []))}
+    ${VEDEL("Kláves <b>Tab</b> pochádza z písacích strojov. Pomáhal rýchlo písať <b>tabuľky</b>, preto sa volá tabulátor.")}
     <h3>Úloha: cenník</h3><p>Každý riadok cenníka je „tovar <kbd>Tab</kbd> cena“. Vyber druh tabulátora a vodiaci znak a klikni na pravítko. Zarážku odstrániš kliknutím na ňu.</p>
     <div class="task">${gl([["tab", "Zarovnaj ceny desatinným (alebo pravým) tabulátorom na približne 12 cm."], ["lead", "Pridaj vodiaci znak bodky."]], tabGoals())}${S.t.g_tab ? `<div class="checkbar"><span class="score ${S.t.g_tab.score < 2 ? "part" : ""}">Splnené: ${S.t.g_tab.score} z 2</span></div>` : ""}</div>
     <div class="tool" style="overflow-x:auto"><div class="row" style="gap:12px;align-items:center"><span>Druh:</span><select id="ttype">${["ľavý", "stredový", "pravý", "desatinný"].map(t => `<option ${S.ttype === t ? "selected" : ""}>${t}</option>`).join("")}</select><span>Vodiaci znak:</span><select id="tlead">${["žiadny", "bodky", "pomlčky", "čiara"].map(t => `<option ${S.tlead === t ? "selected" : ""}>${t}</option>`).join("")}</select><button class="ghost" data-tclr>Odstrániť všetky zarážky</button></div>
       <div id="tabbox">${rulerHTML()}${tabDocHTML()}</div></div>
-    <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>` + nextBar(),
+    <h3>Otázky</h3><div class="task">${taskHTML("tq")}</div>
+    <h3>Vyskúšaj: medzery, alebo tabulátor?</h3>${mdemoHTML()}` + nextBar(),
   precvic: () => head() + `<h2>Precvičovanie: naformátuj podľa zadania</h2>
-    <div class="theory"><p>Pri formátovaní vždy postupuj <b>od celku k detailom</b>: najprv nastav <b>stranu</b> (veľkosť, orientácia, okraje), potom <b>písmo a odseky</b> a nakoniec jemné úpravy ako <b>tabulátory</b>. Okraje určujú, koľko miesta zostane na text: šírka textu = šírka papiera − ľavý okraj − pravý okraj. Preto pri širokých tabuľkách pomôžu užšie okraje alebo orientácia na šírku.</p><p>Pri každej úlohe vyber, ktorú funkciu Wordu použiješ, a potom si vypočítaj šírku plochy na text.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Pri formátovaní vždy postupuj <b>od celku k detailom</b>: najprv nastav <b>stranu</b> (veľkosť, orientácia, okraje), potom <b>písmo a odseky</b> a nakoniec jemné úpravy ako <b>tabulátory</b>.</p>
+      <p>Okraje určujú, koľko miesta zostane na text: <b>šírka textu = šírka papiera − ľavý okraj − pravý okraj</b>. Preto pri širokých tabuľkách pomôžu užšie okraje alebo orientácia na šírku.</p>
+      <p>Pri každej úlohe vyber, ktorú funkciu Wordu použiješ, a potom si vypočítaj šírku plochy na text.</p>
+    </div><div>${TFIG.postup}</div></div>
+    ${ltfigs(TFIG.sirka, ...(S.t.g_sit ? [TFIG.znaky] : []))}
+    ${VEDEL("V USA sa nepoužíva A4, ale formát <b>Letter</b> (21,59 × 27,94 cm). Preto pri tlači dokumentu z Ameriky Word niekedy hlási iný formát papiera.")}
     <h3>Úloha: čo urobíš?</h3>${S.t.g_sit ? `<div class="checkbar"><span class="score ${S.t.g_sit.score < 7 ? "part" : ""}">Správne: ${S.t.g_sit.score} zo 7</span></div>` : ""}<div class="tool">${selBlock("px", PX_I, PX_O)}</div>
     <h3>Úloha 2: počítaj</h3><div class="task">${taskHTML("pxin")}</div>` + nextBar(),
   test: () => head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar()
@@ -386,6 +586,7 @@ function CUSTOM_CLICK(e) {
   const el = e.target.closest("button, .ts"); if (el && el.dataset.trm !== undefined) { S.tabs.splice(+el.dataset.trm, 1); save(); render(false); return true; }
   const r = e.target.closest && e.target.closest("#rul"); if (r) { const b = r.getBoundingClientRect(), cm = Math.round((e.clientX - b.left) / CMW * 4) / 4; if (cm > 0.2 && cm < RL) { S.tabs.push({ p: cm, t: S.ttype, l: S.tlead }); scoreAll(); save(); render(false); } return true; }
   if (!el) return false; const ds = el.dataset;
+  if (ds.mf) { S.mf = ds.mf; save(); render(false); return true; }
   if (ds.pt) { S.P[ds.pt] = !S.P[ds.pt]; save(); render(false); return true; }
   if (ds.tclr !== undefined) { S.tabs = []; save(); render(false); return true; }
   return false;
@@ -549,7 +750,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }

@@ -210,13 +210,49 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 
+/* ===== LENKA: spoločné pravidlá vzhľadu ===== */
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#D9EAFB}}
+:root[data-theme="light"]{--bg:#D9EAFB}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:22px;align-items:start}
+.tsplit>div>.tfig,.tsplit>div>figure{margin:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab.num td:first-child{white-space:nowrap;font-family:var(--mono);font-size:14.5px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.goals.g2{columns:2;column-gap:24px}.goals.g2 li{break-inside:avoid}
+@media (max-width:640px){.goals.g2{columns:1}}
+.tfigs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.tfigs.one{grid-template-columns:minmax(0,560px);justify-content:center}
+@media (max-width:760px){.tfigs{grid-template-columns:1fr}}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+.tsplit>div{min-width:0}
+.rtab td{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="top" id="top"></header>
 <main id="main" tabindex="-1"></main>
 <script>
-const THEORY = {"zadanie": ["Postup: téma a otázka → zber údajov → tabuľka so záhlavím a jednotkami → vzorce a funkcie → graf → záver."], "tabulka": ["Aspoň 5 riadkov údajov, vypočítaný stĺpec vzorcom (vyplniť nadol), súhrnný riadok funkciou, tučné záhlavie a orámovanie."], "graf": ["Typ podľa údajov: vývoj = čiarový, porovnanie = stĺpcový, podiel = koláčový. Názov a osi s jednotkami."], "zaver": ["Záver: čo z údajov vyplýva (max, min, priemer, trend) a čo by si zlepšil. Odovzdaj tabuľku aj graf."]};
+/* ===== LENKA: typografia a pomôcky ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+const ltfigs = (...a) => `<div class="tfigs${a.length === 1 ? " one" : ""}">${a.join("")}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,pre,script,style,textarea,.bits,.asc,svg,.cm,.code,.editor") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+const THEORY = {
+  zadanie: ["Projekt má 6 krokov: <b>otázka</b> → <b>zber údajov</b> → <b>tabuľka</b> → <b>vzorce a funkcie</b> → <b>graf</b> → <b>záver</b>.", "Dobrá otázka je konkrétna a odpoveď na ňu nájdeme v <b>číslach</b>.", "Údaje získame <b>meraním</b>, <b>prieskumom</b> alebo z cenníkov a webu (poznačíme si zdroj).", "Údaje zapisujeme hneď a vždy s <b>jednotkou</b>.", "Hodnotí sa téma, tabuľka, graf a záver s odovzdaním."],
+  tabulka: ["Záhlavie: názvy veličín s <b>jednotkami</b>, napr. Doma [kr.].", "Aspoň <b>5 riadkov</b> údajov, v bunkách iba čísla.", "<b>Vypočítaný stĺpec</b>: vzorec s adresami v prvom riadku a <b>vyplniť nadol</b>.", "<b>Súhrnný riadok</b> funkciou SUM, PRIEMER, MAX alebo MIN.", "Oblasť funkcie končí posledným údajom, nie súhrnom.", "Formát: <b>tučné záhlavie</b> a <b>orámovanie</b>."],
+  graf: ["Typ grafu podľa otázky: vývoj v čase = <b>čiarový</b>, porovnanie = <b>stĺpcový</b>.", "Podiel z celku = <b>koláčový</b>, závislosť dvoch veličín = <b>bodový XY</b>.", "Graf má výstižný <b>názov</b>.", "Grafy s osami majú <b>názvy osí s jednotkami</b>.", "Pri viacerých radoch údajov pridáme <b>legendu</b>."],
+  zaver: ["<b>Záver</b> odpovedá na otázku projektu aspoň v dvoch vetách.", "Uvedieme <b>výsledok</b>: najväčšiu a najmenšiu hodnotu, priemer.", "Opíšeme <b>trend</b> alebo prekvapenie a skúsime ho <b>vysvetliť</b>.", "Napíšeme, čo by sme nabudúce <b>zlepšili</b>.", "<b>CSV</b> uloží iba hodnoty oddelené bodkočiarkou, bez vzorcov a formátu.", "Odovzdáme tabuľku aj graf podľa pokynov učiteľa."]
+};
 /* ===== generic explore + find on clickable SVG screens ===== */
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
@@ -348,12 +384,82 @@ const PF = (() => {
 })();
 
 /* Ilustrácie – Tercia 5.4 Tvorba projektu – tabuľka, graf */
-const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = C.acc, AS = C.accS;
+const TFIG = (() => { const { C, fig, SV, ar, T, box } = PF; const A = C.acc, AS = C.accS, P1 = "#7E57C2", P2 = "#26A69A", P3 = "#FFB300", G = "#217346", GS = "#E2EFDA", Y = "#FFF2CC";
+const axes = (x, y, w, h) => `<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y + h}" stroke="${C.mut}"/><line x1="${x}" y1="${y}" x2="${x}" y2="${y + h}" stroke="${C.mut}"/>`;
+/* tabuľka: x, y, šírky stĺpcov, riadky, výška riadka, farba riadka/bunky podľa funkcie f(i, j) */
+const tab = (x, y, ws, rows, rh, fill, o = {}) => { let s = ""; rows.forEach((r, i) => { let xx = x; r.forEach((v, j) => { const w = ws[j], num = i && /^[=\d−-]/.test(v) && !/^=/.test(v), f = /^=/.test(v); s += `<rect x="${xx}" y="${y + i * rh}" width="${w}" height="${rh}" fill="${fill ? fill(i, j) : (i ? "#fff" : GS)}" stroke="${o.st || "#C9C9C9"}"/>${T(num ? xx + w - 6 : xx + 6, y + i * rh + rh / 2 + 4, v, { fs: o.fs || 11.5, b: !i || (o.bold && o.bold(i, j)), a: num ? "end" : null, mono: f, c: f ? G : C.ink })}`; xx += w; }); }); return s; };
 return {
   postup: fig(SV(440, 290, `
-    ${T(220, 18, "Príklad projektu: Koľko vody minieme doma?", { a: "middle", fs: 12, b: 1 })}
-    ${[["❓", "otázka", "Kedy minieme najviac vody?"], ["📋", "údaje", "týždeň odčítavam vodomer"], ["🧮", "tabuľka", "deň | litre, záhlavie s [l]"], ["＝", "vzorce", "=SUM(B2:B8), =PRIEMER(…)"], ["📊", "graf", "stĺpcový: litre podľa dní"], ["✍️", "záver", "najviac v sobotu: pranie"]].map(([e, n, d], i) => { const x = 8 + (i % 3) * 144, y = 32 + Math.floor(i / 3) * 128; return `${box(x, y, 136, 116, i % 2 ? "#fff" : AS, A, 10)}${PF.num(x + 18, y + 18, String(i + 1), A)}${T(x + 68, y + 52, e, { a: "middle", fs: 22 })}${T(x + 68, y + 78, n, { a: "middle", fs: 12, b: 1, c: A })}${PF.TW ? "" : ""}${d.length > 22 ? T(x + 68, y + 96, d.slice(0, d.lastIndexOf(" ", 22)), { a: "middle", fs: 9.5 }) + T(x + 68, y + 109, d.slice(d.lastIndexOf(" ", 22) + 1), { a: "middle", fs: 9.5 }) : T(x + 68, y + 100, d, { a: "middle", fs: 9.5 })}${i % 3 < 2 ? `<text x="${x + 140}" y="${y + 62}" text-anchor="middle" font-size="14" font-weight="700" fill="${A}">›</text>` : ""}`; }).join("")}`, "Postup projektu"),
-    "Projekt má šesť krokov: od <b>otázky</b> cez <b>údaje</b>, <b>tabuľku</b> a <b>vzorce</b> po <b>graf</b> a <b>záver</b>.")
+    ${T(220, 20, "Príklad projektu: Koľko vody minieme doma?", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["❓", "otázka", "Kedy minieme", "najviac vody?"], ["📋", "údaje", "týždeň odčítavam", "vodomer"], ["🧮", "tabuľka", "deň | voda [l]", "záhlavie s jednotkou"], ["＝", "vzorce", "=SUM(B2:B8)", "=PRIEMER(…)"], ["📊", "graf", "stĺpcový:", "litre podľa dní"], ["✍️", "záver", "najviac v sobotu,", "keď sa perie"]].map(([e, n, d1, d2], i) => { const x = 8 + (i % 3) * 144, y = 32 + Math.floor(i / 3) * 128; return `${box(x, y, 136, 116, i % 2 ? "#fff" : AS, A, 10)}${PF.num(x + 18, y + 18, String(i + 1), A)}${T(x + 68, y + 50, e, { a: "middle", fs: 22 })}${T(x + 68, y + 74, n, { a: "middle", fs: 12.5, b: 1, c: A })}${T(x + 68, y + 92, d1, { a: "middle", fs: 11, mono: i === 3 })}${T(x + 68, y + 107, d2, { a: "middle", fs: 11, mono: i === 3 })}${i % 3 < 2 ? `<text x="${x + 140}" y="${y + 62}" text-anchor="middle" font-size="14" font-weight="700" fill="${A}">›</text>` : ""}`; }).join("")}`, "Postup projektu"),
+    "Projekt má šesť krokov: od <b>otázky</b> cez <b>údaje</b>, <b>tabuľku</b> a <b>vzorce</b> po <b>graf</b> a <b>záver</b>."),
+  otazka: fig(SV(440, 230, `
+    ${T(220, 20, "Dobrá otázka sa dá zmerať", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 34, 200, 150, C.badS, C.bad, 10)}${T(114, 56, "❌ príliš všeobecné", { a: "middle", fs: 12, b: 1, c: C.bad })}
+    ${["„Je voda dôležitá?“", "„Čo robím doma?“", "„Mám rád šport?“"].map((t, i) => T(114, 88 + i * 26, t, { a: "middle", fs: 11.5 })).join("")}
+    ${T(114, 172, "nedá sa odpovedať číslom", { a: "middle", fs: 11, c: C.mut })}
+    ${box(226, 34, 200, 150, C.okS, C.ok, 10)}${T(326, 56, "✅ merateľné", { a: "middle", fs: 12, b: 1, c: C.ok })}
+    ${["„Koľko litrov vody", "minieme za deň?“", "„Koľko krokov urobím", "cez víkend a v škole?“"].map((t, i) => T(326, 84 + i * 20 + (i > 1 ? 10 : 0), t, { a: "middle", fs: 11.5 })).join("")}
+    ${T(326, 172, "odpoveď nájdeš v údajoch", { a: "middle", fs: 11, c: C.mut })}
+    ${T(220, 212, "Otázka určí, aké údaje budeš zbierať a aký graf urobíš.", { a: "middle", fs: 11.5 })}`, "Otázka projektu"),
+    "Dobrá otázka je <b>konkrétna</b> a odpoveď na ňu nájdeš v <b>číslach</b>."),
+  zber: fig(SV(440, 230, `
+    ${T(220, 20, "Odkiaľ vziať údaje", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["📏", "meranie", "teplomer, stopky,", "krokomer, vodomer"], ["🗳️", "prieskum", "otázky spolužiakom,", "hlasovanie"], ["🏷️", "ceny a fakty", "letáky, cenníky,", "webové stránky"]].map(([e, n, a, b], i) => { const x = 14 + i * 140; return `${box(x, 34, 132, 134, i === 1 ? "#fff" : AS, A, 10)}${T(x + 66, 70, e, { a: "middle", fs: 26 })}${T(x + 66, 100, n, { a: "middle", fs: 12.5, b: 1, c: A })}${T(x + 66, 124, a, { a: "middle", fs: 11 })}${T(x + 66, 142, b, { a: "middle", fs: 11 })}`; }).join("")}
+    ${box(14, 180, 412, 40, C.ambS, null, 8)}${T(220, 198, "Údaje zapisuj hneď a vždy s jednotkou.", { a: "middle", fs: 11.5, b: 1, c: C.amb })}${T(220, 213, "Pri webe si poznač aj zdroj.", { a: "middle", fs: 11 })}`, "Zber údajov"),
+    "Údaje získaš <b>meraním</b>, <b>prieskumom</b> alebo z <b>cenníkov a webu</b>."),
+  struktura: fig(SV(440, 270, `
+    ${T(220, 20, "Kroky za týždeň: stavba tabuľky", { a: "middle", fs: 13, b: 1, c: A })}
+    ${tab(14, 32, [56, 84, 84, 76], [["Deň", "Škola [kr.]", "Doma [kr.]", "Spolu"], ["Po", "4200", "3100", "7300"], ["Ut", "3900", "5400", "9300"], ["St", "4500", "2800", "7300"], ["Št", "4100", "4600", "8700"], ["Pi", "3800", "6200", "10000"], ["Súčet", "20500", "22100", "42600"]], 26, (i, j) => !i ? GS : i === 6 ? AS : j === 3 ? Y : "#fff", { fs: 11.5, bold: i => i === 6 })}
+    ${ar(338, 45, 318, 45, A, 1.6)}${T(342, 42, "záhlavie", { fs: 11, b: 1, c: A })}${T(342, 56, "s jednotkami", { fs: 11, c: A })}
+    ${ar(338, 110, 318, 110, A, 1.6)}${T(342, 107, "údaje: aspoň", { fs: 11, b: 1, c: A })}${T(342, 121, "5 riadkov", { fs: 11, c: A })}
+    ${ar(338, 201, 318, 201, A, 1.6)}${T(342, 198, "súhrnný riadok", { fs: 11, b: 1, c: A })}${T(342, 212, "funkciou SUM", { fs: 11, c: A })}
+    ${box(14, 222, 412, 40, Y, null, 8)}${T(220, 240, "Žltý stĺpec Spolu sa počíta vzorcom =B2+C2", { a: "middle", fs: 11.5, b: 1 })}${T(220, 256, "a vyplní sa nadol pre všetky dni.", { a: "middle", fs: 11 })}`, "Stavba tabuľky"),
+    "Tabuľka projektu: <b>záhlavie</b>, riadky s <b>údajmi</b>, stĺpec počítaný <b>vzorcom</b> a <b>súhrnný riadok</b>."),
+  vzorce: fig(SV(440, 220, `
+    ${T(220, 20, "Aký vzorec pre vypočítaný stĺpec?", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["Spolu", "=B2+C2", "súčet dvoch údajov v riadku"], ["Rozdiel", "=C2-B2", "o koľko viac alebo menej"], ["Cena spolu", "=B2*C2", "cena za kus × počet kusov"], ["Podiel [%]", "=B2/B$9*100", "časť z celku v percentách"]].map(([n, f, d], i) => { const y = 34 + i * 44; return `${box(14, y, 412, 38, i % 2 ? "#fff" : AS, A, 6)}${T(26, y + 24, n, { fs: 12, b: 1 })}<text x="126" y="${y + 24}" font-size="12.5" font-family="Consolas,monospace" font-weight="700" fill="${G}">${f}</text>${T(414, y + 24, d, { a: "end", fs: 11, c: C.mut })}`; }).join("")}`, "Vzorce v projekte"),
+    "Vypočítaný stĺpec vznikne <b>vzorcom</b> v prvom riadku a <b>vyplnením nadol</b>."),
+  chyby: fig(SV(440, 230, `
+    ${T(220, 20, "Časté chyby v tabuľke projektu", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["„12 l“ v bunke", "text sa nedá sčítať", "do bunky iba 12, jednotku do záhlavia"], ["súčet aj so súčtom", "=SUM(B2:B9), kde B9 je súčet", "oblasť končí posledným údajom"], ["čísla vo vzorci", "=4200+3100", "píš adresy: =B2+C2"], ["vzorec iba v 1. riadku", "ostatné bunky sú prázdne", "vyplň vzorec nadol"]].map(([a, b, c], i) => { const y = 32 + i * 48; return `${box(14, y, 412, 42, C.badS, null, 6)}${T(26, y + 18, "✘ " + a, { fs: 11.5, b: 1, c: C.bad })}${T(26, y + 34, b, { fs: 11, c: C.mut })}${T(414, y + 18, "✔ " + c, { a: "end", fs: 11, c: C.ok, b: 1 })}`; }).join("")}`, "Chyby v tabuľke"),
+    "Skontroluj, či sú v bunkách <b>čísla</b>, oblasti funkcií sú <b>správne</b> a vzorce sú <b>vyplnené nadol</b>."),
+  vyber: fig(SV(440, 260, `
+    ${T(220, 20, "Čo chceš grafom ukázať?", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["ako sa hodnota mení v čase", "📈 čiarový", "teplota čaju pri chladnutí"], ["ktorá položka je najväčšia", "📊 stĺpcový", "predaj na jarmoku"], ["aký diel tvorí časť z celku", "🥧 koláčový", "na čo minieme vreckové"], ["ako jedna veličina závisí od druhej", "⁘ bodový XY", "výška rastliny a voda"]].map(([q, t, e], i) => { const y = 34 + i * 54; return `${box(14, y, 236, 46, C.bg, C.line, 8)}${T(26, y + 20, q, { fs: 11.5 })}${T(26, y + 37, "napr. " + e, { fs: 11, c: C.mut })}${ar(254, y + 23, 278, y + 23, A, 2)}${box(284, y, 142, 46, AS, A, 8)}${T(355, y + 28, t, { a: "middle", fs: 12.5, b: 1, c: A })}`; }).join("")}`, "Výber typu grafu"),
+    "Typ grafu vyber podľa <b>otázky</b>, na ktorú graf odpovedá."),
+  dobry: fig(SV(440, 250, `
+    ${T(186, 22, "Kroky za týždeň", { a: "middle", fs: 13, b: 1 })}
+    ${[0, 5, 10].map(v => `<line x1="66" y1="${190 - v * 13}" x2="306" y2="${190 - v * 13}" stroke="#E5E5E5"/>${T(58, 194 - v * 13, v, { a: "end", fs: 11, c: C.mut })}`).join("")}
+    ${axes(66, 40, 240, 150)}
+    ${[7.3, 9.3, 7.3, 8.7, 10].map((v, i) => `<rect x="${80 + i * 46}" y="${190 - v * 13}" width="30" height="${v * 13}" fill="${P1}"/>${T(95 + i * 46, 206, ["Po", "Ut", "St", "Št", "Pi"][i], { a: "middle", fs: 11, c: C.mut })}`).join("")}
+    <text x="40" y="115" transform="rotate(-90 40 115)" text-anchor="middle" font-size="11.5" fill="${C.ink}">kroky [tisíce]</text>
+    ${T(186, 226, "deň", { a: "middle", fs: 11.5 })}
+    ${[["✔ názov grafu", 40], ["✔ názov osi y", 86], ["  s jednotkou", 102], ["✔ názov osi x", 148], ["✔ vhodný typ", 194]].map(([t, y]) => T(318, y, t, { fs: 11.5, b: t[0] === "✔", c: C.ok })).join("")}`, "Dobrý graf projektu"),
+    "Hotový graf má <b>názov</b>, <b>názvy osí</b> s jednotkami a <b>vhodný typ</b>."),
+  legenda: fig(SV(440, 230, `
+    ${T(220, 20, "Viac radov údajov = legenda", { a: "middle", fs: 13, b: 1, c: A })}
+    ${axes(40, 40, 250, 140)}
+    ${[[4.2, 3.1], [3.9, 5.4], [4.5, 2.8], [4.1, 4.6], [3.8, 6.2]].map(([a, b], i) => { const x = 52 + i * 48; return `<rect x="${x}" y="${180 - a * 20}" width="18" height="${a * 20}" fill="${P1}"/><rect x="${x + 20}" y="${180 - b * 20}" width="18" height="${b * 20}" fill="${P3}"/>${T(x + 19, 196, ["Po", "Ut", "St", "Št", "Pi"][i], { a: "middle", fs: 11, c: C.mut })}`; }).join("")}
+    ${box(304, 60, 122, 66, "#fff", C.line, 8)}<rect x="316" y="74" width="14" height="14" fill="${P1}"/>${T(338, 86, "v škole", { fs: 11.5 })}<rect x="316" y="100" width="14" height="14" fill="${P3}"/>${T(338, 112, "doma", { fs: 11.5 })}
+    ${T(365, 150, "legenda", { a: "middle", fs: 12, b: 1, c: A })}${T(365, 166, "vysvetlí farby", { a: "middle", fs: 11, c: C.mut })}
+    ${T(220, 220, "Pri jednom rade údajov legendu netreba, stačí názov grafu.", { a: "middle", fs: 11.5 })}`, "Legenda"),
+    "Keď graf ukazuje <b>dva a viac stĺpcov</b> tabuľky, pridaj <b>legendu</b>."),
+  zaver: fig(SV(440, 260, `
+    ${T(220, 20, "Ako napísať záver", { a: "middle", fs: 13, b: 1, c: A })}
+    ${[["výsledok", "Najviac krokov som urobil v piatok (10 000),", "najmenej v pondelok a v stredu (7 300).", C.blue, C.blueS], ["priemer a trend", "V priemere je to 8 520 krokov za deň,", "v druhej polovici týždňa je ich viac.", C.ok, C.okS], ["vysvetlenie", "V piatok mám tréning a domov chodím pešo.", "", C.amb, C.ambS], ["zlepšenie", "Nabudúce by som meral aj cez víkend.", "", A, AS]].map(([n, a, b, c, cs], i) => { const y = 32 + i * 56; return `${box(14, y, 412, 50, cs, c, 8)}${T(26, y + 20, n, { fs: 11.5, b: 1, c })}${T(140, y + 20, a, { fs: 11 })}${b ? T(140, y + 38, b, { fs: 11 }) : ""}`; }).join("")}`, "Záver projektu"),
+    "Záver odpovedá na <b>otázku projektu</b>: výsledok, priemer či trend, vysvetlenie a čo by si zlepšil."),
+  csv: fig(SV(440, 230, `
+    ${T(220, 20, "Súbor CSV: iba hodnoty ako text", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(14, 34, 190, 140, "#fff", C.line, 8)}${T(109, 54, "v Exceli", { a: "middle", fs: 12, b: 1, c: G })}
+    ${tab(26, 64, [56, 56, 54], [["Deň", "Škola", "Spolu"], ["Po", "4200", "7300"], ["Ut", "3900", "9300"]], 26, (i, j) => !i ? GS : j === 2 ? Y : "#fff")}
+    ${T(109, 162, "D2: =B2+C2, tučné, farby", { a: "middle", fs: 11, c: C.mut })}
+    ${ar(208, 104, 232, 104, A, 2.2)}
+    ${box(236, 34, 190, 140, C.bg, C.line, 8)}${T(331, 54, "projekt.csv", { a: "middle", fs: 12, b: 1, c: A })}
+    ${["Deň;Škola;Spolu", "Po;4200;7300", "Ut;3900;9300"].map((t, i) => `<text x="252" y="${86 + i * 22}" font-size="12.5" font-family="Consolas,monospace" fill="${C.ink}">${t}</text>`).join("")}
+    ${T(331, 162, "bez vzorcov a formátu", { a: "middle", fs: 11, c: C.mut })}
+    ${T(220, 198, "Bunky oddeľuje bodkočiarka ; a každý riadok je nový riadok textu.", { a: "middle", fs: 11.5 })}${T(220, 216, "CSV otvorí Excel, Google Tabuľky aj Poznámkový blok.", { a: "middle", fs: 11, c: C.mut })}`, "Formát CSV"),
+    "<b>CSV</b> uloží iba <b>hodnoty</b> oddelené bodkočiarkou. Vzorce a formátovanie sa stratia.")
 }; })();
 
 const KEY = "projekt-t54-v1";
@@ -407,21 +513,60 @@ function csvOf() { const X = PJ(), sh = X.sh, cols = ["A", "B", "C", "D", "E", "
 const TASKS = { g_tema: { id: "g_tema", type: "custom", max: 1 }, g_tab: { id: "g_tab", type: "custom", max: 5 }, g_gr: { id: "g_gr", type: "custom", max: 3 }, g_zav: { id: "g_zav", type: "custom", max: 3 } };
 const VIEWS = {
   zadanie: () => head() + `<h2>Téma a plán projektu</h2>
-    <div class="theory"><p><b>Postup projektu</b>: 1. vyber tému a otázku, na ktorú chceš odpovedať, 2. <b>zozbieraj údaje</b> (merania, prieskum, ceny), 3. zapíš ich do <b>tabuľky</b> so záhlavím a jednotkami, 4. dopočítaj hodnoty <b>vzorcami a funkciami</b>, 5. vytvor vhodný <b>graf</b>, 6. napíš <b>záver</b>. Údaje môžeš zbierať doma počas týždňa, ak ich ešte nemáš, použi odhad a neskôr ho nahraď.</p>
-      <table class="ctab rub"><tr><th>Hodnotí sa</th><th>Body</th></tr><tr><td>Téma zvolená</td><td>1</td></tr><tr><td>Tabuľka: záhlavie, údaje, vzorce, funkcia, formát</td><td>5</td></tr><tr><td>Graf: údaje, názov, osi</td><td>3</td></tr><tr><td>Záver a odovzdanie tabuľky a grafu</td><td>3</td></tr></table></div>
-    ${tfigs(TFIG.postup)}
+    <div class="theory tsplit"><div>
+      <p>V projekte si výskumníkom ty: odpovedáš na vlastnú <b>otázku</b> pomocou údajov. Údaje môžeš zbierať doma počas týždňa. Ak ich ešte nemáš, použi odhad a neskôr ho nahraď.</p>
+      <table class="rtab num"><thead><tr><th>Krok</th><th>Čo urobíš</th></tr></thead><tbody>
+        <tr><td>1.</td><td>vyberieš tému a <b>otázku</b>, na ktorú chceš odpovedať</td></tr>
+        <tr><td>2.</td><td><b>zozbieraš údaje</b> (merania, prieskum, ceny)</td></tr>
+        <tr><td>3.</td><td>zapíšeš ich do <b>tabuľky</b> so záhlavím a jednotkami</td></tr>
+        <tr><td>4.</td><td>dopočítaš hodnoty <b>vzorcami a funkciami</b></td></tr>
+        <tr><td>5.</td><td>vytvoríš vhodný <b>graf</b></td></tr>
+        <tr><td>6.</td><td>napíšeš <b>záver</b></td></tr></tbody></table>
+      <table class="ctab rub"><tr><th>Hodnotí sa</th><th>Body</th></tr><tr><td>Téma zvolená</td><td>1</td></tr><tr><td>Tabuľka: záhlavie, údaje, vzorce, funkcia, formát</td><td>5</td></tr><tr><td>Graf: údaje, názov, osi</td><td>3</td></tr><tr><td>Záver a odovzdanie tabuľky a grafu</td><td>3</td></tr></table>
+    </div><div>${TFIG.postup}</div></div>
+    ${ltfigs(TFIG.otazka, TFIG.zber)}
+    ${VEDEL("Prvý súpis obyvateľov na našom území dal urobiť cisár Jozef II. v rokoch 1784 – 1787. Dnes sa sčítanie robí každých 10 rokov, naposledy v roku 2021 a prvýkrát elektronicky.")}
     <h3>Úloha: vyber tému</h3><div class="proj">${THEMES.map(t => `<button class="${S.th === t.id ? "on" : ""}" data-th="${t.id}"><b>${t.n}</b>${t.d}</button>`).join("")}</div>
     <p class="muted" style="font-size:13.5px">Výber tém predvyplní záhlavie tabuľky. Údaje doplníš ty.</p>` + nextBar(),
   tabulka: () => { PJ(); return head() + `<h2>Tabuľka a vzorce</h2>
-    <div class="theory"><p>Doplň do tabuľky svoje údaje (aspoň 5 riadkov). Pridaj stĺpec, ktorý sa <b>vypočíta vzorcom</b> (napr. <code>=B2+C2</code> alebo <code>=C2-B2</code> alebo <code>=B2*C2</code>) a vyplň ho nadol. Pod tabuľku pridaj riadok so <b>súhrnom</b> (<code>=SUM(D2:D8)</code>, <code>=PRIEMER(B2:B8)</code>, <code>=MAX(…)</code>). Nakoniec tabuľku naformátuj.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Doplň do tabuľky svoje údaje (aspoň 5 riadkov). Pridaj stĺpec, ktorý sa <b>vypočíta vzorcom</b>, a vyplň ho nadol. Pod tabuľku pridaj riadok so <b>súhrnom</b>. Nakoniec tabuľku naformátuj.</p>
+      <table class="rtab"><thead><tr><th>Časť tabuľky</th><th>Príklad</th></tr></thead><tbody>
+        <tr><td><b>vypočítaný stĺpec</b></td><td><code>=B2+C2</code>, <code>=C2-B2</code> alebo <code>=B2*C2</code></td></tr>
+        <tr><td><b>súhrnný riadok</b></td><td><code>=SUM(D2:D8)</code>, <code>=PRIEMER(B2:B8)</code>, <code>=MAX(…)</code></td></tr>
+        <tr><td><b>formát</b></td><td>tučné záhlavie, orámovanie</td></tr></tbody></table>
+      <p>Vo vzorcoch používaj <b>adresy buniek</b>, nie prepísané čísla. Keď údaj opravíš, všetko sa prepočíta.</p>
+    </div><div>${TFIG.struktura}</div></div>
+    ${ltfigs(TFIG.vzorce, TFIG.chyby)}
+    ${VEDEL("Excel prvýkrát vyšiel v roku 1985 pre počítače Apple Macintosh. Verzia pre Windows prišla až o dva roky neskôr, v roku 1987.")}
     <div class="task" id="tgoals">${gl(TL, tabGoals())}</div>${S.t.g_tab ? `<div class="checkbar"><span class="score ${S.t.g_tab.score < 5 ? "part" : ""}">Splnené: ${S.t.g_tab.score} z 5</span></div>` : ""}
     ${xSheetHTML("pj", { tools: true, tab: "Projekt" })}` + nextBar(); },
   graf: () => head() + `<h2>Graf z mojich údajov</h2>
-    <div class="theory"><p>Vyber stĺpec s popiskami (napr. dni) a stĺpec s hodnotami, zvoľ <b>vhodný typ</b> grafu (vývoj v čase = čiarový, porovnanie = stĺpcový, podiel z celku = koláčový) a doplň <b>názov</b> a <b>názvy osí s jednotkami</b>.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Vyber stĺpec s popiskami (napr. dni) a stĺpec s hodnotami a zvoľ <b>vhodný typ</b> grafu podľa toho, čo chceš ukázať.</p>
+      <table class="rtab"><thead><tr><th>Chcem ukázať</th><th>Typ grafu</th></tr></thead><tbody>
+        <tr><td><b>vývoj</b> v čase</td><td>📈 čiarový</td></tr>
+        <tr><td><b>porovnanie</b> položiek</td><td>📊 stĺpcový</td></tr>
+        <tr><td><b>podiel</b> z celku</td><td>🥧 koláčový</td></tr>
+        <tr><td><b>závislosť</b> dvoch veličín</td><td>⁘ bodový XY</td></tr></tbody></table>
+      <p>Potom doplň <b>názov</b> grafu a <b>názvy osí s jednotkami</b>. Ak graf ukazuje viac stĺpcov tabuľky, pridaj <b>legendu</b>.</p>
+    </div><div>${TFIG.vyber}</div></div>
+    ${ltfigs(TFIG.dobry, TFIG.legenda)}
+    ${VEDEL("Na karte Vložiť je v Exceli tlačidlo Odporúčané grafy. Excel podľa tvojich údajov sám navrhne niekoľko vhodných typov grafu.")}
     <div class="task" id="ggoals">${gl([["data", "graf zobrazuje aspoň 5 hodnôt z tvojej tabuľky"], ["title", "výstižný názov grafu"], ["axes", "názvy osí (pri koláčovom grafe netreba)"]], grGoals())}</div>
     <div class="tool" id="grbox">${grHTML()}</div>` + nextBar(),
   zaver: () => head() + `<h2>Záver a odovzdanie</h2>${guessBox()}
-    <div class="theory"><p>Napíš <b>záver</b> aspoň v dvoch vetách: čo z údajov vyplýva (najväčšia a najmenšia hodnota, priemer, trend, prekvapenie) a čo by si urobil inak. Potom si stiahni <b>tabuľku ako CSV</b> (otvoríš ju v Exceli) a <b>graf ako SVG</b> a odovzdaj ich podľa pokynov učiteľa.</p></div>
+    <div class="theory tsplit"><div>
+      <p>Napíš <b>záver</b> aspoň v dvoch vetách. Tabuľka a graf sú iba nástroje, podstatné je, čo z údajov zistíš.</p>
+      <table class="rtab"><thead><tr><th>Časť záveru</th><th>Čo napíšeš</th></tr></thead><tbody>
+        <tr><td><b>výsledok</b></td><td>najväčšia a najmenšia hodnota, priemer</td></tr>
+        <tr><td><b>trend</b></td><td>čo sa mení, čo ťa prekvapilo</td></tr>
+        <tr><td><b>vysvetlenie</b></td><td>prečo to tak je</td></tr>
+        <tr><td><b>zlepšenie</b></td><td>čo by si urobil inak</td></tr></tbody></table>
+      <p>Potom si stiahni <b>tabuľku ako CSV</b> (otvoríš ju v Exceli) a <b>graf ako SVG</b> a odovzdaj ich podľa pokynov učiteľa.</p>
+    </div><div>${TFIG.zaver}</div></div>
+    ${ltfigs(TFIG.csv)}
+    ${VEDEL("Skratka CSV znamená Comma-Separated Values, teda hodnoty oddelené čiarkou. V slovenskom Exceli sa namiesto čiarky používa bodkočiarka, lebo čiarka je desatinná.")}
     <div class="task" id="zgoals">${gl([["zav", "záver aspoň v dvoch vetách"], ["csv", "stiahnutá tabuľka (CSV)"], ["svg", "stiahnutý graf (SVG)"]], zavGoals())}</div>
     <textarea class="zav" id="zav" placeholder="Z údajov vyplýva, že…">${esc(S.zav)}</textarea>
     <div class="row"><button class="primary" data-csv>⬇ Stiahnuť tabuľku (CSV)</button><button class="primary" data-svg>⬇ Stiahnuť graf (SVG)</button></div>` + nextBar()
@@ -587,7 +732,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
