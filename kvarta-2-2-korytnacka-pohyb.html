@@ -287,7 +287,7 @@ const STEPS = [
 const STEP_TASKS = { korytnacka: ["kor"], pohyb: ["kroky", "pohq", "kin2"], otacanie: ["smer", "uhly"], predpoved: ["pred"], kreslime: ["draw"], chyby: ["chyby"], test: ["test"] };
 const START = {
   kicker: "Informatika, Kvarta",
-  lead: "Dnes v Pythone vytvoríš korytnačku a naučíš ju chodiť: dopredu, dozadu, otáčať sa vpravo a vľavo. Pracovať budeš v príkazovom režime v okne Shell. Každý príkaz sa hneď vykoná a korytnačka za sebou kreslí čiaru. Na konci nakreslíš štvorec, trojuholník aj domček. 7 zastávok, body a na konci výsledok.",
+  lead: "Dnes v Pythone vytvoríš korytnačku a naučíš ju chodiť: dopredu, dozadu, otáčať sa vpravo a vľavo. Pracovať budeš v príkazovom režime v okne Shell. Každý príkaz sa hneď vykoná a korytnačka za sebou kreslí čiaru. Na konci nakreslíš štvorec, trojuholník, schody aj šesťuholník. 7 zastávok, body a na konci výsledok.",
   guessQ: "Kam je natočená korytnačka hneď po vytvorení?",
   guessNote: "Tip sa neboduje. Na prvej zastávke to uvidíš.",
   guesses: ["Hore", "Doprava", "Doľava", "Dole"],
@@ -385,18 +385,11 @@ function matches(segs, target) { if (!segs.length) return false; const A = cells
 /* ---------- targets ---------- */
 const R = (n, arr) => Array.from({ length: n }, () => arr).flat();
 const TARGETS = {
-  stvorec: { n: "Štvorec", d: "strana 100", p: R(4, [["fd", 100], ["rt", 90]]) },
-  trojuholnik: { n: "Trojuholník", d: "rovnostranný, strana 100", p: R(3, [["fd", 100], ["rt", 120]]) },
-  obdlznik: { n: "Obdĺžnik", d: "160 × 80", p: [["fd", 160], ["rt", 90], ["fd", 80], ["rt", 90], ["fd", 160], ["rt", 90], ["fd", 80], ["rt", 90]] },
-  domcek: { n: "Domček", d: "štvorec + strecha, strany 100", p: [...R(4, [["fd", 100], ["rt", 90]]).slice(0, 7), ["rt", 30], ["fd", 100], ["rt", 120], ["fd", 100]] },
-  schody: { n: "Schody", d: "3 schody po 40", p: R(3, [["fd", 40], ["lt", 90], ["fd", 40], ["rt", 90]]) },
-  patuholnik: { n: "Päťuholník", d: "pravidelný, strana 80, otáčaj o 72°", p: R(5, [["fd", 80], ["rt", 72]]) },
-  sestuholnik: { n: "Šesťuholník", d: "pravidelný, strana 60, otáčaj o 60°", p: R(6, [["fd", 60], ["rt", 60]]) },
-  hviezda: { n: "Hviezda", d: "5 cípov, strana 120, otáčaj o 144°", p: R(5, [["fd", 120], ["rt", 144]]) },
-  kosostvorec: { n: "Kosoštvorec", d: "strana 100, uhly 60° a 120°", p: [["fd", 100], ["rt", 60], ["fd", 100], ["rt", 120], ["fd", 100], ["rt", 60], ["fd", 100]] },
-  cikcak: { n: "Cik-cak", d: "4 zuby, strana 50, otáčaj o 90°", p: [["lt", 45], ...R(4, [["fd", 50], ["rt", 90], ["fd", 50], ["lt", 90]])] }
+  stvorec: { n: "Štvorec", d: "strana 100", pts: 2, p: R(4, [["fd", 100], ["rt", 90]]) },
+  trojuholnik: { n: "Trojuholník", d: "rovnostranný, strana 100", pts: 2, p: R(3, [["fd", 100], ["rt", 120]]) },
+  schody: { n: "Schody", d: "3 schody po 40", pts: 3, p: R(3, [["fd", 40], ["lt", 90], ["fd", 40], ["rt", 90]]) },
+  sestuholnik: { n: "Šesťuholník", d: "pravidelný, strana 60, otáčaj o 60°", pts: 3, p: R(6, [["fd", 60], ["rt", 60]]) }
 };
-TARGETS.domcek.p = [["fd", 100], ["rt", 90], ["fd", 100], ["rt", 90], ["fd", 100], ["rt", 90], ["fd", 100], ["rt", 30], ["fd", 100], ["rt", 120], ["fd", 100]];
 
 /* ---------- prediction ---------- */
 const PRED = [
@@ -709,6 +702,7 @@ const VIEWS = {
     <p class="muted">Po kontrole si môžeš príkazy vyskúšať v Shelli na ďalšej zastávke.</p>` + nextBar();
   },
   kreslime() {
+    if (!TARGETS[S.dt.sel]) S.dt.sel = "stvorec";
     const D = S.dt, T = TARGETS[D.sel], k = "draw";
     return head() + `<h2>Kreslíme v Shelli</h2>
     <div class="theory tsplit"><div>
@@ -720,15 +714,14 @@ const VIEWS = {
     ${VEDEL("Korytnačka v Pythone vie aj zrýchliť. Príkaz <code>speed(0)</code> nastaví najvyššiu rýchlosť a kresba sa objaví takmer okamžite.")}
     <h3>Úloha: nakresli útvary</h3>
     <p>Nakresli príkazmi útvary podľa predlohy. Korytnačka začína v strede a pozerá sa doprava. Príkazy môžeš písať po jednom alebo viac naraz s bodkočiarkou.</p>
-    <div class="targets">${Object.keys(TARGETS).map(t => `<button class="${D.sel === t ? "on" : ""}" data-tg="${t}">${D.done[t] ? "✅" : "⬜"} ${TARGETS[t].n}</button>`).join("")}</div>
+    <div class="targets">${Object.keys(TARGETS).map(t => `<button class="${D.sel === t ? "on" : ""}" data-tg="${t}">${D.done[t] ? "✅" : "⬜"} ${TARGETS[t].n} <small>(${TARGETS[t].pts} b.)</small></button>`).join("")}</div>
     <div class="side dprev"><div class="tprev">${progSVG(T.p, { fit: 30, grid: false, color: "#1766C2", sw: 4 })}</div>
       <div><h4>Predloha: ${T.n}</h4><p class="muted" style="font-size:14.5px;margin:0 0 8px">${T.d}</p>
         <div class="row"><button class="primary" data-dcheck>Skontrolovať kresbu</button></div>
         ${S.msg.dc ? `<div class="fb ${S.msg.dc.k}">${S.msg.dc.t}</div>` : ""}
-        ${D.sel === "domcek" ? `<p class="muted" style="font-size:14px;margin-top:8px">Tip: domček je štvorec a na ňom trojuholník. Po štvorci sa otoč o 30° a nakresli strechu.</p>` : ""}
         ${D.sel === "schody" ? `<p class="muted" style="font-size:14px;margin-top:8px">Tip: dopredu, vľavo, dopredu, vpravo… a znova.</p>` : ""}</div></div>
     ${simHTML(k)}
-    ${S.t.draw ? `<div class="checkbar"><span class="score ${S.t.draw.score < 10 ? "part" : ""}">Nakreslené útvary: ${S.t.draw.score} z 10</span></div>` : ""}` + nextBar();
+    ${S.t.draw ? `<div class="checkbar"><span class="score ${S.t.draw.score < 10 ? "part" : ""}">Body za útvary: ${S.t.draw.score} z 10</span></div>` : ""}` + nextBar();
   },
   chyby() {
     return head() + `<h2>Časté chyby</h2>
@@ -758,7 +751,7 @@ function CUSTOM_CLICK(e) {
   if (ds.tg) { S.dt.sel = ds.tg; S.msg.dc = null; save(); render(false); return true; }
   if (ds.dcheck !== undefined) {
     const W = world("draw"), t = S.dt.sel;
-    if (matches(W.segs, run(TARGETS[t].p).segs)) { S.dt.done[t] = true; S.msg.dc = { k: "ok", t: `✅ Výborne, ${TARGETS[t].n.toLowerCase()} je správne! Vyber si ďalší útvar.` }; award("draw", Object.keys(S.dt.done).length); }
+    if (matches(W.segs, run(TARGETS[t].p).segs)) { S.dt.done[t] = true; S.msg.dc = { k: "ok", t: `✅ Výborne, ${TARGETS[t].n.toLowerCase()} je správne! Vyber si ďalší útvar.` }; award("draw", Object.keys(S.dt.done).filter(t => TARGETS[t]).reduce((a, t) => a + TARGETS[t].pts, 0)); }
     else S.msg.dc = { k: "bad", t: W.segs.length ? "Kresba sa ešte nezhoduje s predlohou. Skontroluj dĺžky a uhly, potom napíš reset() a skús znova." : "Plocha je prázdna. Najprv kresli v Shelli." };
     save(); render(false); return true;
   }
