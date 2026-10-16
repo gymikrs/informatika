@@ -428,10 +428,10 @@ const LET = {
   E: { s: [[0, 0, 0, 100], [0, 100, 60, 100], [0, 50, 40, 50], [0, 0, 60, 0]], l: [[-14, 25, "100"], [30, 108, "60"], [20, 57, "40"], [30, -14, "60"]], t: "Korytnačka môže ísť po tej istej čiare aj viackrát, napr. späť príkazom bk()." },
   H: { s: [[0, 0, 0, 100], [60, 0, 60, 100], [0, 50, 60, 50]], l: [[-14, 25, "100"], [74, 25, "100"], [30, 57, "60"]], t: "Nakresli ľavú čiaru, vráť sa do stredu, prejdi na pravú stranu." },
   K: { s: [[0, 0, 0, 100], [0, 50, 50, 100], [0, 50, 50, 0]], l: [[-14, 25, "100"], [34, 82, "≈71, 45°"], [34, 14, "≈71, 45°"]], t: "Šikmé čiary majú dĺžku asi 71 (fd(71)) a uhol 45°." },
-  M: { s: [[0, 0, 0, 100], [0, 100, 50, 50], [50, 50, 100, 100], [100, 100, 100, 0]], l: [[-14, 50, "100"], [18, 70, "≈71"], [82, 70, "≈71"], [114, 50, "100"]], t: "Šikmé čiary majú dĺžku asi 71, zvislé 100. Pozor na uhly pri otáčaní: 135° a 90°." }
 };
 const SEG = { a: [0, 100, 50, 100], b: [50, 100, 50, 50], c: [50, 50, 50, 0], d: [0, 0, 50, 0], e: [0, 0, 0, 50], f: [0, 50, 0, 100], g: [0, 50, 50, 50] };
-const DIG = { "0": "abcdef", "2": "abged", "3": "abgcd", "5": "afgcd", "8": "abcdefg" };
+const DIG = { "0": "abcdef", "2": "abged", "3": "abgcd", "5": "afgcd" };
+const PPTS = { L: 1, H: 1, E: 2, K: 2 }, CPTS = { "0": 1, "2": 1, "3": 1, "5": 2 };
 const digSegs = d => [...DIG[d]].map(x => SEG[x]);
 
 const TASKS = {
@@ -659,6 +659,7 @@ const VIEWS = {
     <h3>Úloha: dobrý, alebo zlý názov?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("nsort")}</div>` + nextBar();
   },
   pismena() {
+    if (!LET[S.sel.p]) S.sel.p = "L";
     const sel = S.sel.p, T = LET[sel], w = WS("pl" + sel); if (!w.ed) { w.ed = true; w.name = `03pismeno${sel}.py`; w.text = "from turtle import *\n"; w.saved = w.text; }
     const done = S.pdone || (S.pdone = {});
     return head() + `<h2>Písmená veľkej abecedy</h2>
@@ -670,12 +671,13 @@ const VIEWS = {
     ${ltfigs(TFIG.plan)}
     ${VEDEL("Aj písma v počítači sú uložené ako čiary a krivky, nie ako obrázky z bodov. Preto sa písmená v textovom editore dajú zväčšiť na ľubovoľnú veľkosť a ostanú ostré. Takým písmam hovoríme <b>vektorové</b>.")}
     <h3>Úloha: písmená</h3>
-    <p>Úloha z pracovného listu: nakresli písmená <b>L, E, H, K, M</b>. Každé písmeno je samostatný program. Korytnačka začína na <b>zelenej bodke</b> a pozerá sa doprava. Po napísaní programu stlač <b>Run Module</b>.</p>
-    <div class="targets">${Object.keys(LET).map(k => `<button class="${sel === k ? "on" : ""}" data-pl="${k}">${done[k] ? "✅" : "⬜"} ${k}</button>`).join("")}<button class="${sel === "INI" ? "on" : ""}" data-pl="INI">${done.INI ? "✅" : "⬜"} Tvoje iniciály</button></div>
-    ${sel === "INI" ? iniHTML() : `<div class="tgtbar"><div class="tprev">${targetSVG(T.s, T.l)}</div><div><h4 style="font-family:var(--head);margin:0 0 4px">Písmeno ${sel}</h4><p class="muted" style="margin:0 0 8px;font-size:15px">${T.t}</p><div class="row"><button class="primary" data-pchk="${sel}">Skontrolovať písmeno</button></div>${S.msg.pc ? `<div class="fb ${S.msg.pc.c}">${S.msg.pc.t}</div>` : ""}</div></div>${wsHTML("pl" + sel, "simple")}`}
-    ${S.t.pism ? `<div class="checkbar"><span class="score ${S.t.pism.score < 6 ? "part" : ""}">Hotové: ${S.t.pism.score} zo 6</span></div>` : ""}` + nextBar();
+    <p>Úloha z pracovného listu: nakresli písmená <b>L, E, H, K</b>. Každé písmeno je samostatný program. Korytnačka začína na <b>zelenej bodke</b> a pozerá sa doprava. Po napísaní programu stlač <b>Run Module</b>.</p>
+    <div class="targets">${Object.keys(LET).map(k => `<button class="${sel === k ? "on" : ""}" data-pl="${k}">${done[k] ? "✅" : "⬜"} ${k} <small>(${PPTS[k]} b.)</small></button>`).join("")}</div>
+    ${`<div class="tgtbar"><div class="tprev">${targetSVG(T.s, T.l)}</div><div><h4 style="font-family:var(--head);margin:0 0 4px">Písmeno ${sel}</h4><p class="muted" style="margin:0 0 8px;font-size:15px">${T.t}</p><div class="row"><button class="primary" data-pchk="${sel}">Skontrolovať písmeno</button></div>${S.msg.pc ? `<div class="fb ${S.msg.pc.c}">${S.msg.pc.t}</div>` : ""}</div></div>${wsHTML("pl" + sel, "simple")}`}
+    ${S.t.pism ? `<div class="checkbar"><span class="score ${S.t.pism.score < 6 ? "part" : ""}">Body za písmená: ${S.t.pism.score} zo 6</span></div>` : ""}` + nextBar();
   },
   cislice() {
+    if (!DIG[S.sel.c]) S.sel.c = "0";
     const sel = S.sel.c, w = WS("dg" + sel); if (!w.ed) { w.ed = true; w.name = `03cislica${sel}.py`; w.text = "from turtle import *\n"; w.saved = w.text; }
     const done = S.cdone || (S.cdone = {});
     return head() + `<h2>Digitálne číslice</h2>
@@ -689,19 +691,14 @@ const VIEWS = {
     <h3>Rozsvieť segmenty</h3><p>Klikaj na segmenty displeja a skús zložiť rôzne číslice. Neboduje sa.</p><div id="segbox">${segHTML()}</div>
     <h3>Úloha: digitálne číslice</h3>
     <p>Nakresli číslice podľa predlohy.</p>
-    <div class="targets">${Object.keys(DIG).map(k => `<button class="${sel === k ? "on" : ""}" data-dg="${k}">${done[k] ? "✅" : "⬜"} ${k}</button>`).join("")}</div>
+    <div class="targets">${Object.keys(DIG).map(k => `<button class="${sel === k ? "on" : ""}" data-dg="${k}">${done[k] ? "✅" : "⬜"} ${k} <small>(${CPTS[k]} b.)</small></button>`).join("")}</div>
     <div class="tgtbar"><div class="tprev">${targetSVG(digSegs(sel), [[-14, 50, "100"], [25, 112, "50"]])}</div><div><h4 style="font-family:var(--head);margin:0 0 4px">Číslica ${sel}</h4><p class="muted" style="margin:0 0 8px;font-size:15px">Korytnačka sa na začiatku pozerá doprava. Na konci musí stáť znova na zelenej bodke.</p><div class="row"><button class="primary" data-dchk="${sel}">Skontrolovať číslicu</button></div>${S.msg.dc ? `<div class="fb ${S.msg.dc.c}">${S.msg.dc.t}</div>` : ""}</div></div>
     ${wsHTML("dg" + sel, "simple")}
-    ${S.t.cisl ? `<div class="checkbar"><span class="score ${S.t.cisl.score < 5 ? "part" : ""}">Hotové: ${S.t.cisl.score} z 5</span></div>` : ""}` + nextBar();
+    ${S.t.cisl ? `<div class="checkbar"><span class="score ${S.t.cisl.score < 5 ? "part" : ""}">Body za číslice: ${S.t.cisl.score} z 5</span></div>` : ""}` + nextBar();
   },
   test() { return head() + `<h2>Záverečný test</h2><p>Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz.</p><div class="task">${taskHTML("test")}</div>` + nextBar(); }
 };
-function iniHTML() {
-  const w = WS("plINI"); if (!w.ed) { w.ed = true; w.name = "03inicialy.py"; w.text = "from turtle import *\n"; w.saved = w.text; }
-  return `<div class="box v"><p><b>Tvoje iniciály</b> sú prvé písmená tvojho mena a priezviska, napríklad pre Lenku Peknú <b>L P</b>. Nakresli ich jedným programom vedľa seba. Hranaté písmená stačia, oblúky zatiaľ nevieme.</p></div>
-    <div class="row" style="margin-bottom:10px"><button class="primary" data-pchk="INI">Hotovo, iniciály sú nakreslené</button></div>${S.msg.pc ? `<div class="fb ${S.msg.pc.c}">${S.msg.pc.t}</div>` : ""}${wsHTML("plINI", "simple")}`;
-}
-function scoreP() { award("pism", Object.keys(S.pdone).length); }
+function scoreP() { award("pism", Object.keys(S.pdone).filter(k => PPTS[k]).reduce((a, k) => a + PPTS[k], 0)); }
 
 /* ---------- events ---------- */
 function CUSTOM_CLICK(e) {
@@ -728,8 +725,7 @@ function CUSTOM_CLICK(e) {
   if (ds.dg) { S.sel.c = ds.dg; S.msg.dc = null; save(); render(false); return true; }
   if (ds.pchk) {
     const k = ds.pchk, w = WS("pl" + k), segs = w.W ? w.W.segs : [];
-    if (k === "INI") { if (segs.length >= 4 && w.lastOk) { S.pdone.INI = true; S.msg.pc = { c: "ok", t: "🎉 Výborne, iniciály sú hotové!" }; scoreP(); } else S.msg.pc = { c: "bad", t: "Najprv napíš program a spusti ho (Run Module). Iniciály potrebujú aspoň 4 čiary." }; }
-    else if (matches(segs, LET[k].s)) { S.pdone[k] = true; S.msg.pc = { c: "ok", t: `✅ Písmeno ${k} je správne!` }; scoreP(); }
+    if (matches(segs, LET[k].s)) { S.pdone[k] = true; S.msg.pc = { c: "ok", t: `✅ Písmeno ${k} je správne!` }; scoreP(); }
     else S.msg.pc = { c: "bad", t: segs.length ? "Kresba sa ešte nezhoduje s predlohou. Skontroluj dĺžky a uhly, uprav program a spusti ho znova." : "Najprv program spusti tlačidlom Run Module." };
     save(); render(false); return true;
   }
@@ -738,7 +734,7 @@ function CUSTOM_CLICK(e) {
     if (!W || !W.segs.length) S.msg.dc = { c: "bad", t: "Najprv program spusti tlačidlom Run Module." };
     else if (!matches(W.segs, digSegs(k))) S.msg.dc = { c: "bad", t: "Číslica sa ešte nezhoduje s predlohou. Skontroluj dĺžky 50 a 100 a otočenia." };
     else if (Math.hypot(W.x, W.y) > 3) S.msg.dc = { c: "bad", t: "Číslica je dobre, ale korytnačka sa nevrátila do ľavého dolného rohu. Doplň príkazy, ktoré ju tam vrátia." };
-    else { let mx = Infinity, my = Infinity; W.segs.forEach(s => { mx = Math.min(mx, s[0], s[2]); my = Math.min(my, s[1], s[3]); }); if (Math.abs(mx) > 3 || Math.abs(my) > 3) S.msg.dc = { c: "bad", t: "Číslica musí začínať v ľavom dolnom rohu, teda na mieste, kde korytnačka štartuje." }; else { S.cdone[k] = true; S.msg.dc = { c: "ok", t: `✅ Číslica ${k} je správne a korytnačka je späť v rohu!` }; award("cisl", Object.keys(S.cdone).length); } }
+    else { let mx = Infinity, my = Infinity; W.segs.forEach(s => { mx = Math.min(mx, s[0], s[2]); my = Math.min(my, s[1], s[3]); }); if (Math.abs(mx) > 3 || Math.abs(my) > 3) S.msg.dc = { c: "bad", t: "Číslica musí začínať v ľavom dolnom rohu, teda na mieste, kde korytnačka štartuje." }; else { S.cdone[k] = true; S.msg.dc = { c: "ok", t: `✅ Číslica ${k} je správne a korytnačka je späť v rohu!` }; award("cisl", Object.keys(S.cdone).filter(k => CPTS[k]).reduce((a, k) => a + CPTS[k], 0)); } }
     save(); render(false); return true;
   }
   return false;
