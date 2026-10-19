@@ -55,6 +55,14 @@ h1{font-size:clamp(32px,5.5vw,52px);line-height:1.05;margin:0 0 10px;letter-spac
 .pill[aria-pressed="true"] .n{color:inherit;opacity:.75}
 .search{width:100%;padding:11px 14px 11px 42px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface) no-repeat 14px 50%/18px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23566381' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M20 20l-4.8-4.8'/%3E%3C/svg%3E")}
 main{padding:10px 0 60px}
+.folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.folder{display:flex;align-items:center;gap:16px;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-left:8px solid var(--c);border-radius:14px;padding:20px 18px;transition:transform .12s,box-shadow .12s}
+.folder:hover,.folder:focus-visible{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.08)}
+.folder .fi{font-size:42px;line-height:1}
+.folder .ft{display:inline-block;margin:0 0 4px;font-size:21px;font-weight:700}
+.folder .fc{color:var(--muted);font-size:14.5px}
+.back{display:inline-flex;align-items:center;gap:6px;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:6px 14px;margin:0 0 12px}
+.back:hover{border-color:var(--c)}
 section.cls{margin-top:30px}
 .clsh{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .clsh .bar{width:8px;height:30px;border-radius:4px}
@@ -109,7 +117,9 @@ textarea.in{resize:vertical;min-height:70px}
 const DATA = JSON.parse(document.getElementById("data").textContent);
 const COLORS = ["#2F5BEA","#12805A","#C2660E","#8E3FD6","#C0392B","#0E7C86","#A67C00","#5A6782","#D6336C","#3B7D23"];
 let D = DATA, DRAFT = null, EDIT = false, DIRTY = false, FORM = null, FORMERR = "", MSG = "", BUSY = false;
-let API = null, CAN_EDIT = false, Q = "", FILTER = "all";
+let API = null, CAN_EDIT = false, Q = "", FILTER = "all", SUB = null;
+/* triedy, ktorých hodiny sa zobrazujú v priečinkoch podľa témy */
+const FOLDERS = { "4roc": [{ topic: "Python", name: "Python", icon: "🐍", desc: "Programovanie v jazyku Python: učebnica a kapitoly 1 – 9" }, { topic: "Teória", name: "Teória", icon: "📚", desc: "Teória k maturite: témy 1 – 7" }] };
 try { FILTER = localStorage.getItem("katalog-trieda") || "all"; } catch (e) {}
 
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -146,6 +156,19 @@ function listHTML() {
     const ls = d.lessons.filter(l => l.cls.includes(c.id) && matches(l));
     if (!ls.length && (Q || !EDIT)) continue;
     any = true;
+    const FD = FOLDERS[c.id];
+    if (FD && !EDIT && !Q) {
+      const open = SUB && SUB.cls === c.id ? FD.find(f => f.topic === SUB.topic) : null;
+      const inF = f => ls.filter(l => l.topic === f.topic), rest = ls.filter(l => !FD.some(f => f.topic === l.topic));
+      const hw = n => `${n} ${n === 1 ? "hodina" : n >= 2 && n <= 4 ? "hodiny" : "hodín"}`;
+      if (open) { const fl = inF(open);
+        out += `<section class="cls" style="--c:${colorOf(c.id)}"><div class="clsh"><span class="bar" style="background:${colorOf(c.id)}"></span><h2>${esc(c.name)}: ${esc(open.icon)} ${esc(open.name)}</h2><span class="cnt">${hw(fl.length)}</span></div>
+          <button class="back" data-folder="">← späť na ${esc(c.name)}</button><div class="grid">${fl.map(l => card(l, c.id)).join("")}</div></section>`; }
+      else out += `<section class="cls"><div class="clsh"><span class="bar" style="background:${colorOf(c.id)}"></span><h2>${esc(c.name)}</h2><span class="cnt">${hw(ls.length)}</span></div>
+          <div class="folders">${FD.map(f => `<button class="folder" style="--c:${colorOf(c.id)}" data-folder="${esc(c.id)}|${esc(f.topic)}"><span class="fi" aria-hidden="true">📁</span><span><span class="ft">${esc(f.icon)} ${esc(f.name)}</span><br><span class="fc">${esc(f.desc)}</span><br><span class="fc"><b>${hw(inF(f).length)}</b></span></span></button>`).join("")}</div>
+          ${rest.length ? `<div class="grid" style="margin-top:14px">${rest.map(l => card(l, c.id)).join("")}</div>` : ""}</section>`;
+      continue;
+    }
     out += `<section class="cls"><div class="clsh"><span class="bar" style="background:${colorOf(c.id)}"></span><h2>${esc(c.name)}</h2><span class="cnt">${ls.length} ${ls.length === 1 ? "hodina" : ls.length >= 2 && ls.length <= 4 ? "hodiny" : "hodín"}</span></div>
       ${ls.length ? `<div class="grid">${ls.map(l => card(l, c.id)).join("")}</div>` : '<p class="cnt" style="color:var(--muted)">Zatiaľ bez hodín.</p>'}</section>`;
   }
@@ -234,7 +257,8 @@ function readForm() {
 document.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   const ds = b.dataset;
-  if (ds.filter) { FILTER = ds.filter; try { localStorage.setItem("katalog-trieda", FILTER); } catch (err) {} return render(); }
+  if (ds.filter) { FILTER = ds.filter; SUB = null; try { localStorage.setItem("katalog-trieda", FILTER); } catch (err) {} return render(); }
+  if (ds.folder !== undefined) { const [cls, topic] = ds.folder.split("|"); SUB = cls ? { cls, topic } : null; renderList(); const el = document.getElementById("list"); if (el) { const top = el.getBoundingClientRect().top + scrollY - 80; if (scrollY > top) scrollTo({ top, behavior: "smooth" }); } return; }
   if (ds.startedit !== undefined) { DRAFT = clone(D); EDIT = true; DIRTY = false; MSG = ""; FORM = null; return render(); }
   if (ds.cancel !== undefined) { if (DIRTY && !b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Naozaj zahodiť?"; return; } EDIT = false; DRAFT = null; FORM = null; DIRTY = false; MSG = ""; return render(); }
   if (ds.new !== undefined) { FORM = { title: "", topic: "", url: "", icon: "", subj: "Informatika", desc: "", min: 45, cls: FILTER !== "all" ? [FILTER] : [] }; FORMERR = ""; render(); document.getElementById("f-title").focus(); return; }
