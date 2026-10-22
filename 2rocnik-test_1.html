@@ -122,30 +122,12 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&a
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function shuffled(n) { const ids = [...Array(n).keys()]; let o; let k = 0; do { o = shuffle(ids.slice()); k++; } while (k < 12 && n > 1 && o.every((x, i) => x === i)); return o; }
 function parseNum(v) { const s = String(v).replace(/\s/g, "").replace(",", "."); return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : NaN; }
-const near = (v, x, t) => Math.abs(parseNum(v) - x) <= t;
 const bw = n => n === 1 ? "bod" : n >= 2 && n <= 4 ? "body" : "bodov";
-const fmt = x => String(x).replace(".", ",");
-const big = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,textarea,svg,select,option") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
   const L = []; while (W.nextNode()) L.push(W.currentNode);
   L.forEach(n => { let t = n.nodeValue, o = t; t = t.replace(/(\d) (?=[\p{L}%°])/gu, "$1\u00A0");
     for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s(„])([vkszaiouVKSZAIOU]) /g, "$1$2\u00A0");
     if (t !== o) n.nodeValue = t; }); }
-
-/* ===== náhodné čísla pre každého žiaka ===== */
-const rint = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
-const pick = a => a[Math.floor(Math.random() * a.length)];
-function genR() {
-  return {
-    ghz: pick([2.4, 2.8, 3.2, 3.6, 4.2, 4.8, 5.2]),
-    rpm: pick([5400, 7200]), sec: rint(2, 9),
-    tb: pick([0.5, 1, 2, 4, 6, 8]),
-    usb: pick([["USB 3.2 Gen 1", 5], ["USB 3.2 Gen 2", 10], ["USB4", 40]]),
-    inch: pick([22, 24, 27, 32, 34]),
-    sd: pick(["1 GB", "2 GB"]), sdhc: pick(["4 GB", "8 GB", "16 GB", "32 GB"]),
-    sdxc: pick(["64 GB", "128 GB", "256 GB", "512 GB", "1 TB"]), sduc: pick(["4 TB", "8 TB", "32 TB", "64 TB"])
-  };
-}
 
 /* ===== obrázky ===== */
 const badge = (x, y, l) => `<circle cx="${x}" cy="${y}" r="13" fill="#FDF1D3" stroke="#B98500" stroke-width="2"/><text x="${x}" y="${y + 5.5}" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">${l}</text>`;
@@ -154,7 +136,7 @@ const BOARD = (() => {
   let pins = ""; for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) pins += `<circle cx="${78 + c * 9}" cy="${58 + r * 9}" r="1.8" fill="#9CA3AF"/>`;
   let dimm = ""; [200, 216, 232, 248].forEach(x => { dimm += `<rect x="${x}" y="30" width="9" height="165" rx="2" fill="#23272F"/><rect x="${x - 1}" y="26" width="11" height="8" rx="2" fill="#E5E7EB"/><rect x="${x - 1}" y="191" width="11" height="8" rx="2" fill="#E5E7EB"/>`; });
   let atx = ""; for (let r = 0; r < 12; r++) for (let c = 0; c < 2; c++) atx += `<rect x="${402 + c * 11}" y="${64 + r * 9.5}" width="8" height="7" rx="1.5" fill="#111827"/>`;
-  return `<svg viewBox="0 0 460 320" role="img" aria-label="Zjednodušená základná doska s časťami označenými písmenami A až F" font-family="Rubik,Segoe UI,Arial,sans-serif">
+  return `<svg viewBox="0 0 460 320" role="img" aria-label="Zjednodušená základná doska s časťami označenými písmenami A až D" font-family="Rubik,Segoe UI,Arial,sans-serif">
   <rect x="10" y="10" width="440" height="300" rx="10" fill="#1F6B4A" stroke="#144C34" stroke-width="2"/>
   ${[[24, 24], [436, 24], [24, 296], [436, 296]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="#D1D5DB" stroke="#9CA3AF"/>`).join("")}
   <rect x="60" y="40" width="100" height="100" rx="6" fill="#C9CDD4" stroke="#6B7280" stroke-width="2"/><rect x="70" y="50" width="80" height="80" fill="#E5E7EB"/>${pins}<line x1="164" y1="44" x2="164" y2="136" stroke="#6B7280" stroke-width="3"/>
@@ -166,7 +148,7 @@ const BOARD = (() => {
   <circle cx="335" cy="262" r="20" fill="#D1D5DB" stroke="#6B7280" stroke-width="2"/><circle cx="335" cy="262" r="14" fill="none" stroke="#9CA3AF"/>
   <rect x="396" y="58" width="30" height="124" rx="3" fill="#F3F4F6" stroke="#111827" stroke-width="1.5"/>${atx}
   ${[0, 1].map(r => [0, 1].map(c => `<rect x="${386 + c * 26}" y="${230 + r * 22}" width="22" height="14" rx="2" fill="#111827"/><rect x="${390 + c * 26}" y="${234 + r * 22}" width="14" height="6" fill="#374151"/>`).join("")).join("")}
-  ${badge(46, 52, "A")}${badge(228, 212, "B")}${badge(138, 252, "C")}${badge(44, 186, "D")}${badge(372, 290, "E")}${badge(382, 120, "F")}
+  ${badge(228, 212, "A")}${badge(138, 252, "B")}${badge(372, 290, "C")}${badge(382, 120, "D")}
   </svg>`; })();
 
 const PANEL = `<svg viewBox="0 0 460 150" role="img" aria-label="Zadný panel počítača s konektormi A až F" font-family="Rubik,Segoe UI,Arial,sans-serif">
@@ -193,21 +175,20 @@ const FRAG = (() => { const cx = 150, cy = 115;
   <circle cx="300" cy="200" r="12" fill="#6B7280"/><line x1="300" y1="200" x2="212" y2="92" stroke="#6B7280" stroke-width="7" stroke-linecap="round"/><rect x="202" y="82" width="16" height="12" rx="2" fill="#374151" transform="rotate(-50 210 88)"/>
   </svg>`; })();
 
-/* ===== úlohy (spolu 45 bodov) ===== */
-function buildQ(R) {
-  const taktov = Math.round(R.ghz * 10) * 1e8, ot = R.rpm / 60 * R.sec, gb = R.tb * 1e12 / 2 ** 30, mbs = R.usb[1] * 1000 / 8, cm = Math.round(R.inch * 254) / 100;
+/* ===== úlohy (spolu 37 bodov) ===== */
+function buildQ() {
   return [
-  { id: "q1", type: "match", pts: 3, q: "Na obrázku je zjednodušená základná doska. Čo je označené písmenom?", img: BOARD,
-    pool: ["pätica (socket)", "sloty RAM (DIMM)", "slot PCIe x16", "slot M.2", "batéria CMOS", "konektor ATX 24-pin", "slot PCIe x1", "porty SATA"],
-    rows: [["časť A", "pätica (socket)"], ["časť B", "sloty RAM (DIMM)"], ["časť C", "slot PCIe x16"], ["časť D", "slot M.2"], ["časť E", "batéria CMOS"], ["časť F", "konektor ATX 24-pin"]] },
-  { id: "q2", type: "match", pts: 3, q: "Priraď k časti základnej dosky jej úlohu.",
-    pool: ["riadi komunikáciu procesora s USB, SATA a slotmi", "flash pamäť s firmvérom, spustí sa ako prvá", "drží hodiny a nastavenia UEFI", "zníži 12 V zo zdroja na asi 1 V pre procesor", "napájanie procesora zo zdroja", "pripojenie klasického HDD a mechaník káblom", "menšie karty: sieťová, Wi-Fi, zvuková"],
-    rows: [["čipová sada", "riadi komunikáciu procesora s USB, SATA a slotmi"], ["čip BIOS/UEFI", "flash pamäť s firmvérom, spustí sa ako prvá"], ["batéria CMOS", "drží hodiny a nastavenia UEFI"], ["VRM", "zníži 12 V zo zdroja na asi 1 V pre procesor"], ["EPS 8-pin", "napájanie procesora zo zdroja"], ["SATA", "pripojenie klasického HDD a mechaník káblom"]] },
+  { id: "q1", type: "match", pts: 2, q: "Na obrázku je zjednodušená základná doska. Čo je označené písmenom?", img: BOARD,
+    pool: ["sloty RAM (DIMM)", "slot PCIe x16", "batéria CMOS", "konektor ATX 24-pin", "slot PCIe x1", "porty SATA"],
+    rows: [["časť A", "sloty RAM (DIMM)"], ["časť B", "slot PCIe x16"], ["časť C", "batéria CMOS"], ["časť D", "konektor ATX 24-pin"]] },
+  { id: "q2", type: "match", pts: 2, q: "Priraď k časti základnej dosky jej úlohu.",
+    pool: ["riadi komunikáciu procesora s USB, SATA a slotmi", "flash pamäť s firmvérom, spustí sa ako prvá", "drží hodiny a nastavenia UEFI", "pripojenie klasického HDD a mechaník káblom", "menšie karty: sieťová, Wi-Fi, zvuková"],
+    rows: [["čipová sada", "riadi komunikáciu procesora s USB, SATA a slotmi"], ["čip BIOS/UEFI", "flash pamäť s firmvérom, spustí sa ako prvá"], ["batéria CMOS", "drží hodiny a nastavenia UEFI"], ["SATA", "pripojenie klasického HDD a mechaník káblom"]] },
   { id: "q3", type: "order", pts: 2, q: "Zoraď, čo sa deje po stlačení tlačidla napájania, až kým sa nenačíta operačný systém.",
     items: ["zdroj dodá napätie", "spustí sa firmvér BIOS/UEFI z čipu na doske", "POST otestuje procesor, pamäť a hardvér", "firmvér prechádza zariadenia podľa poradia zavádzania", "zavádzač načíta operačný systém"], ends: ["prvý krok", "posledný krok"] },
   { id: "q4", type: "multi", pts: 2, q: "Označ <b>všetky</b> pravdivé tvrdenia o BIOS a UEFI.",
     opts: [["UEFI má grafické rozhranie a dá sa ovládať myšou.", 1], ["UEFI zvláda veľké disky GPT.", 1], ["Secure Boot spustí iba podpísaný zavádzač.", 1], ["Do nastavení sa dostaneš klávesom Del alebo F2 hneď po zapnutí.", 1],
-           ["BIOS je program uložený na disku spolu s Windows.", 0], ["Hodiny a nastavenia UEFI drží pri vypnutom počítači VRM.", 0], ["POST je test, ktorý spustí operačný systém po svojom načítaní.", 0]] },
+           ["BIOS je program uložený na disku spolu s Windows.", 0], ["Hodiny a nastavenia UEFI drží pri vypnutom počítači zdroj.", 0], ["POST je test, ktorý spustí operačný systém po svojom načítaní.", 0]] },
   { id: "q5", type: "match", pts: 3, q: "Na obrázku je zadný panel počítača. Čo zapojíš do ktorého konektora?", img: PANEL,
     pool: ["sieťový kábel (Ethernet)", "USB kľúč", "televízor (obraz aj zvuk)", "herný monitor s vysokou frekvenciou", "reproduktory", "mikrofón", "starý monitor s analógovým obrazom"],
     rows: [["konektor A", "sieťový kábel (Ethernet)"], ["konektor B", "USB kľúč"], ["konektor C", "televízor (obraz aj zvuk)"], ["konektor D", "herný monitor s vysokou frekvenciou"], ["konektor E", "reproduktory"], ["konektor F", "mikrofón"]] },
@@ -216,10 +197,7 @@ function buildQ(R) {
   { id: "q7", type: "order", pts: 2, q: "Zoraď pamäte od <b>najrýchlejšej</b> po <b>najpomalšiu</b>.",
     items: ["registre", "cache L1, L2, L3", "RAM", "SSD", "HDD", "cloud"], ends: ["najrýchlejšia", "najpomalšia"] },
   { id: "q8", type: "match", pts: 2, q: "Je pamäť <b>stratová</b> (volatilná), alebo <b>nestratová</b>?", fixed: true, pool: ["Stratová", "Nestratová"],
-    rows: [["registre", "Stratová"], ["cache L2", "Stratová"], ["RAM", "Stratová"], ["SSD", "Nestratová"], ["USB kľúč (flash)", "Nestratová"], ["HDD", "Nestratová"]] },
-  { id: "q9", type: "match", pts: 3, q: "Priraď k pojmu o procesore správny popis.",
-    pool: ["miliardy taktov za sekundu", "úlohy naozaj naraz", "architektúra procesorov Intel a AMD", "architektúra procesorov v mobiloch", "rýchla pamäť priamo v procesore", "najrýchlejšia pamäť v jadre procesora", "aritmeticko-logická jednotka"],
-    rows: [["takt v GHz", "miliardy taktov za sekundu"], ["viac jadier", "úlohy naozaj naraz"], ["x64", "architektúra procesorov Intel a AMD"], ["ARM", "architektúra procesorov v mobiloch"], ["cache", "rýchla pamäť priamo v procesore"], ["registre", "najrýchlejšia pamäť v jadre procesora"]] },
+    rows: [["RAM", "Stratová"], ["SSD", "Nestratová"], ["USB kľúč (flash)", "Nestratová"], ["HDD", "Nestratová"]] },
   { id: "q10", type: "multi", pts: 2, q: "Označ <b>všetky</b> pravdivé tvrdenia o operačnej pamäti RAM.",
     opts: [["Spustené programy a otvorené súbory sa načítajú z disku do RAM.", 1], ["Moduly DDR4 a DDR5 nie sú zameniteľné.", 1], ["Dvojkanál potrebuje 2 rovnaké moduly.", 1], ["Bez prúdu sa obsah RAM vymaže, preto treba ukladať.", 1],
            ["RAM si otvorený súbor pamätá aj po vypnutí počítača.", 0], ["Frekvencia RAM sa udáva v GB, napr. 16 GB.", 0], ["RAM je pomalšia ako SSD, ale lacnejšia.", 0]] },
@@ -227,28 +205,28 @@ function buildQ(R) {
     pool: ["SSD", "viac RAM", "grafická karta", "viac jadier", "väčšie úložisko", "čistenie chladenia"],
     rows: [["počítač veľmi pomaly štartuje", "SSD"], ["spomalí sa, keď je spustených veľa programov naraz", "viac RAM"], ["hry sa trhajú", "grafická karta"], ["renderovanie videa trvá dlho", "viac jadier"], ["disk je stále plný", "väčšie úložisko"], ["počítač sa prehrieva", "čistenie chladenia"]] },
   { id: "q12", type: "match", pts: 2, q: "Platí to pre <b>HDD</b>, alebo pre <b>SSD</b>?", fixed: true, pool: ["HDD", "SSD"],
-    rows: [["magnetické platne a čítacia hlava na ramene", "HDD"], ["citlivý na otrasy", "HDD"], ["lacnejší za 1 TB", "HDD"], ["údaje vo flash čipoch bez pohyblivých častí", "SSD"], ["vydrží obmedzený počet zápisov", "SSD"], ["verzia M.2 NVMe sa pripája priamo na dosku", "SSD"]] },
+    rows: [["magnetické platne a čítacia hlava na ramene", "HDD"], ["citlivý na otrasy", "HDD"], ["lacnejší za 1 TB", "HDD"], ["údaje vo flash čipoch bez pohyblivých častí", "SSD"]] },
   { id: "q13", type: "mc", pts: 1, q: "Na obrázku je platňa pevného disku. Modré úseky sú časti <b>jedného súboru</b>. Čo platí?", img: FRAG, cap: "🟦 časti jedného súboru · ⬜ iné údaje",
     opts: ["Súbor je fragmentovaný, hlava musí skákať a čítanie je pomalšie. Pomôže defragmentácia (Optimalizácia jednotiek).", "Súbor je fragmentovaný. Pomôže defragmentácia, ktorú treba pravidelne robiť aj na SSD.", "Súbor je skomprimovaný, preto zaberá menej miesta. Rýchlejšie sa načíta po rozbalení.", "Platňa je rozdelená na stopy a sektory, preto je každý súbor vždy uložený po kúskoch a nedá sa to zmeniť."], a: 0 },
-  { id: "q14", type: "input", pts: 2, q: "Procesor a pevný disk v číslach.",
-    fields: [{ label: `a) Procesor má takt ${fmt(R.ghz)} GHz. Koľko taktov urobí za 1 sekundu?`, ph: "celé číslo", ok: v => parseNum(v) === taktov, show: big(taktov) },
-             { label: `b) Platne pevného disku sa točia rýchlosťou ${big(R.rpm)} otáčok za minútu. Koľkokrát sa otočia za ${R.sec} sekúnd?`, ok: v => parseNum(v) === ot, show: big(ot) }] },
-  { id: "q15", type: "input", pts: 3, q: "Kapacita, rýchlosť a veľkosť. Pri desatinných číslach stačí výsledok na celé číslo (pri c na 1 desatinné miesto).",
-    fields: [{ label: `a) Výrobca predáva disk ${fmt(R.tb)} TB (počíta po 1000). Koľko GB približne ukáže Windows (počíta po 1024)?`, unit: "GB", ok: v => near(v, gb, 1.5), show: "≈ " + big(Math.round(gb)) + " GB" },
-             { label: `b) ${R.usb[0]} má rýchlosť ${R.usb[1]} Gb/s (1 Gb/s = 1000 Mb/s). Koľko je to MB/s?`, unit: "MB/s", ok: v => parseNum(v) === mbs, show: big(mbs) + " MB/s" },
-             { label: `c) Monitor má uhlopriečku ${R.inch} palcov. Koľko je to centimetrov?`, unit: "cm", ok: v => near(v, cm, 0.15), show: fmt(cm) + " cm" }] },
-  { id: "q16", type: "match", pts: 2, q: "Aký typ pamäťovej karty má danú kapacitu?", fixed: true, pool: ["SD", "SDHC", "SDXC", "SDUC"],
-    rows: [[`karta ${R.sd}`, "SD"], [`karta ${R.sdhc}`, "SDHC"], [`karta ${R.sdxc}`, "SDXC"], [`karta ${R.sduc}`, "SDUC"]] },
   { id: "q17", type: "mc", pts: 1, q: "Čo znamená pravidlo zálohovania <b>3-2-1</b>?",
     opts: ["3 kópie údajov, na 2 rôznych médiách, 1 kópia mimo domu", "3 disky, 2 počítače, 1 záloha v cloude", "3 kópie údajov, 2 z nich na tom istom disku, 1 v cloude", "3 zálohy za týždeň, 2 za mesiac, 1 za rok"], a: 0 },
   { id: "q18", type: "match", pts: 2, q: "Je periféria <b>vstupná</b>, <b>výstupná</b>, alebo <b>vstupno-výstupná</b>?", fixed: true, pool: ["Vstupná", "Výstupná", "Vstupno-výstupná"],
     rows: [["skener", "Vstupná"], ["webkamera", "Vstupná"], ["projektor", "Výstupná"], ["reproduktory", "Výstupná"], ["dotyková obrazovka", "Vstupno-výstupná"], ["headset", "Vstupno-výstupná"]] },
-  { id: "q19", type: "match", pts: 3, q: "Ktorá tlačiareň je na danú úlohu najvhodnejšia?",
-    pool: ["atramentová", "laserová", "termotlačiareň", "ihličková", "3D tlačiareň", "plotter"],
-    rows: [["farebné fotky doma", "atramentová"], ["rýchla a lacná tlač veľa strán v kancelárii", "laserová"], ["bločky v obchode a etikety", "termotlačiareň"], ["tlač s priepismi (kópiami)", "ihličková"], ["trojrozmerný model súčiastky", "3D tlačiareň"], ["veľkoformátové stavebné plány", "plotter"]] },
-  { id: "q20", type: "match", pts: 3, q: "Priraď k pojmu správnu hodnotu, jednotku alebo názov.",
-    pool: ["1920 × 1080", "2560 × 1440", "3840 × 2160", "Hz", "ms", "DPI", "ppm", "lúmeny", "Plug and Play", "OCR", "ovládač (driver)"],
-    rows: [["rozlíšenie Full HD", "1920 × 1080"], ["rozlíšenie 4K", "3840 × 2160"], ["frekvencia monitora", "Hz"], ["odozva monitora", "ms"], ["jemnosť tlače alebo skenovania", "DPI"], ["rýchlosť tlačiarne (strán za minútu)", "ppm"], ["zariadenie sa po pripojení samo rozpozná", "Plug and Play"], ["rozpoznanie textu z naskenovaného obrázka", "OCR"]] }
+  { id: "q19", type: "match", pts: 2, q: "Ktorá tlačiareň je na danú úlohu najvhodnejšia?",
+    pool: ["atramentová", "laserová", "ihličková", "3D tlačiareň"],
+    rows: [["farebné fotky doma", "atramentová"], ["rýchla a lacná tlač veľa strán v kancelárii", "laserová"], ["tlač s priepismi (kópiami)", "ihličková"], ["trojrozmerný model súčiastky", "3D tlačiareň"]] },
+  { id: "q20", type: "match", pts: 2, q: "Priraď k pojmu správnu hodnotu, jednotku alebo názov.",
+    pool: ["1920 × 1080", "2560 × 1440", "3840 × 2160", "Hz", "DPI", "lúmeny", "Plug and Play", "ovládač (driver)"],
+    rows: [["rozlíšenie Full HD", "1920 × 1080"], ["rozlíšenie 4K", "3840 × 2160"], ["frekvencia monitora", "Hz"], ["jemnosť tlače alebo skenovania", "DPI"], ["zariadenie sa po pripojení samo rozpozná", "Plug and Play"]] },
+  { id: "q21", type: "order", pts: 2, q: "Zoraď verzie USB od <b>najpomalšej</b> po <b>najrýchlejšiu</b>.",
+    items: ["USB 2.0", "USB 3.2 Gen 1", "USB 3.2 Gen 2", "USB4"], ends: ["najpomalšia", "najrýchlejšia"] },
+  { id: "q22", type: "mc", pts: 1, q: "Počas kopírovania súborov ti spadol notebook na zem. Ktorý disk sa pravdepodobnejšie poškodí a prečo?",
+    opts: ["HDD, lebo má otáčajúce sa platne a čítaciu hlavu na ramene.", "SSD, lebo flash čipy sú citlivé na náraz.", "Oba rovnako, lebo oba ukladajú údaje natrvalo.", "Žiadny, lebo počas kopírovania sa disk nehýbe."], a: 0 },
+  { id: "q23", type: "match", pts: 2, q: "Priraď k spôsobu pripojenia jeho popis.",
+    pool: ["bezdrôtovo nablízko", "bezdrôtová sieť, sieťové tlačiarne", "analógové slúchadlá, mikrofón", "starý analógový obraz", "obojstranný, dáta, obraz aj nabíjanie", "obraz aj zvuk do televízora"],
+    rows: [["Bluetooth", "bezdrôtovo nablízko"], ["Wi-Fi", "bezdrôtová sieť, sieťové tlačiarne"], ["jack 3,5 mm", "analógové slúchadlá, mikrofón"], ["VGA", "starý analógový obraz"], ["USB-C", "obojstranný, dáta, obraz aj nabíjanie"]] },
+  { id: "q24", type: "mc", pts: 1, q: "Na čo slúži malý prepínač na boku <b>SD karty</b>?",
+    opts: ["chráni kartu proti zápisu", "prepína medzi SD a microSD", "zapína rýchlejší režim zápisu", "naformátuje kartu"], a: 0 }
   ];
 }
 
@@ -256,19 +234,17 @@ const poolOf = q => q.pool || [...new Set(q.rows.map(r => r[1]))];
 const HINT = { mc: "Vyber jednu odpoveď.", multi: "Označ všetky správne tvrdenia. Za každé nesprávne označenie sa ti jedno správne odpočíta.", match: "Ku každému riadku vyber odpoveď zo zoznamu.", order: "Klikaj na kartičky v správnom poradí. Kliknutím na umiestnenú kartičku ju vrátiš späť.", input: "Napíš odpoveď." };
 
 /* ===== stav ===== */
-function fresh() { return { v: 1, name: "", cls: "", phase: "start", order: [], perm: {}, ans: {}, rnd: null, result: null, finished: null, attempt: 0, sentKey: null }; }
+function fresh() { return { v: 1, name: "", cls: "", phase: "start", order: [], perm: {}, ans: {}, result: null, finished: null, attempt: 0, sentKey: null }; }
 function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.v === 1) return Object.assign(fresh(), o); } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
-if (!S.rnd) S.rnd = genR();
 let Q, BY, MAX;
-function setup() { Q = buildQ(S.rnd); BY = Object.fromEntries(Q.map(q => [q.id, q])); MAX = Q.reduce((a, q) => a + q.pts, 0); }
+function setup() { Q = buildQ(); BY = Object.fromEntries(Q.map(q => [q.id, q])); MAX = Q.reduce((a, q) => a + q.pts, 0); }
 setup();
 const canStart = () => S.name.trim().length >= 3 && CLASSES.includes(S.cls);
 const startHint = () => S.name.trim().length < 3 ? "Napíš svoje meno a priezvisko." : !CLASSES.includes(S.cls) ? "Vyber svoju triedu." : "";
 
 function newAttempt() {
-  S.rnd = genR(); setup();
   S.order = shuffle(Q.map(q => q.id)); S.perm = {};
   Q.forEach(q => {
     if (q.type === "mc" || q.type === "multi") S.perm[q.id] = shuffled(q.opts.length);
@@ -331,7 +307,7 @@ function viewStart() { const ok = canStart();
   return `<p class="kicker">Informatika, 2. ročník</p><h1>${TITLE}</h1>
   <p>Test z učiva 1.3 až 1.6: základná doska, BIOS a UEFI, porty, hierarchia pamätí, procesor a RAM, pevný disk, SSD a pamäťové karty, zálohovanie a periférne zariadenia.</p>
   <div class="facts"><div class="fact"><b>${Q.length}</b><span>úloh</span></div><div class="fact"><b>${MAX}</b><span>bodov</span></div><div class="fact"><b>40</b><span>minút</span></div></div>
-  <div class="warnbox">Úlohy aj odpovede má každý v inom poradí a čísla v príkladoch má každý iné. Za ťažšie úlohy je viac bodov a pri niektorých dostaneš aj časť bodov. Keď test odovzdáš, výsledok sa automaticky pošle učiteľovi a uvidíš správne odpovede.</div>
+  <div class="warnbox">Úlohy aj odpovede má každý v inom poradí. Za ťažšie úlohy je viac bodov a pri niektorých dostaneš aj časť bodov. Keď test odovzdáš, výsledok sa automaticky pošle učiteľovi a uvidíš správne odpovede.</div>
   <div class="panel"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
   <label class="f" for="cl">Trieda</label><select class="in" id="cl" data-field="cls"><option value="">— vyber triedu —</option>${CLASSES.map(c => `<option ${S.cls === c ? "selected" : ""}>${c}</option>`).join("")}</select>
   <div class="row"><button class="primary" data-start ${ok ? "" : "disabled"}>Začať test</button><span class="muted" id="sthint">${startHint()}</span></div></div>`; }
@@ -356,7 +332,7 @@ function viewDone() { const tot = S.result.tot, pct = Math.round(tot / MAX * 100
     <div class="row" style="margin-top:4px">${sendResults()}</div></div>
   <h2>Prehľad odpovedí</h2><p class="muted">Zelená = správne, červená = nesprávne. Pri nesprávnych odpovediach vidíš aj správne riešenie.</p>
   ${S.order.map((id, i) => card(BY[id], i + 1, true)).join("")}
-  <div class="submitbar"><button class="primary ${ARM ? "warn" : ""}" data-again>${ARM ? "Naozaj začať nový pokus?" : "Nový pokus"}</button><span class="muted">${ARM ? "Úlohy sa znova premiešajú, dostaneš nové čísla a začneš od začiatku." : "Test môžeš skúsiť znova, každý pokus sa pošle učiteľovi."}</span></div>`; }
+  <div class="submitbar"><button class="primary ${ARM ? "warn" : ""}" data-again>${ARM ? "Naozaj začať nový pokus?" : "Nový pokus"}</button><span class="muted">${ARM ? "Úlohy sa znova premiešajú a začneš od začiatku." : "Test môžeš skúsiť znova, každý pokus sa pošle učiteľovi."}</span></div>`; }
 
 const main = document.getElementById("main");
 function render(toTop) { const y = window.scrollY; renderTop();
