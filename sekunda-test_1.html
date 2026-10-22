@@ -309,8 +309,23 @@ function viewDone() { const tot = S.result.tot, pct = Math.round(tot / MAX * 100
   ${S.order.map((id, i) => card(BY[id], i + 1, true)).join("")}
   <div class="submitbar"><button class="primary ${ARM ? "warn" : ""}" data-again>${ARM ? "Naozaj začať nový pokus?" : "Nový pokus"}</button><span class="muted">${ARM ? "Úlohy sa znova premiešajú a začneš od začiatku." : "Test môžeš skúsiť znova, každý pokus sa pošle učiteľovi."}</span></div>`; }
 
+/* ===== kontrola uloženého stavu (po úprave testu sa starý rozpracovaný pokus zahodí) ===== */
+function stateOk() {
+  if (S.phase === "start") return true;
+  if (!Array.isArray(S.order) || S.order.length !== Q.length || !S.perm) return false;
+  const ok = S.order.every(id => { const q = BY[id], p = S.perm[id]; if (!q) return false;
+    if (q.type === "mc" || q.type === "multi") return Array.isArray(p) && p.length === q.opts.length;
+    if (q.type === "match") return !!p && Array.isArray(p.rows) && p.rows.length === q.rows.length && Array.isArray(p.pool) && p.pool.length === poolOf(q).length;
+    if (q.type === "order") return Array.isArray(p) && p.length === q.items.length;
+    return true; });
+  return ok && (S.phase !== "done" || (!!S.result && !!S.result.per && S.order.every(id => S.result.per[id])));
+}
+function resetState() { S = Object.assign(fresh(), { name: S.name || "", cls: S.cls || fresh().cls }); save(); }
+try { if (!stateOk()) resetState(); } catch (e) { resetState(); }
+
 const main = document.getElementById("main");
-function render(toTop) { const y = window.scrollY; renderTop();
+function render(toTop) { try { render0(toTop); } catch (e) { console.error(e); resetState(); ARM = false; render0(true); } }
+function render0(toTop) { const y = window.scrollY; renderTop();
   main.innerHTML = S.phase === "start" ? viewStart() : S.phase === "test" ? viewTest() : viewDone();
   typo(main); window.scrollTo(0, toTop ? 0 : y); }
 function updateCount() { const n = S.order.filter(id => answered(BY[id])).length, c = document.getElementById("cnt"), b = document.getElementById("bar");
