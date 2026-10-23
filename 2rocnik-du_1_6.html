@@ -457,7 +457,7 @@ const BUDGET = 250;
 function budgetEval() { const sel = S.shop, pr = SHOP.flatMap(c => c.p), sum = Object.values(sel).reduce((a, id) => a + pr.find(p => p.id === id).c, 0);
   const cam = sel.cam, snd = sel.snd, drw = sel.drw;
   const micOk = cam === "c1" || cam === "c3" || snd === "s1" || snd === "s3", hpOk = snd === "s1" || snd === "s2";
-  return { sum, c: [sum <= BUDGET, !!cam && micOk && hpOk, drw === "d1" || drw === "d3"] }; }
+  return { sum, c: [SHOP.every(c => sel[c.id]) && sum <= BUDGET, !!cam && micOk && hpOk, drw === "d1" || drw === "d3"] }; }
 
 /* ===== ÚLOHY ===== */
 const TASKS = {
@@ -734,21 +734,27 @@ const VIEWS = {
   },
   vysledok() {
     if (!allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i));
-      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú misie: ${miss.map(([s, i]) => `<button class="ghost" data-go="${i}" style="margin:4px">${s.ic} ${s.title}</button>`).join("")}</p><p class="muted">Výsledok sa odošle, keď dokončíš všetky úlohy.</p></div>`; }
+      const left = s => STEP_TASKS[s.id].filter(t => !S.t[t]).length, ul = n => n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh";
+      return `<div class="result"><h2>🏆 Výsledok</h2>${say("Ešte nemáš hotové všetky misie. Môžeš sa k nim vrátiť, alebo domácu úlohu ukončiť a odoslať, ak už ďalej nevieš.")}
+        <h3 style="margin-top:6px">Chýbajúce misie</h3><div class="row" style="margin-top:0">${miss.map(([s, i]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} – ${left(s) === 1 ? "zostáva" : "zostávajú"} ${left(s)} ${ul(left(s))}</button>`).join("")}</div>
+        <p class="muted" style="margin-top:14px">Zatiaľ máš <b>${total()} ⭐</b> zo skontrolovaných úloh.</p>
+        ${S.confirmEnd ? `<div class="vedel" style="background:#FBE3E0;border-color:#F0B4AC;border-left-color:#C0392B;color:#5A1A12"><b>Naozaj ukončiť?</b> Úlohy, v ktorých si už niečo vybral, sa vyhodnotia. Nevyriešené úlohy budú za 0 bodov a vrátiť sa k nim už nebude možné.
+          <div class="row"><button class="primary" style="background:#C0392B" data-endyes>✅ Áno, odoslať</button><button class="ghost" data-endno>↩️ Späť k úlohám</button></div></div>` :
+          `<div class="row"><button class="primary" data-end>📨 Ukončiť a odoslať výsledok</button></div>`}</div>`; }
     if (!S.finished) { S.finished = Date.now(); save(); }
     const pct = Math.round(total() / MAX * 100), g = gradeOf(total(), MAX);
     let A = attempts(); if (!S.rec) { A.push({ name: S.name, cls: S.cls, score: total(), max: MAX, g, at: S.finished }); saveAttempts(A); S.rec = true; save(); }
     const retry = canRetry(A) ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš nárok na opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu ešte <b>raz</b> vypracovať znova. Platí výsledok opravy.<div class="row"><button class="primary" data-retry>🔁 Opraviť domácu úlohu (posledný pokus)</button></div></div>` :
       `<p class="muted" style="margin-top:14px">${S.att === 2 ? "Toto bola oprava, ďalší pokus už nie je možný." : "Domáca úloha je hotová, oprava pri známke 1 alebo 2 nie je potrebná. 👍"}</p>`;
     return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.split(" ")[0])}!</h2>${say(g <= 2 ? "Si skvelý detektív periférií! Prípad je uzavretý. 🖱️🕵️" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil.", "wow")}
-      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      ${S.early ? `<p class="muted" style="margin:0 0 6px">📨 Domácu úlohu si ukončil predčasne, nevyriešené úlohy sú za 0 bodov.</p>` : ""}<div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
       <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
       <div class="row">${sendResults()}</div>${retry}</div>`;
   }
 };
 function sendResults() {
   const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
-  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.att === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.att === 2 ? " (oprava)" : "") + (S.early ? " (nedokončené)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
   const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
   const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
   if (S.sentKey !== key && !S.sending) { S.sending = true;
@@ -761,18 +767,22 @@ function render(scroll) { const L = lockedDone(); if (L) { document.getElementBy
   const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); hitAreas(m); typo(m); typo(document.getElementById("top")); window.scrollTo({ top: scroll ? 0 : y }); }
 function hitAreas(m) { m.querySelectorAll(".room [data-hot]").forEach(g => { try { const r = g.getBBox(), pad = 6, n = document.createElementNS("http://www.w3.org/2000/svg", "rect");
   n.setAttribute("x", r.x - pad); n.setAttribute("y", r.y - pad); n.setAttribute("width", r.width + 2 * pad); n.setAttribute("height", r.height + 2 * pad); n.setAttribute("fill", "transparent"); g.insertBefore(n, g.firstChild); } catch (e) {} }); }
-function check(id) {
+function scoreOf(id) {
   const T = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (T.type === "safe") sc = S.d.safe === TASKS.safe.a ? 1 : 0;
   if (T.type === "mc") sc = qsOf(T).filter(q => d[q.id] === q.a).length;
-  if (T.type === "room") { sc = HOTS.filter(h => d[h.id] === h.a).length; award("safe", S.d.safe === TASKS.safe.a ? 1 : 0); }
+  if (T.type === "room") sc = HOTS.filter(h => d[h.id] === h.a).length;
   if (T.type === "homeT") sc = S.home.filter(x => d[x] === HOME.find(h => h.id === x).a).length;
   if (T.type === "io2" || T.type === "build") sc = T.items.filter(x => d[x.id] && d[x.id].i === x.ai && d[x.id].o === x.ao).length;
   if (T.type === "comic") sc = T.panels.filter(p => p.q && d[p.q] === p.a).length;
   if (T.type === "sort") sc = Math.floor(T.items.filter(x => d[x.id] === x.a).length / 2);
   if (T.type === "find") sc = S.fsel.filter(k => k[0] === "e").length;
   if (T.type === "budget") sc = budgetEval().c.filter(Boolean).length;
-  award(id, sc); save(); render(false);
+  return sc;
 }
+function check(id) { award(id, scoreOf(id)); if (id === "room") award("safe", scoreOf("safe")); save(); render(false); }
+/* predčasné ukončenie: rozpracované úlohy sa vyhodnotia podľa toho, čo žiak vybral, neriešené = 0 */
+function finishEarly() { Object.keys(TASKS).forEach(id => { if (!S.t[id]) award(id, scoreOf(id)); }); S.early = true; S.confirmEnd = false; S.cur = STEPS.length - 1; save(); render(true); }
 const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
 document.addEventListener("click", e => {
   const hot = e.target.closest("[data-hot]");
@@ -782,6 +792,9 @@ document.addEventListener("click", e => {
     save(); render(false); return; }
   const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
   if (ds.retry !== undefined) { if (!canRetry(attempts())) return; const nm = S.name, cl = S.cls; S = fresh(); S.att = 2; S.name = nm; S.cls = cl; save(); render(true); return; }
+  if (ds.end !== undefined) { S.confirmEnd = true; save(); render(false); return; }
+  if (ds.endno !== undefined) { S.confirmEnd = false; save(); render(false); return; }
+  if (ds.endyes !== undefined) { finishEarly(); return; }
   if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
   if (ds.cls) { S.cls = ds.cls; save(); render(false); return; }
   if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
