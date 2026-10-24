@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DU_2.2 Kódovanie farieb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;
+  --acc:#2F5BEA;--accSoft:#D5DFFB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#C9D1DF;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D6DCE6;
+  --font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}}
+:root[data-theme="dark"]{--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .du{background:#F2A516;color:#3A2600;border-radius:7px;padding:1px 8px;font-size:14px;font-weight:800}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:35px;height:35px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:16px;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff;font-size:14px;font-weight:700}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.18);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:21px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+/* misia – banner */
+.ban{position:relative;overflow:hidden;border-radius:22px;padding:20px 22px 18px;color:#fff;margin:0 0 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;box-shadow:0 14px 30px -18px rgba(10,20,60,.6)}
+.ban .pill{display:inline-block;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 12px;font-size:13.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ban h2{color:#fff;margin:8px 0 4px}
+.ban p{margin:0;font-size:16px;opacity:.95}
+.ban .big{font-size:64px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.ban::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+@media (max-width:560px){.ban .big{font-size:44px}}
+/* chameleón Pixo */
+.say{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:end;margin:6px 0 18px}
+.say svg{width:92px;height:92px}
+.bubble{position:relative;background:var(--surface);border:2px solid var(--acc);border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:16.5px}
+.bubble b.n{color:var(--acc)}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:0 0 12px}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.tfigs{display:grid;gap:12px}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E4A66;text-align:center;padding:0 4px}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.93em}
+code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px}
+kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:.88em}
+/* tlačidlá a otázky */
+.primary{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:30px;padding-top:20px;border-top:1px dashed var(--track);display:flex;justify-content:flex-end}
+.q{border:0;padding:0;margin:0 0 22px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px}
+.why.good{background:var(--okSoft)}.why.miss{background:var(--badSoft)}
+.lock{display:flex;gap:10px;align-items:center;background:var(--surface2);border:1.5px dashed var(--track);border-radius:12px;padding:12px 16px;color:var(--muted)}
+/* párovanie */
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.pairs{grid-template-columns:1fr}}
+.pcol{display:grid;gap:8px;align-content:start}
+.pcol h4{margin:0 0 2px;font-size:15px;color:var(--muted)}
+.pi{display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:9px 12px;cursor:pointer;width:100%}
+.pi:hover:not(:disabled){border-color:var(--acc)}
+.pi.sel{border-color:var(--amber);box-shadow:0 0 0 4px var(--amberSoft)}
+.pi .e{font-size:24px;flex:0 0 30px;text-align:center}
+.pi .tag{margin-left:auto;flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff}
+.pi.ok{border-color:var(--ok);background:var(--okSoft)}
+.pi.bad{border-color:var(--bad);background:var(--badSoft)}
+.pi:disabled{cursor:default;color:var(--ink)}
+/* štart a výsledok */
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px}
+@media (max-width:800px){.hero{grid-template-columns:1fr}}
+.hero svg{width:100%;height:auto;display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.mcard{border-radius:14px;padding:10px 12px;color:#fff;font-weight:600;font-size:15px}
+.mcard small{display:block;font-weight:400;opacity:.9}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{width:100%;max-width:380px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px}
+.bign{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.bign .n{font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.bign .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
+table.res{border-collapse:collapse;width:100%;font-size:15.5px}
+table.res td,table.res th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+table.res td:last-child,table.res th:last-child{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+@media (prefers-reduced-motion: no-preference){.fly{animation:fly 1.4s ease-in-out}@keyframes fly{from{opacity:.2;transform:translateX(-30px)}to{opacity:1;transform:none}}}
+.muted{color:var(--muted)}
+.say svg{width:92px;height:92px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .opt{padding:6px 12px;font-size:14.5px;border-radius:999px}
+.tnum{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;margin-right:6px}
+.msg{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--accSoft);font-size:15.5px;min-height:44px}
+/* izba (misia 1) */
+.room svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--border)}
+.room [data-hot]{cursor:pointer}
+.room [data-hot]:hover{filter:brightness(1.12) drop-shadow(0 0 4px #F2A516)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.fc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px 14px;position:relative}
+.fc.okc{border-color:var(--ok);background:var(--okSoft)}.fc.badc{border-color:var(--bad);background:var(--badSoft)}
+.fc .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}
+.fc .hd .e{font-size:28px;line-height:1}
+.dig{margin-left:auto;background:#16213A;color:#F2C94C;font-family:var(--mono);font-weight:700;border-radius:8px;padding:2px 10px;font-size:18px}
+.fc .why{margin-top:8px}
+.safe{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px;align-items:center;margin-top:16px;background:linear-gradient(135deg,#2B3550,#16213A);color:#E8EDF7;border-radius:18px;padding:16px 18px}
+@media (max-width:720px){.safe{grid-template-columns:1fr}}
+.safe svg{width:100%;max-width:220px;height:auto;display:block;margin:0 auto}
+.safe .rule{background:#FFF8E1;color:#3A2E00;border-radius:10px;padding:10px 12px;font-size:15px;margin-bottom:10px}
+.codes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.codes .opt{font-family:var(--mono);font-size:22px;font-weight:700;text-align:center;letter-spacing:.2em;background:#0E1424;color:#F2C94C;border-color:#3E4A66}
+.codes .opt.sel{border-color:#F2A516;background:#2A2410}
+.codes .opt.ok{border-color:#3CCB8E;background:#123A2C;color:#9FF0C8}
+.codes .opt.bad{border-color:#FF7A6B;background:#46221F;color:#FFB4AA}
+/* pátranie doma (misia 2) */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.hc{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:10px 6px;cursor:pointer;text-align:center;font-size:14.5px;font-weight:600;line-height:1.25}
+.hc .e{font-size:30px;line-height:1}
+.hc:hover:not(:disabled){border-color:var(--acc)}
+.hc.on{border-color:var(--amber);background:var(--amberSoft);box-shadow:0 0 0 3px var(--amberSoft)}
+.hc:disabled{cursor:default;opacity:.45}
+.hc.on:disabled{opacity:1}
+/* dielňa (misia 3) */
+.inv{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.ic{background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:14px 16px}
+.ic.okc{border-color:var(--ok)}.ic.badc{border-color:var(--bad)}
+.ic .hd{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.ic .hd .e{font-size:40px;line-height:1}
+.ic .hd b{font-size:17px}
+.ic .st{font-size:15px;color:var(--muted);margin:0 0 8px}
+.ic .lab{font-size:13.5px;font-weight:700;color:var(--muted);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.bprev{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-top:10px;font-size:15px}
+.bprev .slot{min-width:92px;text-align:center;border-radius:12px;padding:6px 8px;background:var(--surface);border:2px solid var(--border)}
+.bprev .slot .e{display:block;font-size:28px;line-height:1.1}
+.bprev .core{background:#16213A;color:#fff;border-color:#16213A}
+/* komiks (misia 4) */
+.comic{display:grid;grid-template-columns:1fr;gap:14px}
+.panel:not(.choice){max-width:560px}.panel.c{justify-self:center}
+.panel{background:#FFFDF5;border:3px solid #16213A;border-radius:6px;padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;color:#16213A;box-shadow:4px 4px 0 #16213A}
+.panel svg{width:76px;height:76px}
+.panel .bub{background:#fff;border:2px solid #16213A;border-radius:14px;padding:8px 12px;font-size:15.5px;position:relative}
+.panel .nm{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#566381;margin-bottom:2px}
+.panel.choice{grid-column:1/-1;background:#EEF4FF}
+.panel .opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel .opt{background:#fff;color:#16213A}
+.panel .opt.sel{background:#E6EDFD}
+.panel .opt.ok{background:#DDF3EA}.panel .opt.bad{background:#FBE3E0}
+.panel .why{color:#16213A}
+/* triedenie */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.chip.ok{border-color:var(--ok);background:var(--okSoft)}.chip.bad{border-color:var(--bad);background:var(--badSoft)}
+.chip:disabled{cursor:default;color:var(--ink)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.bins{grid-template-columns:1fr}}
+.bin{border:2px solid var(--border);border-radius:16px;padding:10px;min-height:120px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bin .bh{width:100%;text-align:center;font-weight:700;border-radius:10px;padding:6px;cursor:pointer;border:0;font-size:15px}
+.bin .bh:disabled{cursor:default}
+/* príbeh (misia 5) */
+.story{background:#FFFDF5;color:#2A2410;border:1px solid #E6D6A8;border-radius:16px;padding:16px 18px;font-size:17px;line-height:1.9}
+.story p{margin:0 0 10px}
+.ph{display:inline;font:inherit;color:inherit;background:none;border:0;border-bottom:2px dotted #B08D4F;padding:0 2px;cursor:pointer;border-radius:4px;line-height:inherit}
+.ph:hover:not(:disabled){background:#FDF1D6}
+.ph.on{background:#FDE3A7;border-bottom:2px solid #E0A800}
+.ph.ok{background:#DDF3EA;border-bottom:2px solid #12805A}
+.ph.bad{background:#FBE3E0;border-bottom:2px solid #C0392B}
+.ph.miss{background:none;border-bottom:3px solid #C0392B}
+.ph:disabled{cursor:default}
+/* rozpočet (misia 6) */
+.shop{display:grid;gap:14px}
+.cat h4{margin:0 0 6px;font-size:16px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.prod{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:10px 12px;cursor:pointer;font-size:14.5px;line-height:1.35}
+.prod b{font-size:15px}
+.prod .pr{font-weight:700;color:var(--acc);font-size:16px;margin-top:4px}
+.prod:hover:not(:disabled){border-color:var(--acc)}
+.prod.on{border-color:var(--acc);background:var(--accSoft)}
+.prod:disabled{cursor:default}
+.cart{position:sticky;bottom:10px;z-index:5;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:10px 14px;margin-top:14px;box-shadow:0 10px 24px -14px rgba(10,20,60,.5)}
+.cart .bar{height:12px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:6px}
+.cart .bar span{display:block;height:100%;background:var(--ok)}
+.cart.over{border-color:var(--bad)}.cart.over .bar span{background:var(--bad)}
+.crit{list-style:none;padding:0;margin:12px 0 0}
+.crit li{padding:6px 10px;border-radius:10px;margin:4px 0;font-size:15.5px}
+.crit li.y{background:var(--okSoft)}.crit li.n{background:var(--badSoft)}
+@media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
+.panel{min-width:0}.panel .bub{min-width:0}
+@media (max-width:640px){.room{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px}.room svg{min-width:760px}.room::after{content:"↔️ Obrázok posúvaj prstom do strany.";display:block;font-size:13.5px;color:var(--muted);padding:4px 2px}}
+/* poradie riadkov */
+.seq{list-style:none;padding:0;margin:14px 0 12px;display:grid;gap:8px;max-width:520px}
+.slot2{display:flex;align-items:center;gap:12px}
+.slot2 .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot2 .ph2{color:var(--muted);flex:1;border:1.5px dashed var(--track);border-radius:10px;padding:8px 14px;font-size:15px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:var(--mono);font-size:15px}
+.slotbtn:hover:not(:disabled){border-color:var(--acc)}
+.slot2.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}.slot2.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.chip.mono{font-family:var(--mono);font-weight:500}
+.bins.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* kód s chybami */
+.codebox{background:#fff;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;color:#000;max-width:560px}
+.codebox .wt{border-radius:0}
+.cl{display:flex;width:100%;align-items:center;gap:14px;border:0;border-bottom:1px solid #EEF1F5;background:#fff;padding:6px 12px;font-family:"Courier New",var(--mono);font-size:16px;text-align:left;cursor:pointer;color:#000}
+.cl .ln{color:#8A93A6;width:22px;text-align:right;font-size:13px;flex:0 0 22px}
+.cl:hover:not(:disabled){background:#FFF6DB}
+.cl.on{background:#FDE3A7}.cl.ok{background:#DDF3EA}.cl.bad{background:#FBE3E0}.cl.miss{box-shadow:inset 5px 0 0 #C0392B;background:#FFF0EE}
+.cl:disabled{cursor:default}
+.fixrow{margin-top:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.fixrow .hd{font-weight:600;margin-bottom:6px;font-size:15.5px}
+.fixrow .opt{font-family:var(--mono)}
+.errc{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.errc .opts{grid-template-columns:1fr;gap:6px}
+.errc .opt{font-family:var(--mono);font-size:13.5px;padding:8px 10px;color:#9A1F12}
+.errc .opt.ok,.errc .opt.bad,.errc .opt.sel{color:var(--ink)}
+.opts.pics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.pics .opt{padding:8px}
+.opt svg{width:100%;height:auto;display:block;background:#fff;border-radius:8px;border:1px solid #E3E8EF}
+/* ===== DU 2.2: farby ===== */
+.sw{display:block;height:64px;border-radius:8px;border:1px solid #CBD3E0}
+.swbig{height:84px;border-radius:12px;border:1px solid #CBD3E0;margin:0 0 10px}
+.dot{display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.25);vertical-align:-3px;margin-left:4px}
+.chip.mono{font-family:var(--mono);font-weight:500}
+.mpix{display:flex;gap:6px;justify-content:center;background:#0E1424;border-radius:12px;padding:10px;margin:0 0 8px}
+.mpix span{width:22px;height:64px;border-radius:5px;display:grid;place-items:end center;font-size:12px;font-weight:700;color:#fff;padding-bottom:3px}
+.inkc{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.inkrow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.ink{min-width:58px;border-radius:12px;padding:8px 12px;font-weight:800;font-size:18px;border:2px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.1}
+.ink small{font-size:11.5px;font-weight:600;color:var(--muted)}
+.ink .drop2{width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:1px solid rgba(0,0,0,.25)}
+.ink:hover:not(:disabled){border-color:var(--acc)}
+.ink.on{border-color:#16213A;box-shadow:0 0 0 3px var(--amberSoft);background:var(--surface)}
+.ink:disabled{cursor:default}
+.prow{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+.prow .lbl{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.paper{height:84px;border-radius:10px;border:2px dashed #9AA6B8;display:grid;place-items:center;font-size:15px;color:var(--muted);background:repeating-linear-gradient(45deg,#fff,#fff 8px,#F3F5F9 8px,#F3F5F9 16px)}
+.paper.pr{border-style:solid;border-color:#CBD3E0}
+.whc{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.whc svg{width:100%;max-width:230px;display:block;margin:0 auto}
+.whc [data-wh]{cursor:pointer}
+.whc [data-wh]:hover{filter:brightness(1.1)}
+.whc .goal{text-align:center;font-weight:600;margin-bottom:6px}
+.whc .goal b{font-family:var(--mono);font-size:24px;color:var(--acc)}
+.whsel{display:flex;align-items:center;justify-content:center;gap:10px;font-size:14.5px;color:var(--muted);margin-top:6px}
+.whsel i{display:inline-block;width:34px;height:22px;border-radius:6px;border:1px solid #CBD3E0}
+.pwrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:640px){.pwrap{grid-template-columns:1fr}}
+.pgrid{display:grid;grid-template-columns:repeat(6,46px);gap:3px;background:#C9D1DF;padding:3px;border-radius:10px;width:max-content}
+.pc{width:46px;height:46px;border:0;border-radius:4px;font-family:var(--mono);font-size:13px;font-weight:700;cursor:pointer;padding:0;background:repeating-linear-gradient(45deg,#fff,#fff 5px,#EEF1F5 5px,#EEF1F5 10px);color:#16213A}
+.pc:disabled{cursor:default}
+.pc.wr{outline:3px solid #C0392B;outline-offset:-3px}
+@media (max-width:420px){.pgrid{grid-template-columns:repeat(6,40px)}.pc{width:40px;height:40px;font-size:12px}}
+.pal{display:grid;gap:8px;max-width:300px}
+.palb{display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:8px 12px;cursor:pointer;font-weight:600}
+.palb i{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.2);flex:0 0 30px}
+.palb .ix{font-family:var(--mono);font-size:20px;width:22px;text-align:center}
+.palb.on{border-color:var(--amber);box-shadow:0 0 0 4px var(--amberSoft)}
+.palb:disabled{cursor:default;opacity:.6}
+.camo{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:16px;align-items:center}
+@media (max-width:720px){.camo{grid-template-columns:1fr}}
+.camo svg{width:100%;max-width:340px;height:auto;display:block;margin:0 auto;border-radius:14px}
+.codes2 .opt{font-family:var(--mono);font-size:18px;font-weight:700;text-align:center}
+</style></head><body>
+<header class="top" id="top"></header><main id="main" tabindex="-1"></main>
+<script>
+/* ===== DU 2.2 – 1. ročník: Kódovanie farieb ===== */
+const KEY = "du-1r22-v1";
+const LESSON = "1. ročník – DU_2.2 Kódovanie farieb";
+const CLASS_DEFAULT = "";
+const CLASSES = ["I.A", "I.B", "KVINTA_1", "KVINTA_2"];
+const DONE_KEY = "du-1r22-done-v1"; /* zámok: pokusy (1 pokus, pri známke 3 – 5 jedna oprava) */
+const OLD_DONE_KEYS = [];
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+
+const STEPS = [
+  { id: "start", title: "Štart", ic: "🚀", min: 1 },
+  { id: "m1", title: "Svetlo v pixeli", ic: "💡", min: 3, col: "linear-gradient(120deg,#C62828,#F06A5A)" },
+  { id: "m2", title: "Detektív HEX", ic: "🔎", min: 4, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
+  { id: "m3", title: "Tlačiareň CMYK", ic: "🖨️", min: 3, col: "linear-gradient(120deg,#00839F,#C2187A)" },
+  { id: "m4", title: "Farebný kruh", ic: "🌈", min: 3, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
+  { id: "m5", title: "Hĺbka a palety", ic: "🧮", min: 3, col: "linear-gradient(120deg,#A0640A,#E2A23B)" },
+  { id: "m6", title: "Grafik v akcii", ic: "🎨", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+  { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
+];
+const STEP_TASKS = { m1: ["screens", "rgbsort"], m2: ["hexmatch", "cssbugs"], m3: ["ink", "comic"], m4: ["wheel", "lorder"], m5: ["depth", "paint", "bytes"], m6: ["usesort", "swatch", "lighter", "camo"] };
+/* farba chameleóna Pixa v jednotlivých misiách */
+const PCOL = { start: "#5DBB4A", m1: "#E8594F", m2: "#8A63E0", m3: "#1BA3C6", m4: "#3DBE7A", m5: "#E9A53B", m6: "#4F7BEF", vysledok: "#5DBB4A" };
+
+/* ===== LENKA: typografia ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,kbd,textarea,.code,.cl,.slotbtn,.chip.mono,.fixrow .opt,.codes2 .opt,.pc,.wt") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐″])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+/* ===== OBRÁZKY: pomôcky ===== */
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 13}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,Courier New,monospace" xml:space="preserve"` : ""}>${s}</text>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.6"` : ""}/>`;
+const EM = (x, y, e, fs = 24) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}">${e}</text>`;
+const ARR = (x1, y1, x2, y2, c = "#566381", w = 2.5) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return `<line x1="${x1}" y1="${y1}" x2="${x2 - Math.cos(a) * 4}" y2="${y2 - Math.sin(a) * 4}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2} L${x2 - h * Math.cos(a - .45)} ${y2 - h * Math.sin(a - .45)} L${x2 - h * Math.cos(a + .45)} ${y2 - h * Math.sin(a + .45)}z" fill="${c}"/>`; };
+const C = { ink: "#16213A", mut: "#566381", acc: "#2F5BEA", accS: "#D5DFFB", ok: "#12805A", okS: "#DDF3EA", bad: "#C0392B", badS: "#FBE3E0", amb: "#8A5A00", ambS: "#FDF1D6", bg: "#F5F7FA", line: "#D6DCE6", pur: "#6A3FD0", purS: "#ECE5FC" };
+const he = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const hsl = (h, s, l) => `hsl(${h},${s}%,${l}%)`;
+function mixW(hex, t) { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, f = v => Math.round(v + (255 - v) * t).toString(16).padStart(2, "0"); return "#" + f(r) + f(g) + f(b); }
+function mixB(hex, t) { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, f = v => Math.round(v * (1 - t)).toString(16).padStart(2, "0"); return "#" + f(r) + f(g) + f(b); }
+const lum = hex => { const n = parseInt(hex.slice(1), 16); return ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000; };
+
+/* ===== chameleón Pixo – sprievodca ===== */
+function pixo(x, y, s, col, mood) {
+  const c = col || PCOL.start, grad = c.startsWith("url"), lt = grad ? "#FFFFFF" : mixW(c, .45), dk = grad ? "#2E6B3A" : mixB(c, .45);
+  const eye = mood === "wow"
+    ? `<circle cx="80" cy="44" r="8.5" fill="${lt}" stroke="#16213A" stroke-width="2"/><circle cx="81.5" cy="44" r="4.4" fill="#16213A"/><circle cx="83" cy="42.4" r="1.4" fill="#fff"/><ellipse cx="92" cy="57" rx="3" ry="3.6" fill="#B03030"/>`
+    : `<circle cx="80" cy="44" r="8" fill="${lt}" stroke="#16213A" stroke-width="2"/><circle cx="82" cy="44.5" r="3.4" fill="#16213A"/><circle cx="83.2" cy="43.2" r="1.1" fill="#fff"/><path d="M84 57 Q91 60 97 55" fill="none" stroke="#16213A" stroke-width="2" stroke-linecap="round"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})">
+    <ellipse cx="52" cy="93" rx="40" ry="4" fill="#000" opacity=".12"/>
+    <rect x="4" y="80" width="96" height="8" rx="4" fill="#8D6E4F" stroke="#5B4330" stroke-width="1.6"/>
+    <path d="M26 64 C8 64 4 84 18 86 C29 87 31 75 23 73 C17 72 16 79 21 80" fill="none" stroke="${dk}" stroke-width="10" stroke-linecap="round"/>
+    <path d="M26 64 C8 64 4 84 18 86 C29 87 31 75 23 73 C17 72 16 79 21 80" fill="none" stroke="${c}" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M36 70 L32 82 M46 72 L48 82 M62 72 L60 82 M70 68 L74 82" stroke="${dk}" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="50" cy="62" rx="28" ry="15" fill="${c}" stroke="#16213A" stroke-width="2.2"/>
+    <path d="M28 52 l4 -5 l4 4 l4 -5 l4 4 l4 -5 l4 4 l4 -5 l4 4 l4 -4" fill="none" stroke="#16213A" stroke-width="1.8" stroke-linejoin="round"/>
+    <circle cx="40" cy="62" r="3.4" fill="${lt}"/><circle cx="52" cy="66" r="2.6" fill="${lt}"/><circle cx="61" cy="59" r="3" fill="${lt}"/>
+    <path d="M66 50 Q74 32 90 38 Q101 44 100 54 Q97 64 82 64 Q72 64 66 58 Z" fill="${c}" stroke="#16213A" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M70 40 Q76 28 86 34" fill="none" stroke="${dk}" stroke-width="3" stroke-linecap="round"/>
+    ${eye}
+  </g>`;
+}
+const curCol = () => PCOL[(STEPS[S.cur] || {}).id] || PCOL.start;
+const PIXO = (mood, col) => SV(104, 98, pixo(0, 2, 1, col || curCol(), mood), "Chameleón Pixo");
+const say = (html, mood) => `<div class="say">${PIXO(mood)}<div class="bubble">${html}</div></div>`;
+/* kamarátka Ema (komiks) */
+const EMA = mood => SV(80, 80, `<path d="M14 80 Q40 58 66 80" fill="#C2187A"/><path d="M13 44 Q12 16 40 15 Q68 16 67 44 L68 66 Q60 58 58 46 L22 46 Q20 58 12 66 Z" fill="#7A3B1A" stroke="#16213A" stroke-width="2"/>
+  <circle cx="40" cy="44" r="23" fill="#F6C9A0" stroke="#16213A" stroke-width="2.5"/>
+  <path d="M17 40 Q20 20 41 21 Q60 21 63 40 Q52 30 40 31 Q26 30 17 40z" fill="#7A3B1A"/>
+  <circle cx="32" cy="47" r="3.3" fill="#16213A"/><circle cx="48" cy="47" r="3.3" fill="#16213A"/>
+  ${mood === "sad" ? `<path d="M27 38 L36 41 M53 38 L44 41" stroke="#16213A" stroke-width="2.2"/><path d="M33 60 Q40 54 47 60" fill="none" stroke="#C0392B" stroke-width="2.5"/>` : `<path d="M33 57 Q40 64 47 57" fill="none" stroke="#C0392B" stroke-width="2.5"/>`}`, "Ema");
+
+/* ===== ÚVODNÝ OBRÁZOK ===== */
+const HERO = SV(420, 300, `
+  <defs><linearGradient id="hs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E3EEFF"/><stop offset="1" stop-color="#F7FAFF"/></linearGradient>
+  <linearGradient id="rb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E8594F"/><stop offset=".25" stop-color="#E9A53B"/><stop offset=".5" stop-color="#5DBB4A"/><stop offset=".75" stop-color="#1BA3C6"/><stop offset="1" stop-color="#8A63E0"/></linearGradient></defs>
+  <rect width="420" height="300" rx="18" fill="url(#hs)"/>
+  <rect x="200" y="36" width="200" height="128" rx="10" fill="#16213A"/><rect x="208" y="44" width="184" height="112" rx="4" fill="#0E1424"/>
+  ${[0, 1, 2, 3, 4, 5].map(i => [0, 1, 2, 3].map(j => `<rect x="${214 + i * 30}" y="${50 + j * 26}" width="26" height="22" rx="3" fill="${hsl(i * 60 + j * 15, 80, 45 + j * 8)}"/>`).join("")).join("")}
+  <rect x="290" y="164" width="20" height="14" fill="#566381"/><rect x="266" y="176" width="68" height="8" rx="3" fill="#566381"/>
+  <circle cx="110" cy="82" r="62" fill="#0E1424"/>
+  <circle cx="96" cy="70" r="26" fill="#FF0000" opacity=".85" style="mix-blend-mode:screen"/><circle cx="124" cy="70" r="26" fill="#00FF00" opacity=".85" style="mix-blend-mode:screen"/><circle cx="110" cy="94" r="26" fill="#0000FF" opacity=".85" style="mix-blend-mode:screen"/>
+  ${box(28, 196, 92, 60, "#E9EDF3", "#9AA6B8", 8)}${box(40, 186, 68, 14, "#fff", "#9AA6B8", 3)}${["#00AEEF", "#EC008C", "#FFF200", "#1A1A1A"].map((c, i) => `<rect x="${42 + i * 17}" y="212" width="13" height="18" rx="3" fill="${c}" stroke="#16213A" stroke-width="1"/>`).join("")}${T(74, 248, "CMYK", { a: "middle", fs: 11, b: 1, c: C.mut })}
+  ${pixo(118, 168, 1.25, "url(#rb)", "wow")}
+  ${T(338, 222, "#FF8000", { a: "middle", fs: 16, b: 1, mono: 1, c: "#C2560C" })}${T(338, 250, "hsl(120, 60%, 45%)", { a: "middle", fs: 13, b: 1, mono: 1, c: C.ok })}${T(338, 278, "rgb(47, 91, 234)", { a: "middle", fs: 13, b: 1, mono: 1, c: C.acc })}
+  ${T(210, 24, "Pixo a 6 farebných misií", { a: "middle", fs: 15, b: 1, c: "#1F45C2" })}`, "Chameleón Pixo pri monitore, tlačiarni a farebných kódoch");
+
+/* ===== TEÓRIA: OBRÁZKY ===== */
+/* M1 */
+const FIG_SUBPIX = fig(SV(440, 230, `
+  ${T(220, 22, "Pixel pod lupou", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${box(12, 40, 150, 104, "#16213A", null, 10)}${box(20, 48, 134, 88, "#FF9900", null, 4)}
+  <circle cx="118" cy="100" r="22" fill="none" stroke="#fff" stroke-width="3"/><line x1="134" y1="116" x2="150" y2="132" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  ${ARR(166, 96, 196, 96, C.mut)}
+  ${box(204, 36, 150, 120, "#0E1424", null, 10)}
+  ${[["R", "#FF0000", 255], ["G", "#00FF00", 153], ["B", "#0000FF", 0]].map(([n, c, v], i) => { const x = 218 + i * 46, h = Math.round(v / 255 * 84); return `<rect x="${x}" y="52" width="32" height="84" rx="5" fill="#2A3350"/><rect x="${x}" y="${136 - h}" width="32" height="${h}" rx="5" fill="${c}"/>${T(x + 16, 150, n, { a: "middle", fs: 12, b: 1, c: "#fff" })}${T(x + 16, 176, String(v), { a: "middle", fs: 13, b: 1, c: C.ink })}`; }).join("")}
+  ${ARR(360, 96, 384, 96, C.mut)}${box(390, 66, 40, 60, "#FF9900", "#16213A", 6)}
+  ${T(220, 204, "rgb(255, 153, 0) = oranžová", { a: "middle", fs: 13, b: 1, mono: 1, c: C.amb })}
+  ${T(220, 222, "Každé svetielko má jas od 0 (nesvieti) do 255 (naplno).", { a: "middle", fs: 11.5, c: C.mut })}`, "Pixel s tromi svetielkami"),
+  "Pixel obrazovky má tri svetielka <b>R</b>, <b>G</b>, <b>B</b>. Ich jas udávajú tri čísla.");
+const FIG_LEVELS = fig(SV(440, 186, `
+  ${T(220, 22, "Viac svetla = svetlejšia farba", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[0, 64, 128, 192, 255].map((v, i) => `<rect x="${20 + i * 82}" y="36" width="72" height="44" rx="8" fill="rgb(0,0,${v})" stroke="${C.line}"/>${T(56 + i * 82, 96, "B = " + v, { a: "middle", fs: 11.5, b: 1 })}`).join("")}
+  ${[0, 64, 128, 192, 255].map((v, i) => `<rect x="${20 + i * 82}" y="110" width="72" height="44" rx="8" fill="rgb(${v},${v},${v})" stroke="${C.line}"/>${T(56 + i * 82, 172, `${v}, ${v}, ${v}`, { a: "middle", fs: 11.5, b: 1 })}`).join("")}`, "Úrovne jasu"),
+  "Hore svieti iba modré svetielko, čoraz silnejšie. Dole sú všetky tri <b>rovnaké</b>, preto vzniká čierna, sivá až biela.");
+/* M2 */
+const FIG_HEX = fig(SV(440, 214, `
+  ${T(220, 22, "Ako čítať zápis HEX", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${T(72, 78, "#", { a: "middle", fs: 34, b: 1, mono: 1, c: C.mut })}
+  ${[["33", "#C62828", "R", 51], ["66", "#12805A", "G", 102], ["CC", "#1E6FD9", "B", 204]].map(([p, c, n, v], i) => { const x = 96 + i * 88; return `${box(x, 44, 76, 46, "#fff", c, 10)}${T(x + 38, 77, p, { a: "middle", fs: 26, b: 1, mono: 1, c })}${T(x + 38, 110, n, { a: "middle", fs: 13, b: 1, c })}${ARR(x + 38, 118, x + 38, 140, c, 2)}${T(x + 38, 160, String(v), { a: "middle", fs: 14, b: 1 })}`; }).join("")}
+  ${box(370, 44, 56, 120, "#3366CC", "#16213A", 8)}
+  ${T(220, 194, "dve šestnástkové cifry = 1 bajt = 0 – 255", { a: "middle", fs: 12, b: 1, c: C.mut })}`, "Rozklad kódu #3366CC"),
+  "Kód <b>#3366CC</b> sa delí na tri dvojice: červená 33, zelená 66, modrá CC.");
+const FIG_LADDER = fig(SV(440, 150, `
+  ${T(220, 22, "Rebrík jasu jednej zložky", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${["00", "40", "80", "C0", "FF"].map((p, i) => `<rect x="${20 + i * 82}" y="38" width="72" height="50" rx="8" fill="#${p}0000" stroke="${C.line}"/>${T(56 + i * 82, 106, `#${p}0000`, { a: "middle", fs: 12, b: 1, mono: 1 })}${T(56 + i * 82, 124, ["nesvieti", "slabo", "polovica", "silno", "naplno"][i], { a: "middle", fs: 11, c: C.mut })}`).join("")}`, "Rebrík jasu"),
+  "Čím väčšia dvojica, tým viac svetla. <b>80</b> je zhruba polovica z <b>FF</b>.");
+/* M3 */
+const FIG_ABSORB = fig(SV(440, 214, `
+  ${T(220, 22, "Atrament svetlo pohlcuje", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${EM(38, 62, "☀️", 30)}${T(38, 92, "biele svetlo", { a: "middle", fs: 11, b: 1, c: C.mut })}
+  ${ARR(66, 50, 196, 158, "#E53935", 3)}${ARR(66, 64, 148, 128, "#2E9E44", 3)}${ARR(66, 78, 186, 160, "#1E6FD9", 3)}
+  ${T(156, 140, "✕", { a: "middle", fs: 20, b: 1, c: "#2E9E44" })}${T(118, 158, "zelenú pohltí", { a: "end", fs: 11.5, b: 1, c: "#2E9E44" })}
+  <rect x="60" y="172" width="320" height="16" rx="3" fill="#fff" stroke="#9AA6B8"/><rect x="140" y="162" width="160" height="12" rx="6" fill="#EC008C"/>
+  ${T(220, 206, "papier s purpurovým (M) atramentom", { a: "middle", fs: 11.5, b: 1 })}
+  ${ARR(228, 158, 318, 70, "#E53935", 3)}${ARR(240, 160, 330, 84, "#1E6FD9", 3)}
+  ${T(344, 52, "odrazí sa", { fs: 11.5, b: 1 })}${T(344, 68, "červená", { fs: 11.5, c: "#E53935", b: 1 })}${T(344, 84, "+ modrá", { fs: 11.5, c: "#1E6FD9", b: 1 })}
+  ${box(346, 96, 64, 30, "#FF00FF", "#16213A", 6)}`, "Pohlcovanie svetla atramentom"),
+  "Purpurový atrament <b>pohltí</b> zelenú zložku svetla. Do oka sa odrazí červená a modrá, preto vidíme purpurovú.");
+const FIG_CART = fig(SV(440, 196, `
+  ${T(220, 22, "Štyri atramenty tlačiarne", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[["C", "#00AEEF", "azúrová"], ["M", "#EC008C", "purpurová"], ["Y", "#FFF200", "žltá"], ["K", "#1A1A1A", "čierna"]].map(([l, c, n], i) => { const x = 14 + i * 58; return `<rect x="${x}" y="40" width="46" height="72" rx="6" fill="${c}" stroke="#16213A" stroke-width="1.6"/><rect x="${x + 12}" y="32" width="22" height="10" rx="2" fill="#566381"/>${T(x + 23, 84, l, { a: "middle", fs: 22, b: 1, c: l === "Y" ? "#16213A" : "#fff" })}${T(x + 23, 130, n, { a: "middle", fs: 10.5, b: 1 })}`; }).join("")}
+  <circle cx="320" cy="84" r="40" fill="#EC008C" opacity=".95"/><circle cx="370" cy="84" r="40" fill="#FFF200" style="mix-blend-mode:multiply"/>
+  <path d="M345 52.4 A40 40 0 0 1 345 115.6 A40 40 0 0 1 345 52.4z" fill="#ED1C24"/>
+  ${T(300, 146, "M", { a: "middle", fs: 13, b: 1 })}${T(392, 146, "Y", { a: "middle", fs: 13, b: 1 })}${T(345, 168, "M + Y = červená", { a: "middle", fs: 12.5, b: 1, c: "#C62828" })}
+  ${T(220, 188, "Hodnoty sa udávajú v percentách: 0 % – 100 % atramentu.", { a: "middle", fs: 11.5, c: C.mut })}`, "Atramenty CMYK"),
+  "Prekrytím dvoch atramentov vznikne nová, <b>tmavšia</b> farba.");
+/* M4 */
+function wheelPaths(cx, cy, r1, r2, extra) { let s = ""; for (let k = 0; k < 12; k++) { const a1 = (k * 30 - 15) * Math.PI / 180, a2 = (k * 30 + 15) * Math.PI / 180, p = (a, r) => `${(cx + r * Math.sin(a)).toFixed(1)} ${(cy - r * Math.cos(a)).toFixed(1)}`;
+  s += `<path d="M${p(a1, r1)} L${p(a1, r2)} A${r2} ${r2} 0 0 1 ${p(a2, r2)} L${p(a2, r1)} A${r1} ${r1} 0 0 0 ${p(a1, r1)}Z" fill="${hsl(k * 30, 100, 50)}" stroke="#fff" stroke-width="2" ${extra ? extra(k) : ""}/>`; } return s; }
+const FIG_WHEEL = fig(SV(440, 236, `
+  ${T(220, 22, "Odtieň H = uhol na farebnom kruhu", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${wheelPaths(130, 142, 38, 84)}
+  ${T(130, 147, "H", { a: "middle", fs: 18, b: 1, c: C.mut })}
+  ${T(130, 50, "0°", { a: "middle", fs: 12.5, b: 1 })}
+  <path d="M160 52 A94 94 0 0 1 206 84" fill="none" stroke="${C.mut}" stroke-width="2"/>${ARR(200, 77, 210, 89, C.mut, 2)}
+  ${box(250, 60, 180, 140, "#fff", C.line, 10)}
+  ${[[0, "červená"], [120, "zelená"], [240, "modrá"], [360, "znova červená"]].map(([h, n], i) => `<rect x="262" y="${76 + i * 30}" width="22" height="18" rx="4" fill="${hsl(h, 100, 50)}"/>${T(292, 90 + i * 30, `${h}° = ${n}`, { fs: 12, b: 1 })}`).join("")}`, "Farebný kruh"),
+  "Odtieň <b>H</b> sa meria v stupňoch od 0° hore, v smere hodinových ručičiek (šípka).");
+const FIG_SL = fig(SV(440, 190, `
+  ${T(220, 22, "Sýtosť S a svetlosť L (odtieň H = 200°)", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[0, 25, 50, 75, 100].map((v, i) => `<rect x="${20 + i * 82}" y="36" width="72" height="36" rx="8" fill="${hsl(200, v, 50)}" stroke="${C.line}"/>${T(56 + i * 82, 88, `S ${v} %`, { a: "middle", fs: 11.5, b: 1 })}`).join("")}
+  ${[0, 25, 50, 75, 100].map((v, i) => `<rect x="${20 + i * 82}" y="104" width="72" height="36" rx="8" fill="${hsl(200, 100, v)}" stroke="${C.line}"/>${T(56 + i * 82, 156, `L ${v} %`, { a: "middle", fs: 11.5, b: 1 })}`).join("")}
+  ${T(220, 180, "S: od sivej po čistú farbu · L: od čiernej cez čistú farbu po bielu", { a: "middle", fs: 11, c: C.mut })}`, "Sýtosť a svetlosť"),
+  "Hore sa mení iba <b>sýtosť</b>, dole iba <b>svetlosť</b>. Odtieň ostáva rovnaký.");
+/* M5 */
+const FIG_DEPTH = fig(SV(440, 200, `
+  ${T(220, 22, "n bitov na pixel = 2ⁿ farieb", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[[1, ["#000000", "#FFFFFF"]], [2, ["#000000", "#555555", "#AAAAAA", "#FFFFFF"]], [3, [0, 1, 2, 3, 4, 5, 6, 7].map(i => hsl(i * 45, 80, 50))]].map(([b, cs], i) => { const x = 14 + i * 142; return `${box(x, 38, 128, 126, "#fff", C.line, 10)}${T(x + 64, 60, `${b} bit${b === 1 ? "" : "y"}`, { a: "middle", fs: 13, b: 1 })}${cs.map((c, j) => { const n = cs.length, cols = n <= 2 ? 2 : 4, w = 24, gx = x + 64 - cols * (w + 4) / 2 + 2; return `<rect x="${gx + (j % cols) * (w + 4)}" y="${74 + Math.floor(j / cols) * 28}" width="${w}" height="${w}" rx="4" fill="${c}" stroke="#9AA6B8"/>`; }).join("")}${T(x + 64, 152, `2${["¹", "²", "³"][i]} = ${cs.length} farb${cs.length === 2 ? "y" : cs.length === 4 ? "y" : "ieb"}`, { a: "middle", fs: 12.5, b: 1, c: C.acc })}`; }).join("")}
+  ${T(220, 190, "Každý bit navyše zdvojnásobí počet farieb.", { a: "middle", fs: 12, c: C.mut })}`, "Farebná hĺbka"),
+  "S <b>každým bitom</b> navyše sa počet farieb zdvojnásobí.");
+const PAL_EX = ["#CFE6FF", "#FFD23F", "#16213A", "#F28C28"], IMG_EX = [0, 1, 1, 0, 1, 2, 2, 1, 1, 3, 3, 1, 0, 1, 1, 0];
+const FIG_PAL = fig(SV(440, 200, `
+  ${T(220, 22, "Obrázok s paletou", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${box(12, 36, 130, 150, "#fff", C.line, 10)}${T(77, 56, "paleta", { a: "middle", fs: 12, b: 1, c: C.mut })}
+  ${PAL_EX.map((c, i) => `${T(36, 82 + i * 28, String(i), { a: "middle", fs: 14, b: 1, mono: 1 })}<rect x="52" y="${66 + i * 28}" width="72" height="22" rx="4" fill="${c}" stroke="#9AA6B8"/>`).join("")}
+  ${box(152, 36, 136, 150, C.bg, null, 10)}${T(220, 56, "pixely = čísla", { a: "middle", fs: 12, b: 1, c: C.mut })}
+  ${IMG_EX.map((v, i) => `<rect x="${168 + (i % 4) * 26}" y="${66 + Math.floor(i / 4) * 26}" width="24" height="24" fill="#fff" stroke="#C9D1DF"/>${T(180 + (i % 4) * 26, 83 + Math.floor(i / 4) * 26, String(v), { a: "middle", fs: 12.5, b: 1, mono: 1 })}`).join("")}
+  ${ARR(292, 116, 312, 116, C.mut)}
+  ${box(316, 36, 114, 150, "#fff", C.line, 10)}${T(373, 56, "výsledok", { a: "middle", fs: 12, b: 1, c: C.mut })}
+  ${IMG_EX.map((v, i) => `<rect x="${321 + (i % 4) * 26}" y="${66 + Math.floor(i / 4) * 26}" width="26" height="26" fill="${PAL_EX[v]}"/>`).join("")}`, "Paleta a pixely"),
+  "Pixel neobsahuje farbu, ale iba jej <b>číslo</b> v palete. Farbu nájde počítač v tabuľke.");
+/* M6 */
+const FIG_FOUR = fig(SV(440, 200, `
+  ${T(220, 22, "Jedna farba, štyri zápisy", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${box(170, 44, 100, 100, "#8000FF", "#16213A", 14)}
+  ${[["RGB", "rgb(128, 0, 255)", 14, 60], ["HEX", "#8000FF", 14, 128], ["HSL", "hsl(270, 100%, 50%)", 284, 60], ["CMYK", "C50 M100 Y0 K0 (%)", 284, 128]].map(([n, v, x, y]) => `${box(x, y - 16, 142, 50, "#fff", C.line, 8)}${T(x + 10, y + 2, n, { fs: 11.5, b: 1, c: C.mut })}${T(x + 10, y + 22, v, { fs: 11.5, b: 1, mono: 1 })}`).join("")}
+  ${T(220, 176, "fialová na obrazovke aj na papieri", { a: "middle", fs: 12, b: 1, c: C.pur })}`, "Jedna farba v štyroch zápisoch"),
+  "Tú istú fialovú opíšeš svetlom (<b>RGB</b>, <b>HEX</b>), pocitom (<b>HSL</b>) aj atramentmi (<b>CMYK</b>).");
+const FIG_WEB = fig(SV(440, 210, `
+  ${T(220, 22, "Farby na webovej stránke", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${box(12, 36, 200, 162, "#0F1A2E", null, 10)}
+  ${[["h1 {", "#DCE7FF"], ["  color: #8B0000;", "#FFB86B"], ["}", "#DCE7FF"], ["body {", "#DCE7FF"], ["  background:", "#FFB86B"], ["    #FFF8E1;", "#FFB86B"], ["}", "#DCE7FF"]].map(([l, c], i) => T(24, 60 + i * 19, he(l), { fs: 12, mono: 1, c })).join("")}
+  ${ARR(216, 116, 236, 116, C.mut)}
+  ${box(240, 36, 188, 162, "#FFF8E1", "#9AA6B8", 10)}${T(256, 74, "Môj web", { fs: 20, b: 1, c: "#8B0000" })}
+  ${[0, 1, 2, 3].map(i => `<rect x="256" y="${92 + i * 16}" width="${150 - i * 18}" height="8" rx="4" fill="#C9C2AE"/>`).join("")}`, "CSS a webová stránka"),
+  "Na webe sa farby zapisujú v <b>CSS</b>. Prehliadač podľa kódu rozsvieti pixely.");
+
+/* ===== M1 – IZBA S OBRAZOVKAMI (úloha 1) ===== */
+const MIXN = ["žltá", "azúrová", "purpurová", "biela"];
+const SCR_W = [
+  { id: "mon", e: "🖥️", n: "Monitor na stole", lit: "RG", a: 0, why: "Červené a zelené svetlo sa sčítajú na <b>žltú</b>. Na monitore tak vznikajú napríklad žlté písmená." },
+  { id: "tel", e: "📱", n: "Mobil na stole", lit: "GB", a: 1, why: "Zelené a modré svetlo dajú spolu <b>azúrovú</b> (tyrkysovú), farbu jasnej morskej vody." },
+  { id: "tv", e: "📺", n: "Televízor na stene", lit: "RB", a: 2, why: "Červené a modré svetlo dajú spolu <b>purpurovú</b>. Na biele by museli svietiť všetky tri svetielka." }
+];
+const SDECOY = { win: "🪟 Okno. Svieti cezeň slnko, ale pixely nemá, farby nevyrába.", poster: "🖼️ Plagát je <b>vytlačený</b> atramentom. Sám nesvieti, iba odráža svetlo z izby.", book: "📚 Knihy sú vytlačené na papieri. Svetielka R, G, B v nich nenájdeš.", lamp: "💡 Lampa svieti, ale iba jedným bielym svetlom. Pixely nemá, obrázok neukáže.", mag: "📰 Časopis je tlačený štyrmi atramentmi. Pod lupou by si videl bodky, nie svetielka.", plant: "🪴 Kvetina je zelená vďaka farbivu v listoch. Nesvieti.", cup: "☕ Hrnček s farebnou potlačou. Pekný, ale svietiť nevie." };
+function pixMini(lit) { return `<div class="mpix" aria-label="Zväčšený pixel">${[["R", "#FF2A2A"], ["G", "#22E04A"], ["B", "#2A6BFF"]].map(([k, c]) => `<span style="background:${lit.includes(k) ? c : "#2A3350"};${lit.includes(k) ? `box-shadow:0 0 12px ${c}` : ""}">${k}</span>`).join("")}</div>`; }
+function roomSVG() {
+  const f = S.sfound;
+  let s = `<rect width="800" height="470" fill="#F3E9DC"/><rect y="380" width="800" height="90" fill="#C9A86A"/><rect y="380" width="800" height="8" fill="#B08D4F"/>
+  <g data-hot="win"><rect x="30" y="40" width="160" height="140" rx="6" fill="#BFE3FF" stroke="#8D6E4F" stroke-width="6"/><line x1="110" y1="40" x2="110" y2="180" stroke="#8D6E4F" stroke-width="5"/><line x1="30" y1="110" x2="190" y2="110" stroke="#8D6E4F" stroke-width="5"/><circle cx="70" cy="74" r="16" fill="#FFE07A"/></g>
+  <g data-hot="poster"><rect x="222" y="44" width="110" height="146" rx="4" fill="#FFF" stroke="#C9B9A0" stroke-width="2"/><rect x="230" y="52" width="94" height="96" fill="#7FC8E8"/><path d="M230 148 L262 100 L284 128 L300 108 L324 148Z" fill="#3E7A4E"/><circle cx="304" cy="72" r="10" fill="#F2C94C"/>${T(277, 174, "KONCERT", { a: "middle", fs: 15, b: 1, c: "#C2187A" })}</g>
+  <rect x="380" y="150" width="130" height="10" rx="3" fill="#8D6E4F"/>
+  <g data-hot="book">${["#C62828", "#2F5BEA", "#E2A23B", "#12805A"].map((c, i) => `<rect x="${390 + i * 18}" y="${102 + (i % 2) * 6}" width="15" height="${48 - (i % 2) * 6}" rx="2" fill="${c}"/>`).join("")}</g>
+  <g data-hot="plant"><path d="M478 150 L474 128 L500 128 L496 150Z" fill="#C0643A"/><path d="M487 128 Q470 104 478 92 Q488 110 487 128 Q492 100 506 96 Q500 118 487 128" fill="#3E9B5E"/></g>
+  <g data-hot="tv"><rect x="540" y="36" width="230" height="140" rx="8" fill="#16213A"/><rect x="550" y="46" width="210" height="120" rx="3" fill="#2A1640"/>
+    <rect x="550" y="46" width="210" height="120" fill="url(#tvg)"/><circle cx="700" cy="86" r="22" fill="#FF4FD8" opacity=".85"/><path d="M560 160 Q620 110 680 150 T760 140 V166 H550Z" fill="#7A2BD8" opacity=".8"/></g>
+  <rect x="180" y="300" width="460" height="16" rx="4" fill="#8D6E4F"/><rect x="200" y="316" width="14" height="64" fill="#6E5139"/><rect x="606" y="316" width="14" height="64" fill="#6E5139"/>
+  <g data-hot="mon"><rect x="300" y="184" width="176" height="108" rx="8" fill="#16213A"/><rect x="308" y="192" width="160" height="88" rx="3" fill="#0E1424"/>
+    <rect x="318" y="204" width="140" height="16" rx="4" fill="#FFE600"/><rect x="318" y="228" width="100" height="10" rx="4" fill="#FFE600" opacity=".8"/><rect x="318" y="246" width="120" height="10" rx="4" fill="#FFE600" opacity=".6"/>
+    <rect x="378" y="292" width="20" height="8" fill="#566381"/></g>
+  <g data-hot="tel"><rect x="512" y="250" width="34" height="50" rx="6" fill="#16213A" transform="rotate(-8 529 275)"/><rect x="516" y="255" width="26" height="40" rx="3" fill="#18E0E8" transform="rotate(-8 529 275)"/></g>
+  <g data-hot="lamp"><path d="M220 300 L236 236 L250 236 L246 300Z" fill="#9AA6B8"/><path d="M214 236 L232 206 L262 206 L274 236Z" fill="#F2C94C" stroke="#B08D4F" stroke-width="2"/><ellipse cx="244" cy="240" rx="34" ry="8" fill="#FFF3B0" opacity=".7"/></g>
+  <g data-hot="mag"><rect x="560" y="284" width="64" height="14" rx="2" fill="#fff" stroke="#9AA6B8" transform="rotate(4 592 291)"/><rect x="566" y="287" width="30" height="8" fill="#EC008C" transform="rotate(4 592 291)"/><rect x="598" y="288" width="20" height="8" fill="#00AEEF" transform="rotate(4 592 291)"/></g>
+  <g data-hot="cup"><rect x="270" y="270" width="22" height="28" rx="4" fill="#fff" stroke="#9AA6B8" stroke-width="2"/><path d="M292 276 Q302 284 292 292" fill="none" stroke="#9AA6B8" stroke-width="3"/><circle cx="281" cy="284" r="6" fill="#F06A5A"/></g>
+  <defs><linearGradient id="tvg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B026FF"/><stop offset="1" stop-color="#FF2E9A"/></linearGradient></defs>`;
+  const HOT = { mon: [388, 238], tel: [529, 275], tv: [655, 106] };
+  SCR_W.forEach(w => { if (f[w.id]) { const [x, y] = HOT[w.id]; s += `<g pointer-events="none"><circle cx="${x}" cy="${y}" r="34" fill="#12805A" opacity=".18"/><circle cx="${x}" cy="${y}" r="34" fill="none" stroke="#12805A" stroke-width="4" stroke-dasharray="7 5"/>${EM(x, y + 10, "✅", 28)}</g>`; } });
+  return SV(800, 470, s, "Izba s rôznymi predmetmi");
+}
+
+/* ===== M2 – CSS s chybami (úloha 4) ===== */
+const CSSL = [
+  { id: "1", t: "h1 { color: #C62828; }", opts: ["h1 { color: C62828; }", "h1 { color: #C6282; }", "h1 { color: #C62G28; }"], why: "Riadok je v poriadku: znak # a šesť šestnástkových cifier." },
+  { id: "2", t: "p { color: #00GG66; }", err: 1, opts: ["p { color: #00CC66; }", "p { color: #00GG6; }", "p { color: 00GG66; }"], why: "Písmeno <b>G</b> nie je šestnástková cifra. Povolené sú iba 0 – 9 a A – F." },
+  { id: "3", t: "body { background: #FFF8E1; }", opts: ["body { background: #FFF8E; }", "body { background: FFF8E1; }", "body { background: #FFF8EI; }"], why: "Riadok je v poriadku, #FFF8E1 je svetlá krémová." },
+  { id: "4", t: "a { color: 0000FF; }", err: 1, opts: ["a { color: #0000FF; }", "a { color: #00FF; }", "a { color: #0000FFF; }"], why: "Na začiatku kódu chýba znak <b>#</b>." },
+  { id: "5", t: ".pixo { color: #3c8; }", opts: ["pixo { color: #3c88; }", ".pixo { color: 3c8; }", ".pixo { color: #3G8; }"], why: "Riadok je v poriadku! <code>#3c8</code> je <b>skrátený zápis</b> kódu <code>#33cc88</code> a na veľkosti písmen nezáleží." },
+  { id: "6", t: ".btn { background: #12AB5; }", err: 1, opts: [".btn { background: #12AB56; }", ".btn { background: 12AB5; }", ".btn { background: #12AB5G; }"], why: "Kód má iba <b>5 cifier</b>. Plný zápis HEX má vždy 6 cifier (alebo skrátene 3)." },
+  { id: "7", t: "footer { color: #FFFFFF; }", opts: ["footer { color: #FFFFF; }", "footer { color: FFFFFF; }", "footer { color: #FFFFFG; }"], why: "Riadok je v poriadku, #FFFFFF je biela." }
+];
+
+/* ===== M3 – tlačiareň (úloha 5) ===== */
+const INKS = [["C", "#00AEEF", "azúrová"], ["M", "#EC008C", "purpurová"], ["Y", "#FFF200", "žltá"], ["K", "#1A1A1A", "čierna"]];
+const INKMIX = { "": "#FFFFFF", C: "#00AEEF", M: "#EC008C", Y: "#FFF200", CM: "#2E3192", CY: "#00A651", MY: "#ED1C24", CMY: "#3B2A1F" };
+const inkKey = s => ["C", "M", "Y", "K"].filter(k => (s || "").includes(k)).join("");
+const inkColor = s => { const k = inkKey(s); return k.includes("K") ? "#1A1A1A" : INKMIX[k]; };
+const INK_T = [
+  { id: "g", n: "zelenú", set: "CY", why: "Azúrová pohltí červenú, žltá pohltí modrú. Odrazí sa iba zelená: <b>C + Y = zelená</b>." },
+  { id: "b", n: "modrú", set: "CM", why: "Azúrová pohltí červenú, purpurová pohltí zelenú. Odrazí sa iba modrá: <b>C + M = modrá</b>." }
+];
+
+/* ===== M4 – farebný kruh (úloha 7) ===== */
+const WH_T = [{ id: "a", h: 60, why: "60° leží presne v polovici medzi červenou (0°) a zelenou (120°). Je to <b>žltá</b>." }, { id: "b", h: 180, why: "180° leží v polovici medzi zelenou (120°) a modrou (240°), na opačnej strane kruhu ako červená. Je to <b>azúrová</b>." }];
+
+/* ===== M5 – maľovanie podľa palety (úloha 10) ===== */
+const PAL = [{ c: "#DCEBFF", n: "svetlomodrá" }, { c: "#E53935", n: "červená" }, { c: "#43A047", n: "zelená" }, { c: "#6D4C41", n: "hnedá" }];
+const IMG = [0, 0, 0, 3, 2, 0, 0, 1, 1, 3, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0];
+const bin2 = v => v.toString(2).padStart(2, "0");
+
+/* ===== ÚLOHY ===== */
+const swOpt = c => `<span class="sw" style="background:${c}"></span>`;
+const TASKS = {
+  screens: { id: "screens", type: "screens", max: 3 },
+  rgbsort: { id: "rgbsort", type: "sort", mono: 1, bins: [{ id: "r", t: "🔴 prevláda červená", bg: "#FBE3E0", c: "#B3261E" }, { id: "g", t: "🟢 prevláda zelená", bg: "#DDF3EA", c: "#12805A" }, { id: "b", t: "🔵 prevláda modrá", bg: "#E3EEFC", c: "#1E6FD9" }], items: [
+    { id: "1", t: "rgb(220, 40, 60)", sw: "rgb(220,40,60)", a: "r" }, { id: "2", t: "rgb(180, 110, 30)", sw: "rgb(180,110,30)", a: "r" },
+    { id: "3", t: "rgb(30, 160, 70)", sw: "rgb(30,160,70)", a: "g" }, { id: "4", t: "rgb(150, 210, 40)", sw: "rgb(150,210,40)", a: "g" },
+    { id: "5", t: "rgb(40, 90, 210)", sw: "rgb(40,90,210)", a: "b" }, { id: "6", t: "rgb(120, 60, 190)", sw: "rgb(120,60,190)", a: "b" }] },
+  hexmatch: { id: "hexmatch", type: "cards", items: [
+    { id: "A", vis: "#FF8000", opts: ["#FF8000", "#80FF00", "#0080FF", "#FF0080"], a: 0, why: "Červená naplno (FF), zelená do polovice (80), modrá nesvieti (00): <b>oranžová</b>." },
+    { id: "B", vis: "#008080", opts: ["#008080", "#800080", "#808000", "#00FFFF"], a: 0, why: "Červená nesvieti, zelená a modrá do polovice: <b>tmavá tyrkysová</b>. #00FFFF by bola jasná azúrová." },
+    { id: "C", vis: "#C0C0C0", opts: ["#C0C0C0", "#404040", "#C0C000", "#00C0C0"], a: 0, why: "Tri rovnaké a dosť veľké dvojice dávajú <b>svetlosivú</b>. #404040 by bola tmavosivá." }] },
+  cssbugs: { id: "cssbugs", type: "bugs", max: 3 },
+  ink: { id: "ink", type: "ink", max: 2 },
+  comic: { id: "comic", type: "comic", panels: [
+    { w: "e", mood: "sad", t: "Pixo, pomoc! 😩 Vytlačila som plagát s mojím obrázkom. Na monitore svietil krásne, ale na papieri je <b>čierne pozadie tmavohnedé</b>!" },
+    { w: "p", q: "1", opts: ["V tlačiarni ti asi došla čierna kazeta K. Tlačiareň skúša čiernu namiešať z C + M + Y a z toho vyjde iba tmavohnedá.", "Tlačiareň zámerne tlačí čiernu ako tmavohnedú, aby ušetrila atrament.", "Monitor poslal tlačiarni farbu #000000 a tlačiareň kódy HEX nevie čítať, tak si vybrala hnedú.", "Čierna farba na papieri časom zhnedne, lebo atrament pohltí všetko svetlo."], a: 0, why: "Zmes azúrovej, purpurovej a žltej nikdy nepohltí všetko svetlo, vyjde z nej <b>tmavohnedá</b>. Preto má tlačiareň zvlášť čierny atrament <b>K</b>." },
+    { w: "e", t: "Aha, kazeta K je naozaj prázdna! A ešte jedna vec: prečo sú aj ostatné farby na papieri <b>bledšie</b> ako na monitore?" },
+    { w: "p", q: "2", opts: ["Monitor farby vyžaruje svetlom (RGB). Papier svetlo iba odráža a atramenty (CMYK) niektoré žiarivé farby obrazovky nedokážu vytvoriť.", "Tlačiareň zmenší farebnú hĺbku obrázka na 1 bit, aby tlač bola rýchlejšia.", "Papier pohltí polovicu bitov z každého pixelu, preto sú farby bledšie.", "Na papieri je viac svetla ako na monitore, a to farby vybieli."], a: 0, why: "Obrazovka <b>svieti</b> a sčítava svetlá, papier iba <b>odráža</b> svetlo, ktoré atrament nepohltil. Preto sú výtlačky vždy o niečo tlmenejšie." },
+    { w: "p", t: "Novú čiernu kazetu do tlačiarne a plagát bude ako nový, Ema! 🦎🖨️" }] },
+  wheel: { id: "wheel", type: "wheel", max: 2 },
+  lorder: { id: "lorder", type: "order", max: 2, items: [{ id: "a", t: "hsl(120, 60%, 15%)", sw: hsl(120, 60, 15) }, { id: "b", t: "hsl(30, 90%, 35%)", sw: hsl(30, 90, 35) }, { id: "c", t: "hsl(0, 80%, 60%)", sw: hsl(0, 80, 60) }, { id: "d", t: "hsl(240, 70%, 85%)", sw: hsl(240, 70, 85) }] },
+  depth: { id: "depth", type: "mc", qs: [
+    { id: "1", q: "Pixo kreslí obrázok, v ktorom potrebuje <b>30 rôznych farieb</b>. Aká je <b>najmenšia</b> farebná hĺbka, ktorá stačí?", opts: ["5 bitov", "4 bity", "30 bitov", "8 bitov"], a: 0, why: "4 bity dajú iba 2⁴ = 16 farieb, to nestačí. 5 bitov dá 2⁵ = <b>32 farieb</b>, to už stačí. 8 bitov by stačilo tiež, ale nie je to najmenej." },
+    { id: "2", q: "Koľko rôznych farieb môže mať obrázok s farebnou hĺbkou <b>4 bity</b>?", opts: ["16", "8", "4", "32"], a: 0, why: "2⁴ = 2 · 2 · 2 · 2 = <b>16</b> farieb." }] },
+  paint: { id: "paint", type: "paint", max: 2 },
+  bytes: { id: "bytes", type: "mc", qs: [
+    { id: "1", q: "Obrázok má rozmery <b>20 × 10 pixelov</b> a používa paletu s 256 farbami (8 bitov na pixel). Koľko bajtov zaberú jeho pixely (bez samotnej palety)?", opts: ["200 B", "600 B", "1 600 B", "25 B"], a: 0, why: "20 · 10 = 200 pixelov a každý zaberá 8 bitov = <b>1 bajt</b>. Spolu <b>200 B</b>. 600 B by mal 24-bitový obrázok, 1 600 je počet bitov." }] },
+  usesort: { id: "usesort", type: "sort", bins: [{ id: "r", t: "🖥️ RGB alebo HEX", bg: "#E3EEFC", c: "#1E6FD9" }, { id: "c", t: "🖨️ CMYK", bg: "#FCE4F1", c: "#A3105F" }, { id: "h", t: "🎨 HSL", bg: "#DDF3EA", c: "#12805A" }], items: [
+    { id: "1", t: "Nastavuješ farbu nadpisu na webovej stránke v CSS.", a: "r" }, { id: "2", t: "Pripravuješ leták, ktorý pôjde do tlačiarne.", a: "c" },
+    { id: "3", t: "V grafickom programe chceš ten istý odtieň, len o kúsok svetlejší.", a: "h" }, { id: "4", t: "Vo Worde zadávaš farbu písma tromi číslami 0 – 255.", a: "r" }] },
+  swatch: { id: "swatch", type: "mc", pics: 1, qs: [
+    { id: "1", q: "Ktorá vzorka má farbu <code>#FFC0CB</code>?", opts: [swOpt("#FFC0CB"), swOpt("#C0CBFF"), swOpt("#C0FFCB"), swOpt("#CB2040")], a: 0, why: "Červená naplno (FF), zelená aj modrá silné (C0, CB). Prevláda červená a farba je veľmi svetlá: <b>ružová</b>." }] },
+  lighter: { id: "lighter", type: "mc", mono: 1, qs: [
+    { id: "1", q: "Pixo má farbu <code>#204080</code> (tmavomodrá). Ktorý kód je <b>svetlejšia</b> verzia tej istej modrej?", opts: ["#4080FF", "#102040", "#802040", "#204040"], a: 0, why: "Všetky tri dvojice sa zdvojnásobili (20 → 40, 40 → 80, 80 → FF). Pomer zložiek ostal rovnaký, len je viac svetla. #102040 je tmavšia." }] },
+  camo: { id: "camo", type: "camo", qs: [{ id: "1", opts: ["#2E8B57", "#8B2E57", "#572E8B", "#2E578B"], a: 0, why: "List je zelený, preto musí byť najväčšia <b>prostredná</b> dvojica (zelená): <b>#2E8B57</b>. Pri ostatných kódoch je najväčšia červená alebo modrá." }] }
+};
+const THEORY = {
+  m1: ["Obrazovka skladá každý pixel z troch svetiel: <b>R</b> červená, <b>G</b> zelená, <b>B</b> modrá.", "<b>Aditívne miešanie</b>: svetlá sa sčítavajú, viac svetla = svetlejšia farba.", "Každá zložka má <b>8 bitov</b>, teda hodnotu <b>0 – 255</b>. Pixel má spolu <b>24 bitov</b>.", "rgb(0, 0, 0) = <b>čierna</b>, rgb(255, 255, 255) = <b>biela</b>, rovnaké zložky = <b>sivá</b>.", "Najväčšia zložka určuje, ktorá farba <b>prevláda</b>."],
+  m2: ["Zápis <b>#RRGGBB</b>: znak # a 6 šestnástkových cifier (0 – 9, A – F).", "Každá zložka má <b>dve cifry</b>: 00 = nesvieti, 80 ≈ polovica, FF = naplno.", "Poradie je vždy <b>červená, zelená, modrá</b>.", "Zápis HEX používajú webové stránky v <b>CSS</b>.", "Skrátený zápis: <b>#F90 = #FF9900</b>. Na veľkosti písmen nezáleží."],
+  m3: ["Tlačiareň používa model <b>CMYK</b>: azúrová, purpurová, žltá a čierna.", "<b>Subtraktívne miešanie</b>: atrament časť svetla <b>pohltí</b>, viac atramentu = tmavšia farba.", "Papier sám nesvieti, iba <b>odráža</b> svetlo, ktoré atrament nepohltil.", "Hodnoty CMYK sa udávajú v <b>percentách</b> 0 – 100 %.", "Biely papier bez atramentu = <b>biela</b> farba."],
+  m4: ["<b>HSL</b>: odtieň H, sýtosť S, svetlosť L.", "Odtieň <b>H</b> je uhol na farebnom kruhu <b>0° – 360°</b>: 0° červená, 120° zelená, 240° modrá.", "Sýtosť <b>S</b>: 0 % = sivá, 100 % = najčistejšia farba.", "Svetlosť <b>L</b>: 0 % = čierna, 50 % = čistá farba, 100 % = biela.", "Zápis: hsl(200, 100%, 50%)."],
+  m5: ["<b>Farebná hĺbka</b> = počet bitov na pixel. n bitov = <b>2ⁿ</b> farieb.", "1 bit = 2 farby, 8 bitov = 256 farieb, 24 bitov ≈ 16,7 milióna farieb.", "<b>32 bitov</b> = RGB + 8 bitov priehľadnosti (kanál <b>alfa</b>, RGBA).", "<b>Paleta</b> je tabuľka farieb. Pixel obsahuje iba <b>číslo farby</b>.", "24-bitový pixel zaberá <b>3 bajty</b>, pixel s paletou 256 farieb iba <b>1 bajt</b>."],
+  m6: ["Tú istú farbu môžeš zapísať v <b>RGB</b>, <b>HEX</b>, <b>HSL</b> aj <b>CMYK</b>.", "Pred výberom zápisu sa opýtaj: bude farba <b>svietiť</b>, alebo sa bude <b>tlačiť</b>?", "Svetlejšia farba má v RGB aj HEX <b>väčšie</b> čísla, tmavšia menšie.", "Grafické programy majú okno <b>výberu farby</b>, ktoré ukáže RGB, HEX aj HSL naraz."]
+};
+
+/* ===== ENGINE ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max || (T.qs ? T.qs.length : T.items ? T.items.length : T.panels ? T.panels.filter(p => p.q).length : 0); }
+/* triedenie a poradie: 1 ⭐ za každé 2 správne kartičky */
+["rgbsort", "usesort"].forEach(k => { TASKS[k].max = Math.floor(TASKS[k].items.length / 2); });
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return { v: 1, attempt: 1, early: false, confirmEarly: false, name: "", cls: CLASS_DEFAULT, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, sel: {}, msg: {}, sfound: {}, sorder: [], smsg: "" }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
+const NSTOP = STEPS.length - 2;
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
+const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
+const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 2.2 Kódovanie farieb</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
+function checkBar(T, ready, hint, label) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+}
+const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
+
+/* výber odpovede (aj s obrázkami) */
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, Q = T.qs;
+  const qs = T.keep ? Q : ord(T.id + ":q", Q.map(q => q.id)).map(id => Q.find(q => q.id === id));
+  return qs.map((q, qi) => { const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend>${Q.length > 1 ? `<span class="qn">${qi + 1}</span>` : ""}<span>${q.q}</span></legend><div class="opts${T.pics ? " pics" : ""}${T.mono ? " codes2" : ""}">${o.map(i => `<button class="${optCls(done, d[q.id], i, q.a)}" data-mc="${T.id}|${q.id}|${i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`).join("")}</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`; }).join("") + checkBar(T, Q.every(q => d[q.id] !== undefined), Q.length > 1 ? "Odpovedz na všetky otázky." : "Vyber odpoveď.");
+}
+/* triedenie do stĺpcov */
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, io = ord(T.id + ":i", T.items.map(x => x.id)), sel = S.sel[T.id];
+  const items = io.map(id => T.items.find(x => x.id === id));
+  const chip = x => { let c = "chip" + (T.mono ? " mono" : ""); if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad"; return `<button class="${c}" data-sti="${T.id}|${x.id}" ${done ? "disabled" : ""}>${x.t}${done && x.sw ? `<span class="dot" style="background:${x.sw}"></span>` : ""}</button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? T.items.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na kartičku a potom na nadpis stĺpca, kam patrí. Kartičku presunieš, keď na ňu klikneš a potom na iný stĺpec. Za každé 2 správne zatriedené kartičky získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(chip).join("") : `<span class="muted" style="font-size:14.5px">Všetky kartičky sú zatriedené.</span>`}</div>
+    <div class="bins${T.bins.length === 2 ? " two" : ""}">${T.bins.map(g => `<div class="bin"><button class="bh" style="background:${g.bg};color:${g.c}" data-stb="${T.id}|${g.id}" ${done ? "disabled" : ""}>${g.t}</button>${items.filter(x => d[x.id] === g.id).map(chip).join("")}</div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === T.items.length ? "good" : "miss"}">Správne zatriedených: <b>${nOk} z ${T.items.length}</b>. ${T.items.filter(x => d[x.id] !== x.a).map(x => `„${x.t}“ → <b>${T.bins.find(b => b.id === x.a).t}</b>`).join(" · ")}${T.mono ? " Pri každom kóde teraz vidíš aj jeho farbu." : ""}</p>` : ""}` +
+    checkBar(T, T.items.every(x => d[x.id]), "Zatrieď všetky kartičky.");
+}
+/* M1 – izba s obrazovkami */
+function screensHTML() {
+  const T = TASKS.screens, done = S.t.screens, d = S.d.screens || {}, nf = SCR_W.filter(w => S.sfound[w.id]).length, all = nf === SCR_W.length;
+  const cards = S.sorder.map(id => SCR_W.find(w => w.id === id)).map(w => { const o = ord("scr:" + w.id, MIXN.map((_, i) => i)), good = done && d[w.id] === w.a;
+    return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd"><span class="e">${w.e}</span><span>${w.n}</span></div>${pixMini(w.lit)}<p class="ins" style="margin:0 0 6px">Na zväčšenom pixeli svietia naplno tieto svetielka. Akú farbu pixel ukazuje?</p>
+      <div class="chips">${o.map(i => `<button class="${optCls(done, d[w.id], i, w.a)}" data-sc="${w.id}|${i}" ${done ? "disabled" : ""}>${MIXN[i]}</button>`).join("")}</div>${done ? `<p class="why ${good ? "good" : "miss"}">${w.why}</p>` : ""}</div>`; });
+  return `<div class="room">${roomSVG()}</div><div class="msg" aria-live="polite">${S.smsg || `Klikaj na veci v izbe. Nájdené zariadenia, ktoré farby vyrábajú svetlom: <b>${nf} z 3</b>.`}</div>
+    ${cards.length ? `<div class="fgrid">${cards.join("")}</div>` : ""}` +
+    (all ? checkBar(T, SCR_W.every(w => d[w.id] !== undefined), "Pri každom zariadení vyber farbu pixelu.") : `<p class="hint muted" style="margin-top:12px">Keď nájdeš všetky 3 zariadenia, pri každom si pozrieš pixel pod lupou a určíš jeho farbu.</p>`);
+}
+/* M2 – vzorky a kódy */
+function cardsHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return `<p class="ins">Ku každej farebnej vzorke vyber jej kód HEX. Pozor, kódy sa líšia iba poradím dvojíc!</p><div class="fgrid">${T.items.map(x => { const o = ord(T.id + ":" + x.id, x.opts.map((_, i) => i)), good = done && d[x.id] === x.a;
+    return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd">🎨 Vzorka ${x.id}</div><div class="swbig" style="background:${x.vis}"></div><div class="chips">${o.map(i => `<button class="${optCls(done, d[x.id], i, x.a)}" style="font-family:var(--mono)" data-cd="${T.id}|${x.id}|${i}" ${done ? "disabled" : ""}>${x.opts[i]}</button>`).join("")}</div>${done ? `<p class="why ${good ? "good" : "miss"}">${x.why}</p>` : ""}</div>`; }).join("")}</div>` +
+    checkBar(T, T.items.every(x => d[x.id] !== undefined), "Vyber kód pri každej vzorke.");
+}
+/* M2 – štýl CSS s chybami */
+function bugsHTML() {
+  const T = TASKS.cssbugs, done = S.t.cssbugs, d = S.d.cssbugs || { sel: [], fix: {} };
+  const lines = CSSL.map(b => { const on = d.sel.includes(b.id); let c = "cl";
+    if (done) { if (b.err) c += on && d.fix[b.id] === 0 ? " ok" : " miss"; else if (on) c += " bad"; } else if (on) c += " on";
+    return `<button class="${c}" data-bl="${b.id}" ${done ? "disabled" : ""}><span class="ln">${b.id}</span><span>${esc(b.t)}</span></button>`; }).join("");
+  const rows = d.sel.slice().sort().map(id => { const b = CSSL.find(x => x.id === id), o = ord("css:" + id, b.opts.map((_, i) => i)), a = b.err ? 0 : -1, good = done && b.err && d.fix[id] === 0;
+    return `<div class="fixrow"><div class="hd">Oprava riadku ${id}: <code>${esc(b.t)}</code> zmeň na</div><div class="chips">${o.map(i => `<button class="${optCls(done, d.fix[id], i, a)}" data-bf="${id}|${i}" ${done ? "disabled" : ""}>${esc(b.opts[i])}</button>`).join("")}</div>${done ? `<p class="why ${good ? "good" : "miss"}">${b.why}</p>` : ""}</div>`; }).join("");
+  const missed = done ? CSSL.filter(b => b.err && !d.sel.includes(b.id)).map(b => `<p class="why miss">Prehliadnutá chyba na riadku ${b.id}: ${b.why}</p>`).join("") : "";
+  return `<p class="ins">V štýle Pixovej webovej stránky sú presne <b>3 chybné riadky</b>. Klikni na ne (opätovným kliknutím označenie zrušíš) a pri každom vyber správnu opravu. Za každú nájdenú a správne opravenú chybu získaš 1 ⭐.</p>
+    <div class="codebox"><div class="wt"><span class="tt">🎨 pixo.css – štýl Pixovej stránky</span><span class="dots">— ▢ ✕</span></div>${lines}</div>${rows}${missed}
+    ${!done ? `<p class="hint muted" style="margin-top:8px">Označené riadky: <b>${d.sel.length} z 3</b></p>` : ""}` +
+    checkBar(T, d.sel.length === 3 && d.sel.every(id => d.fix[id] !== undefined), "Označ presne 3 riadky a pri každom vyber opravu.");
+}
+/* M3 – tlačiareň */
+function inkHTML() {
+  const T = TASKS.ink, done = S.t.ink, d = S.d.ink || {};
+  return `<p class="ins">Pri každej zákazke zapni kazety, ktoré má tlačiareň použiť (ďalším kliknutím kazetu vypneš). Výtlačok uvidíš až po kontrole. Každá správne vytlačená farba = 1 ⭐.</p><div class="inkc">${INK_T.map(x => { const v = inkKey(d[x.id]), good = done && v === x.set;
+    return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd">🖨️ Zákazka: vytlač <b>${x.n}</b></div>
+      <div class="inkrow">${INKS.map(([k, c, n]) => `<button class="ink ${v.includes(k) ? "on" : ""}" data-ik="${x.id}|${k}" ${done ? "disabled" : ""} aria-pressed="${v.includes(k)}"><span class="drop2" style="background:${c}"></span>${k}<small>${n}</small></button>`).join("")}</div>
+      <div class="prow"><div><div class="lbl">Cieľ</div><div class="paper pr" style="background:${INKMIX[x.set]}"></div></div><div><div class="lbl">Výtlačok</div>${done ? `<div class="paper pr" style="background:${inkColor(v)}"></div>` : `<div class="paper">🖨️ ?</div>`}</div></div>
+      <p class="muted" style="font-size:14px;margin:8px 0 0">Zapnuté kazety: <b>${v ? v.split("").join(" + ") : "žiadna"}</b></p>
+      ${done ? `<p class="why ${good ? "good" : "miss"}">${x.why}</p>` : ""}</div>`; }).join("")}</div>` +
+    checkBar(T, INK_T.every(x => inkKey(d[x.id])), "Pri oboch zákazkách zapni aspoň jednu kazetu.", "🖨️ Vytlačiť a skontrolovať");
+}
+/* M3 – komiks */
+function comicHTML() {
+  const T = TASKS.comic, done = S.t.comic, d = S.d.comic || {};
+  const who = { e: ["Ema", EMA], p: ["Pixo", m => PIXO(m)] };
+  return `<div class="comic">${T.panels.map(p => { const [nm, pic] = who[p.w];
+    if (!p.q) return `<div class="panel ${p.w === "p" ? "c" : ""}">${pic(p.mood || (p.w === "p" ? "wow" : ""))}<div class="bub"><div class="nm">${nm}</div>${p.t}</div></div>`;
+    const o = ord("comic:" + p.q, p.opts.map((_, i) => i));
+    return `<div class="panel choice">${pic("")}<div class="bub"><div class="nm">${nm} – vyber, čo odpovie</div><div class="opts">${o.map(i => `<button class="${optCls(done, d[p.q], i, p.a)}" data-cm="${p.q}|${i}" ${done ? "disabled" : ""}>„${p.opts[i]}“</button>`).join("")}</div>${done ? `<p class="why ${d[p.q] === p.a ? "good" : "miss"}">${p.why}</p>` : ""}</div></div>`; }).join("")}</div>` +
+    checkBar(T, T.panels.filter(p => p.q).every(p => d[p.q] !== undefined), "Vyber obe odpovede Pixa.");
+}
+/* M4 – farebný kruh */
+function secD(cx, cy, r1, r2, k) { const a1 = (k * 30 - 15) * Math.PI / 180, a2 = (k * 30 + 15) * Math.PI / 180, p = (a, r) => `${(cx + r * Math.sin(a)).toFixed(1)} ${(cy - r * Math.cos(a)).toFixed(1)}`;
+  return `M${p(a1, r1)} L${p(a1, r2)} A${r2} ${r2} 0 0 1 ${p(a2, r2)} L${p(a2, r1)} A${r1} ${r1} 0 0 0 ${p(a1, r1)}Z`; }
+function wheelHTML() {
+  const T = TASKS.wheel, done = S.t.wheel, d = S.d.wheel || {};
+  return `<p class="ins">Na kruhu sú vyznačené iba <b>0°</b> a smer otáčania. Klikni na diel kruhu, ktorý zodpovedá zadanému odtieňu H. Vybraný diel môžeš zmeniť ďalším kliknutím. Každý správny odtieň = 1 ⭐.</p><div class="whc">${WH_T.map(x => { const sel = d[x.id], good = done && sel !== undefined && sel * 30 === x.h, ck = x.h / 30;
+    let s = ""; for (let k = 0; k < 12; k++) s += `<path d="${secD(110, 118, 40, 96, k)}" fill="${hsl(k * 30, 100, 50)}" stroke="#fff" stroke-width="2" ${done ? "" : `data-wh="${x.id}|${k}"`}/>`;
+    if (sel !== undefined) s += `<path d="${secD(110, 118, 40, 96, sel)}" fill="none" stroke="#16213A" stroke-width="4.5" stroke-linejoin="round" pointer-events="none"/>`;
+    if (done && !good) s += `<path d="${secD(110, 118, 40, 96, ck)}" fill="none" stroke="#12805A" stroke-width="4" stroke-dasharray="6 4" pointer-events="none"/>`;
+    s += `<circle cx="110" cy="118" r="34" fill="${sel !== undefined ? hsl(sel * 30, 100, 50) : "#F5F7FA"}" stroke="#D6DCE6" stroke-width="2" pointer-events="none"/>${sel === undefined ? T2(110, 125, "?", 22) : ""}`;
+    s += `${T2(110, 14, "0°", 13)}<path d="M150 22 A100 100 0 0 1 192 50" fill="none" stroke="#566381" stroke-width="2"/>${ARR(186, 44, 194, 54, "#566381", 2)}`;
+    return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="goal">Nájdi odtieň <b>H = ${x.h}°</b></div>${SV(220, 222, s, "Farebný kruh")}
+      <div class="whsel">Vybraný odtieň: ${sel !== undefined ? `<i style="background:${hsl(sel * 30, 100, 50)}"></i>` : "zatiaľ žiadny"}</div>${done ? `<p class="why ${good ? "good" : "miss"}">${good ? "" : "Správny diel je označený zelenou čiarkovanou čiarou. "}${x.why}</p>` : ""}</div>`; }).join("")}</div>` +
+    checkBar(T, WH_T.every(x => d[x.id] !== undefined), "Vyber odtieň na oboch kruhoch.");
+}
+const T2 = (x, y, s, fs) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}" font-weight="700" fill="#566381" pointer-events="none">${s}</text>`;
+/* M4 – poradie podľa svetlosti */
+function orderHTML(T) {
+  const done = S.t[T.id], seq = S.d[T.id] || [], ids = ord(T.id, T.items.map(x => x.id)), by = Object.fromEntries(T.items.map(x => [x.id, x])), pool = ids.filter(id => !seq.includes(id));
+  const lab = ["najtmavšia", "", "", "najsvetlejšia"];
+  let h = `<p class="ins">Pixo dostal štyri farby v zápise HSL. Zoraď ich od <b>najtmavšej</b> po <b>najsvetlejšiu</b>. Klikaj na kódy v správnom poradí. Kód vrátiš späť, keď naň klikneš v rebríčku. Za každé 2 kódy na správnom mieste získaš 1 ⭐.</p>
+    <ol class="seq">${T.items.map((_, i) => { const id = seq[i]; if (!id) return `<li class="slot2"><span class="n">${i + 1}</span><span class="ph2">${lab[i] || "…"}${i === seq.length ? " · sem príde ďalší kód" : ""}</span></li>`;
+      let c = "slot2"; if (done) c += id === T.items[i].id ? " ok" : " bad"; return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}${done ? `<span class="dot" style="background:${by[id].sw}"></span>` : ""}</button></li>`; }).join("")}</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chip mono" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : `<span class="muted" style="font-size:14.5px">Všetky kódy sú v rebríčku.</span>`}</div>`;
+  if (done) h += `<p class="why ${S.t[T.id].score === T.max ? "good" : "miss"}">O tom, či je farba tmavá alebo svetlá, rozhoduje <b>posledné číslo L</b> (svetlosť), nie odtieň H. Správne poradie: ${T.items.map(x => `<code>${x.t}</code>`).join(" → ")}</p>`;
+  return h + checkBar(T, seq.length === T.items.length, "Ulož do rebríčka všetky 4 kódy.");
+}
+/* M5 – maľovanie podľa palety */
+function paintHTML() {
+  const T = TASKS.paint, done = S.t.paint, d = S.d.paint || { sel: null, cells: IMG.map(() => null) }, nWr = d.cells.filter((v, i) => v !== IMG[i]).length;
+  const cells = IMG.map((v, i) => { const c = d.cells[i], bg = c === null ? "" : `background:${PAL[c].c};color:${lum(PAL[c].c) < 140 ? "#fff" : "#16213A"}`;
+    return `<button class="pc ${done && c !== v ? "wr" : ""}" style="${bg}" data-pc="${i}" ${done ? "disabled" : ""} aria-label="Pixel ${i + 1}: ${bin2(v)}">${bin2(v)}</button>`; }).join("");
+  return `<p class="ins">Pixo uložil malý obrázok s <b>paletou 4 farieb</b>. Každý pixel si pamätá iba <b>2-bitové číslo</b> farby v dvojkovej sústave, ale paleta má čísla v desiatkovej sústave. Vyber farbu v palete a klikaj na pixely. Bez chyby získaš 2 ⭐, s najviac 3 chybami 1 ⭐.</p>
+    <div class="pwrap"><div class="pgrid">${cells}</div><div><div class="pal">${PAL.map((p, i) => `<button class="palb ${d.sel === i && !done ? "on" : ""}" data-pal="${i}" ${done ? "disabled" : ""}><span class="ix">${i}</span><i style="background:${p.c}"></i>${p.n}</button>`).join("")}</div>
+      ${done ? "" : `<div class="row"><button class="ghost" data-pfill ${d.sel === null ? "disabled" : ""}>🪣 Vyplniť prázdne pixely</button><button class="ghost" data-pclr>🧽 Vymazať všetko</button></div><p class="muted" style="font-size:14px;margin-top:8px">${d.sel === null ? "Najprv vyber farbu v palete." : `Maľuješ farbou <b>${d.sel}</b> (${PAL[d.sel].n}).`} Prázdnych pixelov: <b>${d.cells.filter(v => v === null).length}</b>.</p>`}</div></div>
+    ${done ? `<p class="why ${nWr === 0 ? "good" : "miss"}">${nWr === 0 ? "Všetky pixely sú správne! 🍎 " : `Chybných pixelov: <b>${nWr}</b> (označené červeným rámikom). `}Dvojkové čísla: 00 = 0, 01 = 1, 10 = 2, 11 = 3. Vyšlo <b>jablko so stopkou a lístkom</b>.</p>` : ""}` +
+    checkBar(T, d.cells.every(v => v !== null), "Vyfarbi všetkých 36 pixelov.");
+}
+/* M6 – schovaj Pixa */
+function camoHTML() {
+  const T = TASKS.camo, done = S.t.camo, d = S.d.camo || {}, q = T.qs[0], o = ord("camo:1", q.opts.map((_, i) => i)), ch = d["1"];
+  const pc = done ? q.opts[ch] : "#FFFFFF";
+  const svg = SV(340, 220, `<rect width="340" height="220" fill="#EAF4FF"/><path d="M20 200 Q60 40 300 30 Q300 170 120 210 Q60 220 20 200Z" fill="#2E8B57" stroke="#1F5E3B" stroke-width="3"/><path d="M30 196 Q150 120 292 36" fill="none" stroke="#1F5E3B" stroke-width="3"/>
+    ${pixo(110, 70, 1.25, pc, done ? "wow" : "")}${done ? "" : `<text x="262" y="196" text-anchor="middle" font-size="40" font-weight="700" fill="#fff">?</text>`}`, "Pixo na zelenom liste");
+  return `<div class="camo"><div>${svg}</div><div><p style="margin-top:0">Pixo sa chce schovať na <b>zelenom liste</b>. Vyber kód farby, do ktorej sa má prefarbiť, aby s listom splynul. Prefarbí sa až po kontrole!</p>
+    <div class="opts codes2">${o.map(i => `<button class="${optCls(done, ch, i, q.a)}" data-mc="camo|1|${i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`).join("")}</div>${done ? `<p class="why ${ch === q.a ? "good" : "miss"}">${ch === q.a ? "Pixo je takmer neviditeľný! 🦎 " : "Ups, Pixa na liste vidno! "}${q.why}</p>` : ""}</div></div>` +
+    checkBar(T, ch !== undefined, "Vyber kód farby.", "🦎 Prefarbiť a skontrolovať");
+}
+function memo() { const L = THEORY[STEPS[S.cur].id]; return L ? `<section class="memo"><h3>📌 Zapamätaj si</h3><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "🏆 Zobraziť výsledok" : "Ďalšia misia: " + n.title + " ▶"}</button></div>` : ""); }
+
+const VIEWS = {
+  start() {
+    return `<div class="hero"><div><p class="kicker">Informatika · 1. ročník · domáca úloha k hodine 2.2</p><h1>Domáca úloha: Kódovanie farieb</h1>
+      <p style="font-size:18.5px">Ahoj! Som <b>Pixo</b>, chameleón, ktorý sa vie prefarbiť na akúkoľvek farbu. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: svetielka v pixeli, kódy HEX, tlačiareň, farebný kruh, palety a skutočné zadania grafika. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <p class="muted" style="font-size:15.5px">Priprav si papier a pero na pomocné výpočty. Kalkulačku nepotrebuješ.</p>
+      <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
+      <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
+      <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
+      <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Pri známke 1 alebo 2 je domáca úloha hotová, pri známke 3, 4 alebo 5 máš ešte <b>jednu opravu</b>.</div></div>`;
+  },
+  m1() {
+    return banner(1, "Obrazovka nemá farby, má iba svetielka. Zisti, ako z troch svetiel vznikne každá farba.") +
+    say(`Ahoj, som chameleón <b>Pixo</b>! 🦎 Ja sa prefarbujem kožou, ale obrazovky to robia inak: každý pixel má iba <b>tri svetielka</b>. Najprv v mojej izbe nájdi všetky veci, ktoré farby vyrábajú svetlom.`) +
+    `<div class="theory tsplit"><div>
+      <p>Každý <b>pixel</b> obrazovky tvoria tri drobné svetielka: <b>červené (R)</b>, <b>zelené (G)</b> a <b>modré (B)</b>. Z diaľky ich svetlo splynie do jednej farby.</p>
+      <p>Svetlá sa <b>sčítavajú</b>, hovoríme o <b>aditívnom miešaní</b>. Čím viac svetla, tým svetlejšia farba. Keď nesvieti nič, vidíme čiernu.</p>
+      <table class="rtab"><thead><tr><th>Čo</th><th>Bity</th><th>Hodnoty</th></tr></thead><tbody>
+        <tr><td>jedna zložka (R, G alebo B)</td><td><b>8 bitov</b></td><td>0 – 255</td></tr>
+        <tr><td>celý pixel</td><td><b>24 bitov</b></td><td>256 · 256 · 256 = 16 777 216 farieb</td></tr></tbody></table>
+      <p>Farbu zapíšeme tromi číslami v poradí R, G, B, napríklad <code>rgb(255, 153, 0)</code>. Najväčšie z nich prezradí, ktorá farba <b>prevláda</b>.</p>
+    </div><div class="tfigs">${FIG_SUBPIX}${FIG_LEVELS}</div></div>
+    ${VEDEL("Keď na obrazovku mobilu kvapneš malú kvapku vody, zafunguje ako lupa. Uvidíš v nej drobné <b>červené, zelené a modré</b> svetielka, z ktorých sa skladá obraz.")}
+    ${H3(1, "🔍", "nájdi v izbe obrazovky", "screens")}<div class="task">${screensHTML()}</div>
+    ${H3(2, "🗂️", "ktorá farba prevláda?", "rgbsort")}<div class="task">${sortHTML(TASKS.rgbsort)}</div>` + nextBar();
+  },
+  m2() {
+    return banner(2, "Na webe má každá farba svoj kód. Nauč sa ho čítať ako detektív.") +
+    say(`Na webe sa farby píšu ako tajné kódy, napríklad <b>#3366CC</b>. 🔎 Kto ich vie čítať, uvidí farbu skôr, ako ju prehliadač rozsvieti. Poď, rozlúštime ich spolu!`) +
+    `<div class="theory tsplit"><div>
+      <p>Na webových stránkach a v grafických programoch sa farba zapisuje kódom <b>HEX</b> v tvare <code>#RRGGBB</code>. Za znakom # nasledujú tri dvojice šestnástkových cifier: <b>červená, zelená a modrá</b>.</p>
+      <p>Každá dvojica je jeden bajt s hodnotou <b>00 – FF</b> (0 – 255). Povolené cifry sú iba <b>0 – 9</b> a <b>A – F</b>.</p>
+      <table class="rtab num"><thead><tr><th>HEX</th><th>R, G, B</th><th>Farba</th></tr></thead><tbody>
+        <tr><td>#000000</td><td>0, 0, 0</td><td>čierna</td></tr>
+        <tr><td>#8B0000</td><td>139, 0, 0</td><td>tmavočervená</td></tr>
+        <tr><td>#3366CC</td><td>51, 102, 204</td><td>stredná modrá</td></tr>
+        <tr><td>#FFE4B5</td><td>255, 228, 181</td><td>svetlá béžová</td></tr></tbody></table>
+      <p>V štýle stránky (<b>CSS</b>) sa kód píše napríklad takto: <code>color: #8B0000;</code>. Prehliadač berie veľké aj malé písmená rovnako a pozná aj <b>skrátený zápis</b> tromi ciframi: <code>#F90</code> znamená <code>#FF9900</code>.</p>
+    </div><div class="tfigs">${FIG_HEX}${FIG_LADDER}</div></div>
+    ${VEDEL("Šestnástková sústava sa na farby hodí výborne. Jeden bajt (8 bitov) sa dá zapísať presne <b>dvomi</b> šestnástkovými ciframi, preto má každá zložka v kóde práve dve cifry.")}
+    ${H3(3, "🎨", "priraď kód k vzorke", "hexmatch")}<div class="task">${cardsHTML(TASKS.hexmatch)}</div>
+    ${H3(4, "🐞", "oprav Pixov štýl CSS", "cssbugs")}<div class="task">${bugsHTML()}</div>` + nextBar();
+  },
+  m3() {
+    return banner(3, "Tlačiareň nesvieti. Farby vznikajú tak, že atrament z bieleho svetla časť uberie.") +
+    say(`Na obrazovke farby svietia, ale na papieri to funguje naopak! 🖨️ Atrament svetlo <b>pohlcuje</b>. Vyber správne kazety a potom pomôž mojej kamarátke Eme s pokazeným plagátom.`) +
+    `<div class="theory tsplit"><div>
+      <p>Tlačiareň nanáša na biely papier <b>atrament</b>. Ten časť svetla <b>pohltí</b> a zvyšok sa odrazí do oka. Hovoríme o <b>subtraktívnom</b> (odčítacom) miešaní: čím viac atramentu, tým tmavšia farba.</p>
+      <table class="rtab"><thead><tr><th>Písmeno</th><th>Atrament</th><th>Zo svetla pohltí</th></tr></thead><tbody>
+        <tr><td><b>C</b></td><td>azúrová (cyan)</td><td>červenú</td></tr>
+        <tr><td><b>M</b></td><td>purpurová (magenta)</td><td>zelenú</td></tr>
+        <tr><td><b>Y</b></td><td>žltá (yellow)</td><td>modrú</td></tr>
+        <tr><td><b>K</b></td><td>čierna (key)</td><td>všetko</td></tr></tbody></table>
+      <p>Hodnoty CMYK sa udávajú v <b>percentách</b> 0 – 100 % podľa toho, koľko atramentu tlačiareň nanesie.</p>
+    </div><div class="tfigs">${FIG_ABSORB}${FIG_CART}</div></div>
+    ${VEDEL("Fotografické tlačiarne mávajú <b>6 aj viac atramentov</b>, napríklad aj svetloazúrový a svetlopurpurový. Jemné odtiene pleti či oblohy potom na fotke nevyzerajú zrnito.")}
+    ${H3(5, "🖨️", "vytlač správnu farbu", "ink")}<div class="task">${inkHTML()}</div>
+    ${H3(6, "💬", "komiks: záhada hnedého plagátu", "comic")}<div class="task">${comicHTML()}</div>` + nextBar();
+  },
+  m4() {
+    return banner(4, "Grafici často nehovoria „koľko červenej“, ale „aký odtieň, aký sýty a aký svetlý“.") +
+    say(`Keď sa prefarbujem, nerozmýšľam v číslach R, G, B. 🌈 Najprv si vyberiem <b>odtieň</b> na farebnom kruhu a potom, aký má byť <b>sýty</b> a <b>svetlý</b>. Presne tak funguje model HSL.`) +
+    `<div class="theory tsplit"><div>
+      <p>Model <b>HSL</b> opisuje farbu tak, ako ju vníma človek. Používa tri údaje:</p>
+      <table class="rtab"><thead><tr><th>Písmeno</th><th>Význam</th><th>Rozsah</th></tr></thead><tbody>
+        <tr><td><b>H</b></td><td>odtieň (hue), uhol na farebnom kruhu</td><td>0° – 360°</td></tr>
+        <tr><td><b>S</b></td><td>sýtosť (saturation)</td><td>0 % sivá – 100 % čistá farba</td></tr>
+        <tr><td><b>L</b></td><td>svetlosť (lightness)</td><td>0 % čierna – 50 % čistá farba – 100 % biela</td></tr></tbody></table>
+      <p>Napríklad <code>hsl(200, 100%, 50%)</code> je sýta nebeská modrá. Keď zmeníš iba L, dostaneš <b>svetlejší alebo tmavší</b> variant tej istej farby. Preto grafici HSL radi používajú.</p>
+    </div><div class="tfigs">${FIG_WHEEL}${FIG_SL}</div></div>
+    ${VEDEL("Farby dúhy prvý usporiadal do <b>kruhu</b> Isaac Newton vo svojej knihe o optike z roku 1704. Koniec dúhy (fialovú) spojil so začiatkom (červenou).")}
+    ${H3(7, "🎯", "nájdi odtieň na kruhu", "wheel")}<div class="task">${wheelHTML()}</div>
+    ${H3(8, "🔦", "od najtmavšej po najsvetlejšiu", "lorder")}<div class="task">${orderHTML(TASKS.lorder)}</div>` + nextBar();
+  },
+  m5() {
+    return banner(5, "Koľko bitov treba na farbu a čo je paleta? Vypočítaš aj namaľuješ.") +
+    say(`Nie každý obrázok potrebuje 16 miliónov farieb. 🧮 Keď má obrázok farieb málo, stačí mu <b>paleta</b> a pixely si pamätajú iba <b>číslo farby</b>. Ušetrí sa tak veľa miesta.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Farebná hĺbka</b> je počet bitov, ktorými zapíšeme farbu jedného pixelu. S n bitmi zapíšeme <b>2ⁿ</b> rôznych farieb.</p>
+      <table class="rtab"><thead><tr><th>Bity na pixel</th><th>Počet farieb</th><th>Použitie</th></tr></thead><tbody>
+        <tr><td>1</td><td>2</td><td>čiernobiely obrázok</td></tr>
+        <tr><td>8</td><td>256</td><td>obrázok s paletou (GIF)</td></tr>
+        <tr><td>24</td><td>16 777 216</td><td>fotografia, 3 bajty na pixel</td></tr>
+        <tr><td>32</td><td>16 777 216 + priehľadnosť</td><td>RGBA, kanál alfa</td></tr></tbody></table>
+      <p>Pri <b>indexovaných farbách</b> má obrázok <b>paletu</b>, tabuľku farieb s číslami. Pixel obsahuje iba <b>číslo farby</b> v palete. Pri 256 farbách je to 8 bitov, teda <b>1 bajt</b> namiesto 3.</p>
+    </div><div class="tfigs">${FIG_DEPTH}${FIG_PAL}</div></div>
+    ${VEDEL("Formát <b>GIF</b> z roku 1987 dodnes používa paletu s najviac 256 farbami. Preto sú animované GIFy často zrnité a plynulé prechody v nich vyzerajú ako schodíky.")}
+    ${H3(9, "🧮", "koľko bitov, koľko farieb?", "depth")}<div class="task">${mcHTML(TASKS.depth)}</div>
+    ${H3(10, "🖌️", "maľuj podľa palety", "paint")}<div class="task">${paintHTML()}</div>
+    ${H3(11, "💾", "koľko miesta zaberie?", "bytes")}<div class="task">${mcHTML(TASKS.bytes)}</div>` + nextBar();
+  },
+  m6() {
+    return banner(6, "Posledná misia: farby v skutočných zadaniach, presne ako to robia grafici.") +
+    say(`Posledná misia! 🎨 Teraz si grafik ty. Vyber správny zápis farby, odhadni farbu z kódu a nakoniec mi pomôž <b>schovať sa</b> na liste.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>Tú istú farbu vieš zapísať viacerými spôsobmi a každý z nich opisuje farbu inak:</p>
+      <table class="rtab"><thead><tr><th>Zápis</th><th>Čo opisuje</th></tr></thead><tbody>
+        <tr><td><b>RGB</b></td><td>svetlo obrazovky tromi číslami 0 – 255</td></tr>
+        <tr><td><b>HEX</b></td><td>to isté svetlo, ale šestnástkovo, ako #RRGGBB</td></tr>
+        <tr><td><b>HSL</b></td><td>odtieň, sýtosť a svetlosť, ako farbu vníma človek</td></tr>
+        <tr><td><b>CMYK</b></td><td>koľko ktorého atramentu nanesie tlačiareň</td></tr></tbody></table>
+      <p>Grafické programy majú okno <b>výberu farby</b>, ktoré ukáže viac zápisov naraz. Stačí si vybrať ten, ktorý práve potrebuješ.</p>
+    </div><div class="tfigs">${FIG_FOUR}${FIG_WEB}</div></div>
+    ${VEDEL("Skutočné chameleóny nemiešajú farbivá ako tlačiareň. V koži majú drobné <b>kryštáliky</b> a menia vzdialenosti medzi nimi. Tým menia, ktoré svetlo sa od kože odrazí.")}
+    ${H3(12, "🗂️", "ktorý zápis použiť?", "usesort")}<div class="task">${sortHTML(TASKS.usesort)}</div>
+    ${H3(13, "👀", "farba z kódu", "swatch")}<div class="task">${mcHTML(TASKS.swatch)}</div>
+    ${H3(14, "☀️", "svetlejšia verzia", "lighter")}<div class="task">${mcHTML(TASKS.lighter)}</div>
+    ${H3(15, "🦎", "schovaj Pixa na liste", "camo")}<div class="task">${camoHTML()}</div>` + nextBar();
+  },
+  vysledok() {
+    if (!S.finished && !allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i)).map(([s, i]) => [s, i, STEP_TASKS[s.id].filter(t => !S.t[t]).length]);
+      const left = Object.keys(TASKS).filter(k => !S.t[k]).length;
+      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú tieto misie (kliknutím sa do nich vrátiš):</p><div class="row" style="margin-top:0">${miss.map(([s, i, n]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} <span class="muted">· ${n} ${n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh"}</span></button>`).join("")}</div>
+        ${S.confirmEarly ? `<div class="vedel" style="margin-top:18px"><b>⚠️ Naozaj chceš domácu úlohu ukončiť?</b> Nedokončených úloh: <b>${left}</b>. Rozpracované úlohy sa vyhodnotia podľa toho, čo si v nich vybral, nedotknuté dostanú 0 ⭐. Potom sa už nič nedá zmeniť.<div class="row"><button class="primary" data-earlyyes style="background:#C0392B">Áno, odoslať</button><button class="ghost" data-earlyno>Späť k úlohám</button></div></div>`
+        : `<div class="row" style="margin-top:18px"><button class="primary" data-early>🏁 Ukončiť a odoslať výsledok</button><span class="muted" style="font-size:14.5px">Ak už nechceš pokračovať, môžeš domácu úlohu ukončiť aj teraz.</span></div>`}</div>`; }
+    if (!S.finished) { S.finished = Date.now(); save(); }
+    const gr = gradeOf(total(), MAX);
+    try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: S.name, cls: S.cls, score: total(), max: MAX, at: S.finished, grade: gr, attempts: S.attempt || 1 })); } catch (e) {}
+    const pct = Math.round(total() / MAX * 100), g = gr;
+    return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Si skvelý majster farieb! Kódy HEX, atramenty aj palety máš v malíčku. Teraz ma už nikto nenájde. 🦎🎨" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil. Farby si môžeš vyskúšať aj v okne výberu farby v ľubovoľnom grafickom programe.", "wow")}
+      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <div class="row">${sendResults()}</div>
+      ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
+      ${(S.attempt || 1) === 1 && g >= 3 ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš ešte jednu opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu vypracovať ešte raz. Najprv si pozri vysvetlenia pri úlohách, kde si sa pomýlil. Oprava je posledný pokus.<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>` : ""}
+      ${(S.attempt || 1) === 2 ? `<p class="muted" style="margin-top:12px">Toto bola oprava, ďalší pokus už nie je možný.</p>` : ""}</div>`;
+  }
+};
+function sendResults() {
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.early ? " (nedokončené)" : "") + ((S.attempt || 1) === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(gradeOf(total(), MAX)));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished, S.attempt].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
+}
+/* záznam o odovzdaní; zo staršej verzie DÚ sa známka 3 – 5 počíta ako prvý pokus */
+function doneRec() { try { let r = localStorage.getItem(DONE_KEY); if (r) return JSON.parse(r);
+    for (const k of OLD_DONE_KEYS) { r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); o.grade = o.grade || gradeOf(o.score, o.max || MAX); o.attempts = Math.min(o.attempts || 1, 1); o.old = true; return o; } } } catch (e) {} return null; }
+function lockedDone() { if (S.finished) return null; const r = doneRec(); if (!r) return null; if ((S.attempt || 1) === 2 && (r.attempts || 1) < 2) return null; return r; }
+function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const can = (L.grade || gradeOf(L.score, L.max || MAX)) >= 3 && (L.attempts || 1) < 2;
+    document.getElementById("main").innerHTML = can ? `<div class="result"><h2>🔁 Oprava domácej úlohy</h2>${say(`${esc(L.name)} (${esc(L.cls)}), ${L.old ? "v predchádzajúcej verzii tejto domácej úlohy" : "v prvom pokuse"} si získal/a <b>${L.score} z ${L.max || MAX} ⭐</b> (známka ${L.grade}). Máš ešte <b>jednu opravu</b>. Je to posledný pokus.`)}<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>`
+      : `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${L.score} z ${L.max || MAX} ⭐</b>. Opakovať ju nie je možné.`)}</div>`; return; }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); hitAreas(m); typo(m); typo(document.getElementById("top"));
+  window.scrollTo({ top: scroll ? 0 : y }); }
+function hitAreas(m) { m.querySelectorAll(".room [data-hot]").forEach(g => { try { const r = g.getBBox(), pad = 6, n = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  n.setAttribute("x", r.x - pad); n.setAttribute("y", r.y - pad); n.setAttribute("width", r.width + 2 * pad); n.setAttribute("height", r.height + 2 * pad); n.setAttribute("fill", "transparent"); g.insertBefore(n, g.firstChild); } catch (e) {} }); }
+function scoreOf(id) {
+  const T = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (T.type === "mc" || T.type === "camo") sc = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") sc = Math.floor(T.items.filter(x => d[x.id] === x.a).length / 2);
+  if (T.type === "screens") sc = SCR_W.filter(w => d[w.id] === w.a).length;
+  if (T.type === "cards") sc = T.items.filter(x => d[x.id] === x.a).length;
+  if (T.type === "order") sc = Math.floor(T.items.filter((x, i) => (S.d[id] || [])[i] === x.id).length / 2);
+  if (T.type === "bugs") { const b = S.d.cssbugs || { sel: [], fix: {} }; sc = CSSL.filter(x => x.err && b.sel.includes(x.id) && b.fix[x.id] === 0).length; }
+  if (T.type === "ink") sc = INK_T.filter(x => inkKey(d[x.id]) === x.set).length;
+  if (T.type === "comic") sc = T.panels.filter(p => p.q && d[p.q] === p.a).length;
+  if (T.type === "wheel") sc = WH_T.filter(x => d[x.id] !== undefined && d[x.id] * 30 === x.h).length;
+  if (T.type === "paint") { const c = (S.d.paint || {}).cells || IMG.map(() => null), w = c.filter((v, i) => v !== IMG[i]).length; sc = w === 0 ? 2 : w <= 3 ? 1 : 0; }
+  return Math.min(sc, maxOf(T));
+}
+function check(id) { award(id, scoreOf(id)); save(); render(false); }
+/* predčasné ukončenie: rozpracované úlohy sa vyhodnotia podľa výberu, nedotknuté = 0 */
+function finishEarly() {
+  Object.keys(TASKS).forEach(id => { if (S.t[id]) return; award(id, scoreOf(id)); });
+  S.early = true; S.confirmEarly = false; S.finished = Date.now();
+}
+const gradeOf = (sc, mx) => { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; };
+function startRetry(rec) { const n = (rec && rec.name) || S.name, c = (rec && rec.cls) || S.cls; S = fresh(); S.name = n; S.cls = c; S.attempt = 2; save(); render(true); }
+const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
+const PD = () => S.d.paint = S.d.paint || { sel: null, cells: IMG.map(() => null) };
+document.addEventListener("click", e => {
+  const wh = e.target.closest("[data-wh]");
+  if (wh) { const [q, k] = wh.dataset.wh.split("|"); if (S.t.wheel) return; setD("wheel", q, +k); save(); render(false); return; }
+  const hot = e.target.closest("[data-hot]");
+  if (hot) { const id = hot.dataset.hot, w = SCR_W.find(x => x.id === id);
+    if (w) { if (!S.sfound[id]) { S.sfound[id] = 1; S.sorder.push(id); } const nf = SCR_W.filter(x => S.sfound[x.id]).length; S.smsg = `✅ Našiel si: <b>${w.e} ${w.n}</b>. Nájdené zariadenia: <b>${nf} z 3</b>.` + (nf === 3 ? " 🎉 Všetky! Pod obrázkom si ich pixely prezri pod lupou." : ""); }
+    else S.smsg = SDECOY[id] || S.smsg;
+    save(); render(false); return; }
+  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
+  if (ds.cls) { S.cls = ds.cls; save(); render(false); return; }
+  if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
+  if (ds.check) { check(ds.check); return; }
+  if (ds.early !== undefined) { S.confirmEarly = true; save(); render(false); return; }
+  if (ds.earlyno !== undefined) { S.confirmEarly = false; save(); render(false); return; }
+  if (ds.earlyyes !== undefined) { finishEarly(); save(); render(true); return; }
+  if (ds.retry !== undefined) { const r = S.finished ? { name: S.name, cls: S.cls } : doneRec(); startRetry(r); return; }
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; setD(t, q, +i); save(); render(false); return; }
+  if (ds.sc) { const [id, i] = ds.sc.split("|"); if (S.t.screens) return; setD("screens", id, +i); save(); render(false); return; }
+  if (ds.cd) { const [t, id, i] = ds.cd.split("|"); if (S.t[t]) return; setD(t, id, +i); save(); render(false); return; }
+  if (ds.sti) { const [t, id] = ds.sti.split("|"); if (S.t[t]) return; S.sel[t] = S.sel[t] === id ? null : id; save(); render(false); return; }
+  if (ds.stb) { const [t, b] = ds.stb.split("|"); if (S.t[t] || !S.sel[t]) return; setD(t, S.sel[t], b); S.sel[t] = null; save(); render(false); return; }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); render(false); return; }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); render(false); return; }
+  if (ds.bl) { if (S.t.cssbugs) return; const b = S.d.cssbugs = S.d.cssbugs || { sel: [], fix: {} }, i = b.sel.indexOf(ds.bl); if (i >= 0) { b.sel.splice(i, 1); delete b.fix[ds.bl]; } else if (b.sel.length < 3) b.sel.push(ds.bl); save(); render(false); return; }
+  if (ds.bf) { const [id, i] = ds.bf.split("|"); if (S.t.cssbugs) return; const b = S.d.cssbugs = S.d.cssbugs || { sel: [], fix: {} }; b.fix[id] = +i; save(); render(false); return; }
+  if (ds.ik) { const [id, k] = ds.ik.split("|"); if (S.t.ink) return; const d = S.d.ink = S.d.ink || {}, v = d[id] || ""; d[id] = v.includes(k) ? v.replace(k, "") : v + k; save(); render(false); return; }
+  if (ds.cm) { const [q, i] = ds.cm.split("|"); if (S.t.comic) return; setD("comic", q, +i); save(); render(false); return; }
+  if (ds.pal !== undefined) { if (S.t.paint) return; PD().sel = +ds.pal; save(); render(false); return; }
+  if (ds.pc !== undefined) { if (S.t.paint) return; const d = PD(); if (d.sel === null) return; const i = +ds.pc; d.cells[i] = d.cells[i] === d.sel ? null : d.sel; save(); render(false); return; }
+  if (ds.pfill !== undefined) { if (S.t.paint) return; const d = PD(); if (d.sel === null) return; d.cells = d.cells.map(v => v === null ? d.sel : v); save(); render(false); return; }
+  if (ds.pclr !== undefined) { if (S.t.paint) return; const d = PD(); d.cells = IMG.map(() => null); save(); render(false); return; }
+});
+document.addEventListener("input", e => {
+  const t = e.target, f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
+});
+render(false);
+</script></body></html>
