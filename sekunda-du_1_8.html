@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DU_1.8 Aplikačný softvér</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;
+  --acc:#2F5BEA;--accSoft:#D5DFFB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#C9D1DF;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D6DCE6;
+  --font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}}
+:root[data-theme="dark"]{--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .du{background:#F2A516;color:#3A2600;border-radius:7px;padding:1px 8px;font-size:14px;font-weight:800}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:35px;height:35px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:16px;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff;font-size:14px;font-weight:700}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.18);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:21px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+/* misia – banner */
+.ban{position:relative;overflow:hidden;border-radius:22px;padding:20px 22px 18px;color:#fff;margin:0 0 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;box-shadow:0 14px 30px -18px rgba(10,20,60,.6)}
+.ban .pill{display:inline-block;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 12px;font-size:13.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ban h2{color:#fff;margin:8px 0 4px}
+.ban p{margin:0;font-size:16px;opacity:.95}
+.ban .big{font-size:64px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.ban::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+@media (max-width:560px){.ban .big{font-size:44px}}
+/* holub Pípo */
+.say{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:end;margin:6px 0 18px}
+.say svg{width:92px;height:92px}
+.bubble{position:relative;background:var(--surface);border:2px solid var(--acc);border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:16.5px}
+.bubble b.n{color:var(--acc)}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:0 0 12px}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.tfigs{display:grid;gap:12px}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E4A66;text-align:center;padding:0 4px}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.93em}
+code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px}
+kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:.88em}
+/* tlačidlá a otázky */
+.primary{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:30px;padding-top:20px;border-top:1px dashed var(--track);display:flex;justify-content:flex-end}
+.q{border:0;padding:0;margin:0 0 22px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px}
+.why.good{background:var(--okSoft)}.why.miss{background:var(--badSoft)}
+.lock{display:flex;gap:10px;align-items:center;background:var(--surface2);border:1.5px dashed var(--track);border-radius:12px;padding:12px 16px;color:var(--muted)}
+/* párovanie */
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.pairs{grid-template-columns:1fr}}
+.pcol{display:grid;gap:8px;align-content:start}
+.pcol h4{margin:0 0 2px;font-size:15px;color:var(--muted)}
+.pi{display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:9px 12px;cursor:pointer;width:100%}
+.pi:hover:not(:disabled){border-color:var(--acc)}
+.pi.sel{border-color:var(--amber);box-shadow:0 0 0 4px var(--amberSoft)}
+.pi .e{font-size:24px;flex:0 0 30px;text-align:center}
+.pi .tag{margin-left:auto;flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff}
+.pi.ok{border-color:var(--ok);background:var(--okSoft)}
+.pi.bad{border-color:var(--bad);background:var(--badSoft)}
+.pi:disabled{cursor:default;color:var(--ink)}
+/* štart a výsledok */
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px}
+@media (max-width:800px){.hero{grid-template-columns:1fr}}
+.hero svg{width:100%;height:auto;display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.mcard{border-radius:14px;padding:10px 12px;color:#fff;font-weight:600;font-size:15px}
+.mcard small{display:block;font-weight:400;opacity:.9}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{width:100%;max-width:380px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px}
+.bign{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.bign .n{font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.bign .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
+table.res{border-collapse:collapse;width:100%;font-size:15.5px}
+table.res td,table.res th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+table.res td:last-child,table.res th:last-child{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+@media (prefers-reduced-motion: no-preference){.fly{animation:fly 1.4s ease-in-out}@keyframes fly{from{opacity:.2;transform:translateX(-30px)}to{opacity:1;transform:none}}}
+.muted{color:var(--muted)}
+.say svg{width:92px;height:92px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .opt{padding:6px 12px;font-size:14.5px;border-radius:999px}
+.tnum{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;margin-right:6px}
+.msg{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--accSoft);font-size:15.5px;min-height:44px}
+/* izba (misia 1) */
+.room svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--border)}
+.room [data-hot]{cursor:pointer}
+.room [data-hot]:hover{filter:brightness(1.12) drop-shadow(0 0 4px #F2A516)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.fc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px 14px;position:relative}
+.fc.okc{border-color:var(--ok);background:var(--okSoft)}.fc.badc{border-color:var(--bad);background:var(--badSoft)}
+.fc .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}
+.fc .hd .e{font-size:28px;line-height:1}
+.dig{margin-left:auto;background:#16213A;color:#F2C94C;font-family:var(--mono);font-weight:700;border-radius:8px;padding:2px 10px;font-size:18px}
+.fc .why{margin-top:8px}
+.safe{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px;align-items:center;margin-top:16px;background:linear-gradient(135deg,#2B3550,#16213A);color:#E8EDF7;border-radius:18px;padding:16px 18px}
+@media (max-width:720px){.safe{grid-template-columns:1fr}}
+.safe svg{width:100%;max-width:220px;height:auto;display:block;margin:0 auto}
+.safe .rule{background:#FFF8E1;color:#3A2E00;border-radius:10px;padding:10px 12px;font-size:15px;margin-bottom:10px}
+.codes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.codes .opt{font-family:var(--mono);font-size:22px;font-weight:700;text-align:center;letter-spacing:.2em;background:#0E1424;color:#F2C94C;border-color:#3E4A66}
+.codes .opt.sel{border-color:#F2A516;background:#2A2410}
+.codes .opt.ok{border-color:#3CCB8E;background:#123A2C;color:#9FF0C8}
+.codes .opt.bad{border-color:#FF7A6B;background:#46221F;color:#FFB4AA}
+/* pátranie doma (misia 2) */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.hc{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:10px 6px;cursor:pointer;text-align:center;font-size:14.5px;font-weight:600;line-height:1.25}
+.hc .e{font-size:30px;line-height:1}
+.hc:hover:not(:disabled){border-color:var(--acc)}
+.hc.on{border-color:var(--amber);background:var(--amberSoft);box-shadow:0 0 0 3px var(--amberSoft)}
+.hc:disabled{cursor:default;opacity:.45}
+.hc.on:disabled{opacity:1}
+/* dielňa (misia 3) */
+.inv{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.ic{background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:14px 16px}
+.ic.okc{border-color:var(--ok)}.ic.badc{border-color:var(--bad)}
+.ic .hd{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.ic .hd .e{font-size:40px;line-height:1}
+.ic .hd b{font-size:17px}
+.ic .st{font-size:15px;color:var(--muted);margin:0 0 8px}
+.ic .lab{font-size:13.5px;font-weight:700;color:var(--muted);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.bprev{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-top:10px;font-size:15px}
+.bprev .slot{min-width:92px;text-align:center;border-radius:12px;padding:6px 8px;background:var(--surface);border:2px solid var(--border)}
+.bprev .slot .e{display:block;font-size:28px;line-height:1.1}
+.bprev .core{background:#16213A;color:#fff;border-color:#16213A}
+/* komiks (misia 4) */
+.comic{display:grid;grid-template-columns:1fr;gap:14px}
+.panel:not(.choice){max-width:560px}.panel.c{justify-self:center}
+.panel{background:#FFFDF5;border:3px solid #16213A;border-radius:6px;padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;color:#16213A;box-shadow:4px 4px 0 #16213A}
+.panel svg{width:76px;height:76px}
+.panel .bub{background:#fff;border:2px solid #16213A;border-radius:14px;padding:8px 12px;font-size:15.5px;position:relative}
+.panel .nm{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#566381;margin-bottom:2px}
+.panel.choice{grid-column:1/-1;background:#EEF4FF}
+.panel .opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel .opt{background:#fff;color:#16213A}
+.panel .opt.sel{background:#E6EDFD}
+.panel .opt.ok{background:#DDF3EA}.panel .opt.bad{background:#FBE3E0}
+.panel .why{color:#16213A}
+/* triedenie */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.chip.ok{border-color:var(--ok);background:var(--okSoft)}.chip.bad{border-color:var(--bad);background:var(--badSoft)}
+.chip:disabled{cursor:default;color:var(--ink)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.bins{grid-template-columns:1fr}}
+.bin{border:2px solid var(--border);border-radius:16px;padding:10px;min-height:120px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bin .bh{width:100%;text-align:center;font-weight:700;border-radius:10px;padding:6px;cursor:pointer;border:0;font-size:15px}
+.bin .bh:disabled{cursor:default}
+/* príbeh (misia 5) */
+.story{background:#FFFDF5;color:#2A2410;border:1px solid #E6D6A8;border-radius:16px;padding:16px 18px;font-size:17px;line-height:1.9}
+.story p{margin:0 0 10px}
+.ph{display:inline;font:inherit;color:inherit;background:none;border:0;border-bottom:2px dotted #B08D4F;padding:0 2px;cursor:pointer;border-radius:4px;line-height:inherit}
+.ph:hover:not(:disabled){background:#FDF1D6}
+.ph.on{background:#FDE3A7;border-bottom:2px solid #E0A800}
+.ph.ok{background:#DDF3EA;border-bottom:2px solid #12805A}
+.ph.bad{background:#FBE3E0;border-bottom:2px solid #C0392B}
+.ph.miss{background:none;border-bottom:3px solid #C0392B}
+.ph:disabled{cursor:default}
+/* rozpočet (misia 6) */
+.shop{display:grid;gap:14px}
+.cat h4{margin:0 0 6px;font-size:16px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.prod{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:10px 12px;cursor:pointer;font-size:14.5px;line-height:1.35}
+.prod b{font-size:15px}
+.prod .pr{font-weight:700;color:var(--acc);font-size:16px;margin-top:4px}
+.prod:hover:not(:disabled){border-color:var(--acc)}
+.prod.on{border-color:var(--acc);background:var(--accSoft)}
+.prod:disabled{cursor:default}
+.cart{position:sticky;bottom:10px;z-index:5;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:10px 14px;margin-top:14px;box-shadow:0 10px 24px -14px rgba(10,20,60,.5)}
+.cart .bar{height:12px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:6px}
+.cart .bar span{display:block;height:100%;background:var(--ok)}
+.cart.over{border-color:var(--bad)}.cart.over .bar span{background:var(--bad)}
+.crit{list-style:none;padding:0;margin:12px 0 0}
+.crit li{padding:6px 10px;border-radius:10px;margin:4px 0;font-size:15.5px}
+.crit li.y{background:var(--okSoft)}.crit li.n{background:var(--badSoft)}
+@media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
+.panel{min-width:0}.panel .bub{min-width:0}
+@media (max-width:640px){.room{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px}.room svg{min-width:760px}.room::after{content:"↔️ Obrázok posúvaj prstom do strany.";display:block;font-size:13.5px;color:var(--muted);padding:4px 2px}}
+/* ===== DU 2.3: simulátor IDLE a nové typy úloh ===== */
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14.5px}
+.wt{background:#E9EDF3;padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:13.5px;border-bottom:1px solid #D5DCE6;color:#1B1B1F;min-width:0}
+.wt .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .dots{margin-left:auto;color:#666;letter-spacing:6px;flex:0 0 auto}
+.menubar{display:flex;flex-wrap:wrap;gap:2px;background:#F6F7F9;border-bottom:1px solid #E0E4EA;padding:2px 6px;position:relative}
+.menubar button{border:0;background:none;padding:4px 10px;font-size:13.5px;cursor:pointer;border-radius:4px;color:#1B1B1F}
+.menubar button:hover:not(:disabled),.menubar button.on{background:#DCE6F5}
+.menubar button:disabled{opacity:.45;cursor:default}
+.drop{position:absolute;top:30px;background:#fff;border:1px solid #BCC6D3;box-shadow:0 8px 20px rgba(0,0,0,.2);border-radius:6px;padding:4px;z-index:3;min-width:210px}
+.drop button{display:block;width:100%;text-align:left;padding:6px 10px}
+.drop small{color:#667}
+.shell{background:#fff;font-family:"Courier New",var(--mono);font-size:14px;padding:10px 12px;min-height:96px;max-height:170px;overflow:auto;white-space:pre-wrap;color:#000}
+.shell .p{color:#7A2E00}.shell .e{color:#D10000}
+.ws{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start;margin-top:12px}
+.editor textarea{width:100%;min-height:250px;border:0;border-radius:0;font-family:"Courier New",var(--mono);font-size:15px;line-height:1.5;padding:10px 12px;background:#fff;color:#000;resize:vertical;outline:none;display:block}
+.editor textarea[readonly]{background:#F6F7F9;color:#3A3A44}
+.editor .status{background:#F1F3F6;border-top:1px solid #E0E4EA;font-size:12px;color:#555;padding:3px 10px;text-align:right}
+.edempty{min-height:290px;display:grid;place-items:center;text-align:center;color:#667;background:#F6F7F9;padding:16px;font-size:14px}
+.twin svg{display:block;width:100%;height:auto;background:#fff}
+.twin .empty{height:250px;display:grid;place-items:center;color:#667;background:#F6F7F9;font-size:14px;text-align:center;padding:10px}
+.dlgbox{background:#fff;color:#1B1B1F;border:1px solid #9FB0C8;border-radius:10px;box-shadow:0 14px 30px rgba(0,0,0,.25);padding:14px 16px;margin:10px 0;max-width:460px}
+.dlgbox h5{margin:0 0 8px;font-size:15px}
+.dlgbox input{width:100%;border:1px solid #A9B4C4;border-radius:4px;padding:6px 8px;font-family:var(--mono);font-size:14px;color:#1B1B1F;background:#fff}
+.dlgbox .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA;padding:6px 14px}
+.filelist button{display:block;width:100%;text-align:left;border:0;background:#F4F6F9;border-radius:6px;padding:6px 10px;margin:4px 0;cursor:pointer;font-family:var(--mono);color:#1B1B1F}
+.tgtbar{display:grid;grid-template-columns:210px minmax(0,1fr);gap:16px;align-items:start}
+.tprev svg{width:100%;max-width:210px;height:auto;display:block;background:#fff;border:1px solid var(--border);border-radius:12px}
+.tprev .cap{font-size:13px;color:var(--muted);text-align:center;margin-top:4px}
+.goals{list-style:none;padding:0;margin:6px 0 0}.goals li{padding:3px 0}
+.fb{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.fb ul{margin:4px 0 0;padding-left:20px}
+.code{font-family:var(--mono);font-size:14.5px;line-height:1.6;background:#0F1A2E;color:#DCE7FF;border-radius:10px;padding:10px 14px;white-space:pre;overflow-x:auto;margin:8px 0;font-weight:500}
+.code .k{color:#FFB86B;font-weight:700}
+/* poradie riadkov */
+.seq{list-style:none;padding:0;margin:14px 0 12px;display:grid;gap:8px;max-width:520px}
+.slot2{display:flex;align-items:center;gap:12px}
+.slot2 .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot2 .ph2{color:var(--muted);flex:1;border:1.5px dashed var(--track);border-radius:10px;padding:8px 14px;font-size:15px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:var(--mono);font-size:15px}
+.slotbtn:hover:not(:disabled){border-color:var(--acc)}
+.slot2.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}.slot2.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.chip.mono{font-family:var(--mono);font-weight:500}
+.bins.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* kód s chybami */
+.codebox{background:#fff;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;color:#000;max-width:560px}
+.codebox .wt{border-radius:0}
+.cl{display:flex;width:100%;align-items:center;gap:14px;border:0;border-bottom:1px solid #EEF1F5;background:#fff;padding:6px 12px;font-family:"Courier New",var(--mono);font-size:16px;text-align:left;cursor:pointer;color:#000}
+.cl .ln{color:#8A93A6;width:22px;text-align:right;font-size:13px;flex:0 0 22px}
+.cl:hover:not(:disabled){background:#FFF6DB}
+.cl.on{background:#FDE3A7}.cl.ok{background:#DDF3EA}.cl.bad{background:#FBE3E0}.cl.miss{box-shadow:inset 5px 0 0 #C0392B;background:#FFF0EE}
+.cl:disabled{cursor:default}
+.fixrow{margin-top:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.fixrow .hd{font-weight:600;margin-bottom:6px;font-size:15.5px}
+.fixrow .opt{font-family:var(--mono)}
+.errc{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.errc .opts{grid-template-columns:1fr;gap:6px}
+.errc .opt{font-family:var(--mono);font-size:13.5px;padding:8px 10px;color:#9A1F12}
+.errc .opt.ok,.errc .opt.bad,.errc .opt.sel{color:var(--ink)}
+.opts.pics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.pics .opt{padding:8px}
+.opt svg{width:100%;height:auto;display:block;background:#fff;border-radius:8px;border:1px solid #E3E8EF}
+/* priečinok */
+.fwin{margin-bottom:14px;max-width:620px}
+.frow{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #EEF1F5;font-size:14.5px;color:#1B1B1F}
+.frow .nm{font-family:var(--mono);overflow-wrap:anywhere}
+.frow .nm s{color:#9AA3B5}
+.frow .ds{color:#566381;font-size:13px;text-align:right}
+/* displej */
+.segs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.segc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px;display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;align-items:center}
+.segc.okc{border-color:var(--ok);background:var(--okSoft)}.segc.badc{border-color:var(--bad);background:var(--badSoft)}
+.segc svg{width:110px;height:auto;display:block;background:#16213A;border-radius:12px}
+.segc [data-sg]{cursor:pointer}
+.segc .goal{font-size:15px}
+.segc .goal b{font-family:var(--mono);font-size:36px;color:var(--acc);display:block;line-height:1.1}
+@media (max-width:900px){.ws{grid-template-columns:minmax(0,1fr)}.drop{left:auto!important;right:0}}
+@media (max-width:720px){.bins.two{grid-template-columns:1fr}.tgtbar{grid-template-columns:1fr}}
+/* ===== DU 1.8: aplikačný softvér ===== */
+.fig{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:10px}
+.fig svg{display:block;width:100%;height:auto}
+.why ul{margin:4px 0 0;padding-left:20px}
+.tsplit>div{min-width:0}.rtab td{overflow-wrap:anywhere}
+/* plocha s ikonami */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;background:linear-gradient(135deg,#1E5BC6,#58A6E0);padding:14px;border-radius:14px;box-shadow:inset 0 -28px 0 rgba(10,20,50,.35)}
+.tile{display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,.14);border:2.5px solid transparent;border-radius:12px;color:#fff;padding:10px 6px;cursor:pointer;font-weight:600;font-size:14px;line-height:1.25;text-align:center}
+.tile .e{font-size:30px;line-height:1.1}
+.tile:hover:not(:disabled){background:rgba(255,255,255,.26)}
+.tile.on{border-color:#F2C94C;background:rgba(242,201,76,.32)}
+.tile.ok{border-color:#3CCB8E;background:rgba(60,203,142,.4)}
+.tile.bad{border-color:#FF7A6B;background:rgba(255,122,107,.4)}
+.tile.miss{border-color:#FFD2CC;border-style:dashed}
+.tile:disabled{cursor:default;color:#fff}
+.krow{display:grid;grid-template-columns:minmax(150px,240px) minmax(0,1fr);gap:12px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--border)}
+.krow .kk{font-size:15.5px;font-weight:600}
+.krow .kk small{display:block;font-weight:400;color:var(--muted);font-size:13.5px}
+@media (max-width:620px){.krow{grid-template-columns:1fr;gap:6px}}
+/* prehliadač PDF */
+.pdfwrap{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(230px,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.pdfwrap{grid-template-columns:1fr}}
+.pdfv{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;font-family:"Segoe UI",var(--font);font-size:14px;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);min-width:0}
+.pdfbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:#F6F7F9;border-bottom:1px solid #E0E4EA}
+.pdfbar button{height:32px;min-width:34px;border:1px solid #C9D0DA;background:#fff;border-radius:6px;cursor:pointer;color:#1B1B1F;font-size:14px;padding:0 8px}
+.pdfbar button.on{background:#FFF1B8;border-color:#E0A800;box-shadow:inset 0 0 0 1px #E0A800}
+.pdfbar button:disabled{opacity:.45;cursor:default}
+.pdfbar .pn{font-weight:600;padding:0 6px;white-space:nowrap}
+.pdfbar input{height:32px;border:1px solid #C9D0DA;border-radius:6px;padding:0 8px;width:120px;min-width:0;color:#1B1B1F;background:#fff;font:inherit}
+.pdfbar .sep{width:1px;height:22px;background:#C9D0DA}
+.pdfbody{display:grid;grid-template-columns:78px minmax(0,1fr);background:#DDE2E9}
+.thumbs{display:flex;flex-direction:column;gap:8px;padding:8px;background:#EEF1F5;border-right:1px solid #D5DCE6}
+.thumb{background:#fff;border:2px solid #C9D0DA;border-radius:4px;height:72px;cursor:pointer;font-size:12px;color:#566381;display:grid;place-items:end center;padding-bottom:3px;position:relative}
+.thumb::before{content:"";position:absolute;left:8px;right:8px;top:8px;height:30px;background:repeating-linear-gradient(#D5D9E0 0 3px,transparent 3px 8px)}
+.thumb.on{border-color:#2F5BEA;box-shadow:0 0 0 2px #CFE0FA}
+.thumb.rot::before{transform:rotate(90deg) scale(.7)}
+.pview{height:400px;display:grid;place-items:center;overflow:hidden;padding:8px}
+.ppage{width:250px;height:330px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);padding:16px 18px;font-family:"Times New Roman",Georgia,serif;font-size:12.5px;line-height:1.5;color:#111;transition:transform .35s;overflow:hidden}
+.ppage h5{font-size:15px;margin:0 0 8px;font-family:Georgia,serif}
+.ppage p{margin:0 0 7px;max-width:none}
+.ppage .scan{filter:grayscale(1) contrast(.9);color:#333}
+.sent{font:inherit;color:inherit;background:none;border:0;padding:0 1px;text-align:left;display:inline;cursor:default;line-height:inherit}
+.sent.can{cursor:pointer;outline:1px dashed #E0A800}
+.sent.hl{background:#FFF176}
+mark.sr{background:#FFB74D;color:inherit;padding:0 1px}
+.sigf{display:block;width:100%;border:0;border-bottom:1.5px solid #333;height:40px;background:#F4F8FF;margin-top:4px;font-family:"Segoe Script","Brush Script MT",cursive;font-size:20px;color:#1E3A8A;text-align:center}
+.sigf.can{cursor:pointer;background:#FFF6D5;outline:2px dashed #E0A800}
+.pdfmsg{background:#F1F3F6;border-top:1px solid #E0E4EA;font-size:13px;color:#333;padding:6px 10px;min-height:30px}
+.goalp{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+.goalp h4{margin:0 0 6px;font-size:17px}
+.goalp ol{margin:0;padding-left:20px}.goalp li{margin:6px 0;font-size:15px}
+.goalp .chips{margin-top:6px}
+@media (max-width:520px){.pdfbody{grid-template-columns:58px minmax(0,1fr)}.thumb{height:56px}.pview{height:380px;padding:4px}}
+/* raster a vektor */
+.zcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.zc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:10px}
+.zc.okc{border-color:var(--ok);background:var(--okSoft)}.zc.badc{border-color:var(--bad);background:var(--badSoft)}
+.zc svg{width:100%;height:auto;display:block;background:#fff;border-radius:10px;border:1px solid var(--border)}
+.zc .zl{display:flex;align-items:center;gap:8px;font-size:14px;margin:8px 0 6px}
+.zc input[type=range]{flex:1;min-width:0}
+.zc .opts{grid-template-columns:1fr 1fr;gap:6px}.zc .opt{padding:7px 8px;font-size:14.5px;text-align:center}
+.pxw{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.pxg{display:grid;grid-template-columns:repeat(8,30px);gap:1px;background:#AEB7C6;border:2px solid #7C879A;border-radius:4px;padding:1px;width:max-content}
+.pxg button{width:30px;height:30px;border:0;padding:0;cursor:pointer;background:#fff}
+.pxg button:disabled{cursor:default}
+.pxg.tg button{cursor:default}
+.pxg.sm{grid-template-columns:repeat(8,18px)}.pxg.sm button,.pxg.sm span{width:18px;height:18px}
+.pxg span{display:block;width:30px;height:30px}
+.pal{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.pal button{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px}
+.pal button.on{border-color:var(--acc);background:var(--accSoft)}
+.pal .sw{width:18px;height:18px;border-radius:4px;border:1px solid rgba(0,0,0,.25);display:inline-block}
+/* prehrávač */
+.mp{background:#171B28;color:#E8ECF6;border-radius:14px;overflow:hidden;font-family:"Segoe UI",var(--font);font-size:14px;box-shadow:0 14px 30px -16px rgba(0,0,0,.6)}
+.mp .mph{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#222838;flex-wrap:wrap}
+.mp .mph b{font-size:15px}
+.mpgrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:0}
+@media (max-width:760px){.mpgrid{grid-template-columns:1fr}}
+.mp table{width:100%;border-collapse:collapse}
+.mp td,.mp th{padding:6px 8px;border-bottom:1px solid #2C3346;text-align:left;font-size:13.5px}
+.mp th{color:#9AA7C4;font-weight:600;font-size:12.5px}
+.mp td.g{color:#B8C2DA}
+.mp button{background:#2C3346;color:#E8ECF6;border:1px solid #3B4560;border-radius:6px;cursor:pointer;padding:3px 8px;font:inherit}
+.mp button:hover:not(:disabled){border-color:#6E91FF}
+.mp button.on{background:#3A56C8;border-color:#6E91FF}
+.mp button:disabled{opacity:.45;cursor:default}
+.mp .pl{background:#1E2333;border-left:1px solid #2C3346;padding:8px 10px}
+.mp .pl h5{margin:0 0 6px;font-size:14px;color:#F2C94C}
+.mp .pl li{margin:4px 0;display:flex;gap:6px;align-items:center;justify-content:space-between}
+.mp .pl ol{margin:0;padding-left:18px}
+.mp .ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:#222838;border-top:1px solid #2C3346}
+.mp .ctl button{font-size:15px;padding:5px 10px}
+.mp .now{flex:1;min-width:160px;color:#B8C2DA;font-size:13px}
+.tagd{background:#fff;color:#1B1B1F;border:1px solid #C9CED6;border-radius:10px;overflow:hidden;font-family:"Segoe UI",var(--font);font-size:14.5px;max-width:520px;margin-top:12px}
+.tagd .bd{padding:12px;display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:center}
+.tagd select{border:1px solid #BFC7D5;border-radius:4px;padding:5px 6px;font:inherit;color:#1B1B1F;background:#fff;min-width:0;width:100%}
+@media (max-width:480px){.tagd .bd{grid-template-columns:1fr}}
+.cdcover{display:flex;gap:12px;align-items:center;background:#FFFDF5;color:#2A2410;border:1px solid #E6D6A8;border-radius:12px;padding:10px 14px;margin-top:10px;max-width:520px}
+.cdcover .disc{width:54px;height:54px;border-radius:50%;background:radial-gradient(circle,#fff 0 6px,#C9B27A 7px 9px,#E8742A 10px);flex:0 0 54px}
+</style></head><body>
+<header class="top" id="top"></header><main id="main" tabindex="-1"></main>
+<script>
+/* ===== DU 1.8 – Sekunda: Aplikačný softvér – prehliadače PDF, grafiky, prehrávače hudby ===== */
+const KEY = "du-s18-v1";
+const LESSON = "Sekunda – DU_1.8 Aplikačný softvér – prehliadače PDF, grafiky, prehrávače hudby";
+const CLASS_DEFAULT = "SEKUNDA";
+const CLASSES = ["SEKUNDA"];
+const DONE_KEY = "du-s18-done-v1"; /* zámok: pokusy (1 pokus, pri známke 3 – 5 jedna oprava) */
+const OLD_DONE_KEYS = [];
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+
+const STEPS = [
+  { id: "start", title: "Štart", ic: "🚀", min: 1 },
+  { id: "m1", title: "Softvér a licencie", ic: "🧩", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+  { id: "m2", title: "Prehliadač PDF", ic: "📕", min: 4, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
+  { id: "m3", title: "Raster a vektor", ic: "🔍", min: 3, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
+  { id: "m4", title: "Grafické programy", ic: "🎨", min: 3, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
+  { id: "m5", title: "Prehrávač hudby", ic: "🎧", min: 4, col: "linear-gradient(120deg,#C2560C,#F08A3C)" },
+  { id: "m6", title: "Ktorý program na čo", ic: "🗂️", min: 2, col: "linear-gradient(120deg,#0B6F8A,#2BB3D6)" },
+  { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
+];
+const STEP_TASKS = { m1: ["desk", "lic"], m2: ["pdf", "notpdf"], m3: ["zoom", "pix", "vfmt"], m4: ["gsort", "sit", "png"], m5: ["player", "comic"], m6: ["open", "deflt", "final"] };
+/* ===== LENKA: typografia ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,kbd,textarea,.wt,.url") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐″])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+/* ===== OBRÁZKY: pomôcky ===== */
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 13}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,Courier New,monospace" xml:space="preserve"` : ""}${o.i ? ` font-style="italic"` : ""}>${s}</text>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.6"` : ""}/>`;
+const EM = (x, y, e, fs = 24) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}">${e}</text>`;
+const ARR = (x1, y1, x2, y2, c = "#566381", w = 2.5) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return `<line x1="${x1}" y1="${y1}" x2="${x2 - Math.cos(a) * 4}" y2="${y2 - Math.sin(a) * 4}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2} L${x2 - h * Math.cos(a - .45)} ${y2 - h * Math.sin(a - .45)} L${x2 - h * Math.cos(a + .45)} ${y2 - h * Math.sin(a + .45)}z" fill="${c}"/>`; };
+const C = { ink: "#16213A", mut: "#566381", acc: "#2F5BEA", accS: "#D5DFFB", ok: "#12805A", okS: "#DDF3EA", bad: "#C0392B", badS: "#FBE3E0", amb: "#8A5A00", ambS: "#FDF1D6", bg: "#F5F7FA", line: "#D6DCE6", or: "#C2560C", orS: "#FBE3D2", wd: "#2B579A", wdS: "#E3ECF8", xl: "#1F7A45", xlS: "#DDF3EA", pp: "#C2410C", ppS: "#FBE3D2" };
+const lines = (x, y, ws, gap = 9, c = "#C9CED6") => ws.map((w, i) => `<rect x="${x}" y="${y + i * gap}" width="${w}" height="4" rx="2" fill="${c}"/>`).join("");
+
+
+/* líška Lumi – sprievodkyňa */
+function lumi(x, y, s, mood) {
+  const eyes = mood === "wow"
+    ? `<circle cx="52" cy="33" r="4.4" fill="#fff" stroke="#2A1A10" stroke-width="1.3"/><circle cx="53" cy="33" r="2.5" fill="#2A1A10"/><circle cx="70" cy="33" r="4.4" fill="#fff" stroke="#2A1A10" stroke-width="1.3"/><circle cx="71" cy="33" r="2.5" fill="#2A1A10"/>`
+    : `<path d="M48 34 Q52 29 56 34" fill="none" stroke="#2A1A10" stroke-width="2.4" stroke-linecap="round"/><path d="M66 34 Q70 29 74 34" fill="none" stroke="#2A1A10" stroke-width="2.4" stroke-linecap="round"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})">
+    <ellipse cx="54" cy="93" rx="38" ry="4.5" fill="#000" opacity=".12"/>
+    <path d="M38 82 Q4 84 4 54 Q6 34 22 40 Q16 60 42 70z" fill="#E8742A" stroke="#7A3A12" stroke-width="2"/><path d="M4 54 Q6 36 22 40 Q12 44 11 56z" fill="#fff" stroke="#7A3A12" stroke-width="1.4"/>
+    <ellipse cx="58" cy="70" rx="22" ry="21" fill="#E8742A" stroke="#7A3A12" stroke-width="2.2"/>
+    <ellipse cx="60" cy="74" rx="12" ry="14" fill="#FFF4E6"/>
+    <ellipse cx="48" cy="89" rx="8" ry="5" fill="#5A2A10"/><ellipse cx="70" cy="89" rx="8" ry="5" fill="#5A2A10"/>
+    <path d="M40 24 L44 3 L58 17z" fill="#E8742A" stroke="#7A3A12" stroke-width="2" stroke-linejoin="round"/><path d="M45 18 L46 9 L53 16z" fill="#3A2414"/>
+    <path d="M64 17 L78 3 L82 24z" fill="#E8742A" stroke="#7A3A12" stroke-width="2" stroke-linejoin="round"/><path d="M69 16 L76 9 L77 18z" fill="#3A2414"/>
+    <path d="M38 27 Q61 10 84 27 Q84 46 61 58 Q38 46 38 27z" fill="#E8742A" stroke="#7A3A12" stroke-width="2.2"/>
+    <path d="M40 33 Q46 50 61 58 Q52 46 52 38 Q46 40 40 33z" fill="#fff"/><path d="M82 33 Q76 50 61 58 Q70 46 70 38 Q76 40 82 33z" fill="#fff"/>
+    <circle cx="61" cy="53" r="3.6" fill="#2A1A10"/>
+    ${eyes}
+    <path d="M36 30 Q61 0 86 30" fill="none" stroke="#2F5BEA" stroke-width="4" stroke-linecap="round"/>
+    <rect x="31" y="24" width="10" height="15" rx="4" fill="#2F5BEA" stroke="#1B3A99" stroke-width="1.5"/><rect x="81" y="24" width="10" height="15" rx="4" fill="#2F5BEA" stroke="#1B3A99" stroke-width="1.5"/>
+    <path d="M50 58 Q60 64 70 58" fill="none" stroke="#16213A" stroke-width="1.5"/>
+    <rect x="49" y="64" width="22" height="15" rx="3" fill="#16213A"/><rect x="53" y="61" width="7" height="4" rx="1" fill="#16213A"/><circle cx="60" cy="71.5" r="5" fill="#6E91FF" stroke="#fff" stroke-width="1.5"/>
+  </g>`;
+}
+const LUMI = mood => SV(104, 98, lumi(0, 2, 1, mood), "Líška Lumi");
+const say = (html, mood) => `<div class="say">${LUMI(mood)}<div class="bubble">${html}</div></div>`;
+/* kamarátka Zuzka (komiks) */
+const ZUZKA = mood => SV(80, 80, `<path d="M16 80 Q40 60 64 80" fill="#0E8A6A"/><circle cx="13" cy="46" r="8" fill="#C0682A" stroke="#16213A" stroke-width="2"/><circle cx="67" cy="46" r="8" fill="#C0682A" stroke="#16213A" stroke-width="2"/>
+  <circle cx="40" cy="42" r="25" fill="#F6C9A0" stroke="#16213A" stroke-width="2.5"/>
+  <path d="M15 40 Q14 14 40 14 Q66 14 65 40 Q60 24 47 26 Q40 32 31 27 Q20 28 15 40z" fill="#C0682A" stroke="#16213A" stroke-width="2"/>
+  <circle cx="31" cy="45" r="3.4" fill="#16213A"/><circle cx="49" cy="45" r="3.4" fill="#16213A"/><circle cx="25" cy="53" r="3" fill="#F4A6A6" opacity=".8"/><circle cx="55" cy="53" r="3" fill="#F4A6A6" opacity=".8"/>
+  ${mood === "sad" ? `<path d="M32 59 Q40 53 48 59" fill="none" stroke="#C0392B" stroke-width="2.5"/>` : `<path d="M32 56 Q40 63 48 56" fill="none" stroke="#C0392B" stroke-width="2.5"/>`}`, "Zuzka");
+
+/* ===== ÚVODNÝ OBRÁZOK ===== */
+const HERO = SV(420, 300, `
+  <defs><linearGradient id="hs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#DCE9FF"/><stop offset="1" stop-color="#F3F7FF"/></linearGradient></defs>
+  <rect width="420" height="300" rx="18" fill="url(#hs)"/>
+  <rect x="0" y="232" width="420" height="68" fill="#C9A86A"/><rect x="0" y="232" width="420" height="8" fill="#B08D4F"/>
+  <rect x="150" y="40" width="254" height="168" rx="10" fill="#16213A"/><rect x="158" y="48" width="238" height="150" rx="5" fill="#EAF0F8"/>
+  ${box(166, 56, 70, 134, "#fff", C.bad, 6)}<rect x="166" y="56" width="70" height="18" rx="6" fill="${C.bad}"/>${EM(201, 102, "📕", 22)}${lines(176, 118, [50, 44, 50, 30, 46, 38])}
+  ${box(243, 56, 70, 134, "#fff", "#6A3FD0", 6)}<rect x="243" y="56" width="70" height="18" rx="6" fill="#6A3FD0"/>${EM(278, 102, "🎨", 22)}${[0, 1, 2, 3, 4].map(r => [0, 1, 2, 3, 4].map(q => `<rect x="${252 + q * 10}" y="${116 + r * 10}" width="10" height="10" fill="${(r - 2) ** 2 + (q - 2) ** 2 <= 4 ? "#F2C94C" : "#BFE0F7"}"/>`).join("")).join("")}
+  ${box(320, 56, 68, 134, "#fff", C.or, 6)}<rect x="320" y="56" width="68" height="18" rx="6" fill="${C.or}"/>${EM(354, 102, "🎧", 22)}${[14, 26, 20, 32, 18].map((h, i) => `<rect x="${330 + i * 10}" y="${160 - h}" width="6" height="${h}" rx="2" fill="${C.or}"/>`).join("")}
+  <rect x="266" y="208" width="22" height="16" fill="#566381"/><rect x="240" y="222" width="74" height="9" rx="3" fill="#566381"/>
+  ${EM(58, 74, "🎵", 26)}${EM(118, 116, "🖼️", 24)}${EM(30, 140, "📄", 22)}
+  ${lumi(8, 150, 1.38, "wow")}
+  ${T(212, 27, "Lumi a 6 misií s aplikáciami", { a: "middle", fs: 15, b: 1, c: C.acc })}`, "Líška Lumi pri počítači s PDF, obrázkom a hudbou");
+
+/* ===== TEÓRIA: OBRÁZKY ===== */
+/* M1 */
+const FIG_LAYERS = fig(SV(440, 230, `
+  ${T(220, 22, "Softvér v troch vrstvách", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[["🧩", "aplikačný softvér", "robí prácu, ktorú chceš ty", "píšeš, kreslíš, hráš sa", "#2F5BEA", "#E3ECF8", 300], ["⚙️", "systémový softvér", "riadi počítač a jeho súčiastky", "operačný systém, ovládače", "#6A3FD0", "#ECE5FC", 360], ["🔩", "hardvér", "súčiastky, ktoré chytíš do ruky", "procesor, disk, tlačiareň", "#566381", "#EEF1F5", 420]].map(([e, n, d, ex, c, bg, w], i) => { const y = 36 + i * 64, x = (440 - w) / 2 + (i === 2 ? 0 : 0);
+    return box(10 + i * 0, y, 420, 56, bg, c, 12) + EM(38, y + 37, e, 24) + T(64, y + 24, n, { fs: 13.5, b: 1, c }) + T(64, y + 43, d, { fs: 11.5 }) + T(420, y + 43, ex, { fs: 11, c: C.mut, a: "end" }); }).join("")}`, "Vrstvy softvéru"),
+  "Aplikácie bežia <b>nad</b> operačným systémom. Ten im sprostredkuje prácu s hardvérom.");
+const FIG_STORE = fig(SV(440, 170, `
+  ${T(220, 22, "Odkiaľ inštalovať aplikácie", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[["🛍️", "Microsoft Store", "Windows"], ["▶️", "Google Play", "Android"], ["🌐", "stránka výrobcu", "napr. pri programe zadarmo"]].map(([e, n, d], i) => { const x = 8 + i * 146;
+    return box(x, 38, 136, 92, C.okS, C.ok, 12) + EM(x + 68, 74, e, 26) + T(x + 68, 100, n, { a: "middle", fs: 12.5, b: 1, c: C.ok }) + T(x + 68, 118, d, { a: "middle", fs: 10.5, c: C.mut }); }).join("")}
+  ${box(8, 138, 424, 26, C.badS, null, 8)}${T(220, 156, "❌ nie z reklám, neznámych stránok a e-mailov", { a: "middle", fs: 12, b: 1, c: C.bad })}`, "Bezpečné zdroje aplikácií"),
+  "Obchod s aplikáciami programy kontroluje. Z neznámych stránok si môžeš stiahnuť vírus.");
+/* M2 */
+const FIG_SAME = fig(SV(440, 190, `
+  ${T(220, 22, "Jedno PDF, rovnaký vzhľad všade", { a: "middle", fs: 14, b: 1, c: C.bad })}
+  ${[[30, 50, 150, 100, "💻 počítač"], [206, 46, 96, 120, "📱 mobil"], [322, 54, 100, 96, "📟 tablet"]].map(([x, y, w, h, n], i) => {
+    const pw = Math.min(w - 24, (h - 24) * .72), ph = pw / .72, px = x + (w - pw) / 2, py = y + (h - ph) / 2;
+    return box(x, y, w, h, "#16213A", null, i === 1 ? 12 : 8) + `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="#fff"/><rect x="${px + pw * .12}" y="${py + ph * .1}" width="${pw * .76}" height="${ph * .1}" fill="${C.bad}"/>` + [0, 1, 2, 3].map(k => `<rect x="${px + pw * .12}" y="${py + ph * (.3 + k * .12)}" width="${pw * (k === 3 ? .5 : .76)}" height="${ph * .04}" fill="#C9CED6"/>`).join("") + `<rect x="${px + pw * .55}" y="${py + ph * .66}" width="${pw * .33}" height="${ph * .22}" fill="#9CC3F5"/>` + T(x + w / 2, 182, n, { a: "middle", fs: 12, b: 1 }); }).join("")}`, "Rovnaký vzhľad PDF"),
+  "Písmo, obrázky aj rozloženie strán ostanú v PDF <b>na každom zariadení</b> rovnaké.");
+const FIG_PTOOLS = fig(SV(440, 200, `
+  ${T(220, 22, "Nástroje prehliadača PDF", { a: "middle", fs: 14, b: 1, c: C.bad })}
+  ${[["🔍", "Hľadať", "nájde slovo (Ctrl + F)"], ["🖍️", "Zvýrazniť", "farebne označí text"], ["✍️", "Podpísať", "vloží podpis do poľa"], ["⟳", "Otočiť", "otočí stranu o 90°"], ["🗂️", "Náhľady", "skok na inú stranu"], ["🖨️", "Tlačiť", "vytlačí (Ctrl + P)"]].map(([e, n, d], i) => { const x = 8 + (i % 2) * 216, y = 36 + Math.floor(i / 2) * 54;
+    return box(x, y, 208, 46, "#fff", C.line, 10) + EM(x + 24, y + 31, e, 20) + T(x + 46, y + 20, n, { fs: 12.5, b: 1 }) + T(x + 46, y + 37, d, { fs: 11, c: C.mut }); }).join("")}`, "Nástroje prehliadača PDF"),
+  "Prehliadač PDF vie viac než len zobraziť dokument. Nástroje nájdeš na <b>paneli</b> hore.");
+/* M3 */
+const FIG_RV = fig(SV(440, 220, `
+  ${T(220, 22, "Čo sa stane pri zväčšení", { a: "middle", fs: 14, b: 1, c: "#6A3FD0" })}
+  ${box(8, 36, 206, 150, "#fff", C.line, 12)}${T(111, 56, "rastrový obrázok", { a: "middle", fs: 12.5, b: 1 })}
+  ${(() => { let s = ""; for (let r = 0; r < 9; r++) for (let q = 0; q < 9; q++) { const d = Math.hypot(q - 4, r - 4); s += `<rect x="${66 + q * 10}" y="${72 + r * 10}" width="10" height="10" fill="${d <= 3.6 ? "#E8742A" : "#fff"}" stroke="#E6E9EF" stroke-width=".6"/>`; } return s; })()}
+  ${T(111, 178, "schodíky z pixelov", { a: "middle", fs: 11.5, c: C.bad, b: 1 })}
+  ${box(226, 36, 206, 150, "#fff", C.line, 12)}${T(329, 56, "vektorový obrázok", { a: "middle", fs: 12.5, b: 1 })}<circle cx="329" cy="117" r="36" fill="#E8742A"/>
+  ${T(329, 178, "stále hladký okraj", { a: "middle", fs: 11.5, c: C.ok, b: 1 })}
+  ${T(220, 210, "Ten istý kruh zväčšený 10-krát", { a: "middle", fs: 11.5, c: C.mut })}`, "Raster a vektor pri zväčšení"),
+  "Rastrový obrázok tvoria <b>pixely</b>, vektorový <b>tvary</b> opísané výpočtom.");
+const FIG_GRID = fig(SV(440, 190, `
+  ${T(220, 22, "Obrázok ako mriežka bodov", { a: "middle", fs: 14, b: 1, c: "#6A3FD0" })}
+  ${(() => { const H = ["..##..", ".####.", "######", "######", ".####.", "..##.."]; let s = ""; H.forEach((row, r) => [...row].forEach((ch, q) => { s += `<rect x="${40 + q * 22}" y="${40 + r * 22}" width="22" height="22" fill="${ch === "#" ? "#2FA866" : "#fff"}" stroke="#AEB7C6"/>`; })); return s; })()}
+  ${ARR(186, 106, 226, 106)}
+  ${T(240, 80, "6 × 6 = 36 pixelov", { fs: 13, b: 1 })}${T(240, 104, "každý pixel má", { fs: 12 })}${T(240, 122, "práve jednu farbu", { fs: 12 })}${T(240, 150, "fotka v mobile má", { fs: 11.5, c: C.mut })}${T(240, 168, "milióny pixelov", { fs: 11.5, c: C.mut })}`, "Mriežka pixelov"),
+  "Rastrový editor mení farbu jednotlivých <b>pixelov</b>, podobne ako keď vyfarbuješ štvorčekový papier.");
+/* M4 */
+const FIG_GTYPES = fig(SV(440, 236, `
+  ${T(220, 22, "Tri druhy grafických programov", { a: "middle", fs: 14, b: 1, c: C.ok })}
+  ${[["👀", "prehliadač obrázkov", "prezeráš, listuješ, otočíš", "Fotografie vo Windows", "#0B6F8A", "#DDF1F7"], ["🖌️", "rastrový editor", "upravuješ pixely: fotky, maľby", "Skicár, GIMP", "#C2560C", "#FBE3D2"], ["📐", "vektorový editor", "kreslíš tvary: logá, ikony", "Inkscape", "#6A3FD0", "#ECE5FC"]].map(([e, n, d, ex, c, bg], i) => { const y = 36 + i * 66;
+    return box(8, y, 424, 58, bg, c, 12) + EM(36, y + 38, e, 24) + T(62, y + 24, n, { fs: 13.5, b: 1, c }) + T(62, y + 44, d, { fs: 11.5 }) + T(422, y + 44, ex, { fs: 11, c: C.mut, a: "end" }); }).join("")}`, "Druhy grafických programov"),
+  "Najprv si ujasni, či obrázok len <b>prezeráš</b>, upravuješ <b>fotku</b> alebo kreslíš <b>tvary</b>.");
+/* M5 */
+const FIG_PLAYER = fig(SV(440, 214, `
+  ${T(220, 22, "Časti prehrávača hudby", { a: "middle", fs: 14, b: 1, c: C.or })}
+  ${box(8, 34, 424, 172, "#171B28", null, 12)}
+  ${box(18, 44, 200, 120, "#222838", null, 8)}${T(28, 62, "📚 Knižnica", { fs: 12, b: 1, c: "#F2C94C" })}${["Pieseň A · rock", "Pieseň B · pop", "Pieseň C · jazz", "Pieseň D · rock"].map((t, i) => T(28, 84 + i * 20, t, { fs: 11.5, c: "#E8ECF6" })).join("")}
+  ${box(226, 44, 196, 120, "#222838", null, 8)}${T(236, 62, "🎶 Playlist", { fs: 12, b: 1, c: "#F2C94C" })}${["1. Pieseň B", "2. Pieseň D"].map((t, i) => T(236, 84 + i * 20, t, { fs: 11.5, c: "#E8ECF6" })).join("")}${T(236, 150, "tvoj vlastný zoznam", { fs: 10.5, c: "#9AA7C4" })}
+  ${[["⏮", 40], ["▶", 80], ["⏭", 120], ["🔀", 190], ["🔁", 236], ["🎚️", 300]].map(([e, x]) => T(x, 192, e, { fs: 17, c: "#E8ECF6", a: "middle" })).join("")}${T(330, 192, "ekvalizér", { fs: 11, c: "#9AA7C4" })}`, "Prehrávač hudby"),
+  "<b>Knižnica</b> obsahuje všetky skladby, <b>playlist</b> je zoznam, ktorý si poskladáš sám.");
+const FIG_STREAM = fig(SV(440, 180, `
+  ${T(220, 22, "Súbor v zariadení a streamovanie", { a: "middle", fs: 14, b: 1, c: C.or })}
+  ${box(8, 36, 206, 136, C.okS, C.ok, 12)}${T(111, 58, "🎵 súbor v zariadení", { a: "middle", fs: 12.5, b: 1, c: C.ok })}${EM(70, 108, "💾", 28)}${ARR(94, 100, 128, 100, C.ok)}${EM(152, 108, "🎧", 28)}${T(111, 142, "skladba je uložená", { a: "middle", fs: 11.5 })}${T(111, 160, "v mobile alebo počítači", { a: "middle", fs: 11.5 })}
+  ${box(226, 36, 206, 136, C.accS, C.acc, 12)}${T(329, 58, "📡 streamovanie", { a: "middle", fs: 12.5, b: 1, c: C.acc })}${EM(270, 108, "☁️", 28)}${ARR(294, 100, 328, 100, C.acc)}${EM(352, 108, "🎧", 28)}${T(329, 142, "skladba prichádza", { a: "middle", fs: 11.5 })}${T(329, 160, "postupne cez internet", { a: "middle", fs: 11.5 })}`, "Súbor a stream"),
+  "Prehrávač hrá <b>súbory</b>, ktoré máš uložené. Streamovacia služba posiela hudbu <b>cez internet</b>.");
+/* M6 */
+const FIG_ASK = fig(SV(440, 200, `
+  ${T(220, 22, "Ako vybrať správny program", { a: "middle", fs: 14, b: 1, c: "#0B6F8A" })}
+  ${[["❓", "Čo chcem robiť?", "čítať, upraviť, počúvať"], ["📄", "S akým súborom?", "pozri príponu"], ["🧰", "Druh programu", "až potom konkrétny program"]].map(([e, n, d], i) => { const x = 8 + i * 146;
+    return box(x, 40, 128, 120, "#fff", "#0B6F8A", 12) + EM(x + 64, 82, e, 28) + T(x + 64, 112, n, { a: "middle", fs: 12, b: 1 }) + T(x + 64, 134, d, { a: "middle", fs: 10.5, c: C.mut }) + (i < 2 ? ARR(x + 130, 100, x + 144, 100) : ""); }).join("")}
+  ${T(220, 186, "Rovnaký súbor môžeš otvoriť rôznymi programami.", { a: "middle", fs: 11.5, c: C.mut })}`, "Postup výberu programu"),
+  "Najprv rozhodni, <b>čo</b> chceš so súborom robiť. Podľa toho vyber druh programu.");
+
+/* ===== M1 – plocha ===== */
+const DESK = [
+  { k: "s1", e: "⚙️", t: "Nastavenia Windows" }, { k: "a1", e: "🎮", t: "Minecraft" }, { k: "a2", e: "🎨", t: "Canva" },
+  { k: "s2", e: "🧹", t: "Vyčistenie disku" }, { k: "a3", e: "🌐", t: "Google Chrome" }, { k: "a4", e: "🎵", t: "Spotify" },
+  { k: "s3", e: "🖨️", t: "Ovládač tlačiarne" }, { k: "a5", e: "📕", t: "Acrobat Reader" }];
+const LICS = [{ id: "kom", t: "💶 komerčný" }, { id: "free", t: "🎁 freeware" }, { id: "share", t: "⏳ shareware" }, { id: "open", t: "🔓 open source" }];
+const LROWS = [
+  { k: "1", n: "Adobe Photoshop", d: "platíš mesačné predplatné", a: "kom" },
+  { k: "2", n: "WinRAR", d: "40 dní skúšaš, potom ťa vyzve na kúpu", a: "share" },
+  { k: "3", n: "GIMP", d: "zadarmo, jeho kód si môže ktokoľvek prečítať a upraviť", a: "open" },
+  { k: "4", n: "Adobe Acrobat Reader", d: "zadarmo, ale jeho kód je tajný", a: "free" }];
+
+/* ===== M2 – prehliadač PDF ===== */
+const PSENT = [["d1", "Kurz sa koná v Jasnej pod Chopkom."], ["ok", "Odchod autobusu je v pondelok 18. januára o 7:00 spred školy."], ["d2", "Ubytovanie je v chate Kosodrevina."], ["d3", "Vedúcim kurzu je pán učiteľ Hronec."]];
+const PTEXT = {
+  1: "", 2: "Zoznam výstroja: lyže, lyžiarky, palice, prilba, lyžiarske okuliare, teplá bunda, rukavice, čiapka, krém na opaľovanie, lieky.",
+  3: "Cena kurzu je 210 € a zahŕňa ubytovanie, stravu a skipas. Platbu uhraďte do 10. decembra na účet školy. Požičanie lyží v stredisku stojí 15 € na deň.",
+  4: "Prihláška na lyžiarsky kurz. Meno žiaka: Lumi Líšková, Sekunda. Súhlasím s účasťou svojho dieťaťa na kurze."
+};
+const PCHIPS = ["180 €", "210 €", "225 €", "15 €"];
+const pdfNew = () => ({ page: 1, rot: { 1: 0, 2: 270, 3: 0, 4: 0 }, tool: null, hl: [], sig: false, q: "", hits: null, ans: null, msg: "" });
+const pdfGoals = () => { const P = S.pdf; return [P.rot[2] === 0 && [1, 3, 4].every(i => P.rot[i] === 0), P.hl.includes("ok") && P.hl.length === 1, P.ans === 1, P.sig]; };
+const PGOALS = ["Strana 2 je naskenovaná naležato. Otoč ju tak, aby sa dala čítať (ostatné strany nech stoja rovno).", "Na strane 1 zvýrazni <b>iba</b> vetu, kedy a odkiaľ odchádza autobus.", "Pomocou <b>Hľadať</b> zisti, koľko stojí kurz, a vyber sumu:", "Na strane 4 podpíš prihlášku do poľa pre podpis."];
+const hiTxt = (t, q) => { if (!q) return esc(t); const i = t.toLowerCase().indexOf(q.toLowerCase()); if (i < 0) return esc(t); return esc(t.slice(0, i)) + `<mark class="sr">${esc(t.slice(i, i + q.length))}</mark>` + hiTxt(t.slice(i + q.length), q); };
+function pageHTML(n) {
+  const P = S.pdf, done = S.t.pdf, q = P.hits ? P.q : "";
+  if (n === 1) return `<h5>Lyžiarsky kurz 2027</h5><p>${PSENT.map(([k, t]) => `<button class="sent ${P.hl.includes(k) ? "hl" : ""} ${P.tool === "hl" && !done ? "can" : ""}" data-snt="${k}" ${done ? "disabled" : ""}>${hiTxt(t, q)}</button>`).join(" ")}</p><p>Informácie posiela triedny učiteľ.</p>`;
+  if (n === 2) return `<div class="scan"><h5>Výstroj</h5><p>${hiTxt(PTEXT[2], q)}</p><p>Všetko podpíšte menom.</p></div>`;
+  if (n === 3) return `<h5>Platba</h5><p>${hiTxt(PTEXT[3], q)}</p>`;
+  return `<h5>Prihláška</h5><p>${hiTxt(PTEXT[4], q)}</p><p style="margin-top:14px">Podpis rodiča:</p><button class="sigf ${P.tool === "sig" && !P.sig && !done ? "can" : ""}" data-sig ${done ? "disabled" : ""}>${P.sig ? "M. Líšková" : ""}</button>`;
+}
+function pdfHTML() {
+  const P = S.pdf, done = S.t.pdf, g = pdfGoals(), dis = done ? "disabled" : "";
+  const bar = `<div class="pdfbar"><button data-pg="-1" ${P.page === 1 || done ? "disabled" : ""} aria-label="Predchádzajúca strana">◀</button><span class="pn">${P.page} / 4</span><button data-pg="1" ${P.page === 4 || done ? "disabled" : ""} aria-label="Ďalšia strana">▶</button><span class="sep"></span>
+    <input id="pq" data-pq value="${esc(P.q)}" placeholder="Hľadať…" aria-label="Hľadať v dokumente" ${dis}><button data-ps ${dis} title="Hľadať (Ctrl + F)">🔍</button><span class="sep"></span>
+    <button class="${P.tool === "hl" ? "on" : ""}" data-tool="hl" ${dis} title="Zvýrazniť text">🖍️ Zvýrazniť</button><button class="${P.tool === "sig" ? "on" : ""}" data-tool="sig" ${dis} title="Podpísať">✍️ Podpísať</button><button data-rot ${dis} title="Otočiť stranu doprava">⟳ Otočiť</button><button data-prn ${dis} title="Tlačiť">🖨️</button></div>`;
+  const msg = P.msg || (P.tool === "hl" ? "🖍️ Zvýrazňovač je zapnutý. Klikaj na vety. Ďalším kliknutím zvýraznenie zrušíš." : P.tool === "sig" ? "✍️ Klikni do poľa pre podpis." : "Dokument: lyziarsky_kurz.pdf");
+  const goals = `<div class="goalp"><h4>Úlohy v prehliadači</h4><ol>${PGOALS.map((t, i) => `<li>${done ? (g[i] ? "✅ " : "❌ ") : ""}${t}${i === 2 ? `<div class="chips">${ord("pchips", PCHIPS.map((_, k) => k)).map(k => `<button class="${optCls(done, P.ans, k, 1)}" data-pa="${k}" ${dis}>${PCHIPS[k]}</button>`).join("")}</div>` : ""}</li>`).join("")}</ol></div>`;
+  return `<p class="ins">Prehliadač naozaj funguje: listuj, hľadaj, zvýrazňuj, otáčaj aj podpisuj. Keď splníš všetky 4 úlohy, klikni na Skontrolovať. Každá splnená úloha = 1 ⭐.</p>
+  <div class="pdfwrap"><div class="pdfv"><div class="wt"><span class="tt">📕 lyziarsky_kurz.pdf – prehliadač PDF</span><span class="dots">— ▢ ✕</span></div>${bar}
+    <div class="pdfbody"><div class="thumbs">${[1, 2, 3, 4].map(n => `<button class="thumb ${P.page === n ? "on" : ""} ${P.rot[n] % 180 ? "rot" : ""}" data-th="${n}" ${dis} aria-label="Strana ${n}">${n}</button>`).join("")}</div>
+    <div class="pview"><div class="ppage" style="transform:rotate(${P.rot[P.page]}deg)">${pageHTML(P.page)}</div></div></div><div class="pdfmsg" aria-live="polite">${msg}</div></div>${goals}</div>` + checkBar(TASKS.pdf, true, "");
+}
+/* ===== M3 – zväčšovanie ===== */
+const ZPICS = [
+  { id: "1", n: "Slnko", a: "r", fx: 85, fy: 35, f: (x, y) => Math.hypot(x - 30, y - 30) <= 18 ? "#F2B705" : null, bg: "#BFE0F7" },
+  { id: "2", n: "Hviezda", a: "v", fx: 60, fy: 22, svg: `<path d="M60 14 L70 46 L104 46 L77 66 L87 98 L60 78 L33 98 L43 66 L16 46 L50 46z" fill="#6A3FD0"/>` },
+  { id: "3", n: "Balón", a: "r", fx: 86, fy: 46, f: (x, y) => ((x - 30) / 13.5) ** 2 + ((y - 23) / 16.5) ** 2 <= 1 ? "#D9364A" : (x === 30 && y > 39 && y < 55 ? "#555" : null), bg: "#E8F4FF" },
+  { id: "4", n: "Značka", a: "v", fx: 92, fy: 60, svg: `<circle cx="60" cy="60" r="44" fill="#1E6FD9"/><path d="M34 54 h34 v-14 l24 20 l-24 20 v-14 h-34z" fill="#fff"/>` }];
+function zpicSVG(p, z) {
+  let body;
+  if (p.f) { body = `<rect width="120" height="120" fill="${p.bg}"/>`; for (let y = 0; y < 60; y++) for (let x = 0; x < 60; x++) { const c = p.f(x, y); if (c) body += `<rect x="${x * 2}" y="${y * 2}" width="2.04" height="2.04" fill="${c}"/>`; } }
+  else body = `<rect width="120" height="120" fill="#fff"/>${p.svg}`;
+  return `<svg viewBox="0 0 120 120" role="img" aria-label="${p.n}" shape-rendering="${p.f ? "crispEdges" : "auto"}"><g data-zg="${p.id}" transform="${ztf(p, z)}">${body}</g></svg>`;
+}
+const ztf = (p, z) => `translate(${p.fx * (1 - z)} ${p.fy * (1 - z)}) scale(${z})`;
+/* ===== M3 – pixelový editor ===== */
+const PXT = ["..YYYY..", ".YYYYYY.", "YYBYYBYY", "YYYYYYYY", "YBYYYYBY", "YYBBBBYY", ".YYYYYY.", "..YYYY.."];
+const PXC = { ".": "#FFFFFF", Y: "#F2C94C", B: "#16213A" };
+const PXN = { Y: "žltá", B: "čierna", ".": "guma (biela)" };
+const pxNew = () => ({ g: Array(64).fill("."), col: "Y", tool: "pen" });
+const pxWrong = () => S.px.g.filter((c, i) => c !== PXT[Math.floor(i / 8)][i % 8]).length;
+function pxFill(i, col) { const G = S.px.g, from = G[i]; if (from === col) return; const st = [i]; while (st.length) { const k = st.pop(); if (G[k] !== from) continue; G[k] = col; const r = Math.floor(k / 8), c = k % 8; if (r > 0) st.push(k - 8); if (r < 7) st.push(k + 8); if (c > 0) st.push(k - 1); if (c < 7) st.push(k + 1); } }
+function pixHTML() {
+  const X = S.px, done = S.t.pix, dis = done ? "disabled" : "";
+  return `<p class="ins">Nakresli smajlíka presne podľa vzoru. Vyber farbu a nástroj: <b>ceruzka</b> zafarbí jeden pixel, <b>vedierko</b> vyfarbí celú súvislú plochu rovnakej farby. Bez chyby = 2 ⭐, najviac 4 chybné pixely = 1 ⭐.</p>
+  <div class="pal">${["Y", "B", "."].map(c => `<button class="${X.col === c ? "on" : ""}" data-pc="${c}" ${dis}><span class="sw" style="background:${PXC[c]}"></span>${PXN[c]}</button>`).join("")}<span style="width:12px"></span>${[["pen", "✏️ ceruzka"], ["fill", "🪣 vedierko"]].map(([t, n]) => `<button class="${X.tool === t ? "on" : ""}" data-pt="${t}" ${dis}>${n}</button>`).join("")}<button data-pclr ${dis}>🗑️ vymazať všetko</button></div>
+  <div class="pxw"><div><div class="pxg">${X.g.map((c, i) => `<button data-px="${i}" style="background:${PXC[c]}" ${dis} aria-label="Pixel ${Math.floor(i / 8) + 1}, ${i % 8 + 1}"></button>`).join("")}</div><div class="muted" style="font-size:13.5px;margin-top:4px">tvoj obrázok 8 × 8 pixelov</div></div>
+  <div><div class="pxg tg sm">${PXT.join("").split("").map(c => `<span style="background:${PXC[c]}"></span>`).join("")}</div><div class="muted" style="font-size:13.5px;margin-top:4px">🎯 vzor</div></div></div>
+  ${done ? `<p class="why ${pxWrong() === 0 ? "good" : "miss"}">Chybných pixelov: <b>${pxWrong()}</b>. Obrázok má 64 pixelov a každý má práve jednu farbu.</p>` : ""}` + checkBar(TASKS.pix, true, "");
+}
+/* ===== M5 – prehrávač ===== */
+const SONGS = [
+  { id: "1", n: "Hrádza", a: "Bobrie zuby", g: "rock", d: "3:12" }, { id: "2", n: "Lesná cesta", a: "Líščí chvost", g: "folk", d: "2:58" },
+  { id: "3", n: "Turbo", a: "Bobrie zuby", g: "rock", d: "3:40" }, { id: "4", n: "Dážď v meste", a: "Nina Svetlá", g: "pop", d: "3:05" },
+  { id: "5", n: "Kopec", a: "Horské echo", g: "rock", d: "4:01" }, { id: "6", n: "Uspávanka", a: "Nina Svetlá", g: "pop", d: "2:20" },
+  { id: "7", n: "", a: "", g: "folk", d: "3:33", file: "Track 07.mp3" }, { id: "8", n: "Polnoc", a: "Horské echo", g: "elektronika", d: "3:50" }];
+const TAGO = { n: ["Svitanie", "Ranná rosa", "Track 07", "Lesná cesta"], a: ["Líščí chvost", "Horské echo", "Ranná rosa", "Nina Svetlá"], al: ["Ranná rosa", "Svitanie", "Líščí chvost", "Bez názvu"] };
+const TAGA = { n: 0, a: 0, al: 0 };
+const mpNew = () => ({ pl: [], sh: false, rp: 0, now: null, tag: { n: null, a: null, al: null } });
+const RPN = ["🔁 opakovanie: vypnuté", "🔁 opakovať celý playlist", "🔂 opakovať jednu skladbu"];
+const mpGoals = () => { const M = S.mp, ids = M.pl.slice().sort().join(","); return [ids === "1,3,5", M.sh && M.rp === 1, ["n", "a", "al"].every(k => M.tag[k] === TAGA[k])]; };
+const MPG = ["Vytvor playlist <b>Na bicykel</b>, v ktorom budú <b>všetky rockové</b> skladby a žiadne iné.", "Zapni <b>náhodné prehrávanie</b> a nastav <b>opakovanie celého playlistu</b>.", "Skladba <b>Track 07.mp3</b> nemá tagy. Doplň ich podľa obalu CD (tlačidlo 🏷️)."];
+const songName = s => s.id === "7" ? (S.mp.tag.n != null ? TAGO.n[S.mp.tag.n] : s.file) : s.n;
+function playerHTML() {
+  const M = S.mp, done = S.t.player, dis = done ? "disabled" : "", g = mpGoals(), by = id => SONGS.find(s => s.id === id);
+  const art = s => s.id === "7" ? (M.tag.a != null ? TAGO.a[M.tag.a] : "–") : s.a;
+  return `<p class="ins">Prehrávač naozaj funguje. Tlačidlom ➕ pridáš skladbu do playlistu, ➖ ju odoberieš. Každá splnená úloha = 1 ⭐.</p>
+  <div class="goalp" style="margin-bottom:12px"><ol>${MPG.map((t, i) => `<li>${done ? (g[i] ? "✅ " : "❌ ") : ""}${t}</li>`).join("")}</ol></div>
+  <div class="mp"><div class="mph">🎧 <b>Prehrávač hudby</b><span style="color:#9AA7C4">knižnica: 8 skladieb</span></div><div class="mpgrid"><div style="overflow-x:auto"><table><thead><tr><th></th><th>Názov</th><th>Interpret</th><th>Žáner</th><th>Dĺžka</th><th></th></tr></thead><tbody>
+    ${SONGS.map(s => `<tr><td><button data-mplay="${s.id}" ${dis} aria-label="Prehrať">▶</button></td><td>${esc(songName(s))}${s.id === "7" ? ` <button data-mtag ${dis} title="Upraviť tagy">🏷️</button>` : ""}</td><td>${esc(art(s))}</td><td class="g">${s.g}</td><td class="g">${s.d}</td><td><button data-madd="${s.id}" ${M.pl.includes(s.id) || done ? "disabled" : ""} aria-label="Pridať do playlistu">➕</button></td></tr>`).join("")}</tbody></table></div>
+    <div class="pl"><h5>🎶 Playlist: Na bicykel</h5>${M.pl.length ? `<ol>${M.pl.map(id => `<li><span>${esc(songName(by(id)))}</span><button data-mrem="${id}" ${dis} aria-label="Odobrať">➖</button></li>`).join("")}</ol>` : `<p style="color:#9AA7C4;font-size:13px;margin:0">Playlist je prázdny.</p>`}</div></div>
+    <div class="ctl"><button ${dis} aria-label="Predchádzajúca">⏮</button><button data-mplay="${M.now || "1"}" ${dis} aria-label="Prehrať">▶</button><button ${dis} aria-label="Ďalšia">⏭</button><button class="${M.sh ? "on" : ""}" data-msh ${dis} title="Náhodné prehrávanie">🔀 náhodne</button><button class="${M.rp ? "on" : ""}" data-mrp ${dis} title="Opakovanie">${RPN[M.rp]}</button><span class="now">${M.now ? "♪ Hrá: " + esc(songName(by(M.now))) + " – " + esc(art(by(M.now))) : "Nič nehrá"}</span></div></div>
+  ${M.tagOpen && !done ? `<div class="cdcover"><span class="disc"></span><div><b>Obal CD:</b> Líščí chvost – album <i>Ranná rosa</i><br>7. skladba: <b>Svitanie</b> (3:33)</div></div>
+    <div class="tagd"><div class="wt">🏷️ Tagy skladby – Track 07.mp3</div><div class="bd">${[["n", "Názov"], ["a", "Interpret"], ["al", "Album"]].map(([k, l]) => `<label for="tg-${k}">${l}:</label><select id="tg-${k}" data-tg="${k}"><option value="">– vyber –</option>${TAGO[k].map((o, i) => `<option value="${i}" ${M.tag[k] === i ? "selected" : ""}>${o}</option>`).join("")}</select>`).join("")}</div></div>` : ""}
+  ${done ? `<p class="why ${g.every(Boolean) ? "good" : "miss"}">Rockové sú: Hrádza, Turbo a Kopec. Náhodné prehrávanie 🔀 zamieša poradie, 🔁 po poslednej skladbe začne playlist znova. Tagy: Svitanie, Líščí chvost, Ranná rosa.</p>` : ""}` + checkBar(TASKS.player, true, "");
+}
+/* ===== M6 – otvoriť pomocou ===== */
+const PROGS = [{ id: "acr", t: "📕 Acrobat Reader" }, { id: "ink", t: "📐 Inkscape" }, { id: "vlc", t: "🎧 VLC media player" }, { id: "pnt", t: "🖌️ Skicár" }, { id: "wrd", t: "📝 Word" }, { id: "fot", t: "🖼️ Fotografie" }];
+const OROWS = [
+  { k: "1", f: "prihlaska_kurz.pdf", d: "chceš ju vytlačiť", a: "acr", why: "PDF otvorí a vytlačí <b>prehliadač PDF</b>." },
+  { k: "2", f: "logo_triedy.svg", d: "chceš zmeniť farbu loga", a: "ink", why: ".svg je vektorový obrázok, upravíš ho vo <b>vektorovom editore</b>." },
+  { k: "3", f: "rozhovor.m4a", d: "chceš si ho vypočuť", a: "vlc", why: ".m4a je zvuk. Prehrá ho <b>prehrávač</b>, napríklad VLC." }];
+
+/* ===== ÚLOHY ===== */
+const TASKS = {
+  desk: { id: "desk", type: "desk", max: 3, n: 3 },
+  lic: { id: "lic", type: "lic", max: 2 },
+  pdf: { id: "pdf", type: "pdf", max: 4 },
+  notpdf: { id: "notpdf", type: "mc", qs: [
+    { id: "1", q: "Ktorým programom PDF dokument <b>neotvoríš</b>?", opts: ["VLC media player", "Microsoft Edge", "SumatraPDF", "Google Chrome"], a: 0, why: "<b>VLC</b> je prehrávač hudby a videa. PDF zobrazí prehliadač PDF (SumatraPDF) aj internetový prehliadač (Edge, Chrome)." }] },
+  zoom: { id: "zoom", type: "zoom", max: 2 },
+  pix: { id: "pix", type: "pix", max: 2 },
+  vfmt: { id: "vfmt", type: "mc", qs: [
+    { id: "1", q: "Ktorý z týchto formátov obrázka je <b>vektorový</b>?", opts: ["SVG", "JPG", "PNG", "GIF"], a: 0, why: "<b>SVG</b> (Scalable Vector Graphics) ukladá tvary. JPG, PNG aj GIF sú rastrové, ukladajú pixely." }] },
+  gsort: { id: "gsort", type: "sort", max: 2, per: 3, bins: [{ id: "p", t: "👀 prehliadač obrázkov", bg: "#DDF1F7", c: "#0B6F8A" }, { id: "r", t: "🖌️ rastrový editor", bg: "#FBE3D2", c: "#A0460A" }, { id: "v", t: "📐 vektorový editor", bg: "#ECE5FC", c: "#5A2FC0" }], items: [
+    { id: "1", t: "IrfanView – rýchle prezeranie fotiek", a: "p" }, { id: "2", t: "Fotky Google – album fotiek", a: "p" },
+    { id: "3", t: "Krita – digitálna maľba štetcom", a: "r" }, { id: "4", t: "Paint.NET – úprava fotiek", a: "r" },
+    { id: "5", t: "Figma – návrh ikon a obrazoviek", a: "v" }, { id: "6", t: "CorelDRAW – logá a plagáty", a: "v" }] },
+  sit: { id: "sit", type: "mc", qs: [
+    { id: "1", q: "Na fotke z výletu chceš vyretušovať pehu na nose kamaráta.", opts: ["🖌️ rastrový editor", "📐 vektorový editor", "👀 prehliadač obrázkov", "📕 prehliadač PDF"], a: 0, why: "Fotka je z pixelov. Pehu zakryješ zmenou pixelov v <b>rastrovom editore</b>." },
+    { id: "2", q: "Navrhuješ nápis triedy, ktorý sa vytlačí na malý odznak aj na veľkú plachtu.", opts: ["📐 vektorový editor", "🖌️ rastrový editor", "👀 prehliadač obrázkov", "🎧 prehrávač hudby"], a: 0, why: "Vektorová grafika ostane ostrá v <b>akejkoľvek veľkosti</b>." }] },
+  png: { id: "png", type: "mc", qs: [
+    { id: "1", q: "Logo s <b>priehľadným pozadím</b> chceš vložiť na farebný plagát ako rastrový obrázok. Aký formát zvolíš?", opts: ["PNG", "JPG", "BMP", "MP3"], a: 0, why: "<b>PNG</b> vie uložiť priehľadnosť. JPG a BMP by pozadie vyplnili farbou, väčšinou bielou." }] },
+  player: { id: "player", type: "player", max: 3 },
+  comic: { id: "comic", type: "comic", panels: [
+    { w: "z", mood: "sad", t: "Lumi, zajtra letím za babkou. V lietadle nebude internet a ja chcem cestou počúvať svoj playlist zo Spotify. 😟" },
+    { w: "l", q: "1", opts: ["Pred odletom si playlist stiahni na počúvanie offline. Streamovaná hudba bez internetu nehrá.", "Nevadí, streamovacia služba hrá aj bez internetu, stačí mať zapnutý zvuk.", "Zapni si ekvalizér, ten udrží hudbu aj bez signálu.", "Skopíruj si skladby zo Spotify ako MP3 do priečinka Dokumenty."], a: 0, why: "Stream posiela hudbu <b>cez internet</b>. Bez neho pomôže iba vopred stiahnutý playlist v aplikácii (režim offline)." },
+    { w: "z", t: "Super! A ešte jedna vec: prečo mám v mobile hudbu v MP3 a nie vo WAV? Brat tvrdí, že WAV je lepší. 🤔" },
+    { w: "l", q: "2", opts: ["MP3 je oveľa menší, lebo vynechá zvuky, ktoré takmer nepočujeme. Do mobilu sa ich zmestí viac.", "WAV sa v mobile nedá prehrať, funguje iba v počítači.", "MP3 má lepšiu kvalitu, preto je aj väčší ako WAV.", "MP3 a WAV sú úplne to isté, líšia sa iba príponou."], a: 0, why: "WAV je kvalitnejší, ale <b>veľký</b>. MP3 vynechá málo počuteľné časti zvuku, preto je približne <b>10-krát menší</b>." },
+    { w: "l", t: "Tak šťastnú cestu, Zuzka! Nezabudni slúchadlá. 🦊🎧" }] },
+  open: { id: "open", type: "open", max: 3 },
+  deflt: { id: "deflt", type: "mc", qs: [
+    { id: "1", q: "Dvojklikom sa ti každé PDF otvorí v prehliadači Edge. Ty chceš, aby sa <b>vždy</b> otváralo v Acrobat Readeri. Čo urobíš?", opts: ["Pravé tlačidlo › Otvoriť pomocou › Vybrať inú aplikáciu, vyberieš Acrobat Reader a zaškrtneš Vždy", "Premenuješ súbor z .pdf na .acrobat", "Odinštaluješ prehliadač Edge", "Pravé tlačidlo › Otvoriť pomocou › Acrobat Reader, ale bez zaškrtnutia Vždy"], a: 0, why: "Systém si pre každú príponu pamätá <b>predvolenú aplikáciu</b>. Bez voľby <b>Vždy</b> sa program použije iba raz." }] },
+  final: { id: "final", type: "mc", qs: [
+    { id: "1", q: "Chceš si doma nainštalovať grafický program GIMP. Odkiaľ ho stiahneš najbezpečnejšie?", opts: ["Z oficiálnej stránky gimp.org", "Z reklamy „GIMP PRO zadarmo, rýchle stiahnutie“", "Zo súboru, ktorý ti prišiel v e-maile od neznámeho", "Z prvej stránky, ktorá ponúka tlačidlo Stiahnuť"], a: 0, why: "Programy sťahuj <b>od výrobcu</b> alebo z obchodu s aplikáciami. GIMP je open source a na gimp.org je zadarmo." }] }
+};
+
+const THEORY = {
+  m1: ["<b>Systémový softvér</b> zabezpečuje chod počítača: operačný systém, ovládače, nástroje na údržbu.", "<b>Aplikačný softvér</b> slúži na konkrétnu prácu používateľa.", "<b>Licencia</b> určuje, či za program platíš a čo s ním smieš robiť.", "Aplikácie inštaluj z <b>obchodu</b> alebo zo stránky výrobcu."],
+  m2: ["<b>PDF</b> (Portable Document Format) vyzerá na každom zariadení rovnako.", "PDF je určené hlavne na <b>čítanie a tlač</b>.", "PDF otvorí prehliadač PDF aj <b>internetový prehliadač</b>.", "Prehliadač PDF vie hľadať, zvýrazňovať, otáčať strany, podpisovať a tlačiť."],
+  m3: ["<b>Rastrová grafika</b> = mriežka farebných bodov, <b>pixelov</b>.", "Pri veľkom zväčšení rastrového obrázka vidno <b>štvorčeky</b>.", "<b>Vektorová grafika</b> = tvary opísané výpočtom, pri zväčšení ostáva ostrá.", "Fotky sú rastrové, logá a ikony často vektorové."],
+  m4: ["<b>Prehliadač obrázkov</b>: prezeranie a listovanie fotiek.", "<b>Rastrový editor</b>: úprava fotiek a maľovanie po pixeloch.", "<b>Vektorový editor</b>: kreslenie tvarov, lôg a ikon.", "Niektoré programy (napr. Canva) kombinujú oboje."],
+  m5: ["<b>Prehrávač hudby</b> prehráva súbory uložené v zariadení.", "<b>Streamovacia služba</b> posiela hudbu cez internet, často za predplatné.", "<b>Knižnica</b> = všetky skladby, <b>playlist</b> = vlastný zoznam skladieb.", "<b>Tagy</b> = údaje o skladbe uložené v súbore: názov, interpret, album."],
+  m6: ["Najprv sa spýtaj: <b>Čo chcem robiť?</b> a <b>s akým súborom?</b>", "<b>Prípona</b> prezradí, aký je to súbor.", "Iný program vyberieš cez pravé tlačidlo › <b>Otvoriť pomocou</b>.", "Programy sťahuj iba z <b>bezpečných zdrojov</b>."]
+};
+
+/* ===== ENGINE ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max || (T.qs ? T.qs.length : T.items ? T.items.length : T.panels ? T.panels.filter(p => p.q).length : 0); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return { v: 1, attempt: 1, early: false, confirmEarly: false, name: "", cls: CLASS_DEFAULT, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, sel: {}, fsel: {}, pdf: pdfNew(), zz: {}, px: pxNew(), mp: mpNew() }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
+const NSTOP = STEPS.length - 2;
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
+const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
+const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+function renderTop() {
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 1.8 Aplikačný softvér</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
+function checkBar(T, ready, hint, label) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+}
+const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, Q = T.qs;
+  const qs = T.keep ? Q : ord(T.id + ":q", Q.map(q => q.id)).map(id => Q.find(q => q.id === id));
+  return qs.map((q, qi) => { const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts">${o.map(i => `<button class="${optCls(done, d[q.id], i, q.a)}" data-mc="${T.id}|${q.id}|${i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`).join("")}</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`; }).join("") + checkBar(T, Q.every(q => d[q.id] !== undefined), Q.length > 1 ? "Odpovedz na všetky otázky." : "Vyber odpoveď.");
+}
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, io = ord(T.id + ":i", T.items.map(x => x.id)), sel = S.sel[T.id], per = T.per || 2;
+  const items = io.map(id => T.items.find(x => x.id === id));
+  const chip = x => { let c = "chip"; if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad"; return `<button class="${c}" data-sti="${T.id}|${x.id}" ${done ? "disabled" : ""}>${x.t}</button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? T.items.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na kartičku a potom na nadpis stĺpca, kam patrí. Kartičku presunieš, keď na ňu klikneš a potom na iný stĺpec. Za každé ${per} správne zatriedené kartičky získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(chip).join("") : `<span class="muted" style="font-size:14.5px">Všetky kartičky sú zatriedené.</span>`}</div>
+    <div class="bins">${T.bins.map(g => `<div class="bin"><button class="bh" style="background:${g.bg};color:${g.c}" data-stb="${T.id}|${g.id}" ${done ? "disabled" : ""}>${g.t}</button>${items.filter(x => d[x.id] === g.id).map(chip).join("")}</div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === T.items.length ? "good" : "miss"}">Správne zatriedených: <b>${nOk} z ${T.items.length}</b>. ${T.items.filter(x => d[x.id] !== x.a).map(x => `„${x.t}“ → <b>${T.bins.find(b => b.id === x.a).t}</b>`).join(" · ")}</p>` : ""}` +
+    checkBar(T, T.items.every(x => d[x.id]), "Zatrieď všetky kartičky.");
+}
+/* riadky s výberom (licencie, otvoriť pomocou) */
+function rowsHTML(T, rows, acts, label, sub, whyAll) {
+  const done = S.t[T.id], d = S.d[T.id] || {};
+  return rows.map(r => { const o = ord(T.id + ":" + r.k, acts.map(a => a.id));
+    return `<div class="krow"><div class="kk">${label(r)}<small>${r.d}</small></div><div><div class="chips">${o.map(a => `<button class="${optCls(done, d[r.k], a, r.a)}" data-rw="${T.id}|${r.k}|${a}" ${done ? "disabled" : ""}>${acts.find(x => x.id === a).t}</button>`).join("")}</div>${done && r.why ? `<p class="why ${d[r.k] === r.a ? "good" : "miss"}">${r.why}</p>` : ""}</div></div>`; }).join("") +
+    (done && whyAll ? `<p class="why ${rows.every(r => d[r.k] === r.a) ? "good" : "miss"}" style="margin-top:12px">${whyAll}</p>` : "") +
+    checkBar(T, rows.every(r => d[r.k]), sub);
+}
+/* M1 – plocha */
+function deskHTML() {
+  const T = TASKS.desk, done = S.t.desk, sel = S.fsel.desk || [];
+  return `<p class="ins">Na ploche počítača sú ikony programov. Označ <b>3 programy</b>, ktoré patria k <b>systémovému softvéru</b>. Označenie zrušíš ďalším kliknutím. Každý správne označený = 1 ⭐.</p>
+  <div class="tiles">${DESK.map(x => { const on = sel.includes(x.k), sy = x.k[0] === "s"; let c = "tile"; if (done) c += on ? (sy ? " ok" : " bad") : (sy ? " miss" : ""); else if (on) c += " on";
+    return `<button class="${c}" data-dk="${x.k}" ${done ? "disabled" : ""}><span class="e">${x.e}</span>${x.t}</button>`; }).join("")}</div>
+  ${done ? `<p class="why ${sel.filter(k => k[0] === "s").length === 3 ? "good" : "miss"}" style="margin-top:12px">Systémový softvér: <b>Nastavenia Windows</b> (súčasť operačného systému), <b>Vyčistenie disku</b> (nástroj na údržbu) a <b>ovládač tlačiarne</b>. Ostatné sú aplikácie na prácu alebo zábavu.</p>` : `<p class="hint muted" style="margin-top:8px">Označené: <b>${sel.length} z 3</b></p>`}` +
+    checkBar(T, sel.length === 3, "Označ presne 3 ikony.");
+}
+/* M3 – zväčšovanie */
+function zoomHTML() {
+  const T = TASKS.zoom, done = S.t.zoom, d = S.d.zoom || {}, nOk = ZPICS.filter(p => d[p.id] === p.a).length;
+  return `<p class="ins">Posuvníkom obrázok zväčši a pozri sa na jeho okraj. Potom rozhodni, či je rastrový, alebo vektorový. Za každé 2 správne obrázky získaš 1 ⭐.</p>
+  <div class="zcards">${ZPICS.map(p => { const z = S.zz[p.id] || 1, good = done && d[p.id] === p.a;
+    return `<div class="zc ${done ? (good ? "okc" : "badc") : ""}"><b>${p.n}</b>${zpicSVG(p, z)}<div class="zl">🔍 <input type="range" min="1" max="10" step="0.5" value="${z}" data-zm="${p.id}" aria-label="Priblíženie: ${p.n}"><span data-zv="${p.id}">${z}×</span></div>
+      <div class="opts">${[["r", "rastrový"], ["v", "vektorový"]].map(([k, n]) => `<button class="${optCls(done, d[p.id], k, p.a)}" data-zo="${p.id}|${k}" ${done ? "disabled" : ""}>${n}</button>`).join("")}</div></div>`; }).join("")}</div>
+  ${done ? `<p class="why ${nOk === 4 ? "good" : "miss"}">Správne: <b>${nOk} zo 4</b>. Slnko a balón sa pri zväčšení rozpadnú na štvorčeky (raster). Hviezda a značka majú stále hladký okraj (vektor).</p>` : ""}` + checkBar(T, ZPICS.every(p => d[p.id]), "Rozhodni pri všetkých 4 obrázkoch.");
+}
+/* M2/M5 – komiks */
+function comicHTML() {
+  const T = TASKS.comic, done = S.t.comic, d = S.d.comic || {};
+  const who = { z: ["Zuzka", ZUZKA], l: ["Lumi", LUMI] };
+  return `<div class="comic">${T.panels.map(p => { const [nm, pic] = who[p.w];
+    if (!p.q) return `<div class="panel ${p.w === "l" ? "c" : ""}">${pic(p.mood || (p.w === "l" ? "wow" : ""))}<div class="bub"><div class="nm">${nm}</div>${p.t}</div></div>`;
+    const o = ord("comic:" + p.q, p.opts.map((_, i) => i));
+    return `<div class="panel choice">${pic("")}<div class="bub"><div class="nm">${nm} – vyber, čo odpovie</div><div class="opts">${o.map(i => `<button class="${optCls(done, d[p.q], i, p.a)}" data-cm="${p.q}|${i}" ${done ? "disabled" : ""}>„${p.opts[i]}“</button>`).join("")}</div>${done ? `<p class="why ${d[p.q] === p.a ? "good" : "miss"}">${p.why}</p>` : ""}</div></div>`; }).join("")}</div>` +
+    checkBar(T, T.panels.filter(p => p.q).every(p => d[p.q] !== undefined), "Vyber obe odpovede Lumi.");
+}
+function memo() { const L = THEORY[STEPS[S.cur].id]; return L ? `<section class="memo"><h3>📌 Zapamätaj si</h3><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "🏆 Zobraziť výsledok" : "Ďalšia misia: " + n.title + " ▶"}</button></div>` : ""); }
+
+const VIEWS = {
+  start() {
+    return `<div class="hero"><div><p class="kicker">Informatika · Sekunda · domáca úloha k hodine 1.8</p><h1>Domáca úloha: Aplikačný softvér</h1>
+      <p style="font-size:18.5px">Ahoj! Som <b>Lumi</b>, líška, ktorá rada fotografuje a počúva hudbu. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: softvér a licencie, prehliadač PDF, pixely a vektory, grafické programy, prehrávač hudby a výber správneho programu. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <p class="muted" style="font-size:15.5px">Prehliadač PDF, pixelový editor aj prehrávač hudby sú simulované priamo na tejto stránke. Nič netreba inštalovať.</p>
+      <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
+      <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
+      <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
+      <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Pri známke 1 alebo 2 je domáca úloha hotová, pri známke 3, 4 alebo 5 máš ešte <b>jednu opravu</b>.</div></div>`;
+  },
+  m1() {
+    return banner(1, "Ktoré programy riadia počítač a ktoré robia prácu pre teba? A čo smieš s programom robiť?") +
+    say(`Ahoj, som líška <b>Lumi</b>! 🦊 V počítači mám kopu programov: na fotky, hudbu aj školu. Najprv si ich roztriedime a pozrieme sa, za ktoré treba platiť.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Softvér</b> sú programy v počítači. Delíme ho na dve skupiny:</p>
+      <table class="rtab"><thead><tr><th>Skupina</th><th>Na čo slúži</th></tr></thead><tbody>
+        <tr><td><b>⚙️ systémový softvér</b></td><td>zabezpečuje chod počítača: operačný systém, ovládače zariadení, nástroje na údržbu</td></tr>
+        <tr><td><b>🧩 aplikačný softvér</b></td><td>robí konkrétnu prácu používateľa: písanie, kreslenie, hudba, hry, internet</td></tr></tbody></table>
+      <p>Každý program má <b>licenciu</b>. Tá určuje, či zaňho platíš a čo s ním smieš robiť:</p>
+      <table class="rtab"><thead><tr><th>Licencia</th><th>Čo znamená</th></tr></thead><tbody>
+        <tr><td><b>komerčný</b></td><td>platený, kúpou alebo predplatným</td></tr><tr><td><b>freeware</b></td><td>zadarmo, ale zdrojový kód je tajný</td></tr>
+        <tr><td><b>shareware</b></td><td>istý čas na skúšku, potom treba zaplatiť</td></tr><tr><td><b>open source</b></td><td>zadarmo a so zverejneným zdrojovým kódom</td></tr></tbody></table>
+    </div><div class="tfigs">${FIG_LAYERS}${FIG_STORE}</div></div>
+    ${VEDEL("V obchode <b>Google Play</b> je približne <b>dva milióny</b> aplikácií. Keby si každý deň vyskúšal jednu, trvalo by ti to vyše päťtisíc rokov.")}
+    ${H3(1, "🖥️", "systémové programy na ploche", "desk")}<div class="task">${deskHTML()}</div>
+    ${H3(2, "📜", "aká je to licencia?", "lic")}<div class="task"><p class="ins">Pri každom programe vyber jeho licenciu. Za každé 2 správne získaš 1 ⭐.</p>${rowsHTML(TASKS.lic, LROWS, LICS, r => r.n, "Vyber licenciu pri každom programe.", "Photoshop je <b>komerčný</b> (predplatné), WinRAR <b>shareware</b> (skúšobná doba), GIMP <b>open source</b> (verejný kód) a Acrobat Reader <b>freeware</b> (zadarmo, kód je tajný).")}</div>` + nextBar();
+  },
+  m2() {
+    return banner(2, "Vyskúšaj si skutočný prehliadač PDF: listuj, hľadaj, zvýrazňuj, otáčaj a podpisuj.") +
+    say(`Škola mi poslala prihlášku na lyžiarsky kurz ako <b>PDF</b>. 🎿 Jedna strana je naskenovaná naležato a prihlášku treba podpísať. Pomôžeš mi?`) +
+    `<div class="theory tsplit"><div>
+      <p><b>PDF</b> (Portable Document Format, prenosný formát dokumentu) vytvorila firma Adobe. Dokument v PDF vyzerá na každom zariadení <b>rovnako</b>, preto sa v ňom posielajú tlačivá, prihlášky aj rozvrhy.</p>
+      <p>PDF otvorí špeciálny <b>prehliadač PDF</b>, ale zvládne ho aj <b>internetový prehliadač</b>. Prehliadač PDF vie dokument nielen zobraziť:</p>
+      <ul><li>nájde slovo v celom dokumente,</li><li>zvýrazní dôležitý text alebo pridá poznámku,</li><li>otočí naskenovanú stranu,</li><li>vyplní a podpíše formulár, vytlačí dokument.</li></ul>
+    </div><div class="tfigs">${FIG_SAME}${FIG_PTOOLS}</div></div>
+    ${VEDEL("PDF môže obsahovať aj <b>formulár s políčkami</b>. Vyplníš ho priamo v prehliadači, uložíš a pošleš späť. Netreba ho tlačiť ani skenovať.")}
+    ${H3(3, "📕", "prihláška v prehliadači PDF", "pdf")}<div class="task">${pdfHTML()}</div>
+    ${H3(4, "🚫", "čím PDF neotvoríš?", "notpdf")}<div class="task">${mcHTML(TASKS.notpdf)}</div>` + nextBar();
+  },
+  m3() {
+    return banner(3, "Zväčši obrázky ako detektív a nakresli vlastný obrázok z pixelov.") +
+    say(`Keď si fotku z mobilu priblížim, vidím malé štvorčeky. 🔍 Logo z plagátu však ostáva ostré. Prečo? Preskúmaj to a potom si nakresli smajlíka po pixeloch.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>Počítač ukladá obrázky dvoma spôsobmi:</p>
+      <table class="rtab"><thead><tr><th></th><th>Rastrová grafika</th><th>Vektorová grafika</th></tr></thead><tbody>
+        <tr><td><b>z čoho</b></td><td>mriežka farebných bodov, <b>pixelov</b></td><td>tvary opísané výpočtom: čiary, krivky, výplne</td></tr>
+        <tr><td><b>zväčšíš</b></td><td>objavia sa <b>štvorčeky</b></td><td>ostáva <b>ostrá</b></td></tr>
+        <tr><td><b>na čo</b></td><td>fotografie, maľby</td><td>logá, ikony, nápisy</td></tr></tbody></table>
+      <p>Čím viac pixelov obrázok má, tým je jemnejší, ale aj väčší súbor.</p>
+    </div><div class="tfigs">${FIG_RV}${FIG_GRID}</div></div>
+    ${VEDEL("Slovo <b>pixel</b> vzniklo spojením anglických slov <i>picture</i> (obrázok) a <i>element</i> (prvok). Pixel je teda najmenší prvok obrázka.")}
+    ${H3(5, "🔍", "detektív so zväčšovacím sklom", "zoom")}<div class="task">${zoomHTML()}</div>
+    ${H3(6, "🟨", "smajlík z pixelov", "pix")}<div class="task">${pixHTML()}</div>
+    ${H3(7, "📐", "vektorový formát", "vfmt")}<div class="task">${mcHTML(TASKS.vfmt)}</div>` + nextBar();
+  },
+  m4() {
+    return banner(4, "Prehliadač, rastrový alebo vektorový editor? Vyber správny nástroj na prácu s obrázkom.") +
+    say(`Mám nové fotky z lesa a chcem si navrhnúť aj vlastné logo. 🎨 Na každú prácu sa hodí iný druh grafického programu. Pomôž mi ich roztriediť.`) +
+    `<div class="theory tsplit"><div>
+      <p>Grafické programy delíme podľa toho, čo s obrázkom robíš:</p>
+      <table class="rtab"><thead><tr><th>Druh programu</th><th>Čo v ňom robíš</th></tr></thead><tbody>
+        <tr><td><b>👀 prehliadač obrázkov</b></td><td>prezeráš, listuješ, otočíš alebo vymažeš fotky</td></tr>
+        <tr><td><b>🖌️ rastrový editor</b></td><td>meníš pixely: orezávaš, retušuješ, maľuješ</td></tr>
+        <tr><td><b>📐 vektorový editor</b></td><td>kreslíš tvary, krivky a nápisy</td></tr></tbody></table>
+      <p>Obrázky sa ukladajú v rôznych formátoch. Niektoré sú menšie, iné vedia uložiť aj <b>priehľadnosť</b> alebo <b>animáciu</b>.</p>
+    </div><div class="tfigs">${FIG_GTYPES}</div></div>
+    ${VEDEL("Bezplatný editor <b>GIMP</b> začali v roku <b>1995</b> programovať dvaja študenti Kalifornskej univerzity v Berkeley ako školský projekt.")}
+    ${H3(8, "🗂️", "roztrieď grafické programy", "gsort")}<div class="task">${sortHTML(TASKS.gsort)}</div>
+    ${H3(9, "🤔", "ktorý program použiješ?", "sit")}<div class="task">${mcHTML(TASKS.sit)}</div>
+    ${H3(10, "🖼️", "logo s priehľadným pozadím", "png")}<div class="task">${mcHTML(TASKS.png)}</div>` + nextBar();
+  },
+  m5() {
+    return banner(5, "Poskladaj playlist, nastav prehrávanie a doplň chýbajúce údaje o skladbe.") +
+    say(`Hudba je moja vášeň! 🎧 Pripravujem sa na výlet na bicykli a potrebujem playlist. A jedna skladba v mojej knižnici nemá ani názov. Pomôžeš mi?`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Prehrávač hudby</b> prehráva súbory uložené v počítači alebo mobile, napríklad VLC alebo Windows Media Player. <b>Streamovacia služba</b> posiela hudbu cez internet, často za predplatné.</p>
+      <table class="rtab"><thead><tr><th>Pojem</th><th>Čo znamená</th></tr></thead><tbody>
+        <tr><td><b>knižnica</b></td><td>všetky skladby, ktoré prehrávač pozná</td></tr><tr><td><b>playlist</b></td><td>tvoj vlastný zoznam vybraných skladieb</td></tr>
+        <tr><td><b>🔀 náhodne</b></td><td>zamieša poradie skladieb</td></tr><tr><td><b>🔁 opakovanie</b></td><td>po skončení začne znova</td></tr>
+        <tr><td><b>tagy</b></td><td>údaje o skladbe uložené priamo v súbore</td></tr><tr><td><b>ekvalizér</b></td><td>zosilní basy alebo výšky</td></tr></tbody></table>
+    </div><div class="tfigs">${FIG_PLAYER}${FIG_STREAM}</div></div>
+    ${VEDEL("Formát <b>MP3</b> vyvinuli vedci z nemeckého <b>Fraunhoferovho inštitútu</b>. Rozšíril sa koncom 90. rokov, keď si ľudia začali posielať hudbu cez internet.")}
+    ${H3(11, "🎶", "playlist Na bicykel", "player")}<div class="task">${playerHTML()}</div>
+    ${H3(12, "💬", "komiks: hudba v lietadle", "comic")}<div class="task">${comicHTML()}</div>` + nextBar();
+  },
+  m6() {
+    return banner(6, "Ku každému súboru vyber program podľa toho, čo s ním chceš robiť.") +
+    say(`Posledná misia! 🗂️ V priečinku mám rôzne súbory. Dvojklikom sa otvoria v predvolenom programe, ale ja chcem s každým urobiť niečo iné.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>Pred prácou so súborom si polož dve otázky: <b>Čo chcem robiť?</b> (čítať, upraviť, počúvať) a <b>s akým súborom?</b> Druh súboru prezradí jeho <b>prípona</b>.</p>
+      <p>Ten istý súbor môžeš otvoriť rôznymi programami. Obrázok si v prehliadači iba pozrieš, v editore ho upravíš.</p>
+      <p>Dvojklik otvorí súbor v <b>predvolenom</b> programe. Iný program vyberieš, keď na súbor klikneš <b>pravým tlačidlom</b> a zvolíš <b>Otvoriť pomocou</b>.</p>
+    </div><div class="tfigs">${FIG_ASK}</div></div>
+    ${VEDEL("Logom prehrávača <b>VLC</b> je dopravný kužeľ. Študenti z parížskej školy, ktorí VLC začali programovať, totiž zbierali dopravné kužele z ulíc.")}
+    ${H3(13, "📂", "otvoriť pomocou…", "open")}<div class="task"><p class="ins">Pri každom súbore vyber program, v ktorom urobíš to, čo chceš. Každý správny = 1 ⭐.</p>${rowsHTML(TASKS.open, OROWS, PROGS, r => `📄 <code>${r.f}</code>`, "Vyber program pri každom súbore.")}</div>
+    ${H3(14, "⚙️", "predvolený program", "deflt")}<div class="task">${mcHTML(TASKS.deflt)}</div>
+    ${H3(15, "🎓", "záverečná otázka", "final")}<div class="task">${mcHTML(TASKS.final)}</div>` + nextBar();
+  },
+  vysledok() {
+    if (!S.finished && !allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i)).map(([s, i]) => [s, i, STEP_TASKS[s.id].filter(t => !S.t[t]).length]);
+      const left = Object.keys(TASKS).filter(k => !S.t[k]).length;
+      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú tieto misie (kliknutím sa do nich vrátiš):</p><div class="row" style="margin-top:0">${miss.map(([s, i, n]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} <span class="muted">· ${n} ${n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh"}</span></button>`).join("")}</div>
+        ${S.confirmEarly ? `<div class="vedel" style="margin-top:18px"><b>⚠️ Naozaj chceš domácu úlohu ukončiť?</b> Nedokončených úloh: <b>${left}</b>. Rozpracované úlohy sa vyhodnotia podľa toho, čo si v nich vybral, nedotknuté dostanú 0 ⭐. Potom sa už nič nedá zmeniť.<div class="row"><button class="primary" data-earlyyes style="background:#C0392B">Áno, odoslať</button><button class="ghost" data-earlyno>Späť k úlohám</button></div></div>`
+        : `<div class="row" style="margin-top:18px"><button class="primary" data-early>🏁 Ukončiť a odoslať výsledok</button><span class="muted" style="font-size:14.5px">Ak už nechceš pokračovať, môžeš domácu úlohu ukončiť aj teraz.</span></div>`}</div>`; }
+    if (!S.finished) { S.finished = Date.now(); save(); }
+    const gr = gradeOf(total(), MAX);
+    try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: S.name, cls: S.cls, score: total(), max: MAX, at: S.finished, grade: gr, attempts: S.attempt || 1 })); } catch (e) {}
+    const pct = Math.round(total() / MAX * 100), g = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+    return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Výborne! Prihláška je podpísaná, smajlík nakreslený a playlist pripravený na výlet. Aplikácie ovládaš ako profík! 🦊🎧" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil, a vyskúšaj si prehliadač PDF aj grafický program aj v počítači.", "wow")}
+      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <div class="row">${sendResults()}</div>
+      ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
+      ${(S.attempt || 1) === 1 && g >= 3 ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš ešte jednu opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu vypracovať ešte raz. Najprv si pozri vysvetlenia pri úlohách, kde si sa pomýlil. Oprava je posledný pokus.<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>` : ""}
+      ${(S.attempt || 1) === 2 ? `<p class="muted" style="margin-top:12px">Toto bola oprava, ďalší pokus už nie je možný.</p>` : ""}</div>`;
+  }
+};
+function sendResults() {
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.early ? " (nedokončené)" : "") + ((S.attempt || 1) === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished, S.attempt].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
+}
+/* záznam o odovzdaní; zo staršej verzie DÚ sa známka 3 – 5 počíta ako prvý pokus */
+function doneRec() { try { let r = localStorage.getItem(DONE_KEY); if (r) return JSON.parse(r);
+    for (const k of OLD_DONE_KEYS) { r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); o.grade = o.grade || gradeOf(o.score, o.max || MAX); o.attempts = Math.min(o.attempts || 1, 1); o.old = true; return o; } } } catch (e) {} return null; }
+function lockedDone() { if (S.finished) return null; const r = doneRec(); if (!r) return null; if ((S.attempt || 1) === 2 && (r.attempts || 1) < 2) return null; return r; }
+function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const can = (L.grade || gradeOf(L.score, L.max || MAX)) >= 3 && (L.attempts || 1) < 2;
+    document.getElementById("main").innerHTML = can ? `<div class="result"><h2>🔁 Oprava domácej úlohy</h2>${say(`${esc(L.name)} (${esc(L.cls)}), ${L.old ? "v predchádzajúcej verzii tejto domácej úlohy" : "v prvom pokuse"} si získal/a <b>${L.score} z ${L.max || MAX} ⭐</b> (známka ${L.grade}). Máš ešte <b>jednu opravu</b>. Je to posledný pokus.`)}<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>`
+      : `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${L.score} z ${L.max || MAX} ⭐</b>. Opakovať ju nie je možné.`)}</div>`; return; }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); hitAreas(m); typo(m); typo(document.getElementById("top"));
+  window.scrollTo({ top: scroll ? 0 : y }); }
+function hitAreas(m) { m.querySelectorAll(".room [data-hot]").forEach(g => { try { const r = g.getBBox(), pad = 6, n = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  n.setAttribute("x", r.x - pad); n.setAttribute("y", r.y - pad); n.setAttribute("width", r.width + 2 * pad); n.setAttribute("height", r.height + 2 * pad); n.setAttribute("fill", "transparent"); g.insertBefore(n, g.firstChild); } catch (e) {} }); }
+
+function scoreOf(id) {
+  const T = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (T.type === "mc") sc = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") sc = Math.floor(T.items.filter(x => d[x.id] === x.a).length / (T.per || 2));
+  if (T.type === "comic") sc = T.panels.filter(p => p.q && d[p.q] === p.a).length;
+  if (T.type === "desk") sc = (S.fsel.desk || []).filter(k => k[0] === "s").length;
+  if (T.type === "lic") sc = Math.floor(LROWS.filter(r => d[r.k] === r.a).length / 2);
+  if (T.type === "open") sc = OROWS.filter(r => d[r.k] === r.a).length;
+  if (T.type === "pdf") { S.pdf.tool = null; S.pdf.msg = ""; sc = pdfGoals().filter(Boolean).length; }
+  if (T.type === "zoom") sc = Math.floor(ZPICS.filter(p => d[p.id] === p.a).length / 2);
+  if (T.type === "pix") { const w = pxWrong(); sc = w === 0 ? 2 : w <= 4 ? 1 : 0; }
+  if (T.type === "player") { S.mp.tagOpen = false; sc = mpGoals().filter(Boolean).length; }
+  return Math.min(sc, maxOf(T));
+}
+function check(id) { award(id, scoreOf(id)); save(); render(false); }
+/* predčasné ukončenie: rozpracované úlohy sa vyhodnotia podľa výberu, nedotknuté = 0 */
+function finishEarly() {
+  Object.keys(TASKS).forEach(id => { if (S.t[id]) return; award(id, scoreOf(id)); });
+  S.early = true; S.confirmEarly = false; S.finished = Date.now();
+}
+const gradeOf = (sc, mx) => { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; };
+function startRetry(rec) { const n = (rec && rec.name) || S.name, c = (rec && rec.cls) || S.cls; S = fresh(); S.name = n; S.cls = c; S.attempt = 2; save(); render(true); }
+const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
+function pdfSearch() { const P = S.pdf, inp = document.getElementById("pq"), q = ((inp && inp.value) || "").trim(); P.q = q;
+  if (q.length < 2) { P.hits = null; P.msg = "🔍 Napíš aspoň 2 písmená."; return; }
+  const all = { 1: PSENT.map(x => x[1]).join(" "), 2: PTEXT[2], 3: PTEXT[3], 4: PTEXT[4] }, hits = [1, 2, 3, 4].filter(n => all[n].toLowerCase().includes(q.toLowerCase()));
+  P.hits = hits; if (hits.length) { P.page = hits[0]; P.msg = `🔍 „${esc(q)}“ sa nachádza na ${hits.length === 1 ? "strane" : "stranách"} ${hits.join(", ")}. Zobrazujem stranu ${hits[0]}.`; } else P.msg = `🔍 Slovo „${esc(q)}“ sa v dokumente nenašlo.`; }
+document.addEventListener("click", e => {
+  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
+  if (ds.cls) { S.cls = ds.cls; save(); render(false); return; }
+  if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
+  if (ds.check) { check(ds.check); return; }
+  if (ds.early !== undefined) { S.confirmEarly = true; save(); render(false); return; }
+  if (ds.earlyno !== undefined) { S.confirmEarly = false; save(); render(false); return; }
+  if (ds.earlyyes !== undefined) { finishEarly(); save(); render(true); return; }
+  if (ds.retry !== undefined) { const r = S.finished ? { name: S.name, cls: S.cls } : doneRec(); startRetry(r); return; }
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; setD(t, q, +i); save(); render(false); return; }
+  if (ds.sti) { const [t, id] = ds.sti.split("|"); if (S.t[t]) return; S.sel[t] = S.sel[t] === id ? null : id; save(); render(false); return; }
+  if (ds.stb) { const [t, b] = ds.stb.split("|"); if (S.t[t] || !S.sel[t]) return; setD(t, S.sel[t], b); S.sel[t] = null; save(); render(false); return; }
+  if (ds.cm) { const [q, i] = ds.cm.split("|"); if (S.t.comic) return; setD("comic", q, +i); save(); render(false); return; }
+  if (ds.rw) { const [t, k, a] = ds.rw.split("|"); if (S.t[t]) return; setD(t, k, a); save(); render(false); return; }
+  if (ds.dk) { if (S.t.desk) return; const a = S.fsel.desk = S.fsel.desk || [], i = a.indexOf(ds.dk); if (i >= 0) a.splice(i, 1); else if (a.length < 3) a.push(ds.dk); save(); render(false); return; }
+  if (ds.zo) { const [id, k] = ds.zo.split("|"); if (S.t.zoom) return; setD("zoom", id, k); save(); render(false); return; }
+  /* prehliadač PDF */
+  const P = S.pdf;
+  if (ds.pg || ds.th || ds.ps !== undefined || ds.tool || ds.rot !== undefined || ds.prn !== undefined || ds.snt || ds.sig !== undefined || ds.pa !== undefined) { if (S.t.pdf) return;
+    const inp = document.getElementById("pq"); if (inp) P.q = inp.value;
+    P.msg = "";
+    if (ds.pg) P.page = Math.min(4, Math.max(1, P.page + +ds.pg));
+    if (ds.th) P.page = +ds.th;
+    if (ds.ps !== undefined) pdfSearch();
+    if (ds.tool) P.tool = P.tool === ds.tool ? null : ds.tool;
+    if (ds.rot !== undefined) { P.rot[P.page] = (P.rot[P.page] + 90) % 360; P.msg = `⟳ Strana ${P.page} otočená o 90° doprava.`; }
+    if (ds.prn !== undefined) P.msg = "🖨️ Tlač sa v tomto cvičení nespúšťa. Skutočný prehliadač by otvoril okno Tlačiť (Ctrl + P).";
+    if (ds.snt) { if (P.tool !== "hl") P.msg = "🖍️ Najprv zapni nástroj Zvýrazniť."; else { const i = P.hl.indexOf(ds.snt); if (i >= 0) P.hl.splice(i, 1); else P.hl.push(ds.snt); } }
+    if (ds.sig !== undefined) { if (P.tool !== "sig") P.msg = "✍️ Najprv zapni nástroj Podpísať."; else { P.sig = true; P.tool = null; P.msg = "✍️ Prihláška je podpísaná."; } }
+    if (ds.pa !== undefined) P.ans = +ds.pa;
+    save(); render(false); return; }
+  /* pixelový editor */
+  if (ds.px !== undefined) { if (S.t.pix) return; const X = S.px, i = +ds.px; if (X.tool === "fill") pxFill(i, X.col); else X.g[i] = X.col; save(); render(false); return; }
+  if (ds.pc) { if (S.t.pix) return; S.px.col = ds.pc; save(); render(false); return; }
+  if (ds.pt) { if (S.t.pix) return; S.px.tool = ds.pt; save(); render(false); return; }
+  if (ds.pclr !== undefined) { if (S.t.pix) return; S.px.g = Array(64).fill("."); save(); render(false); return; }
+  /* prehrávač */
+  const M = S.mp;
+  if (ds.mplay || ds.madd || ds.mrem || ds.msh !== undefined || ds.mrp !== undefined || ds.mtag !== undefined) { if (S.t.player) return;
+    if (ds.mplay) M.now = ds.mplay;
+    if (ds.madd && !M.pl.includes(ds.madd)) M.pl.push(ds.madd);
+    if (ds.mrem) M.pl = M.pl.filter(x => x !== ds.mrem);
+    if (ds.msh !== undefined) M.sh = !M.sh;
+    if (ds.mrp !== undefined) M.rp = (M.rp + 1) % 3;
+    if (ds.mtag !== undefined) M.tagOpen = !M.tagOpen;
+    save(); render(false); return; }
+});
+document.addEventListener("change", e => { const t = e.target;
+  if (t.matches("[data-tg]")) { if (S.t.player) return; S.mp.tag[t.dataset.tg] = t.value === "" ? null : +t.value; save(); render(false); } });
+document.addEventListener("keydown", e => { const t = e.target;
+  if (t.matches && t.matches("[data-pq]") && e.key === "Enter") { e.preventDefault(); if (S.t.pdf) return; S.pdf.msg = ""; pdfSearch(); save(); render(false); const n = document.getElementById("pq"); if (n) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } } });
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.matches("[data-zm]")) { const id = t.dataset.zm, z = +t.value, p = ZPICS.find(x => x.id === id); S.zz[id] = z; save(); const g = document.querySelector(`[data-zg="${id}"]`); if (g) g.setAttribute("transform", ztf(p, z)); const v = document.querySelector(`[data-zv="${id}"]`); if (v) v.textContent = z + "×"; return; }
+  if (t.matches("[data-pq]")) { S.pdf.q = t.value; save(); return; }
+  const f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
+});
+render(false);
+</script></body></html>
