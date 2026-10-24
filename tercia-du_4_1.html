@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DU_4.1 Princíp digitálneho videa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;
+  --acc:#2F5BEA;--accSoft:#D5DFFB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#C9D1DF;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D6DCE6;
+  --font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}}
+:root[data-theme="dark"]{--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .du{background:#F2A516;color:#3A2600;border-radius:7px;padding:1px 8px;font-size:14px;font-weight:800}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:35px;height:35px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:16px;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff;font-size:14px;font-weight:700}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.18);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:21px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+.ban{position:relative;overflow:hidden;border-radius:22px;padding:20px 22px 18px;color:#fff;margin:0 0 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;box-shadow:0 14px 30px -18px rgba(10,20,60,.6)}
+.ban .pill{display:inline-block;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 12px;font-size:13.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ban h2{color:#fff;margin:8px 0 4px}
+.ban p{margin:0;font-size:16px;opacity:.95}
+.ban .big{font-size:64px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.ban::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+@media (max-width:560px){.ban .big{font-size:44px}}
+.say{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:end;margin:6px 0 18px}
+.say svg{width:92px;height:92px}
+.bubble{position:relative;background:var(--surface);border:2px solid var(--acc);border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:16.5px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:0 0 12px}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.tfigs{display:grid;gap:12px}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E4A66;text-align:center;padding:0 4px}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.93em}
+code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:30px;padding-top:20px;border-top:1px dashed var(--track);display:flex;justify-content:flex-end}
+.q{border:0;padding:0;margin:0 0 22px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.opts.pics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.pics .opt{padding:8px}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px}
+.why.good{background:var(--okSoft)}.why.miss{background:var(--badSoft)}
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px}
+@media (max-width:800px){.hero{grid-template-columns:1fr}}
+.hero svg{width:100%;height:auto;display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.mcard{border-radius:14px;padding:10px 12px;color:#fff;font-weight:600;font-size:15px}
+.mcard small{display:block;font-weight:400;opacity:.9}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{width:100%;max-width:380px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px}
+.bign{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.bign .n{font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.bign .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
+table.res{border-collapse:collapse;width:100%;font-size:15.5px}
+table.res td,table.res th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+table.res td:last-child,table.res th:last-child{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.muted{color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .opt{padding:6px 12px;font-size:14.5px;border-radius:999px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.fc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px 14px;position:relative}
+.fc.okc{border-color:var(--ok);background:var(--okSoft)}.fc.badc{border-color:var(--bad);background:var(--badSoft)}
+.fc .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}
+.msg{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--accSoft);font-size:15.5px;min-height:44px}
+.fb{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.fb ul{margin:4px 0 0;padding-left:20px}
+/* triedenie */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px;text-align:left;line-height:1.3}
+.chip small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.chip.ok{border-color:var(--ok);background:var(--okSoft)}.chip.bad{border-color:var(--bad);background:var(--badSoft)}
+.chip:disabled{cursor:default;color:var(--ink)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.bins.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:720px){.bins,.bins.two{grid-template-columns:1fr}}
+.bin{border:2px solid var(--border);border-radius:16px;padding:10px;min-height:110px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bin .bh{width:100%;text-align:center;font-weight:700;border-radius:10px;padding:6px;cursor:pointer;border:0;font-size:15px}
+.bin .bh:disabled{cursor:default}
+/* komiks */
+.comic{display:grid;grid-template-columns:1fr;gap:14px}
+.panel:not(.choice){max-width:560px}.panel.c{justify-self:center}
+.panel{background:#FFFDF5;border:3px solid #16213A;border-radius:6px;padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;color:#16213A;box-shadow:4px 4px 0 #16213A;min-width:0}
+.panel svg{width:76px;height:76px}
+.panel .bub{background:#fff;border:2px solid #16213A;border-radius:14px;padding:8px 12px;font-size:15.5px;position:relative;min-width:0}
+.panel .nm{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#566381;margin-bottom:2px}
+.panel.choice{grid-column:1/-1;background:#EEF4FF}
+.panel .opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel .opt{background:#fff;color:#16213A}
+.panel .opt.sel{background:#E6EDFD}
+.panel .opt.ok{background:#DDF3EA}.panel .opt.bad{background:#FBE3E0}
+.panel .why{color:#16213A}
+.panel code{background:#F1F3F6;color:#16213A}
+@media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
+/* okná */
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14.5px}
+.wt{background:#E9EDF3;padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:13.5px;border-bottom:1px solid #D5DCE6;color:#1B1B1F;min-width:0}
+.wt .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .dots{margin-left:auto;color:#666;letter-spacing:6px;flex:0 0 auto}
+.wbody{padding:12px 14px}
+.lock{display:flex;gap:10px;align-items:center;background:var(--surface2);border:1.5px dashed var(--track);border-radius:12px;padding:12px 16px;color:var(--muted)}
+/* poradie snímok */
+.seq{list-style:none;padding:0;margin:14px 0 12px;display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.slot2{display:flex;flex-direction:column;align-items:stretch;gap:4px}
+.slot2 .n{font-weight:700;color:var(--acc);font-size:14px}
+.slot2 .ph2{color:var(--muted);border:1.5px dashed var(--track);border-radius:10px;padding:8px;font-size:14px;min-height:96px;display:grid;place-items:center;text-align:center}
+.slotbtn{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:4px;cursor:pointer}
+.slotbtn:hover:not(:disabled){border-color:var(--acc)}
+.slot2.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}.slot2.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default}
+.slotbtn svg,.chip.pic svg,.opt svg{width:100%;height:auto;display:block;background:#fff;border-radius:6px}
+.chip.pic{padding:4px;width:150px;border-radius:10px}
+/* animátor */
+.stage svg{width:100%;height:auto;display:block;background:#fff;border-radius:10px}
+.frames{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.frames button{border:1.5px solid #C9D0DA;background:#fff;color:#1B1B1F;border-radius:10px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px;font-family:var(--mono)}
+.frames button.on{border-color:#2F5BEA;background:#E6EDFD}
+.sl{display:grid;grid-template-columns:130px minmax(0,1fr) 64px;gap:10px;align-items:center;margin:10px 0;color:#1B1B1F}
+.sl input{accent-color:#2F5BEA;width:100%}.sl b{font-family:var(--mono)}
+.wbody{color:#1B1B1F}
+/* rgb */
+.rgbc{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.sw{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.sw span{flex:1;height:54px;border-radius:10px;border:1px solid #9AA6B8;display:grid;place-items:center;font-size:12.5px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.rgbc .sl{grid-template-columns:28px minmax(0,1fr) 44px;color:var(--ink)}
+.rgbc .sl:nth-of-type(1) input{accent-color:#E5534B}.rgbc .sl:nth-of-type(2) input{accent-color:#2DA44E}.rgbc .sl:nth-of-type(3) input{accent-color:#2F5BEA}
+.pixart svg{width:100%;max-width:420px;height:auto;display:block;border-radius:10px;border:1px solid var(--border);image-rendering:pixelated}
+/* bloky */
+.blk{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:700px){.blk{grid-template-columns:1fr}}
+.blk svg{width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--border)}
+.blk [data-bk]{cursor:pointer}
+.blk [data-bk]:hover rect.h{fill:#F2A516;fill-opacity:.25}
+/* stream */
+.player{background:#0F1A2E;color:#E8EDF7;border-radius:14px;overflow:hidden}
+.player .scr{height:150px;display:grid;place-items:center;font-size:44px;background:linear-gradient(135deg,#2B3550,#16213A)}
+.player .ctl{padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.player .ctl button{border:1.5px solid #3E4A66;background:#1E2A46;color:#E8EDF7;border-radius:10px;padding:6px 10px;cursor:pointer;font-weight:600;font-size:14px}
+.player .ctl button.on{border-color:#F2A516;background:#3A2F17}
+.player .ctl button small{display:block;font-weight:400;color:#9AA7C4;font-size:12px}
+.player .ctl button:disabled{cursor:default}
+.net{display:flex;align-items:center;gap:10px;font-size:14.5px;padding:0 12px 10px}
+.net .bar{flex:1;height:10px;border-radius:5px;background:#34425F;overflow:hidden}.net .bar span{display:block;height:100%;background:#3CCB8E}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tabs button{border:1.5px solid var(--border);background:var(--surface);color:var(--ink);border-radius:10px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:14.5px}
+.tabs button.on{border-color:var(--acc);background:var(--accSoft)}
+.tabs button.okt{border-color:var(--ok)}.tabs button.badt{border-color:var(--bad)}
+.order{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:15px}
+.order b.t{display:block;font-size:16px;margin-bottom:2px}
+</style></head><body>
+<header class="top" id="top"></header><main id="main" tabindex="-1"></main>
+<script>
+/* ===== DU 4.1 – Tercia: Princíp digitálneho videa ===== */
+const KEY = "du-t41-v1";
+const LESSON = "Tercia – DU_4.1 Princíp digitálneho videa";
+const CLASS_DEFAULT = "";
+const CLASSES = ["TERCIA_1", "TERCIA_2"];
+const DONE_KEY = "du-t41-done-v1";
+const OLD_DONE_KEYS = [];
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+
+const STEPS = [
+  { id: "start", title: "Štart", ic: "🚀", min: 1 },
+  { id: "m1", title: "Snímky a fps", ic: "🎞️", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+  { id: "m2", title: "Animátor", ic: "✏️", min: 4, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
+  { id: "m3", title: "Druhy animácie", ic: "🧸", min: 3, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
+  { id: "m4", title: "Pixely a pomer strán", ic: "🖥️", min: 3, col: "linear-gradient(120deg,#C2560C,#F2A516)" },
+  { id: "m5", title: "Kompresia", ic: "🧩", min: 3, col: "linear-gradient(120deg,#0B6F8A,#2BB3D6)" },
+  { id: "m6", title: "Streamovanie", ic: "📡", min: 3, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
+  { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
+];
+const STEP_TASKS = { m1: ["strip", "fps"], m2: ["car", "inb"], m3: ["types", "comic"], m4: ["ratio", "bars", "rgb"], m5: ["blocks", "key", "easy"], m6: ["stream", "drop", "br"] };
+
+/* ===== LENKA: typografia ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐″×:])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ").replace(/ × /g, " × ").replace(/ : (?=\d)/g, " : ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+/* ===== OBRÁZKY: pomôcky ===== */
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 13}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,Courier New,monospace"` : ""}>${s}</text>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.6"` : ""}/>`;
+const EM = (x, y, e, fs = 24) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}">${e}</text>`;
+const ARR = (x1, y1, x2, y2, c = "#566381", w = 2.5) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return `<line x1="${x1}" y1="${y1}" x2="${x2 - Math.cos(a) * 4}" y2="${y2 - Math.sin(a) * 4}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2} L${x2 - h * Math.cos(a - .45)} ${y2 - h * Math.sin(a - .45)} L${x2 - h * Math.cos(a + .45)} ${y2 - h * Math.sin(a + .45)}z" fill="${c}"/>`; };
+const C = { ink: "#16213A", mut: "#566381", acc: "#2F5BEA", accS: "#D5DFFB", ok: "#12805A", okS: "#DDF3EA", bad: "#C0392B", badS: "#FBE3E0", amb: "#8A5A00", ambS: "#FDF1D6", bg: "#F5F7FA", line: "#D6DCE6", pur: "#6A3FD0", purS: "#ECE5FC", or: "#C2560C", tea: "#0B6F8A", teaS: "#E0F4FA" };
+/* filmové políčko */
+const FRAME = (x, y, w, h, inner, n) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#16213A" rx="4"/>${[0, 1, 2, 3].map(i => `<rect x="${x + 6 + i * (w - 12) / 4 + 4}" y="${y + 3}" width="8" height="5" rx="1" fill="#fff"/><rect x="${x + 6 + i * (w - 12) / 4 + 4}" y="${y + h - 8}" width="8" height="5" rx="1" fill="#fff"/>`).join("")}<g transform="translate(${x + 4} ${y + 11})">${inner}</g>${n ? T(x + w / 2, y + h + 14, n, { a: "middle", fs: 11, b: 1, c: C.mut }) : ""}`;
+
+/* mačka Klapka – sprievodkyňa s filmovou klapkou */
+function klapka(x, y, s, mood) {
+  const eyes = mood === "wow"
+    ? `<circle cx="46" cy="44" r="5.4" fill="#fff" stroke="#16213A" stroke-width="1.6"/><circle cx="47" cy="44" r="3" fill="#16213A"/><circle cx="64" cy="44" r="5.4" fill="#fff" stroke="#16213A" stroke-width="1.6"/><circle cx="65" cy="44" r="3" fill="#16213A"/><ellipse cx="55" cy="58" rx="3.4" ry="4" fill="#C0392B"/>`
+    : `<path d="M41 45 Q46 40 51 45" fill="none" stroke="#16213A" stroke-width="2.6" stroke-linecap="round"/><path d="M59 45 Q64 40 69 45" fill="none" stroke="#16213A" stroke-width="2.6" stroke-linecap="round"/><path d="M50 56 Q55 61 60 56" fill="none" stroke="#16213A" stroke-width="2.2" stroke-linecap="round"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})">
+    <ellipse cx="54" cy="94" rx="36" ry="4" fill="#000" opacity=".12"/>
+    <path d="M78 84 Q100 78 96 58" fill="none" stroke="#E08A3C" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="54" cy="78" rx="27" ry="16" fill="#F2A55A" stroke="#8A4B12" stroke-width="2.4"/>
+    <path d="M32 26 L36 8 L48 22Z M78 26 L74 8 L62 22Z" fill="#F2A55A" stroke="#8A4B12" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M37 22 L38 14 L44 21Z M73 22 L72 14 L66 21Z" fill="#F4B6C2"/>
+    <circle cx="55" cy="46" r="25" fill="#F2A55A" stroke="#8A4B12" stroke-width="2.4"/>
+    <path d="M40 30 Q44 36 42 40 M55 24 L55 32 M70 30 Q66 36 68 40" stroke="#C46A1E" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="55" cy="56" rx="11" ry="8" fill="#FFE3C4"/>
+    ${eyes}
+    <path d="M32 54 L20 51 M32 58 L20 59 M78 54 L90 51 M78 58 L90 59" stroke="#8A4B12" stroke-width="1.6" stroke-linecap="round"/>
+    <g transform="translate(2 64) rotate(-8)"><rect x="0" y="10" width="34" height="22" rx="2" fill="#16213A"/><rect x="0" y="2" width="34" height="8" fill="#fff" stroke="#16213A" stroke-width="1.6"/>${[0, 1, 2].map(i => `<path d="M${2 + i * 11} 2 L${8 + i * 11} 10 L${12 + i * 11} 10 L${6 + i * 11} 2Z" fill="#16213A"/>`).join("")}<text x="17" y="26" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">TAKE 1</text></g>
+  </g>`;
+}
+const KLAPKA = mood => SV(104, 100, klapka(0, 2, 1, mood), "Mačka Klapka");
+const say = (html, mood) => `<div class="say">${KLAPKA(mood)}<div class="bubble">${html}</div></div>`;
+/* kamarát Ďuro (komiks) */
+const DURO = mood => SV(80, 80, `<path d="M16 80 Q40 60 64 80" fill="#2F5BEA"/><circle cx="40" cy="42" r="25" fill="#F6C9A0" stroke="#16213A" stroke-width="2.5"/>
+  <path d="M15 40 Q15 14 40 14 Q66 14 65 40 Q58 26 41 27 Q24 26 15 40z" fill="#6B3E1E" stroke="#16213A" stroke-width="2"/>
+  <circle cx="31" cy="45" r="3.4" fill="#16213A"/><circle cx="49" cy="45" r="3.4" fill="#16213A"/>
+  ${mood === "sad" ? `<path d="M25 36 L35 39 M55 36 L45 39" stroke="#16213A" stroke-width="2.4"/><path d="M32 59 Q40 53 48 59" fill="none" stroke="#C0392B" stroke-width="2.5"/>` : `<path d="M32 56 Q40 63 48 56" fill="none" stroke="#C0392B" stroke-width="2.5"/>`}`, "Ďuro");
+
+/* ===== ÚVODNÝ OBRÁZOK ===== */
+const BALLF = i => `<rect width="${92}" height="50" fill="#BFE3FF"/><rect y="38" width="92" height="12" fill="#7CC27A"/><circle cx="${12 + i * 22}" cy="${30 - Math.sin(i / 3 * Math.PI) * 18}" r="6" fill="#E85D4A" stroke="#16213A" stroke-width="1.4"/>`;
+const HERO = SV(420, 300, `
+  <defs><linearGradient id="hs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFD9FF"/><stop offset="1" stop-color="#EAF3FF"/></linearGradient></defs>
+  <rect width="420" height="300" rx="18" fill="url(#hs)"/>
+  ${T(210, 30, "Klapka a 6 filmových misií", { a: "middle", fs: 15, b: 1, c: "#1F45C2" })}
+  <g transform="rotate(-6 210 110)">${[0, 1, 2, 3].map(i => FRAME(20 + i * 100, 64, 100, 72, BALLF(i))).join("")}</g>
+  ${ARR(120, 170, 300, 170, "#2F5BEA", 3)}${T(210, 194, "rýchly sled snímok = pohyb", { a: "middle", fs: 13, b: 1, c: C.acc })}
+  ${box(250, 206, 150, 70, "#16213A", null, 10)}${T(325, 236, "25 fps", { a: "middle", fs: 22, b: 1, c: "#F2C94C", mono: 1 })}${T(325, 260, "snímok za sekundu", { a: "middle", fs: 11, c: "#C9D1DF" })}
+  ${klapka(60, 200, .95, "wow")}`, "Mačka Klapka a filmový pás");
+
+/* ===== TEÓRIA: OBRÁZKY ===== */
+/* M1 */
+const FIG_STRIP = fig(SV(440, 200, `
+  ${T(220, 22, "Video je sled nehybných snímok", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[0, 1, 2, 3].map(i => FRAME(10 + i * 106, 40, 100, 72, BALLF(i), (i + 1) + ". snímka")).join("")}
+  ${box(10, 140, 420, 50, C.accS, null, 10)}${T(220, 162, "Snímky sa striedajú tak rýchlo, že ich oko a mozog", { a: "middle", fs: 12 })}${T(220, 180, "spoja do plynulého pohybu loptičky.", { a: "middle", fs: 12, b: 1 })}`, "Filmový pás"),
+  "Každá <b>snímka</b> (frame) je obyčajný obrázok. Pohyb vznikne až pri rýchlom prehrávaní.");
+const FIG_FPS = fig(SV(440, 214, `
+  ${T(220, 22, "fps = frames per second = snímok za sekundu", { a: "middle", fs: 13, b: 1, c: C.acc })}
+  ${[["⏱️", "1 fps", "časozberné video", "rozkvitnutie kvetu"], ["📱", "30 fps", "bežné video", "z mobilu"], ["🐢", "120 fps", "spomalené video", "skok do vody"]].map(([e, a, b, c2], i) => { const x = 12 + i * 142; return `${box(x, 38, 130, 128, i === 1 ? C.accS : "#fff", C.acc, 12)}${EM(x + 65, 76, e, 28)}${T(x + 65, 106, a, { a: "middle", fs: 16, b: 1, c: C.acc, mono: 1 })}${T(x + 65, 128, b, { a: "middle", fs: 11.5, b: 1 })}${T(x + 65, 146, c2, { a: "middle", fs: 11, c: C.mut })}`; }).join("")}
+  ${box(12, 176, 416, 30, C.bg, null, 8)}${T(220, 196, "Viac snímok za sekundu = plynulejší pohyb, ale viac údajov.", { a: "middle", fs: 12 })}`, "Rôzne fps"),
+  "Počet snímok za sekundu sa volí podľa toho, <b>čo</b> a <b>ako</b> natáčame.");
+/* M2 */
+const CAR = (x, y, op = 1, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})" opacity="${op}"><path d="M0 18 L4 8 L14 4 L34 4 L44 12 L54 14 L56 22 L0 22Z" fill="#E85D4A" stroke="#16213A" stroke-width="1.6"/><path d="M16 7 L32 7 L39 13 L16 13Z" fill="#BFE3FF"/><circle cx="13" cy="23" r="5" fill="#16213A"/><circle cx="43" cy="23" r="5" fill="#16213A"/></g>`;
+const FIG_ONION = fig(SV(440, 200, `
+  ${T(220, 22, "Cibuľový pohľad: všetky snímky naraz", { a: "middle", fs: 14, b: 1, c: C.ok })}
+  ${box(10, 36, 420, 110, "#fff", C.line, 12)}<rect x="10" y="112" width="420" height="34" fill="#C9A86A"/>
+  ${[0, 1, 2, 3, 4].map(i => CAR(24 + i * 34, 86, .25 + i * .18)).join("")}${T(110, 66, "pomalý rozbeh", { a: "middle", fs: 11.5, c: C.mut })}
+  ${[0, 1, 2].map(i => CAR(250 + i * 60, 86, .35 + i * .3)).join("")}${T(330, 66, "rýchla jazda", { a: "middle", fs: 11.5, c: C.mut })}
+  ${box(10, 156, 420, 36, C.okS, null, 8)}${T(220, 179, "Malé posuny = pomalý pohyb, veľké posuny = rýchly pohyb.", { a: "middle", fs: 12, b: 1, c: C.ok })}`, "Cibuľový pohľad"),
+  "Animátor vidí naraz aj predchádzajúce snímky. Podľa vzdialenosti medzi nimi odhadne <b>rýchlosť</b>.");
+const ARM = (x, y, deg, s = 1, col = "#16213A") => { const r = deg * Math.PI / 180, ax = 28 * Math.cos(r), ay = -28 * Math.sin(r); return `<g transform="translate(${x} ${y}) scale(${s})" stroke="${col}" stroke-width="4" stroke-linecap="round" fill="none"><circle cx="0" cy="-48" r="10" fill="#FFE3C4"/><line x1="0" y1="-38" x2="0" y2="0"/><line x1="0" y1="0" x2="-12" y2="30"/><line x1="0" y1="0" x2="12" y2="30"/><line x1="0" y1="-30" x2="-18" y2="-12"/><line x1="0" y1="-30" x2="${ax.toFixed(1)}" y2="${(-30 + ay).toFixed(1)}" stroke="#2F5BEA"/></g>`; };
+const FIG_KEY = fig(SV(440, 200, `
+  ${T(220, 22, "Kľúčové polohy a medzisnímky", { a: "middle", fs: 14, b: 1, c: C.ok })}
+  ${[[-80, 1], [-40, 0], [0, 0], [40, 0], [80, 1]].map(([d, k], i) => { const x = 50 + i * 85; return `${box(x - 38, 36, 76, 118, k ? C.okS : "#fff", k ? C.ok : C.line, 10)}${ARM(x, 116, d, .9)}${T(x, 172, k ? "kľúčová" : "medzi", { a: "middle", fs: 11.5, b: 1, c: k ? C.ok : C.mut })}`; }).join("")}
+  ${T(220, 194, "Animátor nakreslí kľúčové polohy, medzisnímky doplní neskôr.", { a: "middle", fs: 11.5 })}`, "Kľúčové polohy"),
+  "Najprv vzniknú <b>kľúčové polohy</b>, potom <b>medzisnímky</b>, ktoré pohyb plynulo prepoja.");
+/* M3 */
+const FIG_TYPES = fig(SV(440, 214, `
+  ${T(220, 22, "Tri spôsoby, ako rozhýbať postavičku", { a: "middle", fs: 14, b: 1, c: C.pur })}
+  ${[["✏️", "kreslená", "každú snímku", "nakreslí človek"], ["📷", "stop-motion", "posunúť, odfotiť,", "posunúť, odfotiť…"], ["💻", "počítačová", "počítač dopočíta", "pohyb medzi polohami"]].map(([e, a, b, c2], i) => { const x = 12 + i * 142; return `${box(x, 38, 130, 168, i === 1 ? C.purS : "#fff", C.pur, 12)}${EM(x + 65, 86, e, 34)}${T(x + 65, 122, a, { a: "middle", fs: 14, b: 1, c: C.pur })}${T(x + 65, 150, b, { a: "middle", fs: 11.5 })}${T(x + 65, 168, c2, { a: "middle", fs: 11.5 })}`; }).join("")}`, "Druhy animácie"),
+  "Všetky tri spôsoby vyrobia sled snímok. Líšia sa tým, <b>kto a ako</b> snímky vytvára.");
+/* M4 */
+const FIG_RATIO = fig(SV(440, 206, `
+  ${T(220, 22, "Pomer strán = šírka : výška", { a: "middle", fs: 14, b: 1, c: C.or })}
+  <rect x="20" y="44" width="224" height="126" rx="6" fill="${C.ambS}" stroke="${C.or}" stroke-width="2.4"/>${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(i => `<line x1="${20 + i * 14}" y1="44" x2="${20 + i * 14}" y2="170" stroke="${C.or}" stroke-opacity=".18"/>`).join("")}${[1, 2, 3, 4, 5, 6, 7, 8].map(j => `<line x1="20" y1="${44 + j * 14}" x2="244" y2="${44 + j * 14}" stroke="${C.or}" stroke-opacity=".18"/>`).join("")}
+  ${T(132, 190, "16 dielikov : 9 dielikov", { a: "middle", fs: 12.5, b: 1 })}${T(132, 112, "16 : 9", { a: "middle", fs: 22, b: 1, c: C.or })}
+  <rect x="290" y="62" width="110" height="110" rx="6" fill="#fff" stroke="${C.or}" stroke-width="2.4"/>${T(345, 122, "1 : 1", { a: "middle", fs: 20, b: 1, c: C.or })}${T(345, 190, "štvorec (príspevky)", { a: "middle", fs: 11.5 })}`, "Pomer strán"),
+  "Pomer strán hovorí, koľko dielikov má obraz <b>na šírku</b> a koľko <b>na výšku</b>. Na rozlíšení nezáleží.");
+const FIG_RGB = fig(SV(440, 200, `
+  ${T(220, 22, "Každý pixel snímky = 3 čísla R, G, B (0 – 255)", { a: "middle", fs: 13, b: 1, c: C.or })}
+  <g style="mix-blend-mode:screen"><circle cx="110" cy="96" r="44" fill="#FF0000" opacity=".9"/><circle cx="150" cy="96" r="44" fill="#00FF00" opacity=".9"/><circle cx="130" cy="130" r="44" fill="#0000FF" opacity=".9"/></g>
+  ${box(214, 44, 214, 140, C.bg, null, 10)}
+  ${[["255, 0, 0", "#FF0000", "len červená"], ["0, 0, 0", "#000", "všetko zhasnuté = čierna"], ["255, 255, 255", "#fff", "všetko naplno = biela"], ["128, 128, 128", "#808080", "všetky v polovici = sivá"]].map(([v, c2, d], i) => `<rect x="224" y="${56 + i * 31}" width="22" height="22" rx="4" fill="${c2}" stroke="#9AA6B8"/>${T(254, 66 + i * 31, v, { fs: 11.5, b: 1, mono: 1 })}${T(254, 80 + i * 31, d, { fs: 10.5, c: C.mut })}`).join("")}`, "RGB"),
+  "Displej svieti tromi farbami. Ich <b>miešaním</b> vznikne každá farba pixela.");
+/* M5 */
+const FIG_DIFF = fig(SV(440, 210, `
+  ${T(220, 22, "Kodek si všíma, čo sa medzi snímkami zmenilo", { a: "middle", fs: 13, b: 1, c: C.tea })}
+  ${[0, 1].map(k => { const x = 16 + k * 220; let g = `<rect x="${x}" y="40" width="190" height="114" fill="#BFE3FF"/><rect x="${x}" y="116" width="190" height="38" fill="#7CC27A"/><circle cx="${x + 160}" cy="62" r="14" fill="#FFD23F"/><circle cx="${x + 40 + k * 38}" cy="130" r="10" fill="#E85D4A" stroke="#16213A" stroke-width="1.5"/>`; for (let i = 1; i < 5; i++) g += `<line x1="${x + i * 38}" y1="40" x2="${x + i * 38}" y2="154" stroke="#fff" stroke-opacity=".7"/>`; for (let j = 1; j < 3; j++) g += `<line x1="${x}" y1="${40 + j * 38}" x2="${x + 190}" y2="${40 + j * 38}" stroke="#fff" stroke-opacity=".7"/>`; if (k) g += `<rect x="${x}" y="116" width="76" height="38" fill="none" stroke="${C.bad}" stroke-width="3.5"/>`; return g + T(x + 95, 174, k ? "2. snímka: zmenené 2 bloky" : "1. snímka: celá", { a: "middle", fs: 12, b: 1, c: k ? C.bad : C.tea }); }).join("")}
+  ${T(220, 200, "Uloží sa iba to, čo je v červenom rámčeku.", { a: "middle", fs: 12 })}`, "Rozdiel snímok"),
+  "Obraz sa rozdelí na <b>bloky</b>. Kodek uloží iba bloky, ktoré sa zmenili, ostatné zopakuje z predošlej snímky.");
+const FIG_GOP = fig(SV(440, 170, `
+  ${T(220, 22, "Kľúčová snímka a snímky so zmenami", { a: "middle", fs: 13.5, b: 1, c: C.tea })}
+  ${[1, 0, 0, 0, 0, 0, 1, 0, 0].map((k, i) => `<rect x="${14 + i * 46}" y="${k ? 40 : 58}" width="40" height="${k ? 70 : 34}" rx="5" fill="${k ? C.tea : C.teaS}" stroke="${C.tea}" stroke-width="1.6"/>${T(34 + i * 46, k ? 82 : 80, k ? "K" : "Δ", { a: "middle", fs: 14, b: 1, c: k ? "#fff" : C.tea })}`).join("")}
+  ${T(14, 132, "K = kľúčová snímka (celý obrázok, veľká)", { fs: 12, b: 1 })}${T(14, 152, "Δ = iba zmeny oproti predošlej snímke (malá)", { fs: 12, b: 1 })}`, "Kľúčové snímky"),
+  "Raz za čas kodek uloží <b>celú</b> snímku, aby sa dalo v prehrávaní skákať a aby sa chyby nehromadili.");
+/* M6 */
+const FIG_STREAM = fig(SV(440, 210, `
+  ${T(220, 22, "Streamovanie = sťahovanie počas pozerania", { a: "middle", fs: 13.5, b: 1, c: C.bad })}
+  ${box(14, 40, 92, 70, C.ink, null, 6)}${[0, 1, 2].map(i => `<rect x="22" y="${48 + i * 20}" width="76" height="14" rx="2" fill="#3A3355"/>`).join("")}${T(60, 128, "server", { a: "middle", fs: 11.5, b: 1 })}
+  ${[0, 1, 2, 3, 4].map(i => `<rect x="${130 + i * 34}" y="66" width="26" height="20" rx="3" fill="${C.bad}" opacity="${.4 + i * .12}"/>`).join("")}${ARR(124, 100, 300, 100, C.bad, 2.5)}${T(212, 124, "kúsky videa po sekundách", { a: "middle", fs: 11.5 })}
+  <rect x="314" y="44" width="110" height="66" rx="6" fill="${C.ink}"/><rect x="320" y="50" width="98" height="46" rx="3" fill="#2C5D8F"/><rect x="320" y="100" width="98" height="4" fill="#3A3355"/><rect x="320" y="100" width="62" height="4" fill="#F2A516"/>${T(369, 128, "prehrávač", { a: "middle", fs: 11.5, b: 1 })}
+  ${box(14, 148, 412, 54, C.badS, null, 10)}${T(220, 170, "Ak kúsky prichádzajú pomalšie, ako sa prehrávajú,", { a: "middle", fs: 12 })}${T(220, 190, "video sa zastaví a načítava sa ⏳.", { a: "middle", fs: 12, b: 1, c: C.bad })}`, "Streamovanie"),
+  "Prehrávač si stále sťahuje ďalšie sekundy videa. Internet musí stíhať <b>bitrate</b> videa.");
+const FIG_BR = fig(SV(440, 190, `
+  ${T(220, 22, "Rovnaké rozlíšenie, iný bitrate", { a: "middle", fs: 14, b: 1, c: C.bad })}
+  ${[[1, "1 Mb/s", "kocky pri pohybe"], [0, "8 Mb/s", "ostrý obraz"]].map(([lo, a, b], k) => { const x = 20 + k * 212; let g = `<rect x="${x}" y="38" width="190" height="100" rx="8" fill="#5AA9E6"/>`; if (lo) { for (let i = 0; i < 10; i++) for (let j = 0; j < 5; j++) g += `<rect x="${x + i * 19}" y="${38 + j * 20}" width="19" height="20" fill="${["#4E9BD8", "#62AEE8", "#5AA9E6", "#6FB6EC"][(i * 3 + j * 5) % 4]}"/>`; g += `<rect x="${x + 76}" y="78" width="38" height="40" fill="#E2785F"/>`; } else g += `<circle cx="${x + 95}" cy="98" r="20" fill="#E85D4A" stroke="#16213A" stroke-width="1.5"/>`; return g + T(x + 95, 158, a, { a: "middle", fs: 14, b: 1, c: lo ? C.bad : C.ok, mono: 1 }) + T(x + 95, 178, b, { a: "middle", fs: 11.5, c: C.mut }); }).join("")}`, "Bitrate"),
+  "Pri nízkom <b>bitrate</b> má kodek na každú sekundu málo údajov a pri pohybe sa obraz rozpadá na <b>kocky</b>.");
+
+/* ===== DÁTA ÚLOH ===== */
+/* M1 – filmový pás: dieťa kope loptu do brány */
+const STRIP = n => { const bx = 22 + n * 16, by = 52 - Math.sin(n / 5 * Math.PI) * 30; return SV(120, 72, `<rect width="120" height="72" fill="#BFE3FF"/><rect y="56" width="120" height="16" fill="#7CC27A"/><path d="M104 56 V30 H118" fill="none" stroke="#fff" stroke-width="3"/><path d="M104 30 L118 30 L118 56" fill="none" stroke="#9AA6B8" stroke-width="1"/>
+  <g stroke="#16213A" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="30" r="5" fill="#FFE3C4"/><line x1="12" y1="35" x2="12" y2="46"/><line x1="12" y1="46" x2="8" y2="56"/><line x1="12" y1="46" x2="${n === 0 ? 20 : 16}" y2="${n === 0 ? 52 : 56}"/></g>
+  <circle cx="${bx}" cy="${by}" r="4.5" fill="#fff" stroke="#16213A" stroke-width="1.6"/>`, "Snímka"); };
+const STRIP_ITEMS = ["a", "b", "c", "d", "e", "f"].map((id, i) => ({ id, i }));
+/* M2 – animátor */
+const CAR_N = 6, CAR_END = 250;
+/* M4 – pixel art a cieľové farby */
+const PIXT = { p1: { n: "Slnko", rgb: [255, 220, 0], x: 12, y: 1 }, p2: { n: "Kvet", rgb: [150, 30, 200], x: 4, y: 7 } };
+/* M5 – bloky */
+const BW = 8, BH = 5, BCH = ["2,3", "3,3", "5,1", "6,1"];
+/* M6 – streamovanie */
+const QUAL = [["360p", 1], ["720p", 3], ["1080p", 6], ["2160p", 16]];
+const STREAM = {
+  a: { e: "🚌", t: "Mobil v autobuse", txt: "Pozeráš na mobile v autobuse. Internet má práve rýchlosť <b>4 Mb/s</b>.", sp: 4, a: "720p" },
+  b: { e: "🛋️", t: "Televízor v obývačke", txt: "Pozeráš na 4K televízore. Domáca Wi-Fi má rýchlosť <b>25 Mb/s</b>.", sp: 25, a: "2160p" },
+  c: { e: "🏕️", t: "Chata v horách", txt: "Na chate je slabý signál. Internet má rýchlosť iba <b>1,5 Mb/s</b>.", sp: 1.5, a: "360p" }
+};
+
+/* ===== ÚLOHY ===== */
+const Q = (id, q, opts, a, why) => ({ id, q, opts, a, why });
+const TASKS = {
+  strip: { id: "strip", type: "order", max: 3, items: STRIP_ITEMS },
+  fps: { id: "fps", type: "mc", half: 1, max: 2, keep: 1, keepOpt: 1, qs: [
+    Q("1", "🎬 Nový film v kine", ["12 fps", "24 fps", "25 fps", "60 fps"], 1, "Filmy v kine sa premietajú rýchlosťou <b>24 fps</b>."),
+    Q("2", "📺 Večerné správy v európskej televízii", ["12 fps", "24 fps", "25 fps", "60 fps"], 2, "Európska televízia vysiela <b>25 fps</b>."),
+    Q("3", "🎮 Rýchla počítačová hra, kde ide o reflexy", ["12 fps", "24 fps", "25 fps", "60 fps"], 3, "Hry a šport potrebujú plynulý pohyb, preto <b>60 fps</b>."),
+    Q("4", "🧸 Domáca stop-motion animácia z fotiek", ["12 fps", "24 fps", "25 fps", "60 fps"], 0, "Pri stop-motion a kreslenej animácii stačí často <b>12 snímok</b> za sekundu.")] },
+  car: { id: "car", type: "car", max: 3 },
+  inb: { id: "inb", type: "mc", pics: 1, keep: 1, max: 2, qs: [] },
+  types: { id: "types", type: "sort", max: 3, bins: [{ id: "k", t: "✏️ kreslená", bg: "#FFF1E0", c: C.or }, { id: "s", t: "📷 stop-motion", bg: C.purS, c: C.pur }, { id: "p", t: "💻 počítačová", bg: C.teaS, c: C.tea }], items: [
+    { id: "1", t: "Animátorka kreslí na tablete každú fázu skoku zvlášť.", a: "k" }, { id: "2", t: "Starý večerníček: tisíce kresieb ceruzkou na papier.", a: "k" },
+    { id: "3", t: "Plastelínovú postavičku po kúsku posúvajú a fotia.", a: "s" }, { id: "4", t: "Lego figúrky natočené mobilom snímku po snímke.", a: "s" },
+    { id: "5", t: "Program dopočíta let lopty medzi dvoma zadanými polohami.", a: "p" }, { id: "6", t: "3D postava v hre sa hýbe podľa digitálnej kostry.", a: "p" }] },
+  comic: { id: "comic", type: "comic", panels: [
+    { w: "d", mood: "sad", t: "Klapka, točím Lego film! 🧱 Nafotil som <b>24 fotiek</b> a dal som 24 fps. Celé video trvá iba <b>sekundu</b>. Chcel som aspoň 4 sekundy!" },
+    { w: "t", q: "1", opts: ["Nastav nižšie fps, napríklad 6 fps. Video potom potrvá 4 sekundy, len pohyb bude trochu trhanejší.", "Nastav vyššie fps, napríklad 96 fps, aby sa fotky zobrazovali dlhšie.", "Zväčši rozlíšenie fotiek, dlhšie video vznikne samo.", "Ulož video vo formáte MP4 namiesto MOV, ten je dlhší."], a: 0, why: "Pri 6 fps sa každá fotka zobrazí 1/6 sekundy, takže 24 fotiek vystačí na <b>4 sekundy</b>. Ešte plynulejšie by to bolo s viac fotkami." },
+    { w: "d", mood: "sad", t: "Funguje! Ale celý obraz sa trasie a skáče, aj keď sa figúrka nehýbe. 😵" },
+    { w: "t", q: "2", opts: ["Mobil sa medzi fotkami hýbal. Postav ho na statív alebo opri, aby bol stále na tom istom mieste.", "Treba fotiť s bleskom, potom sa obraz netrasie.", "Video treba skomprimovať, kodek trasenie odstráni.", "Treba fotiť rýchlejšie, aspoň 10 fotiek za sekundu."], a: 0, why: "Pri stop-motion sa má hýbať iba figúrka. Ak sa pohne <b>mobil</b>, posunie sa celý obraz a video skáče." },
+    { w: "t", t: "Vidíš, Ďuro? Pevný mobil a dosť fotiek a máš skvelý film. 🎬🐾" }] },
+  ratio: { id: "ratio", type: "mc", pics: 1, max: 2, qs: [] },
+  bars: { id: "bars", type: "mc", pics: 1, max: 1, qs: [] },
+  rgb: { id: "rgb", type: "rgb", max: 2 },
+  blocks: { id: "blocks", type: "blocks", max: 3 },
+  key: { id: "key", type: "mc", pics: 1, keepOpt: 1, max: 1, qs: [] },
+  easy: { id: "easy", type: "mc", qs: [
+    Q("1", "Ktoré 1‑minútové video bude pri rovnakej kvalite a rozlíšení <b>najmenšie</b>?", ["Prednáška: učiteľ stojí pri tabuli, kamera sa nehýbe", "Hokejový zápas s rýchlymi zábermi", "Ohňostroj s padajúcimi iskrami", "Jazda na bicykli s kamerou na prilbe"], 0, "Pri prednáške sa medzi snímkami mení iba málo blokov, kodek ukladá <b>málo zmien</b>.")] },
+  stream: { id: "stream", type: "stream", max: 3 },
+  drop: { id: "drop", type: "mc", qs: [
+    Q("1", "Pozeráš video na YouTube a obraz sa zrazu na chvíľu rozmaže, potom zase zaostrí. Prečo?", ["Internet sa spomalil a prehrávač dočasne prepol na nižší bitrate", "Kamera, ktorá video natáčala, sa rozostrila", "Video sa práve prekonvertovalo do iného kontajnera", "Displej sa prehrial a znížil počet pixelov"], 0, "Prehrávač sleduje rýchlosť internetu a podľa nej <b>prepína kvalitu</b>, aby sa video nezastavilo.")] },
+  br: { id: "br", type: "mc", qs: [
+    Q("1", "Dve videá majú rozlíšenie 1080p. Prvé má bitrate 2 Mb/s, druhé 10 Mb/s. Čo platí?", ["Druhé má lepší obraz pri pohybe, ale väčší súbor", "Obe sú rovnaké, rozhoduje iba rozlíšenie", "Prvé má lepší obraz, lebo je úspornejšie", "Druhé má viac snímok za sekundu"], 0, "Vyšší <b>bitrate</b> = viac údajov na sekundu, menej kociek a väčší súbor.")] }
+};
+/* úlohy s obrázkami ako možnosťami */
+let PICS_READY = false;
+const RECT = (w, h, inner = "") => SV(160, 110, `<rect width="160" height="110" fill="#F5F7FA"/><rect x="${80 - w / 2}" y="${55 - h / 2}" width="${w}" height="${h}" rx="3" fill="#5AA9E6" stroke="#16213A" stroke-width="2"/>${inner}`, "Obraz");
+const TV = mode => { const fr = `<rect x="10" y="12" width="140" height="79" fill="#000"/>`; let v = "";
+  if (mode === "lr") v = `<rect x="27.5" y="12" width="105" height="79" fill="#7CC27A"/><circle cx="80" cy="51" r="22" fill="#F2C94C" stroke="#16213A" stroke-width="2"/>`;
+  if (mode === "tb") v = `<rect x="10" y="30" width="140" height="43" fill="#7CC27A"/><circle cx="80" cy="51" r="16" fill="#F2C94C" stroke="#16213A" stroke-width="2"/>`;
+  if (mode === "st") v = `<rect x="10" y="12" width="140" height="79" fill="#7CC27A"/><ellipse cx="80" cy="51" rx="30" ry="22" fill="#F2C94C" stroke="#16213A" stroke-width="2"/>`;
+  if (mode === "cr") v = `<rect x="10" y="12" width="140" height="79" fill="#7CC27A"/><circle cx="80" cy="51" r="30" fill="#F2C94C" stroke="#16213A" stroke-width="2"/>`;
+  return SV(160, 110, `<rect x="4" y="6" width="152" height="91" rx="6" fill="#16213A"/>${fr}${v}<rect x="66" y="98" width="28" height="8" fill="#566381"/>`, "Televízor"); };
+const ROOM = (i, out) => SV(160, 100, out ? `<rect width="160" height="100" fill="#BFE3FF"/><path d="M0 70 Q80 40 160 70 V100 H0Z" fill="#7CC27A"/><circle cx="130" cy="22" r="12" fill="#FFD23F"/><text x="${40 + i * 8}" y="86" font-size="22">🐈</text>`
+  : `<rect width="160" height="100" fill="#F6E7CF"/><rect y="74" width="160" height="26" fill="#B7845A"/><rect x="96" y="14" width="44" height="34" fill="#BFE3FF" stroke="#8A5A00" stroke-width="3"/><rect x="18" y="50" width="40" height="24" fill="#6A3FD0"/><text x="${60 + i * 8}" y="90" font-size="22">🐈</text>`, "Snímka");
+function picsInit() {
+  if (PICS_READY) return; PICS_READY = true;
+  const fr = inner => SV(110, 110, `<rect width="110" height="110" fill="#fff"/>${inner}`, "Snímka");
+  TASKS.inb.qs = [
+    Q("1", `Na snímke 1 má postavička ruku dolu, na snímke 3 vodorovne. <b>Ktorá snímka patrí do stredu</b>, aby bol pohyb plynulý?<div style="display:flex;gap:10px;max-width:360px;margin-top:8px">${[["1. snímka", -45], ["2. snímka", null], ["3. snímka", 0]].map(([n, d]) => `<div style="flex:1;text-align:center;font-size:13px">${SV(110, 110, `<rect width="110" height="110" rx="8" fill="${d === null ? "#FDF1D6" : "#fff"}" stroke="#D6DCE6"/>${d === null ? `<text x="55" y="66" text-anchor="middle" font-size="40" fill="#8A5A00">?</text>` : ARM(55, 80, d)}`, n)}${n}</div>`).join("")}</div>`,
+      [fr(ARM(55, 80, -22)), fr(ARM(55, 80, 45)), fr(ARM(55, 80, -70)), fr(ARM(55, 80, 90))], 0, "Ruka má prejsť od −45° k 0°. V strede musí byť <b>polovica pohybu</b>, teda šikmo dolu."),
+    Q("2", "Tieto animácie trvajú rovnako dlho. Ktorá z nich bude vyzerať <b>najplynulejšie</b>?",
+      [[8, 1], [4, 0], [2, 0], [3, 0]].map(([n]) => SV(160, 70, `<rect width="160" height="70" fill="#fff"/><rect y="52" width="160" height="18" fill="#C9A86A"/>${Array.from({ length: n }, (_, i) => `<circle cx="${14 + i * (132 / (n - 1))}" cy="40" r="10" fill="#E85D4A" opacity="${(.25 + .75 * (i + 1) / n).toFixed(2)}"/>`).join("")}${T(80, 16, n + " snímok", { a: "middle", fs: 12, b: 1 })}`, "Animácia")), 0, "Viac snímok s <b>menšími posunmi</b> dáva plynulejší pohyb.")];
+  TASKS.ratio.qs = [
+    Q("1", "Ktorý obraz má pomer strán <b>9 : 16</b> (video na výšku z mobilu)?", [RECT(54, 96), RECT(140, 79), RECT(120, 90), RECT(90, 90)], 0, "9 : 16 znamená 9 dielikov <b>na šírku</b> a 16 <b>na výšku</b>, obraz je vysoký a úzky."),
+    Q("2", "Ktorý obraz má pomer strán <b>4 : 3</b> (staré televízory)?", [RECT(120, 90), RECT(140, 79), RECT(54, 96), RECT(150, 64)], 0, "4 : 3 je skoro štvorec, len o tretinu širší ako vyšší.")];
+  TASKS.bars.qs = [Q("1", "Staré video s pomerom <b>4 : 3</b> pustíš na televízore <b>16 : 9</b> tak, aby sa nič neorezalo ani nedeformovalo. Ako to bude vyzerať?", [TV("lr"), TV("tb"), TV("st"), TV("cr")], 0, "Video je užšie ako obrazovka, preto sú čierne pásy <b>vľavo a vpravo</b>. Roztiahnutie by deformovalo kruh, orezanie by zahodilo časť obrazu.")];
+  TASKS.key.qs = [Q("1", "Kodek uložil 1. snímku ako kľúčovú. Pri ktorej ďalšej snímke musí uložiť <b>novú kľúčovú snímku</b>, lebo sa zmenil takmer celý obraz?", [1, 2, 3, 4, 5, 6, 7].map(i => `<div style="font-size:12.5px;font-weight:700;margin-bottom:4px">${i + 1}. snímka</div>${ROOM(i, i >= 4)}`), 3, "Pri <b>5. snímke</b> je strih: izba sa zmenila na lúku. Zmenili sa takmer všetky bloky, preto je výhodnejšie uložiť celý nový obrázok.")];
+}
+
+const THEORY = {
+  m1: ["<b>Video</b> je rýchly sled nehybných obrázkov, <b>snímok</b>.", "<b>fps</b> = počet snímok za sekundu.", "Oko a mozog spoja rýchlo sa striedajúce snímky do pohybu.", "Viac fps = plynulejší pohyb, ale viac údajov.", "K obrazu patrí <b>zvuková stopa</b>, ktorá beží súčasne."],
+  m2: ["Pohyb v animácii vzniká z <b>malých posunov</b> medzi snímkami.", "Rovnaké posuny = rovnomerný pohyb.", "Väčší posun medzi snímkami = rýchlejší pohyb.", "Najprv sa určia <b>kľúčové polohy</b>, potom <b>medzisnímky</b>."],
+  m3: ["<b>Kreslená animácia</b>: snímky kreslí človek.", "<b>Stop-motion</b>: predmet sa posunie, odfotí a opakuje sa to.", "<b>Počítačová animácia</b>: program dopočíta pohyb medzi polohami.", "Pri stop-motion sa nesmie hýbať kamera."],
+  m4: ["Snímka je rastrový obrázok zložený z <b>pixelov</b>.", "Každý pixel má tri zložky <b>R, G, B</b> s hodnotami 0 – 255.", "<b>Pomer strán</b> = šírka : výška, bežné video má 16 : 9.", "Ak pomer videa nesedí s obrazovkou, objavia sa čierne pásy."],
+  m5: ["Nekomprimované video je obrovské, preto ho <b>kodek</b> zmenšuje.", "Snímka sa delí na <b>bloky</b>, ukladajú sa iba tie, ktoré sa zmenili.", "Raz za čas sa uloží celá <b>kľúčová snímka</b>.", "Čím viac pohybu, tým viac zmien a tým väčší súbor."],
+  m6: ["<b>Streamovanie</b> = video sa sťahuje počas pozerania.", "<b>Bitrate</b> = množstvo údajov videa za sekundu (Mb/s).", "Rýchlosť internetu musí stačiť na bitrate videa.", "Vyšší bitrate = lepší obraz, ale viac údajov.", "Prehrávač vie kvalitu prepínať podľa rýchlosti internetu."]
+};
+
+/* ===== ENGINE ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max || (T.qs && T.qs.length ? T.qs.length : T.items ? T.items.length : T.panels ? T.panels.filter(p => p.q).length : 1); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return { v: 1, attempt: 1, early: false, confirmEarly: false, name: "", cls: CLASS_DEFAULT, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, sel: {}, res: {},
+  car: { f: 1, x: [0, 0, 0, 0, 0, 0], touched: false }, rgb: { p1: [128, 128, 128], p2: [128, 128, 128], touched: false }, bk: [], st: { cur: "a", o: {}, sub: {} } }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
+const NSTOP = STEPS.length - 2;
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
+const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
+const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 4.1 Princíp digitálneho videa</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
+function checkBar(T, ready, hint, label) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
+  if (label === false) return `<div class="checkbar"><span class="hint">${hint}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+}
+const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
+
+/* výber odpovede (aj s obrázkami) */
+function mcHTML(T) {
+  picsInit();
+  const done = S.t[T.id], d = S.d[T.id] || {}, Qs = T.qs;
+  const qs = T.keep ? Qs : ord(T.id + ":q", Qs.map(q => q.id)).map(id => Qs.find(q => q.id === id));
+  return qs.map((q, qi) => { const o = T.keepOpt ? q.opts.map((_, i) => i) : ord(T.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts${T.pics ? " pics" : ""}">${o.map(i => `<button class="${optCls(done, d[q.id], i, q.a)}" data-mc="${T.id}|${q.id}|${i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`).join("")}</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`; }).join("") + checkBar(T, Qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
+}
+/* triedenie do stĺpcov */
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, io = ord(T.id + ":i", T.items.map(x => x.id)), sel = S.sel[T.id];
+  const items = io.map(id => T.items.find(x => x.id === id));
+  const chip = x => { let c = "chip"; if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad"; return `<button class="${c}" data-sti="${T.id}|${x.id}" ${done ? "disabled" : ""}><span>${x.t}</span></button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? T.items.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na kartičku a potom na nadpis stĺpca, kam patrí. Kartičku presunieš, keď na ňu klikneš a potom na iný stĺpec. Za každé 2 správne zatriedené kartičky získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(chip).join("") : `<span class="muted" style="font-size:14.5px">Všetky kartičky sú zatriedené.</span>`}</div>
+    <div class="bins${T.bins.length === 2 ? " two" : ""}">${T.bins.map(g => `<div class="bin"><button class="bh" style="background:${g.bg};color:${g.c}" data-stb="${T.id}|${g.id}" ${done ? "disabled" : ""}>${g.t}</button>${items.filter(x => d[x.id] === g.id).map(chip).join("")}</div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === T.items.length ? "good" : "miss"}">Správne zatriedených: <b>${nOk} z ${T.items.length}</b>.${T.items.filter(x => d[x.id] !== x.a).map(x => `<br>„${x.t}“ → <b>${T.bins.find(b => b.id === x.a).t}</b>`).join("")}</p>` : ""}` +
+    checkBar(T, T.items.every(x => d[x.id]), "Zatrieď všetky kartičky.");
+}
+/* M1 – poradie snímok */
+function stripHTML() {
+  const T = TASKS.strip, done = S.t.strip, seq = S.d.strip || [], ids = ord("strip", T.items.map(x => x.id)), by = Object.fromEntries(T.items.map(x => [x.id, x])), pool = ids.filter(id => !seq.includes(id));
+  let h = `<p class="ins">Filmový pás sa roztrhol a snímky sa pomiešali. Klikaj na snímky v poradí, v akom idú za sebou vo videu. Snímku vrátiš späť, keď na ňu klikneš hore v páse. Za každé 2 snímky na správnom mieste získaš 1 ⭐.</p>
+    <ol class="seq">${T.items.map((_, i) => { const id = seq[i]; if (!id) return `<li class="slot2"><span class="n">${i + 1}. snímka</span><span class="ph2">${i === seq.length ? "sem príde ďalšia snímka" : "…"}</span></li>`;
+      let c = "slot2"; if (done) c += id === T.items[i].id ? " ok" : " bad"; return `<li class="${c}"><span class="n">${i + 1}. snímka</span><button class="slotbtn" data-unplace="strip|${id}" ${done ? "disabled" : ""}>${STRIP(by[id].i)}</button></li>`; }).join("")}</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chip pic" data-place="strip|${id}">${STRIP(by[id].i)}</button>`).join("") : `<span class="muted" style="font-size:14.5px">Všetky snímky sú v páse.</span>`}</div>`;
+  if (done && S.t.strip.score < T.max) h += `<p class="why miss">Lopta letí stále doprava k bránke a najprv stúpa, potom klesá. Podľa jej polohy sa dá poradie určiť.</p>`;
+  return h + checkBar(T, seq.length === T.items.length, "Ulož do pásu všetkých 6 snímok.");
+}
+/* M2 – animátor */
+function carStage(play) {
+  const xs = S.car.x, f = S.car.f;
+  let g = `<rect width="360" height="130" fill="#EAF3FF"/><rect y="96" width="360" height="34" fill="#C9A86A"/><line x1="0" y1="113" x2="360" y2="113" stroke="#fff" stroke-width="2" stroke-dasharray="12 10"/>
+    <g><line x1="30" y1="40" x2="30" y2="98" stroke="#12805A" stroke-width="3"/><path d="M30 40 h22 l-6 7 l6 7 h-22z" fill="#12805A"/>${T(30, 34, "ŠTART", { a: "middle", fs: 10, b: 1, c: "#12805A" })}</g>
+    <g><line x1="${30 + CAR_END + 56}" y1="40" x2="${30 + CAR_END + 56}" y2="98" stroke="#16213A" stroke-width="3"/>${[0, 1, 2].map(r => [0, 1, 2].map(c2 => `<rect x="${30 + CAR_END + 56 + c2 * 7}" y="${40 + r * 7}" width="7" height="7" fill="${(r + c2) % 2 ? "#fff" : "#16213A"}"/>`).join("")).join("")}${T(30 + CAR_END + 66, 34, "CIEĽ", { a: "middle", fs: 10, b: 1 })}</g>`;
+  if (!play) xs.forEach((x, i) => { if (i !== f - 1) g += CAR(30 + x, 72, .22) + T(30 + x + 28, 66, String(i + 1), { a: "middle", fs: 10, b: 1, c: C.mut }); });
+  g += `<g id="anicar">${CAR(30 + xs[play ? 0 : f - 1], 72, 1)}</g>`;
+  return SV(360, 130, g, "Scéna animácie");
+}
+function carHTML() {
+  const T = TASKS.car, done = S.t.car, f = S.car.f, x = S.car.x[f - 1];
+  return `<p class="ins">Autíčko má prejsť zo štartu do cieľa v <b>${CAR_N} snímkach</b> a ísť <b>rovnomerne</b>, teda v každej snímke sa posunúť o rovnaký kúsok. Na 1. snímke stojí na štarte. Pri snímkach 2 až ${CAR_N} nastav polohu posuvníkom. Na 6. snímke má predná časť autíčka stáť pri cieľovej čiare. Ostatné snímky vidíš priesvitne. Animáciu si môžeš prehrať.</p>
+    <div class="win"><div class="wt"><span class="tt">✏️ Animátor – autíčko.anim</span><span class="dots">— ▢ ✕</span></div><div class="wbody">
+      <div class="stage" id="stage">${carStage(false)}</div>
+      <div class="frames">${S.car.x.map((_, i) => `<button class="${i + 1 === f ? "on" : ""}" data-cf="${i + 1}">${i + 1}</button>`).join("")}<button data-cplay style="margin-left:auto;font-family:var(--font)">▶ Prehrať (3 fps)</button></div>
+      ${f === 1 ? `<p class="cap2" style="margin:8px 0">1. snímka: autíčko stojí na štarte, poloha 0.</p>` : `<div class="sl"><span>Poloha na ${f}. snímke</span><input type="range" min="0" max="300" step="10" value="${x}" data-cx ${done ? "disabled" : ""} aria-label="Poloha autíčka"><b>${x}</b></div>`}
+    </div></div>
+    ${done ? `<div class="fb ${done.score === 3 ? "ok" : "bad"}">${S.res.car}</div>` : ""}` + checkBar(T, S.car.touched, "Nastav polohu autíčka aspoň na jednej snímke.", "📤 Odovzdať animáciu");
+}
+function gradeCar() { const x = S.car.x, st = x.slice(1).map((v, i) => v - x[i]);
+  const c1 = x[CAR_N - 1] === CAR_END, c2 = st.every(s => s > 0), c3 = st.every(s => s >= 40 && s <= 60);
+  S.res.car = `<ul>${[[c1, c1 ? "autíčko na 6. snímke stojí v cieli" : `na 6. snímke nie je autíčko v cieli (má byť ${CAR_END}, je ${x[CAR_N - 1]})`], [c2, c2 ? "autíčko ide stále dopredu" : "autíčko niekde stojí alebo cúva"], [c3, c3 ? "posuny sú rovnaké, pohyb je rovnomerný" : "posuny nie sú rovnaké, autíčko raz zrýchli a raz spomalí"]].map(([o, t]) => `<li>${o ? "✅" : "❌"} ${t}</li>`).join("")}</ul>Správne polohy: 0, 50, 100, 150, 200, 250 (posun 50 na každej snímke).`;
+  return [c1, c2, c3].filter(Boolean).length; }
+let PLAY = null;
+function carPlay() { if (PLAY) return; let i = 0; const st = document.getElementById("stage"); if (!st) return; st.innerHTML = carStage(true);
+  PLAY = setInterval(() => { i++; const g = document.getElementById("anicar"); if (!g || i >= CAR_N) { clearInterval(PLAY); PLAY = null; setTimeout(() => { const s2 = document.getElementById("stage"); if (s2) s2.innerHTML = carStage(false); }, 500); return; } g.innerHTML = CAR(30 + S.car.x[i], 72, 1); }, 333); }
+/* M4 – miešanie farieb pixela */
+const PX = (() => { const W = 16, H = 10, g = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { let c = y < 6 ? "#5AA9E6" : "#4CAF50";
+    if ((x - 12) ** 2 + (y - 1.5) ** 2 < 4) c = "#FFDC00";
+    if (y >= 7 && (x === 4 && y === 7 || (x === 3 || x === 5) && y === 7)) c = "#961EC8";
+    if (x === 4 && y === 8) c = "#2E7D32"; if (x === 4 && y === 9) c = "#2E7D32";
+    if (y === 6) c = "#7CC27A"; g.push([x, y, c]); } return g; })();
+function pixSVG() { let s = PX.map(([x, y, c]) => `<rect x="${x * 20}" y="${y * 20}" width="20" height="20" fill="${c}"/>`).join("");
+  Object.entries(PIXT).forEach(([k, p]) => { s += `<rect x="${p.x * 20 - 2}" y="${p.y * 20 - 2}" width="24" height="24" fill="none" stroke="#16213A" stroke-width="3"/><circle cx="${p.x * 20 + 22}" cy="${p.y * 20 - 4}" r="9" fill="#16213A"/>${T(p.x * 20 + 22, p.y * 20, k === "p1" ? "1" : "2", { a: "middle", fs: 11, b: 1, c: "#fff" })}`; });
+  return SV(320, 200, s, "Zväčšená snímka s pixelmi"); }
+const rgbS = a => `rgb(${a.join(",")})`;
+function rgbOk(k) { const a = S.rgb[k], t = PIXT[k].rgb; return a.every((v, i) => Math.abs(v - t[i]) <= 50); }
+function rgbHTML() {
+  const T = TASKS.rgb, done = S.t.rgb;
+  return `<p class="ins">Toto je zväčšená snímka videa. Pri dvoch označených pixeloch namiešaj posuvníkmi R, G, B rovnakú farbu. Stačí, ak sa každé číslo líši od správneho najviac o 50. Za každý pixel získaš 1 ⭐.</p>
+    <div class="pixart">${pixSVG()}</div>
+    <div class="rgbc">${Object.entries(PIXT).map(([k, p], n) => { const a = S.rgb[k], good = done && rgbOk(k);
+      return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd">Pixel ${n + 1}: ${p.n}</div><div class="sw"><span style="background:${rgbS(p.rgb)}">cieľ</span><span style="background:${rgbS(a)}" id="sw-${k}">tvoja farba</span></div>
+        ${["R", "G", "B"].map((L, i) => `<div class="sl"><span><b>${L}</b></span><input type="range" min="0" max="255" step="5" value="${a[i]}" data-rgb="${k}|${i}" ${done ? "disabled" : ""} aria-label="${L}"><b id="v-${k}-${i}">${a[i]}</b></div>`).join("")}
+        ${done ? `<p class="why ${good ? "good" : "miss"}">Správne: R ${p.rgb[0]}, G ${p.rgb[1]}, B ${p.rgb[2]}. Tvoje: ${a.join(", ")}.</p>` : ""}</div>`; }).join("")}</div>` + checkBar(T, S.rgb.touched, "Pohni aspoň jedným posuvníkom.");
+}
+/* M5 – zmenené bloky */
+function blockScene(k) { let s = `<rect width="320" height="200" fill="#BFE3FF"/><rect y="120" width="320" height="80" fill="#7CC27A"/><circle cx="20" cy="20" r="14" fill="#FFD23F"/>
+  <rect x="244" y="96" width="72" height="62" fill="#F2A55A" stroke="#8A4B12" stroke-width="2"/><path d="M236 98 L280 62 L324 98Z" fill="#C0392B"/><rect x="270" y="122" width="18" height="36" fill="#6B3E1E"/><rect x="112" y="40" width="40" height="0"/>
+  <path d="M60 60 q10 -12 20 0 q10 -12 20 0" fill="#fff" opacity=".9"/>`;
+  const [bx, by] = k ? [3, 3] : [2, 3], [wx, wy] = k ? [6, 1] : [5, 1];
+  s += `<circle cx="${bx * 40 + 20}" cy="${by * 40 + 20}" r="12" fill="#E85D4A" stroke="#16213A" stroke-width="2"/>`;
+  s += `<path d="M${wx * 40 + 8} ${wy * 40 + 20} q6 -10 12 0 q6 -10 12 0" fill="none" stroke="#16213A" stroke-width="3" stroke-linecap="round"/>`;
+  for (let i = 1; i < BW; i++) s += `<line x1="${i * 40}" y1="0" x2="${i * 40}" y2="200" stroke="#fff" stroke-opacity=".75"/>`;
+  for (let j = 1; j < BH; j++) s += `<line x1="0" y1="${j * 40}" x2="320" y2="${j * 40}" stroke="#fff" stroke-opacity=".75"/>`;
+  return s; }
+function blocksHTML() {
+  const T = TASKS.blocks, done = S.t.blocks, m = S.bk;
+  let ov = ""; for (let y = 0; y < BH; y++) for (let x = 0; x < BW; x++) { const id = x + "," + y, on = m.includes(id), ch = BCH.includes(id);
+    let st = ""; if (done) { if (on && ch) st = `fill="#12805A" fill-opacity=".35" stroke="#12805A"`; else if (on) st = `fill="#C0392B" fill-opacity=".35" stroke="#C0392B"`; else if (ch) st = `fill="none" stroke="#C0392B" stroke-dasharray="6 4"`; else st = `fill="none" stroke="none"`; }
+    else st = on ? `fill="#F2A516" fill-opacity=".45" stroke="#F2A516"` : `fill="#fff" fill-opacity=".001" stroke="none"`;
+    ov += `<g ${done ? "" : `data-bk="${id}"`}><rect class="h" x="${x * 40 + 1}" y="${y * 40 + 1}" width="38" height="38" ${st} stroke-width="3"/></g>`; }
+  return `<p class="ins">Kodek porovnáva 2. snímku s 1. snímkou po blokoch. Na 2. snímke klikni na všetky bloky, ktoré sa <b>zmenili</b> a kodek ich musí uložiť znova. Ďalším kliknutím označenie zrušíš. Začínaš s 3 ⭐ a za každý zabudnutý alebo zbytočne označený blok stratíš 1 ⭐.</p>
+    <div class="blk"><div><b style="font-size:15px">1. snímka</b>${SV(320, 200, blockScene(0), "1. snímka")}</div><div><b style="font-size:15px">2. snímka – klikaj sem</b>${SV(320, 200, blockScene(1) + ov, "2. snímka")}</div></div>
+    <div class="msg">Označené bloky: <b>${m.length}</b></div>
+    ${done ? `<p class="why ${done.score === 3 ? "good" : "miss"}">Zmenili sa <b>4 bloky</b>: lopta zmizla z jedného bloku a objavila sa vo vedľajšom a rovnako vták. Slnko, oblak a dom sú na rovnakom mieste, tie kodek neukladá.</p>` : ""}` +
+    checkBar(T, m.length > 0, "Označ aspoň jeden blok.");
+}
+function gradeBlocks() { const miss = BCH.filter(b => !S.bk.includes(b)).length, extra = S.bk.filter(b => !BCH.includes(b)).length; return Math.max(0, 3 - miss - extra); }
+/* M6 – streamovanie */
+function streamHTML() {
+  const T = TASKS.stream, k = S.st.cur, O = STREAM[k], sub = S.st.sub[k], sel = sub ? sub.q : S.st.o[k], locked = !!sub || !!S.t.stream, n = Object.keys(S.st.sub).length;
+  return `<p class="ins">Pri každej situácii vyber v prehrávači <b>najvyššiu kvalitu</b>, pri ktorej sa video nebude sekať. Pri každej kvalite vidíš, aký bitrate potrebuje. Za každú správnu voľbu získaš 1 ⭐.</p>
+    <div class="tabs">${Object.keys(STREAM).map(id => { const s2 = S.st.sub[id]; return `<button class="${id === k ? "on" : ""} ${s2 ? (s2.ok ? "okt" : "badt") : ""}" data-stt="${id}">${s2 ? (s2.ok ? "✅" : "❌") : STREAM[id].e} ${STREAM[id].t}</button>`; }).join("")}</div>
+    <div class="order"><b class="t">${O.e} ${O.t}</b>${O.txt}</div>
+    <div class="player"><div class="scr">${O.e}</div><div class="net"><span>📶 internet ${String(O.sp).replace(".", ",")} Mb/s</span><div class="bar"><span style="width:${Math.min(100, O.sp / 25 * 100)}%"></span></div></div>
+      <div class="ctl"><span style="font-size:14px;margin-right:4px">⚙️ Kvalita:</span>${QUAL.map(([q, b]) => `<button class="${sel === q ? "on" : ""}" data-stq="${q}" ${locked ? "disabled" : ""}>${q}<small>potrebuje ${b} Mb/s</small></button>`).join("")}</div></div>
+    ${sub ? `<div class="fb ${sub.ok ? "ok" : "bad"}">${sub.ok ? "✅ Správne." : "❌ Nie celkom."} Pri ${String(O.sp).replace(".", ",")} Mb/s je najvyššia kvalita bez sekania <b>${O.a}</b>.${!sub.ok && QUAL.find(x => x[0] === sub.q)[1] > O.sp ? " Tvoja voľba potrebuje viac, ako internet zvládne, video by sa stále načítavalo." : !sub.ok ? " Tvoja voľba by išla, ale obraz by bol zbytočne horší." : ""}</div>`
+      : `<div class="row"><button class="primary" data-stsub ${sel ? "" : "disabled"}>▶ Pozerať v tejto kvalite</button><span class="hint muted" style="font-size:14.5px">Každú situáciu odovzdáš len raz.</span></div>`}` +
+    checkBar(T, false, `Odovzdané situácie: <b>${n} z 3</b>. Hodnotenie sa zobrazí po poslednej.`, false);
+}
+/* komiks */
+function comicHTML() {
+  const T = TASKS.comic, done = S.t.comic, d = S.d.comic || {};
+  const who = { d: ["Ďuro", DURO], t: ["Klapka", KLAPKA] };
+  return `<div class="comic">${T.panels.map(p => { const [nm, pic] = who[p.w];
+    if (!p.q) return `<div class="panel ${p.w === "t" ? "c" : ""}">${pic(p.mood || (p.w === "t" ? "wow" : ""))}<div class="bub"><div class="nm">${nm}</div>${p.t}</div></div>`;
+    const o = ord("comic:" + p.q, p.opts.map((_, i) => i));
+    return `<div class="panel choice">${pic("")}<div class="bub"><div class="nm">${nm} – vyber, čo odpovie</div><div class="opts">${o.map(i => `<button class="${optCls(done, d[p.q], i, p.a)}" data-cm="${p.q}|${i}" ${done ? "disabled" : ""}>„${p.opts[i]}“</button>`).join("")}</div>${done ? `<p class="why ${d[p.q] === p.a ? "good" : "miss"}">${p.why}</p>` : ""}</div></div>`; }).join("")}</div>` +
+    checkBar(T, T.panels.filter(p => p.q).every(p => d[p.q] !== undefined), "Vyber obe odpovede Klapky.");
+}
+function memo() { const L = THEORY[STEPS[S.cur].id]; return L ? `<section class="memo"><h3>📌 Zapamätaj si</h3><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "🏆 Zobraziť výsledok" : "Ďalšia misia: " + n.title + " ▶"}</button></div>` : ""); }
+
+const VIEWS = {
+  start() {
+    return `<div class="hero"><div><p class="kicker">Informatika · Tercia · domáca úloha k hodine 4.1</p><h1>Domáca úloha: Princíp digitálneho videa</h1>
+      <p style="font-size:18.5px">Ahoj! Som mačka <b>Klapka</b> a bez filmovej klapky nejdem nikam. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: filmový pás, vlastná animácia, druhy animácie, pixely a pomer strán, kompresia a streamovanie. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <p class="muted" style="font-size:15.5px">Animátor, miešač farieb aj prehrávač bežia priamo na tejto stránke. Nič nemusíš inštalovať.</p>
+      <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
+      <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
+      <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
+      <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Pri známke 1 alebo 2 je domáca úloha hotová, pri známke 3, 4 alebo 5 máš ešte <b>jednu opravu</b>.</div></div>`;
+  },
+  m1() {
+    return banner(1, "Video nie je nič iné ako veľa obrázkov za sebou. Poskladaj filmový pás a zisti, koľko snímok treba.") +
+    say(`Ahoj, som mačka <b>Klapka</b>! 🐾🎬 Vieš, že vo videu sa v skutočnosti nič nehýbe? Sú to len obrázky, ktoré sa striedajú tak rýchlo, že ťa oklamú. Poďme sa na ne pozrieť zblízka.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Digitálne video</b> je postupnosť nehybných obrázkov, ktorým hovoríme <b>snímky</b> (anglicky frames). Keď sa rýchlo striedajú, oko a mozog ich spoja do plynulého pohybu.</p>
+      <p>Koľko snímok sa ukáže za jednu sekundu, udáva skratka <b>fps</b> (frames per second):</p>
+      <table class="rtab"><thead><tr><th>Málo fps</th><th>Veľa fps</th></tr></thead><tbody>
+        <tr><td>pohyb je trhaný</td><td>pohyb je plynulý</td></tr>
+        <tr><td>menej údajov</td><td>viac údajov, väčší súbor</td></tr></tbody></table>
+      <p>K obrazu patrí aj <b>zvuková stopa</b>, ktorá beží súčasne so snímkami. Keď sa obraz a zvuk rozídu, hovoríme, že video „nesedí“.</p>
+    </div><div class="tfigs">${FIG_STRIP}${FIG_FPS}</div></div>
+    ${VEDEL("Spomalené videá z mobilu sa natáčajú rýchlosťou <b>120 až 240 fps</b>, ale prehrávajú sa pri 30 fps. Pohyb je preto 4 až 8‑krát pomalší a uvidíš aj to, čo by oko inak nestihlo.")}
+    ${H3(1, "🎞️", "poskladaj filmový pás", "strip")}<div class="task">${stripHTML()}</div>
+    ${H3(2, "⏱️", "koľko fps?", "fps")}<div class="task"><p class="ins">Ku každej situácii vyber, koľko snímok za sekundu sa tam používa. Za každé 2 správne odpovede získaš 1 ⭐.</p>${mcHTML(TASKS.fps)}</div>` + nextBar();
+  },
+  m2() {
+    return banner(2, "Staň sa animátorom: rozhýb autíčko snímku po snímke a doplň chýbajúcu fázu pohybu.") +
+    say(`V mojom ateliéri vznikajú animované filmy. ✏️ Celé tajomstvo je v tom, <b>o koľko</b> sa postavička posunie medzi dvoma snímkami. Skús si to sama… teda sám! 😸`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Animácia</b> je video, ktorého snímky niekto vytvoril, nie natočil kamerou. Postavička je na každej snímke trochu inde.</p>
+      <table class="rtab"><thead><tr><th>Posun medzi snímkami</th><th>Ako vyzerá pohyb</th></tr></thead><tbody>
+        <tr><td>malý</td><td>pomalý</td></tr><tr><td>veľký</td><td>rýchly</td></tr>
+        <tr><td>stále rovnaký</td><td>rovnomerný</td></tr><tr><td>čoraz väčší</td><td>zrýchľuje, rozbieha sa</td></tr></tbody></table>
+      <p>Animátori si najprv nakreslia <b>kľúčové polohy</b> (začiatok a koniec pohybu). Potom doplnia <b>medzisnímky</b>, ktoré pohyb plynulo prepoja. Programy na animáciu ukazujú aj predošlé snímky priesvitne, tomu sa hovorí <b>cibuľový pohľad</b>.</p>
+    </div><div class="tfigs">${FIG_ONION}${FIG_KEY}</div></div>
+    ${VEDEL("Slovo <b>animácia</b> pochádza z latinského <b>anima</b>, čo znamená duša. Animátor teda kresbám doslova „vdychuje dušu“.")}
+    ${H3(3, "🚗", "rozhýb autíčko", "car")}<div class="task">${carHTML()}</div>
+    ${H3(4, "🖼️", "chýbajúca a plynulá snímka", "inb")}<div class="task">${mcHTML(TASKS.inb)}</div>` + nextBar();
+  },
+  m3() {
+    return banner(3, "Kreslená, plastelínová alebo počítačová? Zisti, ako vznikajú rôzne druhy animácie.") +
+    say(`Animované filmy sa dajú robiť <b>tromi spôsobmi</b>. 🧸 Ďuro práve skúša ten, ktorý zvládneš aj doma s mobilom. Ale niečo sa mu nedarí…`) +
+    `<div class="theory tsplit"><div>
+      <table class="rtab"><thead><tr><th>Druh</th><th>Ako vznikajú snímky</th></tr></thead><tbody>
+        <tr><td><b>✏️ kreslená</b></td><td>Každú snímku nakreslí človek na papier alebo tablet. Často stačí 12 kresieb na sekundu.</td></tr>
+        <tr><td><b>📷 stop-motion</b></td><td>Skutočný predmet sa trochu posunie a odfotí. Fotky za sebou dajú pohyb.</td></tr>
+        <tr><td><b>💻 počítačová</b></td><td>Človek určí polohy alebo pohyb kostry modelu a počítač dopočíta snímky medzi nimi.</td></tr></tbody></table>
+      <p>Pri stop-motion je dôležité, aby sa medzi fotkami hýbal <b>iba predmet</b>. Ak sa posunie kamera alebo svetlo, celé video „skáče“.</p>
+      <p>Dĺžka animácie závisí od <b>počtu snímok</b> a od <b>fps</b>, ktoré nastavíš pri prehrávaní.</p>
+    </div><div class="tfigs">${FIG_TYPES}</div></div>
+    ${VEDEL("Pri stop-motion filmoch s plastelínovými postavičkami natočia animátori za celý deň často iba <b>niekoľko sekúnd</b> filmu. Celovečerný film tak vzniká aj vyše roka.")}
+    ${H3(5, "🗂️", "aký druh animácie?", "types")}<div class="task">${sortHTML(TASKS.types)}</div>
+    ${H3(6, "💬", "komiks: Ďurov Lego film", "comic")}<div class="task">${comicHTML()}</div>` + nextBar();
+  },
+  m4() {
+    return banner(4, "Každá snímka je obrázok z pixelov. Pozri sa na tvar obrazu aj na farby jednotlivých bodov.") +
+    say(`Teraz si posvietime lupou na jednu snímku. 🔍 Uvidíš, že je poskladaná z malých štvorčekov a každý svieti zmesou <b>troch farieb</b>.`) +
+    `<div class="theory tsplit"><div>
+      <p>Každá snímka videa je <b>rastrový obrázok</b>. Má <b>rozlíšenie</b> (šírka × výška v pixeloch) a <b>pomer strán</b> (šírka : výška).</p>
+      <table class="rtab"><thead><tr><th>Pomer strán</th><th>Kde sa stretneš</th></tr></thead><tbody>
+        <tr><td><b>16 : 9</b></td><td>televízory, monitory, YouTube</td></tr>
+        <tr><td><b>1 : 1</b></td><td>štvorcové príspevky na sociálnych sieťach</td></tr>
+        <tr><td><b>21 : 9</b></td><td>širokouhlé herné monitory</td></tr></tbody></table>
+      <p>Keď sa pomer videa nezhoduje s obrazovkou, prehrávač doplní <b>čierne pásy</b>, aby nič neorezal ani nedeformoval.</p>
+      <p>Farba pixela sa ukladá ako tri čísla <b>R</b> (červená), <b>G</b> (zelená) a <b>B</b> (modrá), každé od 0 do 255.</p>
+    </div><div class="tfigs">${FIG_RATIO}${FIG_RGB}</div></div>
+    ${VEDEL("Keď sa pozrieš na displej mobilu cez lupu alebo kvapku vody, uvidíš drobné <b>červené, zelené a modré</b> body. Každý pixel sa skladá práve z týchto troch svetielok.")}
+    ${H3(7, "📐", "pomer strán", "ratio")}<div class="task">${mcHTML(TASKS.ratio)}</div>
+    ${H3(8, "⬛", "čierne pásy", "bars")}<div class="task">${mcHTML(TASKS.bars)}</div>
+    ${H3(9, "🎨", "namiešaj farbu pixela", "rgb")}<div class="task">${rgbHTML()}</div>` + nextBar();
+  },
+  m5() {
+    return banner(5, "Nekomprimované video by zaplnilo disk za pár minút. Zisti, ako ho kodek šikovne zmenší.") +
+    say(`Video bez kompresie je obrovské, aj minúta by mala niekoľko GB! 😱 Kodek je však šikovný: všimne si, že väčšina obrazu sa medzi snímkami <b>nemení</b>.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p><b>Kodek</b> (kóder a dekóder) video pri ukladaní zmenší a pri prehrávaní znova rozbalí. Používa dva triky:</p>
+      <table class="rtab"><thead><tr><th>Trik</th><th>Ako funguje</th></tr></thead><tbody>
+        <tr><td><b>v rámci snímky</b></td><td>zjednoduší plochy s podobnou farbou, podobne ako JPEG</td></tr>
+        <tr><td><b>medzi snímkami</b></td><td>rozdelí obraz na <b>bloky</b> a uloží iba tie, ktoré sa oproti predošlej snímke zmenili</td></tr></tbody></table>
+      <p>Raz za čas, napríklad každé 2 sekundy alebo pri veľkej zmene obrazu, uloží kodek celú <b>kľúčovú snímku</b>. Vďaka nej môžeš pri prehrávaní skočiť dopredu.</p>
+    </div><div class="tfigs">${FIG_DIFF}${FIG_GOP}</div></div>
+    ${VEDEL("Keď sa pri prenose stratí kľúčová snímka, prehrávač pokračuje iba so zmenami. Obraz sa potom na chvíľu „roztečie“ a farby z predošlej scény sa hýbu po novej. Niektorí umelci tento efekt robia naschvál a volá sa <b>datamoshing</b>.")}
+    ${H3(10, "🧩", "nájdi zmenené bloky", "blocks")}<div class="task">${blocksHTML()}</div>
+    ${H3(11, "🔑", "kde je nová kľúčová snímka?", "key")}<div class="task">${mcHTML(TASKS.key)}</div>
+    ${H3(12, "📦", "ktoré video bude najmenšie?", "easy")}<div class="task">${mcHTML(TASKS.easy)}</div>` + nextBar();
+  },
+  m6() {
+    return banner(6, "Video z internetu sa sťahuje počas pozerania. Vyber kvalitu, ktorá sa nebude sekať.") +
+    say(`Posledná misia! 📡 Keď pozeráš video na internete, nemáš ho celé v počítači. Prehrávač si ho <b>sťahuje po kúskoch</b> a internet musí stíhať.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p><b>Streamovanie</b> znamená, že video sa sťahuje <b>počas pozerania</b>. Prehrávač má vždy pripravených niekoľko sekúnd dopredu.</p>
+      <p><b>Bitrate</b> videa udáva, koľko údajov pripadá na jednu sekundu, napríklad <b>5 Mb/s</b> (megabitov za sekundu).</p>
+      <table class="rtab"><thead><tr><th>Ak je internet…</th><th>…video</th></tr></thead><tbody>
+        <tr><td>rýchlejší ako bitrate</td><td>beží plynulo</td></tr>
+        <tr><td>pomalší ako bitrate</td><td>sa zastavuje a načítava ⏳</td></tr></tbody></table>
+      <p>Služby ako YouTube majú každé video uložené vo viacerých kvalitách. Vyššia kvalita (rozlíšenie) potrebuje <b>vyšší bitrate</b>.</p>
+    </div><div class="tfigs">${FIG_STREAM}${FIG_BR}</div></div>
+    ${VEDEL("YouTube odporúča nahrávať 4K video s 30 fps s bitrate <b>35 až 45 Mb/s</b>. Pri pozeraní ho však pošle oveľa úspornejšie, lebo ho ešte raz skomprimuje.")}
+    ${H3(13, "📺", "vyber kvalitu videa", "stream")}<div class="task">${streamHTML()}</div>
+    ${H3(14, "🌫️", "rozmazaný obraz", "drop")}<div class="task">${mcHTML(TASKS.drop)}</div>
+    ${H3(15, "🎓", "záverečná otázka", "br")}<div class="task">${mcHTML(TASKS.br)}</div>` + nextBar();
+  },
+  vysledok() {
+    if (!S.finished && !allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i)).map(([s, i]) => [s, i, STEP_TASKS[s.id].filter(t => !S.t[t]).length]);
+      const left = Object.keys(TASKS).filter(k => !S.t[k]).length;
+      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú tieto misie (kliknutím sa do nich vrátiš):</p><div class="row" style="margin-top:0">${miss.map(([s, i, n]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} <span class="muted">· ${n} ${n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh"}</span></button>`).join("")}</div>
+        ${S.confirmEarly ? `<div class="vedel" style="margin-top:18px"><b>⚠️ Naozaj chceš domácu úlohu ukončiť?</b> Nedokončených úloh: <b>${left}</b>. Rozpracované úlohy sa vyhodnotia podľa toho, čo si v nich vybral, nedotknuté dostanú 0 ⭐. Potom sa už nič nedá zmeniť.<div class="row"><button class="primary" data-earlyyes style="background:#C0392B">Áno, odoslať</button><button class="ghost" data-earlyno>Späť k úlohám</button></div></div>`
+        : `<div class="row" style="margin-top:18px"><button class="primary" data-early>🏁 Ukončiť a odoslať výsledok</button><span class="muted" style="font-size:14.5px">Ak už nechceš pokračovať, môžeš domácu úlohu ukončiť aj teraz.</span></div>`}</div>`; }
+    if (!S.finished) { S.finished = Date.now(); save(); }
+    const g = gradeOf(total(), MAX), pct = Math.round(total() / MAX * 100);
+    try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: S.name, cls: S.cls, score: total(), max: MAX, at: S.finished, grade: g, attempts: S.attempt || 1 })); } catch (e) {}
+    return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Strih! Toto bol film na Oscara. Vieš, ako vzniká pohyb, ako sa video zmenšuje aj prečo sa niekedy seká. 🎬🐾" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil, a skús si natočiť vlastnú stop-motion animáciu mobilom.", "wow")}
+      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <div class="row">${sendResults()}</div>
+      ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
+      ${(S.attempt || 1) === 1 && g >= 3 ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš ešte jednu opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu vypracovať ešte raz. Najprv si pozri vysvetlenia pri úlohách, kde si sa pomýlil. Oprava je posledný pokus.<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>` : ""}
+      ${(S.attempt || 1) === 2 ? `<p class="muted" style="margin-top:12px">Toto bola oprava, ďalší pokus už nie je možný.</p>` : ""}</div>`;
+  }
+};
+function sendResults() {
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.early ? " (nedokončené)" : "") + ((S.attempt || 1) === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(gradeOf(total(), MAX)));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished, S.attempt].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
+}
+function doneRec() { try { let r = localStorage.getItem(DONE_KEY); if (r) return JSON.parse(r);
+    for (const k of OLD_DONE_KEYS) { r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); o.grade = o.grade || gradeOf(o.score, o.max || MAX); o.attempts = Math.min(o.attempts || 1, 1); o.old = true; return o; } } } catch (e) {} return null; }
+function lockedDone() { if (S.finished) return null; const r = doneRec(); if (!r) return null; if ((S.attempt || 1) === 2 && (r.attempts || 1) < 2) return null; return r; }
+function render(scroll) { if (PLAY) { clearInterval(PLAY); PLAY = null; } const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const can = (L.grade || gradeOf(L.score, L.max || MAX)) >= 3 && (L.attempts || 1) < 2;
+    document.getElementById("main").innerHTML = can ? `<div class="result"><h2>🔁 Oprava domácej úlohy</h2>${say(`${esc(L.name)} (${esc(L.cls)}), ${L.old ? "v predchádzajúcej verzii tejto domácej úlohy" : "v prvom pokuse"} si získal/a <b>${L.score} z ${L.max || MAX} ⭐</b> (známka ${L.grade}). Máš ešte <b>jednu opravu</b>. Je to posledný pokus.`)}<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>`
+      : `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${L.score} z ${L.max || MAX} ⭐</b>. Opakovať ju nie je možné.`)}</div>`; return; }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); typo(m); typo(document.getElementById("top"));
+  window.scrollTo({ top: scroll ? 0 : y }); }
+function scoreOf(id) {
+  const T = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (T.type === "mc") { picsInit(); sc = T.qs.filter(q => d[q.id] === q.a).length; if (T.half) sc = Math.floor(sc / 2); }
+  if (T.type === "sort") sc = Math.floor(T.items.filter(x => d[x.id] === x.a).length / 2);
+  if (T.type === "order") sc = Math.floor(T.items.filter((x, i) => (S.d[id] || [])[i] === x.id).length / 2);
+  if (T.type === "comic") sc = T.panels.filter(p => p.q && d[p.q] === p.a).length;
+  if (T.type === "car") sc = gradeCar();
+  if (T.type === "rgb") sc = Object.keys(PIXT).filter(rgbOk).length;
+  if (T.type === "blocks") sc = gradeBlocks();
+  if (T.type === "stream") sc = Object.values(S.st.sub).filter(x => x.ok).length;
+  return Math.min(sc, maxOf(T));
+}
+function check(id) { award(id, scoreOf(id)); save(); render(false); }
+/* predčasné ukončenie: rozpracované úlohy sa vyhodnotia podľa výberu, nedotknuté = 0 */
+function finishEarly() {
+  Object.keys(TASKS).forEach(id => { if (S.t[id]) return; const T = TASKS[id];
+    if (T.type === "car" && !S.car.touched) { award(id, 0); S.res.car = "Úloha nebola odovzdaná."; return; }
+    if (T.type === "rgb" && !S.rgb.touched) { award(id, 0); return; }
+    if (T.type === "blocks" && !S.bk.length) { award(id, 0); return; }
+    award(id, scoreOf(id)); });
+  S.early = true; S.confirmEarly = false; S.finished = Date.now();
+}
+const gradeOf = (sc, mx) => { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; };
+function startRetry(rec) { const n = (rec && rec.name) || S.name, c = (rec && rec.cls) || S.cls; S = fresh(); S.name = n; S.cls = c; S.attempt = 2; save(); render(true); }
+const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
+document.addEventListener("click", e => {
+  const bk = e.target.closest("[data-bk]");
+  if (bk) { if (S.t.blocks) return; const id = bk.dataset.bk, i = S.bk.indexOf(id); if (i >= 0) S.bk.splice(i, 1); else S.bk.push(id); save(); render(false); return; }
+  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
+  if (ds.cls) { S.cls = ds.cls; save(); render(false); return; }
+  if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
+  if (ds.check) { check(ds.check); return; }
+  if (ds.early !== undefined) { S.confirmEarly = true; save(); render(false); return; }
+  if (ds.earlyno !== undefined) { S.confirmEarly = false; save(); render(false); return; }
+  if (ds.earlyyes !== undefined) { finishEarly(); save(); render(true); return; }
+  if (ds.retry !== undefined) { const r = S.finished ? { name: S.name, cls: S.cls } : doneRec(); startRetry(r); return; }
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; setD(t, q, +i); save(); render(false); return; }
+  if (ds.sti) { const [t, id] = ds.sti.split("|"); if (S.t[t]) return; S.sel[t] = S.sel[t] === id ? null : id; save(); render(false); return; }
+  if (ds.stb) { const [t, b] = ds.stb.split("|"); if (S.t[t] || !S.sel[t]) return; setD(t, S.sel[t], b); S.sel[t] = null; save(); render(false); return; }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); render(false); return; }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); render(false); return; }
+  if (ds.cm) { const [q, i] = ds.cm.split("|"); if (S.t.comic) return; setD("comic", q, +i); save(); render(false); return; }
+  if (ds.cf) { S.car.f = +ds.cf; save(); render(false); return; }
+  if (ds.cplay !== undefined) { carPlay(); return; }
+  if (ds.stt) { S.st.cur = ds.stt; save(); render(false); return; }
+  if (ds.stq) { const k = S.st.cur; if (S.t.stream || S.st.sub[k]) return; S.st.o[k] = ds.stq; save(); render(false); return; }
+  if (ds.stsub !== undefined) { const k = S.st.cur, q = S.st.o[k]; if (S.t.stream || S.st.sub[k] || !q) return; S.st.sub[k] = { q, ok: q === STREAM[k].a };
+    if (Object.keys(S.st.sub).length === 3) award("stream", scoreOf("stream")); else { const nx = Object.keys(STREAM).find(x => !S.st.sub[x]); if (nx) S.st.cur = nx; }
+    save(); render(false); return; }
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.cx !== undefined) { if (S.t.car) return; S.car.x[S.car.f - 1] = +t.value; S.car.touched = true; save(); const st = document.getElementById("stage"); if (st) st.innerHTML = carStage(false); t.nextElementSibling.textContent = t.value;
+    const b = document.querySelector('[data-check="car"]'); if (b) b.disabled = false; return; }
+  if (t.dataset.rgb !== undefined) { if (S.t.rgb) return; const [k, i] = t.dataset.rgb.split("|"); S.rgb[k][+i] = +t.value; S.rgb.touched = true; save();
+    const sw = document.getElementById("sw-" + k); if (sw) sw.style.background = rgbS(S.rgb[k]); const v = document.getElementById(`v-${k}-${i}`); if (v) v.textContent = t.value;
+    const b = document.querySelector('[data-check="rgb"]'); if (b) b.disabled = false; return; }
+  const f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
+});
+render(false);
+</script></body></html>
