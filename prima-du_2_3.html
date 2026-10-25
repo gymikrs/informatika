@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DU_2.3 E-mailoví klienti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;
+  --acc:#2F5BEA;--accSoft:#D5DFFB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#C9D1DF;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D6DCE6;
+  --font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}}
+:root[data-theme="dark"]{--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .du{background:#F2A516;color:#3A2600;border-radius:7px;padding:1px 8px;font-size:14px;font-weight:800}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:35px;height:35px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:16px;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff;font-size:14px;font-weight:700}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.18);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:21px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+/* misia – banner */
+.ban{position:relative;overflow:hidden;border-radius:22px;padding:20px 22px 18px;color:#fff;margin:0 0 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;box-shadow:0 14px 30px -18px rgba(10,20,60,.6)}
+.ban .pill{display:inline-block;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 12px;font-size:13.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ban h2{color:#fff;margin:8px 0 4px}
+.ban p{margin:0;font-size:16px;opacity:.95}
+.ban .big{font-size:64px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.ban::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+@media (max-width:560px){.ban .big{font-size:44px}}
+/* holub Pípo */
+.say{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:end;margin:6px 0 18px}
+.say svg{width:92px;height:92px}
+.bubble{position:relative;background:var(--surface);border:2px solid var(--acc);border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:16.5px}
+.bubble b.n{color:var(--acc)}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:0 0 12px}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.tfigs{display:grid;gap:12px}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E4A66;text-align:center;padding:0 4px}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.93em}
+code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px}
+kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:.88em}
+/* tlačidlá a otázky */
+.primary{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:30px;padding-top:20px;border-top:1px dashed var(--track);display:flex;justify-content:flex-end}
+.q{border:0;padding:0;margin:0 0 22px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px}
+.why.good{background:var(--okSoft)}.why.miss{background:var(--badSoft)}
+.lock{display:flex;gap:10px;align-items:center;background:var(--surface2);border:1.5px dashed var(--track);border-radius:12px;padding:12px 16px;color:var(--muted)}
+/* párovanie */
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.pairs{grid-template-columns:1fr}}
+.pcol{display:grid;gap:8px;align-content:start}
+.pcol h4{margin:0 0 2px;font-size:15px;color:var(--muted)}
+.pi{display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:9px 12px;cursor:pointer;width:100%}
+.pi:hover:not(:disabled){border-color:var(--acc)}
+.pi.sel{border-color:var(--amber);box-shadow:0 0 0 4px var(--amberSoft)}
+.pi .e{font-size:24px;flex:0 0 30px;text-align:center}
+.pi .tag{margin-left:auto;flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff}
+.pi.ok{border-color:var(--ok);background:var(--okSoft)}
+.pi.bad{border-color:var(--bad);background:var(--badSoft)}
+.pi:disabled{cursor:default;color:var(--ink)}
+/* štart a výsledok */
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px}
+@media (max-width:800px){.hero{grid-template-columns:1fr}}
+.hero svg{width:100%;height:auto;display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.mcard{border-radius:14px;padding:10px 12px;color:#fff;font-weight:600;font-size:15px}
+.mcard small{display:block;font-weight:400;opacity:.9}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{width:100%;max-width:380px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px}
+.bign{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.bign .n{font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.bign .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
+table.res{border-collapse:collapse;width:100%;font-size:15.5px}
+table.res td,table.res th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+table.res td:last-child,table.res th:last-child{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+@media (prefers-reduced-motion: no-preference){.fly{animation:fly 1.4s ease-in-out}@keyframes fly{from{opacity:.2;transform:translateX(-30px)}to{opacity:1;transform:none}}}
+.muted{color:var(--muted)}
+.say svg{width:92px;height:92px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .opt{padding:6px 12px;font-size:14.5px;border-radius:999px}
+.tnum{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;margin-right:6px}
+.msg{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--accSoft);font-size:15.5px;min-height:44px}
+/* izba (misia 1) */
+.room svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--border)}
+.room [data-hot]{cursor:pointer}
+.room [data-hot]:hover{filter:brightness(1.12) drop-shadow(0 0 4px #F2A516)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.fc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px 14px;position:relative}
+.fc.okc{border-color:var(--ok);background:var(--okSoft)}.fc.badc{border-color:var(--bad);background:var(--badSoft)}
+.fc .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}
+.fc .hd .e{font-size:28px;line-height:1}
+.dig{margin-left:auto;background:#16213A;color:#F2C94C;font-family:var(--mono);font-weight:700;border-radius:8px;padding:2px 10px;font-size:18px}
+.fc .why{margin-top:8px}
+.safe{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px;align-items:center;margin-top:16px;background:linear-gradient(135deg,#2B3550,#16213A);color:#E8EDF7;border-radius:18px;padding:16px 18px}
+@media (max-width:720px){.safe{grid-template-columns:1fr}}
+.safe svg{width:100%;max-width:220px;height:auto;display:block;margin:0 auto}
+.safe .rule{background:#FFF8E1;color:#3A2E00;border-radius:10px;padding:10px 12px;font-size:15px;margin-bottom:10px}
+.codes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.codes .opt{font-family:var(--mono);font-size:22px;font-weight:700;text-align:center;letter-spacing:.2em;background:#0E1424;color:#F2C94C;border-color:#3E4A66}
+.codes .opt.sel{border-color:#F2A516;background:#2A2410}
+.codes .opt.ok{border-color:#3CCB8E;background:#123A2C;color:#9FF0C8}
+.codes .opt.bad{border-color:#FF7A6B;background:#46221F;color:#FFB4AA}
+/* pátranie doma (misia 2) */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.hc{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:10px 6px;cursor:pointer;text-align:center;font-size:14.5px;font-weight:600;line-height:1.25}
+.hc .e{font-size:30px;line-height:1}
+.hc:hover:not(:disabled){border-color:var(--acc)}
+.hc.on{border-color:var(--amber);background:var(--amberSoft);box-shadow:0 0 0 3px var(--amberSoft)}
+.hc:disabled{cursor:default;opacity:.45}
+.hc.on:disabled{opacity:1}
+/* dielňa (misia 3) */
+.inv{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.ic{background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:14px 16px}
+.ic.okc{border-color:var(--ok)}.ic.badc{border-color:var(--bad)}
+.ic .hd{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.ic .hd .e{font-size:40px;line-height:1}
+.ic .hd b{font-size:17px}
+.ic .st{font-size:15px;color:var(--muted);margin:0 0 8px}
+.ic .lab{font-size:13.5px;font-weight:700;color:var(--muted);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.bprev{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-top:10px;font-size:15px}
+.bprev .slot{min-width:92px;text-align:center;border-radius:12px;padding:6px 8px;background:var(--surface);border:2px solid var(--border)}
+.bprev .slot .e{display:block;font-size:28px;line-height:1.1}
+.bprev .core{background:#16213A;color:#fff;border-color:#16213A}
+/* komiks (misia 4) */
+.comic{display:grid;grid-template-columns:1fr;gap:14px}
+.panel:not(.choice){max-width:560px}.panel.c{justify-self:center}
+.panel{background:#FFFDF5;border:3px solid #16213A;border-radius:6px;padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;color:#16213A;box-shadow:4px 4px 0 #16213A}
+.panel svg{width:76px;height:76px}
+.panel .bub{background:#fff;border:2px solid #16213A;border-radius:14px;padding:8px 12px;font-size:15.5px;position:relative}
+.panel .nm{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#566381;margin-bottom:2px}
+.panel.choice{grid-column:1/-1;background:#EEF4FF}
+.panel .opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel .opt{background:#fff;color:#16213A}
+.panel .opt.sel{background:#E6EDFD}
+.panel .opt.ok{background:#DDF3EA}.panel .opt.bad{background:#FBE3E0}
+.panel .why{color:#16213A}
+/* triedenie */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.chip.ok{border-color:var(--ok);background:var(--okSoft)}.chip.bad{border-color:var(--bad);background:var(--badSoft)}
+.chip:disabled{cursor:default;color:var(--ink)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.bins{grid-template-columns:1fr}}
+.bin{border:2px solid var(--border);border-radius:16px;padding:10px;min-height:120px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bin .bh{width:100%;text-align:center;font-weight:700;border-radius:10px;padding:6px;cursor:pointer;border:0;font-size:15px}
+.bin .bh:disabled{cursor:default}
+/* príbeh (misia 5) */
+.story{background:#FFFDF5;color:#2A2410;border:1px solid #E6D6A8;border-radius:16px;padding:16px 18px;font-size:17px;line-height:1.9}
+.story p{margin:0 0 10px}
+.ph{display:inline;font:inherit;color:inherit;background:none;border:0;border-bottom:2px dotted #B08D4F;padding:0 2px;cursor:pointer;border-radius:4px;line-height:inherit}
+.ph:hover:not(:disabled){background:#FDF1D6}
+.ph.on{background:#FDE3A7;border-bottom:2px solid #E0A800}
+.ph.ok{background:#DDF3EA;border-bottom:2px solid #12805A}
+.ph.bad{background:#FBE3E0;border-bottom:2px solid #C0392B}
+.ph.miss{background:none;border-bottom:3px solid #C0392B}
+.ph:disabled{cursor:default}
+/* rozpočet (misia 6) */
+.shop{display:grid;gap:14px}
+.cat h4{margin:0 0 6px;font-size:16px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.prod{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:10px 12px;cursor:pointer;font-size:14.5px;line-height:1.35}
+.prod b{font-size:15px}
+.prod .pr{font-weight:700;color:var(--acc);font-size:16px;margin-top:4px}
+.prod:hover:not(:disabled){border-color:var(--acc)}
+.prod.on{border-color:var(--acc);background:var(--accSoft)}
+.prod:disabled{cursor:default}
+.cart{position:sticky;bottom:10px;z-index:5;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:10px 14px;margin-top:14px;box-shadow:0 10px 24px -14px rgba(10,20,60,.5)}
+.cart .bar{height:12px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:6px}
+.cart .bar span{display:block;height:100%;background:var(--ok)}
+.cart.over{border-color:var(--bad)}.cart.over .bar span{background:var(--bad)}
+.crit{list-style:none;padding:0;margin:12px 0 0}
+.crit li{padding:6px 10px;border-radius:10px;margin:4px 0;font-size:15.5px}
+.crit li.y{background:var(--okSoft)}.crit li.n{background:var(--badSoft)}
+@media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
+.panel{min-width:0}.panel .bub{min-width:0}
+@media (max-width:640px){.room{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px}.room svg{min-width:760px}.room::after{content:"↔️ Obrázok posúvaj prstom do strany.";display:block;font-size:13.5px;color:var(--muted);padding:4px 2px}}
+/* ===== DU 2.3: simulátor IDLE a nové typy úloh ===== */
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14.5px}
+.wt{background:#E9EDF3;padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:13.5px;border-bottom:1px solid #D5DCE6;color:#1B1B1F;min-width:0}
+.wt .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .dots{margin-left:auto;color:#666;letter-spacing:6px;flex:0 0 auto}
+.menubar{display:flex;flex-wrap:wrap;gap:2px;background:#F6F7F9;border-bottom:1px solid #E0E4EA;padding:2px 6px;position:relative}
+.menubar button{border:0;background:none;padding:4px 10px;font-size:13.5px;cursor:pointer;border-radius:4px;color:#1B1B1F}
+.menubar button:hover:not(:disabled),.menubar button.on{background:#DCE6F5}
+.menubar button:disabled{opacity:.45;cursor:default}
+.drop{position:absolute;top:30px;background:#fff;border:1px solid #BCC6D3;box-shadow:0 8px 20px rgba(0,0,0,.2);border-radius:6px;padding:4px;z-index:3;min-width:210px}
+.drop button{display:block;width:100%;text-align:left;padding:6px 10px}
+.drop small{color:#667}
+.shell{background:#fff;font-family:"Courier New",var(--mono);font-size:14px;padding:10px 12px;min-height:96px;max-height:170px;overflow:auto;white-space:pre-wrap;color:#000}
+.shell .p{color:#7A2E00}.shell .e{color:#D10000}
+.ws{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start;margin-top:12px}
+.editor textarea{width:100%;min-height:250px;border:0;border-radius:0;font-family:"Courier New",var(--mono);font-size:15px;line-height:1.5;padding:10px 12px;background:#fff;color:#000;resize:vertical;outline:none;display:block}
+.editor textarea[readonly]{background:#F6F7F9;color:#3A3A44}
+.editor .status{background:#F1F3F6;border-top:1px solid #E0E4EA;font-size:12px;color:#555;padding:3px 10px;text-align:right}
+.edempty{min-height:290px;display:grid;place-items:center;text-align:center;color:#667;background:#F6F7F9;padding:16px;font-size:14px}
+.twin svg{display:block;width:100%;height:auto;background:#fff}
+.twin .empty{height:250px;display:grid;place-items:center;color:#667;background:#F6F7F9;font-size:14px;text-align:center;padding:10px}
+.dlgbox{background:#fff;color:#1B1B1F;border:1px solid #9FB0C8;border-radius:10px;box-shadow:0 14px 30px rgba(0,0,0,.25);padding:14px 16px;margin:10px 0;max-width:460px}
+.dlgbox h5{margin:0 0 8px;font-size:15px}
+.dlgbox input{width:100%;border:1px solid #A9B4C4;border-radius:4px;padding:6px 8px;font-family:var(--mono);font-size:14px;color:#1B1B1F;background:#fff}
+.dlgbox .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA;padding:6px 14px}
+.filelist button{display:block;width:100%;text-align:left;border:0;background:#F4F6F9;border-radius:6px;padding:6px 10px;margin:4px 0;cursor:pointer;font-family:var(--mono);color:#1B1B1F}
+.tgtbar{display:grid;grid-template-columns:210px minmax(0,1fr);gap:16px;align-items:start}
+.tprev svg{width:100%;max-width:210px;height:auto;display:block;background:#fff;border:1px solid var(--border);border-radius:12px}
+.tprev .cap{font-size:13px;color:var(--muted);text-align:center;margin-top:4px}
+.goals{list-style:none;padding:0;margin:6px 0 0}.goals li{padding:3px 0}
+.fb{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.fb ul{margin:4px 0 0;padding-left:20px}
+.code{font-family:var(--mono);font-size:14.5px;line-height:1.6;background:#0F1A2E;color:#DCE7FF;border-radius:10px;padding:10px 14px;white-space:pre;overflow-x:auto;margin:8px 0;font-weight:500}
+.code .k{color:#FFB86B;font-weight:700}
+/* poradie riadkov */
+.seq{list-style:none;padding:0;margin:14px 0 12px;display:grid;gap:8px;max-width:520px}
+.slot2{display:flex;align-items:center;gap:12px}
+.slot2 .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot2 .ph2{color:var(--muted);flex:1;border:1.5px dashed var(--track);border-radius:10px;padding:8px 14px;font-size:15px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:var(--mono);font-size:15px}
+.slotbtn:hover:not(:disabled){border-color:var(--acc)}
+.slot2.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}.slot2.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.chip.mono{font-family:var(--mono);font-weight:500}
+.bins.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.seq .slotbtn{font-family:var(--font)}
+/* kód s chybami */
+.codebox{background:#fff;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;color:#000;max-width:560px}
+.codebox .wt{border-radius:0}
+.cl{display:flex;width:100%;align-items:center;gap:14px;border:0;border-bottom:1px solid #EEF1F5;background:#fff;padding:6px 12px;font-family:"Courier New",var(--mono);font-size:16px;text-align:left;cursor:pointer;color:#000}
+.cl .ln{color:#8A93A6;width:22px;text-align:right;font-size:13px;flex:0 0 22px}
+.cl:hover:not(:disabled){background:#FFF6DB}
+.cl.on{background:#FDE3A7}.cl.ok{background:#DDF3EA}.cl.bad{background:#FBE3E0}.cl.miss{box-shadow:inset 5px 0 0 #C0392B;background:#FFF0EE}
+.cl:disabled{cursor:default}
+.fixrow{margin-top:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.fixrow .hd{font-weight:600;margin-bottom:6px;font-size:15.5px}
+.fixrow .opt{font-family:var(--mono)}
+.errc{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.errc .opts{grid-template-columns:1fr;gap:6px}
+.errc .opt{font-family:var(--mono);font-size:13.5px;padding:8px 10px;color:#9A1F12}
+.errc .opt.ok,.errc .opt.bad,.errc .opt.sel{color:var(--ink)}
+.opts.pics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.pics .opt{padding:8px}
+.opt svg{width:100%;height:auto;display:block;background:#fff;border-radius:8px;border:1px solid #E3E8EF}
+/* priečinok */
+.fwin{margin-bottom:14px;max-width:620px}
+.frow{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #EEF1F5;font-size:14.5px;color:#1B1B1F}
+.frow .nm{font-family:var(--mono);overflow-wrap:anywhere}
+.frow .nm s{color:#9AA3B5}
+.frow .ds{color:#566381;font-size:13px;text-align:right}
+/* displej */
+.segs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.segc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px;display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;align-items:center}
+.segc.okc{border-color:var(--ok);background:var(--okSoft)}.segc.badc{border-color:var(--bad);background:var(--badSoft)}
+.segc svg{width:110px;height:auto;display:block;background:#16213A;border-radius:12px}
+.segc [data-sg]{cursor:pointer}
+.segc .goal{font-size:15px}
+.segc .goal b{font-family:var(--mono);font-size:36px;color:var(--acc);display:block;line-height:1.1}
+@media (max-width:900px){.ws{grid-template-columns:minmax(0,1fr)}.drop{left:auto!important;right:0}}
+@media (max-width:720px){.bins.two{grid-template-columns:1fr}.tgtbar{grid-template-columns:1fr}}
+/* ===== DU 2.3 Prima: nové typy úloh ===== */
+.room svg{min-width:0}
+.qt svg{display:block;width:100%;max-width:560px;height:auto;margin:10px 0 2px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.q legend .qt{flex:1;min-width:0}
+.fq{display:grid;gap:8px;margin-bottom:12px}
+.fqb{display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:9px 12px;cursor:pointer;font-weight:600;width:100%}
+.fqb small{display:block;font-weight:400;font-size:14px;color:var(--muted);margin-top:2px}
+.fqb:hover:not(:disabled){border-color:var(--acc)}
+.fqb.on{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.fqb.ok{border-color:var(--ok);background:var(--okSoft)}.fqb.bad{border-color:var(--bad);background:var(--badSoft)}
+.fqb:disabled{cursor:default;color:var(--ink)}
+.tbw svg{width:100%;height:auto;display:block}
+.fz{cursor:pointer}.fz rect{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.fz:hover rect{stroke:#F2A516;fill:rgba(242,165,22,.14)}
+.fz.ok rect{stroke:#12805A;fill:rgba(18,128,90,.16);stroke-width:4}.fz.bad rect{stroke:#C0392B;fill:rgba(192,57,43,.14);stroke-width:4}
+.fz.ok,.fz.bad{cursor:default}
+@media (max-width:640px){.tbw{overflow-x:auto;-webkit-overflow-scrolling:touch}.tbw svg{min-width:640px}.tbw::after{content:"↔️ Obrázok posúvaj prstom do strany.";display:block;font-size:13.5px;color:var(--muted);padding:4px 2px}}
+.gwrap{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;align-items:start}
+.gph svg{width:100%;max-width:220px;height:auto;display:block;margin:0 auto}
+@media (max-width:720px){.gwrap{grid-template-columns:1fr}.gph svg{max-width:180px}}
+.wizw{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:16px;align-items:start}
+@media (max-width:760px){.wizw{grid-template-columns:1fr}}
+.card2{background:#FFFBEA;color:#3A2E00;border:1.5px dashed #E0A100;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.5}
+.reg{background:#fff;color:#1B1F2A;border:1px solid #BFC7D5;border-radius:14px;padding:16px 18px;box-shadow:0 12px 30px -14px rgba(10,20,60,.35);font-family:"Segoe UI",var(--font)}
+.reg h4{margin:0 0 2px;font-size:18px}
+.reg label{display:block;font-size:13px;color:#555;margin:10px 0 3px}
+.reg input,.reg select{width:100%;border:1.5px solid #C9D1DE;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;color:#1B1F2A;background:#fff}
+.reg input:disabled,.reg select:disabled{background:#F4F6F9}
+.reg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.reg .btn{background:#2F5BEA;color:#fff;border:0;border-radius:8px;padding:9px 18px;font-weight:700;cursor:pointer}
+.reg .btn:disabled{background:#C9D1DF;color:#667;cursor:not-allowed}
+.reg .ghost{color:#1B1F2A;background:#fff;border-color:#C9D0DA;padding:6px 14px}
+.reg .opt{color:#1B1F2A;background:#F5F7FA}
+.reg .opt.sel{background:#E6EDFD}.reg .opt.ok{background:#DDF3EA}.reg .opt.bad{background:#FBE3E0}
+.wfound{background:#DDF3EA;color:#0B5C3F;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14.5px}
+.wpro{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wpro .opt{text-align:center;font-family:var(--mono);font-weight:700;font-size:18px}
+.evf{max-width:480px;margin-top:4px}
+.mailcard{background:#fff;color:#1B1F2A;border:1px solid #BFC7D5;border-radius:12px;padding:12px 16px;max-width:560px;font-size:15.5px}
+.mailcard .mh{background:#EEF2F8;margin:-12px -16px 0;padding:8px 16px;border-radius:12px 12px 0 0;font-size:14.5px}
+.invs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.invs .chips .opt{border-radius:999px;padding:6px 14px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(84px,1fr));gap:6px;overflow-x:auto;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:8px}
+.cday{background:var(--surface);border:1px solid var(--border);border-radius:10px;min-height:110px;padding:6px;display:flex;flex-direction:column;gap:5px}
+.cdh{text-align:center;font-weight:700;font-size:14px;color:var(--acc);border-bottom:1px solid var(--border);padding-bottom:3px}
+.cev{font-size:12.5px;line-height:1.3;background:var(--accSoft);border-left:4px solid var(--acc);border-radius:6px;padding:4px 6px}
+.cev.new{background:var(--okSoft);border-left-color:var(--ok)}
+.cev.maybe{background:var(--amberSoft);border-left-color:var(--amber);opacity:.85}
+</style></head><body>
+<header class="top" id="top"></header><main id="main" tabindex="-1"></main>
+<script>
+/* ===== DU 2.3 – Prima: Klienti elektronickej pošty pre Windows a Android ===== */
+const KEY = "du-p23-v1";
+const LESSON = "Prima – DU_2.3 Klienti elektronickej pošty pre Windows a Android";
+const CLASS_DEFAULT = "";
+const CLASSES = ["PRIMA_1", "PRIMA_2"];
+const DONE_KEY = "du-p23-done-v1"; /* zámok: pokusy (1 pokus, pri známke 3 – 5 jedna oprava) */
+const OLD_DONE_KEYS = [];
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+
+const STEPS = [
+  { id: "start", title: "Štart", ic: "🚀", min: 1 },
+  { id: "m1", title: "Webmail alebo klient", ic: "🌐", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+  { id: "m2", title: "Klient vo Windows", ic: "💻", min: 3, col: "linear-gradient(120deg,#0B6F8A,#2BB3D6)" },
+  { id: "m3", title: "Klient v mobile", ic: "📱", min: 3, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
+  { id: "m4", title: "IMAP, POP3, SMTP", ic: "🔄", min: 4, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
+  { id: "m5", title: "Účet a poriadok", ic: "🧹", min: 3, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
+  { id: "m6", title: "Kalendár a pozvánky", ic: "📅", min: 3, col: "linear-gradient(120deg,#A0640A,#E2A23B)" },
+  { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
+];
+const STEP_TASKS = { m1: ["wsort", "apps"], m2: ["tbfind", "tbq"], m3: ["gest", "comic"], m4: ["scen", "path", "popq"], m5: ["wiz", "clean", "spamq"], m6: ["inv", "event", "calq"] };
+
+/* ===== LENKA: typografia ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,kbd,textarea,input") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐″])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+/* ===== OBRÁZKY: pomôcky ===== */
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 13}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}" pointer-events="none">${s}</text>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.6"` : ""}/>`;
+const EM = (x, y, e, fs = 24) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}" pointer-events="none">${e}</text>`;
+const ARR = (x1, y1, x2, y2, c = "#566381", w = 2.5) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return `<line x1="${x1}" y1="${y1}" x2="${x2 - Math.cos(a) * 4}" y2="${y2 - Math.sin(a) * 4}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2} L${x2 - h * Math.cos(a - .45)} ${y2 - h * Math.sin(a - .45)} L${x2 - h * Math.cos(a + .45)} ${y2 - h * Math.sin(a + .45)}z" fill="${c}"/>`; };
+const C = { ink: "#16213A", mut: "#566381", acc: "#2F5BEA", accS: "#D5DFFB", ok: "#12805A", okS: "#DDF3EA", bad: "#C0392B", badS: "#FBE3E0", amb: "#8A5A00", ambS: "#FDF1D6", bg: "#F5F7FA", line: "#D6DCE6", inS: "#E3EEFC", in: "#1E6FD9", pur: "#6A3FD0", purS: "#ECE5FC" };
+/* okno v obrázku */
+const WIN = (x, y, w, h, title, o = {}) => `${box(x, y, w, h, o.fill || "#fff", "#9AA6B8", 8)}<path d="M${x} ${y + 8} a8 8 0 0 1 8 -8 h${w - 16} a8 8 0 0 1 8 8 v14 h-${w} z" fill="${o.bar || "#E9EDF3"}"/>${T(x + 9, y + 15, title, { fs: o.tfs || 10.5, b: 1, c: C.mut })}${[0, 1, 2].map(i => `<circle cx="${x + w - 11 - i * 12}" cy="${y + 11}" r="3.6" fill="${["#E5534B", "#E0A800", "#2DA44E"][i]}"/>`).join("")}`;
+/* mobil v obrázku */
+const PHONE = (x, y, w, h, inner = "") => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${Math.min(w, h) * .16}" fill="#1B1B1F"/><rect x="${x + 5}" y="${y + 10}" width="${w - 10}" height="${h - 20}" rx="${Math.min(w, h) * .08}" fill="#F4F7FC"/>${inner}`;
+/* notebook v obrázku */
+const LAPTOP = (x, y, w, inner = "") => { const h = w * .62; return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#16213A"/><rect x="${x + 5}" y="${y + 5}" width="${w - 10}" height="${h - 10}" rx="3" fill="#EAF2FF"/>${inner}<path d="M${x - 10} ${y + h} h${w + 20} l-8 9 h${-w - 4} z" fill="#566381"/>`; };
+const SERVER = (x, y) => `<rect x="${x}" y="${y}" width="50" height="66" rx="6" fill="${C.ink}"/>${[0, 1, 2].map(i => `<rect x="${x + 6}" y="${y + 8 + i * 19}" width="38" height="13" rx="2" fill="#3A4E72"/><circle cx="${x + 37}" cy="${y + 14.5 + i * 19}" r="2.6" fill="#3CCB8E"/>`).join("")}`;
+const ENV = (x, y, s = 1, c = "#fff") => `<g transform="translate(${x} ${y}) scale(${s})"><rect x="-14" y="-10" width="28" height="20" rx="3" fill="${c}" stroke="#16213A" stroke-width="1.6"/><path d="M-14 -9 L0 2 L14 -9" fill="none" stroke="#16213A" stroke-width="1.6"/></g>`;
+
+/* psík Doručko – sprievodca */
+function doruko(x, y, s, mood) {
+  const face = mood === "wow"
+    ? `<circle cx="44" cy="40" r="4.4" fill="#fff" stroke="#16213A" stroke-width="1.4"/><circle cx="45" cy="40" r="2.5" fill="#16213A"/><circle cx="60" cy="40" r="4.4" fill="#fff" stroke="#16213A" stroke-width="1.4"/><circle cx="61" cy="40" r="2.5" fill="#16213A"/><ellipse cx="52" cy="57" rx="4" ry="4.6" fill="#C0392B"/>`
+    : `<circle cx="44" cy="40" r="3.4" fill="#16213A"/><circle cx="45" cy="39" r="1.1" fill="#fff"/><circle cx="60" cy="40" r="3.4" fill="#16213A"/><circle cx="61" cy="39" r="1.1" fill="#fff"/><path d="M46 54 Q52 60 58 54" fill="none" stroke="#16213A" stroke-width="2.2" stroke-linecap="round"/><path d="M50 57 Q52 64 55 58" fill="#F08080" stroke="#16213A" stroke-width="1.2"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})">
+    <ellipse cx="50" cy="94" rx="34" ry="4" fill="#000" opacity=".12"/>
+    <path d="M22 76 Q8 68 12 56" stroke="#B9824A" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <ellipse cx="50" cy="78" rx="26" ry="16" fill="#D9A066" stroke="#6B4423" stroke-width="2.2"/>
+    <ellipse cx="36" cy="91" rx="8" ry="5" fill="#E3B07A" stroke="#6B4423" stroke-width="2"/><ellipse cx="64" cy="91" rx="8" ry="5" fill="#E3B07A" stroke="#6B4423" stroke-width="2"/>
+    <path d="M32 66 L74 88" stroke="#6B4423" stroke-width="3"/>
+    <rect x="62" y="74" width="26" height="19" rx="4" fill="#2F5BEA" stroke="#16213A" stroke-width="2"/>${ENV(75, 83, .55)}
+    <ellipse cx="30" cy="38" rx="8" ry="15" fill="#8B5A2B" stroke="#6B4423" stroke-width="2" transform="rotate(18 30 38)"/>
+    <ellipse cx="74" cy="38" rx="8" ry="15" fill="#8B5A2B" stroke="#6B4423" stroke-width="2" transform="rotate(-18 74 38)"/>
+    <circle cx="52" cy="42" r="21" fill="#E3B07A" stroke="#6B4423" stroke-width="2.4"/>
+    <ellipse cx="52" cy="52" rx="11" ry="8" fill="#F6DDBF"/><ellipse cx="52" cy="47" rx="4.2" ry="3" fill="#16213A"/>
+    ${face}
+    <path d="M31 30 Q52 4 73 30 Z" fill="#2F5BEA" stroke="#16213A" stroke-width="2"/>
+    <rect x="29" y="27" width="46" height="7" rx="3.5" fill="#1F45C2" stroke="#16213A" stroke-width="1.6"/>
+    <circle cx="52" cy="19" r="5.2" fill="#F2C94C" stroke="#16213A" stroke-width="1.4"/>
+  </g>`;
+}
+const DOG = mood => SV(104, 100, doruko(0, 2, 1, mood), "Psík Doručko");
+const say = (html, mood) => `<div class="say">${DOG(mood)}<div class="bubble">${html}</div></div>`;
+/* kamarátka Ema (komiks) */
+const EMA = mood => SV(80, 80, `<path d="M14 80 Q40 58 66 80" fill="#E2558A"/>
+  <path d="M14 46 Q10 70 22 74 M66 46 Q70 70 58 74" stroke="#A0522D" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="40" cy="42" r="24" fill="#F6C9A0" stroke="#16213A" stroke-width="2.5"/>
+  <path d="M16 42 Q14 16 40 15 Q66 16 64 42 Q60 26 48 24 Q40 32 22 30 Q18 34 16 42z" fill="#A0522D" stroke="#16213A" stroke-width="2"/>
+  <circle cx="31" cy="45" r="3.4" fill="#16213A"/><circle cx="49" cy="45" r="3.4" fill="#16213A"/>
+  ${mood === "sad" ? `<path d="M26 37 L35 40 M54 37 L45 40" stroke="#16213A" stroke-width="2.2"/><path d="M32 59 Q40 53 48 59" fill="none" stroke="#C0392B" stroke-width="2.5"/>` : `<path d="M32 56 Q40 63 48 56" fill="none" stroke="#C0392B" stroke-width="2.5"/>`}`, "Ema");
+
+/* ===== ÚVODNÝ OBRÁZOK ===== */
+const HERO = SV(420, 300, `
+  <defs><linearGradient id="hs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFD9FF"/><stop offset="1" stop-color="#EAF3FF"/></linearGradient></defs>
+  <rect width="420" height="300" rx="18" fill="url(#hs)"/>
+  <rect x="0" y="230" width="420" height="70" fill="#C9A86A"/><rect x="0" y="230" width="420" height="8" fill="#B08D4F"/>
+  ${LAPTOP(150, 108, 170, `${box(160, 116, 40, 88, "#DCE6F5", null, 3)}${[0, 1, 2, 3].map(i => `<rect x="204" y="${120 + i * 20}" width="${104 - i * 12}" height="12" rx="3" fill="${i === 0 ? "#2F5BEA" : "#C9D1DF"}"/>`).join("")}`)}
+  ${PHONE(336, 148, 50, 86, `${box(344, 166, 34, 22, "#fff", "#C9D1DF", 4)}${T(361, 181, "✉️ 1", { a: "middle", fs: 9.5, b: 1 })}${[0, 1, 2].map(i => `<rect x="344" y="${194 + i * 9}" width="${34 - i * 6}" height="5" rx="2" fill="#C9D1DF"/>`).join("")}`)}
+  ${box(40, 56, 72, 70, "#fff", "#E3B04B", 8)}<rect x="40" y="56" width="72" height="18" rx="8" fill="#E2A23B"/>${T(76, 70, "PIATOK", { a: "middle", fs: 10, b: 1, c: "#fff" })}${T(76, 108, "16", { a: "middle", fs: 26, b: 1 })}
+  ${ENV(178, 64, 1.1)}${ENV(250, 40, .9, "#FFF3A6")}${ENV(330, 76, 1)}
+  <path d="M190 64 Q230 30 250 40 M262 42 Q300 50 316 72" fill="none" stroke="#2F5BEA" stroke-width="2" stroke-dasharray="5 5"/>
+  ${doruko(12, 140, 1.3, "wow")}
+  ${T(210, 26, "Doručko a 6 poštových misií", { a: "middle", fs: 15, b: 1, c: "#1F45C2" })}`, "Psík Doručko s notebookom a mobilom");
+
+/* ===== TEÓRIA: OBRÁZKY ===== */
+/* M1 */
+const FIG_WEB = fig(SV(440, 236, `
+  ${box(8, 8, 206, 220, C.inS, C.in, 12)}${T(111, 32, "🌐 webmail", { a: "middle", fs: 14, b: 1, c: C.in })}
+  ${WIN(22, 44, 178, 96, "Prehliadač")}<rect x="30" y="70" width="162" height="16" rx="8" fill="#F1F3F7"/>${T(40, 82, "🔒 posta.sk", { fs: 10.5 })}
+  ${[0, 1, 2].map(i => `<rect x="34" y="${96 + i * 13}" width="${150 - i * 30}" height="7" rx="3" fill="#C9D1DF"/>`).join("")}
+  ${T(111, 166, "stránka v prehliadači", { a: "middle", fs: 12, b: 1 })}${T(111, 186, "nič neinštaluješ", { a: "middle", fs: 11.5, c: C.ok })}${T(111, 204, "bez internetu nefunguje", { a: "middle", fs: 11.5, c: C.bad })}
+  ${box(226, 8, 206, 220, C.okS, C.ok, 12)}${T(329, 32, "📬 e‑mailový klient", { a: "middle", fs: 14, b: 1, c: C.ok })}
+  ${LAPTOP(244, 56, 92, `${EM(290, 92, "📬", 22)}`)}${PHONE(358, 48, 44, 82, EM(380, 96, "📬", 20))}
+  ${T(329, 166, "aplikácia v počítači či mobile", { a: "middle", fs: 12, b: 1 })}${T(329, 186, "viac účtov, oznámenia", { a: "middle", fs: 11.5, c: C.ok })}${T(329, 204, "treba ju nainštalovať", { a: "middle", fs: 11.5, c: C.bad })}`, "Webmail a e-mailový klient"),
+  "<b>Webmail</b> otvoríš v prehliadači. <b>Klient</b> je aplikácia, ktorú si nainštaluješ do počítača alebo mobilu.");
+const FIG_ZAK = fig(SV(440, 190, `
+  ${T(220, 22, "Klient si u servera vypýta poštu", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${SERVER(195, 44)}${T(220, 128, "poštový server", { a: "middle", fs: 11.5, b: 1 })}
+  ${LAPTOP(28, 52, 92, EM(74, 88, "📬", 20))}${T(74, 128, "klient v počítači", { a: "middle", fs: 11.5 })}
+  ${PHONE(360, 42, 44, 80, EM(382, 88, "📬", 18))}${T(382, 140, "klient v mobile", { a: "middle", fs: 11.5 })}
+  ${ARR(130, 70, 188, 70, C.acc)}${ARR(188, 92, 130, 92, C.ok)}${ARR(252, 70, 350, 70, C.acc)}${ARR(350, 92, 252, 92, C.ok)}
+  ${box(60, 150, 320, 30, C.bg, null, 8)}${T(220, 170, "„Mám novú poštu?“ → „Áno, tu sú 3 správy.“", { a: "middle", fs: 12, b: 1 })}`, "Klient a server"),
+  "Klient sa pravidelne pýta servera na nové správy a stiahne si ich do zariadenia.");
+/* M2 */
+const FIG_LAY = fig(SV(440, 230, `
+  ${WIN(10, 10, 420, 210, "📬 e‑mailový klient vo Windows")}
+  ${box(18, 40, 94, 26, C.acc, null, 6)}${T(65, 58, "✉ Nová pošta", { a: "middle", fs: 11, b: 1, c: "#fff" })}
+  ${box(118, 40, 304, 26, C.bg, null, 6)}${T(128, 58, "pás s nástrojmi: odpovedať, preposlať, odstrániť…", { fs: 10.5, c: C.mut })}
+  ${box(18, 72, 94, 140, "#EEF3FB", null, 6)}${box(118, 72, 130, 140, "#fff", C.line, 6)}${box(254, 72, 168, 140, "#F7FAFF", C.line, 6)}
+  ${[0, 1, 2, 3].map(i => `<rect x="26" y="${86 + i * 18}" width="${70 - (i % 2) * 14}" height="8" rx="3" fill="#B7C6E2"/>`).join("")}
+  ${[0, 1, 2, 3].map(i => `<rect x="126" y="${84 + i * 30}" width="112" height="22" rx="4" fill="${i === 0 ? C.accS : C.bg}"/>`).join("")}
+  ${[0, 1, 2, 3].map(i => `<rect x="264" y="${104 + i * 14}" width="${146 - i * 20}" height="7" rx="3" fill="#D6DCE6"/>`).join("")}${T(264, 92, "Výlet v sobotu", { fs: 11, b: 1 })}
+  ${T(65, 206, "priečinky", { a: "middle", fs: 10.5, b: 1, c: C.in })}${T(183, 206, "zoznam správ", { a: "middle", fs: 10.5, b: 1, c: C.in })}${T(338, 206, "čitáreň", { a: "middle", fs: 10.5, b: 1, c: C.in })}`, "Časti okna klienta"),
+  "Klient vo Windows má vedľa seba <b>priečinky</b>, <b>zoznam správ</b> a <b>čitáreň</b>, kde čítaš vybratú správu.");
+const FIG_VIAC = fig(SV(440, 200, `
+  ${T(220, 22, "Klient vie viac ako poštu", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[["✉️", "Pošta", "správy a priečinky"], ["📅", "Kalendár", "termíny a pozvánky"], ["👥", "Kontakty", "adresy kamarátov"], ["✅", "Úlohy", "čo treba urobiť"]].map(([e, a, b], i) => { const x = 14 + (i % 2) * 210, y = 36 + Math.floor(i / 2) * 80; return box(x, y, 202, 70, "#fff", C.acc, 12) + EM(x + 32, y + 44, e, 26) + T(x + 62, y + 30, a, { fs: 14, b: 1, c: C.acc }) + T(x + 62, y + 50, b, { fs: 11.5 }); }).join("")}`, "Funkcie klienta"),
+  "Outlook aj Thunderbird majú okrem pošty aj <b>kalendár</b>, <b>kontakty</b> a <b>úlohy</b>.");
+/* M3 */
+const FIG_MOB = fig(SV(440, 220, `
+  ${T(220, 22, "Počítač a mobil ukazujú poštu inak", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${box(12, 40, 200, 118, "#fff", C.line, 8)}${[[16, 56, "priečinky", C.bg], [76, 64, "zoznam", "#fff"], [144, 64, "správa", C.accS]].map(([x, w, t, f]) => `<rect x="${x}" y="44" width="${w - 4}" height="110" rx="4" fill="${f}" stroke="${C.line}"/>${T(x + w / 2 - 2, 104, t, { a: "middle", fs: 10.5, b: 1 })}`).join("")}
+  ${T(112, 180, "💻 všetko vedľa seba", { a: "middle", fs: 12, b: 1 })}
+  ${PHONE(262, 40, 62, 118, `${[0, 1, 2, 3, 4].map(i => `<rect x="272" y="${58 + i * 16}" width="42" height="10" rx="3" fill="${i === 1 ? C.acc : "#C9D1DF"}"/>`).join("")}`)}
+  ${ARR(330, 98, 358, 98, C.acc, 2)}${PHONE(364, 40, 62, 118, `<rect x="374" y="58" width="42" height="9" rx="3" fill="${C.acc}"/>${[0, 1, 2, 3].map(i => `<rect x="374" y="${74 + i * 10}" width="${42 - i * 7}" height="5" rx="2" fill="#C9D1DF"/>`).join("")}`)}
+  ${T(344, 180, "📱 jedno po druhom", { a: "middle", fs: 12, b: 1 })}
+  ${box(12, 192, 416, 22, C.accS, null, 11)}${T(220, 207, "mobil sa ovláda dotykom: klepnutie, potiahnutie prstom", { a: "middle", fs: 11.5 })}`, "Pošta v počítači a v mobile"),
+  "Na malej obrazovke mobilu sa časti pošty <b>striedajú</b>. Ovládaš ich <b>dotykom</b>.");
+const FIG_NOTIF = fig(SV(440, 210, `
+  ${T(220, 22, "Oznámenie o novej pošte", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${PHONE(150, 34, 140, 170, `${T(220, 68, "10:45", { a: "middle", fs: 22, b: 1 })}${T(220, 84, "sobota 7. novembra", { a: "middle", fs: 9.5, c: C.mut })}
+    ${box(162, 98, 116, 46, "#fff", C.line, 10)}${T(172, 114, "📨 Gmail · teraz", { fs: 9.5, c: C.mut })}${T(172, 128, "Teta Jana", { fs: 10.5, b: 1 })}${T(172, 140, "Prídeš v nedeľu na obed?", { fs: 9 })}
+    ${T(220, 178, "🔒", { a: "middle", fs: 16 })}`)}
+  ${ARR(120, 116, 156, 116, C.acc)}${T(14, 104, "správa prišla,", { fs: 12, b: 1 })}${T(14, 122, "aj keď je aplikácia", { fs: 12 })}${T(14, 140, "zatvorená", { fs: 12 })}
+  ${ARR(326, 186, 290, 170, C.ok)}${T(330, 176, "zámok chráni", { fs: 12, b: 1, c: C.ok })}${T(330, 194, "tvoju poštu", { fs: 12, c: C.ok })}`, "Oznámenie na mobile"),
+  "Mobilný klient ťa na novú poštu upozorní <b>oznámením</b>. Mobil chráň <b>zámkom obrazovky</b>.");
+/* M4 */
+const FIG_PROTO = fig(SV(440, 230, `
+  ${T(220, 22, "Kto čo robí", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${SERVER(195, 70)}${T(220, 156, "poštový server", { a: "middle", fs: 11.5, b: 1 })}
+  ${LAPTOP(16, 70, 90, EM(61, 104, "✍️", 18))}${T(61, 150, "odosielateľ", { a: "middle", fs: 11.5 })}
+  ${ARR(112, 100, 190, 100, C.amb, 3)}${box(118, 72, 66, 20, C.ambS, null, 10)}${T(151, 86, "SMTP", { a: "middle", fs: 12, b: 1, c: C.amb })}
+  ${PHONE(366, 40, 44, 76, EM(388, 84, "📨", 16))}${LAPTOP(350, 140, 76, EM(388, 170, "📨", 14))}
+  ${ARR(250, 86, 360, 70, C.ok, 3)}${ARR(250, 116, 346, 152, C.ok, 3)}${box(272, 98, 70, 20, C.okS, null, 10)}${T(307, 112, "IMAP", { a: "middle", fs: 12, b: 1, c: C.ok })}
+  ${box(16, 188, 408, 32, C.bg, null, 8)}${T(220, 209, "SMTP poštu odošle, IMAP alebo POP3 ju doručí do tvojich zariadení", { a: "middle", fs: 11.5, b: 1 })}`, "SMTP a IMAP"),
+  "<b>SMTP</b> poštu odosiela. Na čítanie slúži <b>IMAP</b> alebo <b>POP3</b>.");
+const FIG_SCHR = fig(SV(440, 230, `
+  ${box(8, 8, 206, 214, C.ambS, "#E0A800", 12)}${T(111, 32, "POP3 = poštová schránka", { a: "middle", fs: 12.5, b: 1, c: C.amb })}
+  <rect x="34" y="60" width="54" height="40" rx="6" fill="#C0392B"/><rect x="40" y="70" width="42" height="6" rx="3" fill="#16213A"/><rect x="58" y="100" width="6" height="40" fill="#566381"/>
+  ${ENV(132, 70, .9)}${ARR(96, 82, 150, 120, C.amb, 2.5)}<path d="M150 150 l24 -22 l24 22 v34 h-48z" fill="#fff" stroke="#16213A" stroke-width="2"/>${ENV(174, 166, .7)}
+  ${T(111, 202, "listy si vyberieš a odnesieš", { a: "middle", fs: 11.5 })}${T(111, 216, "domov, schránka ostane prázdna", { a: "middle", fs: 11.5 })}
+  ${box(226, 8, 206, 214, C.okS, C.ok, 12)}${T(329, 32, "IMAP = nástenka", { a: "middle", fs: 12.5, b: 1, c: C.ok })}
+  ${box(276, 48, 106, 74, "#E8C68E", "#8A5A00", 6)}${[0, 1, 2].map(i => `<rect x="${284 + i * 32}" y="58" width="26" height="30" rx="2" fill="#fff" stroke="#C9D1DF"/><circle cx="${297 + i * 32}" cy="60" r="3" fill="#C0392B"/>`).join("")}
+  ${PHONE(246, 132, 32, 54, EM(262, 166, "👀", 13))}${LAPTOP(356, 140, 60, EM(386, 162, "👀", 13))}${ARR(270, 128, 296, 116, C.ok, 2)}${ARR(384, 136, 360, 118, C.ok, 2)}
+  ${T(329, 202, "správy visia na serveri, pozrieš", { a: "middle", fs: 11.5 })}${T(329, 216, "sa na ne z ktoréhokoľvek zariadenia", { a: "middle", fs: 11.5 })}`, "POP3 a IMAP ako schránka a nástenka"),
+  "<b>POP3</b> poštu zo servera <b>stiahne</b>. Pri <b>IMAP</b> pošta <b>ostáva</b> na serveri a vidíš ju všade.");
+/* M5 */
+const FIG_AUTO = fig(SV(440, 200, `
+  ${T(220, 22, "Pridanie účtu do klienta", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[["1", "zadáš e‑mail", "a heslo"], ["2", "klient sám nájde", "nastavenie servera"], ["3", "vyberieš", "IMAP alebo POP3"]].map(([n, a, b], i) => { const x = 14 + i * 146; return box(x, 46, 120, 92, i === 2 ? C.okS : "#fff", i === 2 ? C.ok : C.acc, 12) + `<circle cx="${x + 60}" cy="46" r="12" fill="${i === 2 ? C.ok : C.acc}"/>` + T(x + 60, 51, n, { a: "middle", fs: 12, b: 1, c: "#fff" }) + T(x + 60, 88, a, { a: "middle", fs: 12, b: 1 }) + T(x + 60, 108, b, { a: "middle", fs: 11 }) + (i < 2 ? ARR(x + 124, 92, x + 142, 92, C.acc) : ""); }).join("")}
+  ${box(14, 154, 412, 34, C.ambS, null, 8)}${T(220, 176, "Ak sa nastavenie nenájde, údaje ti povie poskytovateľ alebo správca.", { a: "middle", fs: 11.5 })}`, "Pridanie účtu"),
+  "Väčšinou stačí <b>e‑mail a heslo</b>. Zvyšok klient nastaví sám.");
+const FIG_SPAM = fig(SV(440, 216, `
+  ${WIN(10, 10, 420, 196, "📥 Doručená pošta")}
+  ${box(18, 40, 110, 158, "#EEF3FB", null, 6)}${[["📥 Doručená", 1], ["📁 Škola", 0], ["📁 Krúžok", 0], ["🚫 Nevyžiadaná", 0], ["🗑️ Kôš", 0]].map(([t, on], i) => `${on ? `<rect x="22" y="${48 + i * 28}" width="102" height="22" rx="4" fill="${C.accS}"/>` : ""}${T(30, 63 + i * 28, t, { fs: 11, b: on })}`).join("")}
+  ${[["🚩", "Triedna učiteľka", "Prines podpísaný súhlas"], ["", "Robotický krúžok", "Fotky zo súťaže"], ["", "MegaShop", "LEN DNES −90 %!!!"]].map(([f, a, b], i) => `<rect x="136" y="${44 + i * 50}" width="286" height="44" rx="5" fill="${i === 2 ? C.badS : "#fff"}" stroke="${C.line}"/>${T(146, 62 + i * 50, (f ? f + " " : "") + a, { fs: 11.5, b: 1 })}${T(146, 78 + i * 50, b, { fs: 10.5, c: C.mut })}`).join("")}
+  ${box(300, 128, 116, 22, "#fff", C.bad, 11)}${T(358, 143, "🚫 Nevyžiadaná", { a: "middle", fs: 10.5, b: 1, c: C.bad })}`, "Priečinky, príznak a nevyžiadaná pošta"),
+  "Poriadok v pošte: <b>priečinky</b>, <b>príznak</b> 🚩 a tlačidlo <b>Nevyžiadaná</b> pre spam.");
+/* M6 */
+const FIG_POZV = fig(SV(440, 216, `
+  ${T(220, 22, "Pozvánka je e‑mail s tlačidlami", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${box(12, 38, 250, 166, "#fff", C.line, 10)}${T(26, 62, "📅 Výlet do ZOO", { fs: 13, b: 1 })}${T(26, 82, "nedeľa 10:00 – 15:00", { fs: 11.5 })}${T(26, 100, "od: pán učiteľ Novák", { fs: 11, c: C.mut })}
+  ${[["✔ Prijať", C.ok, C.okS], ["? Možno", C.amb, C.ambS], ["✖ Odmietnuť", C.bad, C.badS]].map(([t, c, f], i) => box(24 + i * 78, 118, 72, 26, f, c, 13) + T(60 + i * 78, 135, t, { a: "middle", fs: 10.5, b: 1, c })).join("")}
+  ${T(26, 172, "Organizátor sa dozvie,", { fs: 11, c: C.mut })}${T(26, 188, "ako si odpovedal.", { fs: 11, c: C.mut })}
+  ${ARR(268, 122, 300, 122, C.acc)}
+  ${box(304, 38, 124, 166, "#fff", C.acc, 10)}<rect x="304" y="38" width="124" height="24" rx="10" fill="${C.acc}"/>${T(366, 55, "môj kalendár", { a: "middle", fs: 11, b: 1, c: "#fff" })}
+  ${["so", "ne", "po"].map((d, i) => T(316, 86 + i * 40, d, { fs: 11, b: 1, c: C.mut })).join("")}${box(338, 114, 82, 30, C.okS, C.ok, 6)}${T(379, 133, "🦁 Výlet ZOO", { a: "middle", fs: 10.5, b: 1, c: C.ok })}`, "Pozvánka v klientovi"),
+  "Pozvánku <b>prijmeš</b>, dáš <b>možno</b> alebo <b>odmietneš</b>. Prijatá udalosť sa zapíše do kalendára.");
+const FIG_UDAL = fig(SV(440, 190, `
+  ${T(220, 22, "Z čoho sa skladá udalosť", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${box(60, 36, 320, 140, "#fff", C.line, 12)}
+  ${[["📝 Názov", "Kino s Emou"], ["📆 Deň", "štvrtok"], ["🕒 Čas", "17:00 – 19:00"], ["📍 Miesto", "Kino Orbis"], ["🔔 Pripomenúť", "30 minút vopred"]].map(([a, b], i) => T(78, 62 + i * 24, a, { fs: 12, b: 1 }) + T(220, 62 + i * 24, b, { fs: 12 })).join("")}`, "Udalosť v kalendári"),
+  "Udalosť má <b>názov</b>, <b>deň</b>, <b>čas</b>, miesto a môže ťa na ňu klient <b>upozorniť</b>.");
+
+/* ===== ÚLOHA 2: STÔL S POČÍTAČOM A MOBILOM ===== */
+const CL = [
+  { id: "tb", e: "🐦", n: "Thunderbird na ploche počítača", a: "r1", why: "<b>Thunderbird</b> je zadarmo. Vyrába ho Mozilla, ktorá robí aj prehliadač Firefox." },
+  { id: "ol", e: "📧", n: "Outlook na paneli úloh", a: "r2", why: "<b>Outlook</b> je od Microsoftu. Okrem pošty má aj kalendár a kontakty." },
+  { id: "gm", e: "📨", n: "Gmail v mobile", a: "r3", why: "<b>Gmail</b> je pošta, ktorá je predinštalovaná v mobiloch s Androidom." }
+];
+const CROLES = [{ id: "r1", t: "zadarmo, vyrába ho Mozilla (tá istá, ktorá robí Firefox)" }, { id: "r2", t: "od Microsoftu, okrem pošty má kalendár a kontakty" }, { id: "r3", t: "predinštalovaná pošta v mobiloch s Androidom" }, { id: "r4", t: "internetový prehliadač, v ňom otvoríš webmail" }];
+const DECOY = { word: "📝 Word slúži na písanie dokumentov, nie na e-maily.", paint: "🎨 Maľovanie je na kreslenie obrázkov.", web: "🌐 Prehliadač. V ňom otvoríš webmail, ale e-mailový klient to nie je.", bin: "🗑️ Kôš. Sem putujú zmazané súbory.", foto: "📁 Priečinok s fotkami z výletu.", calc: "🧮 Kalkulačka. Počítať vie, poštu nie. 😉", hud: "🎵 Prehrávač hudby.", cam: "📷 Kamera v mobile.", vid: "▶️ Aplikácia na videá.", map: "🗺️ Mapy ti ukážu cestu, nie poštu.", alarm: "⏰ Budík. Ráno ťa zobudí, poštu neprečíta.", hry: "🎮 Hry. Tie si nechaj až po domácej úlohe!", start: "🪟 Ponuka Štart. Odtiaľ spúšťaš programy." };
+function deskSVG() {
+  const f = S.found;
+  const DIC = (id, x, y, e, bg, l) => `<g data-hot="${id}">${box(x, y, 54, 54, bg, null, 12)}${EM(x + 27, y + 37, e, 26)}${T(x + 27, y + 72, l, { a: "middle", fs: 11.5, b: 1, c: "#fff" })}</g>`;
+  const TB = (id, x, w, e, l, bg) => `<g data-hot="${id}">${box(x, 312, w, 26, bg, null, 6)}${T(x + 8, 330, `${e} ${l}`, { fs: 11.5, b: 1, c: "#fff" })}</g>`;
+  const APP = (id, x, y, e, bg, l) => `<g data-hot="${id}">${box(x, y, 40, 40, bg, "#C9D1DF", 10)}${EM(x + 20, y + 28, e, 22)}${T(x + 20, y + 54, l, { a: "middle", fs: 10, b: 1 })}</g>`;
+  let s = `<rect width="800" height="470" fill="#EAF2FB"/><rect x="560" y="30" width="200" height="120" rx="8" fill="#CFE3F7" stroke="#A9C4E2" stroke-width="3"/><line x1="660" y1="30" x2="660" y2="150" stroke="#A9C4E2" stroke-width="3"/>
+  <rect x="0" y="384" width="800" height="86" fill="#C9A86A"/><rect x="0" y="384" width="800" height="8" fill="#B08D4F"/>
+  <rect x="40" y="26" width="480" height="326" rx="12" fill="#16213A"/><rect x="52" y="38" width="456" height="270" fill="#3A71A8"/><path d="M52 250 Q200 200 330 250 T508 230 V308 H52z" fill="#4A84BD"/>
+  <rect x="255" y="352" width="50" height="26" fill="#566381"/><rect x="215" y="374" width="130" height="10" rx="4" fill="#566381"/>
+  ${DIC("tb", 74, 52, "🐦", "#1E6FD9", "Thunderbird")}${DIC("word", 164, 52, "📝", "#2B579A", "Word")}${DIC("paint", 254, 52, "🎨", "#E08A1E", "Maľovanie")}
+  ${DIC("web", 74, 150, "🌐", "#3C8D5A", "Prehliadač")}${DIC("foto", 164, 150, "📁", "#C79A2E", "Fotky")}${DIC("bin", 432, 52, "🗑️", "#6B7A90", "Kôš")}
+  <rect x="52" y="308" width="456" height="34" fill="#1B2638"/>
+  <g data-hot="start">${box(58, 312, 30, 26, "#2A3A55", null, 6)}<rect x="66" y="318" width="6" height="6" fill="#6AA8F5"/><rect x="74" y="318" width="6" height="6" fill="#6AA8F5"/><rect x="66" y="326" width="6" height="6" fill="#6AA8F5"/><rect x="74" y="326" width="6" height="6" fill="#6AA8F5"/></g>
+  ${TB("ol", 96, 96, "📧", "Outlook", "#0F6CBD")}${TB("calc", 198, 112, "🧮", "Kalkulačka", "#2A3A55")}${TB("hud", 316, 86, "🎵", "Hudba", "#2A3A55")}${T(496, 330, "15:20", { a: "end", fs: 12, b: 1, c: "#fff" })}
+  ${PHONE(590, 170, 170, 290, `${T(606, 196, "10:45", { fs: 11, b: 1 })}${T(744, 196, "📶 🔋", { a: "end", fs: 10 })}`)}
+  ${APP("gm", 606, 214, "📨", "#fff", "Gmail")}${APP("cam", 655, 214, "📷", "#fff", "Kamera")}${APP("vid", 704, 214, "▶️", "#fff", "Videá")}
+  ${APP("map", 606, 290, "🗺️", "#fff", "Mapy")}${APP("alarm", 655, 290, "⏰", "#fff", "Budík")}${APP("hry", 704, 290, "🎮", "#fff", "Hry")}
+  ${EM(548, 380, "🪴", 40)}${EM(140, 430, "☕", 30)}`;
+  const HOT = { tb: [101, 79], ol: [144, 325], gm: [626, 234] };
+  CL.forEach(w => { if (f[w.id]) { const [x, y] = HOT[w.id]; s += `<g pointer-events="none"><circle cx="${x}" cy="${y}" r="32" fill="#12805A" opacity=".18"/><circle cx="${x}" cy="${y}" r="32" fill="none" stroke="#12805A" stroke-width="4" stroke-dasharray="7 5"/>${EM(x + 22, y - 16, "✅", 20)}</g>`; } });
+  return SV(800, 470, s, "Stôl s počítačom a mobilom");
+}
+
+/* ===== ÚLOHA 3: THUNDERBIRD ===== */
+const TBZ = [
+  { id: "napisat", n: "tlačidlo Nová správa", r: [52, 74, 156, 32], c: [130, 90] },
+  { id: "ucty", n: "účty a priečinky", r: [46, 112, 166, 300], c: [130, 260] },
+  { id: "zoznam", n: "zoznam správ", r: [216, 70, 252, 342], c: [342, 240] },
+  { id: "citaren", n: "čitáreň", r: [472, 70, 244, 342], c: [594, 240] },
+  { id: "hladaj", n: "vyhľadávanie", r: [200, 34, 330, 28], c: [365, 48] },
+  { id: "menu", n: "ponuka ≡", r: [676, 34, 38, 28], c: [695, 48] },
+  { id: "sp_mail", n: "ikona Pošta", r: [4, 80, 36, 40], c: [22, 100] },
+  { id: "sp_cal", n: "ikona Kalendár", r: [4, 128, 36, 40], c: [22, 148] },
+  { id: "sp_kont", n: "ikona Kontakty", r: [4, 176, 36, 40], c: [22, 196] },
+  { id: "sp_set", n: "ikona Nastavenia", r: [4, 368, 36, 40], c: [22, 388] }
+];
+const TBQ = [
+  { id: "1", q: "Kde začneš písať nový e‑mail?", a: "napisat", why: "Tlačidlo <b>Nová správa</b> je vľavo hore nad priečinkami." },
+  { id: "2", q: "Kde prepneš na školský účet jakub.mraz@skola.sk?", a: "ucty", why: "Každý účet má vľavo <b>svoje priečinky</b>. Klikneš na Doručenú poštu školského účtu." },
+  { id: "3", q: "Kde otvoríš kalendár?", a: "sp_cal", why: "Ikony v úzkom pruhu úplne vľavo prepínajú <b>Poštu, Kalendár a Kontakty</b>." }
+];
+function tbSVG() {
+  const done = S.t.tbfind, d = S.d.tbfind || { a: {} };
+  let s = `<rect x="1" y="1" width="718" height="418" rx="10" fill="#fff" stroke="#BCC6D3" stroke-width="2"/><path d="M1 11 a10 10 0 0 1 10 -10 h698 a10 10 0 0 1 10 10 v19 h-718z" fill="#1A1F2E"/>${T(14, 21, "🐦 Mozilla Thunderbird", { fs: 12, b: 1, c: "#fff" })}
+  <rect x="1" y="30" width="718" height="36" fill="#F0F2F5"/><rect x="204" y="37" width="322" height="22" rx="11" fill="#fff" stroke="#C9D1DF"/>${T(218, 52, "🔍 Hľadať…", { fs: 11.5, c: "#666" })}${T(695, 54, "≡", { a: "middle", fs: 20, b: 1, c: "#333" })}
+  <rect x="1" y="66" width="44" height="352" fill="#E4E7EC"/>${["✉️", "📅", "👥"].map((e, i) => EM(22, 107 + i * 48, e, 19)).join("")}${EM(22, 395, "⚙️", 18)}
+  <rect x="45" y="66" width="170" height="352" fill="#F7F9FC"/>${box(54, 76, 152, 28, "#0A84FF", null, 6)}${T(130, 95, "✏️ Nová správa", { a: "middle", fs: 12, b: 1, c: "#fff" })}
+  ${["▾ jakub.mraz@posta.sk", "📥 Doručená pošta (2)", "📤 Odoslaná pošta", "🗑️ Kôš", "▾ jakub.mraz@skola.sk", "📥 Doručená pošta (1)", "📤 Odoslaná pošta", "🗑️ Kôš"].map((t, i) => T(/^▾/.test(t) ? 54 : 66, 130 + i * 26, t, { fs: 10.5, b: /^▾/.test(t) || i === 1 })).join("")}
+  <line x1="215" y1="66" x2="215" y2="418" stroke="#D6DCE6"/><line x1="470" y1="66" x2="470" y2="418" stroke="#D6DCE6"/>
+  ${T(226, 88, "Doručená pošta", { fs: 12, b: 1, c: "#0A84FF" })}
+  ${[["Katka Nová", "Kino v piatok?", 1], ["Pán učiteľ Kováč", "Výsledky testu", 0], ["Knižnica", "Vráť knihu do 15. 11.", 0], ["Babka", "Recept na buchty", 0]].map((m, i) => `<rect x="220" y="${98 + i * 54}" width="246" height="50" rx="4" fill="${i === 1 ? "#E6EFFA" : "#fff"}"/>${T(230, 118 + i * 54, m[0], { fs: 12, b: m[2] })}${T(230, 136 + i * 54, m[1], { fs: 10.5, c: "#555", b: m[2] })}`).join("")}
+  ${T(484, 92, "Výsledky testu", { fs: 14, b: 1 })}${T(484, 110, "Pán učiteľ Kováč · 9:12", { fs: 10.5, c: "#666" })}${[0, 1, 2, 3].map(i => `<rect x="484" y="${126 + i * 16}" width="${210 - i * 26}" height="8" rx="3" fill="#E3E6EA"/>`).join("")}`;
+  s += TBZ.map(z => { let cl = "fz"; if (done) { if (TBQ.some(q => q.a === z.id)) cl += " ok"; else if (TBQ.some(q => d.a[q.id] === z.id)) cl += " bad"; }
+    return `<g class="${cl}" ${done ? "" : `data-fz="${z.id}"`}><rect x="${z.r[0]}" y="${z.r[1]}" width="${z.r[2]}" height="${z.r[3]}" rx="6"/></g>`; }).join("");
+  const pins = {}; TBQ.forEach((q, i) => { const z = d.a[q.id]; if (z) (pins[z] = pins[z] || []).push(i + 1); });
+  Object.keys(pins).forEach(zid => { const z = TBZ.find(x => x.id === zid); pins[zid].forEach((n, k) => { const x = z.c[0] + k * 26, y = z.c[1]; s += `<g pointer-events="none"><circle cx="${x}" cy="${y}" r="13" fill="#F2A516" stroke="#16213A" stroke-width="2"/>${T(x, y + 5, n, { a: "middle", fs: 13, b: 1 })}</g>`; }); });
+  return SV(720, 420, s, "Okno Thunderbirdu");
+}
+
+/* ===== ÚLOHA 5: MOBIL ===== */
+const GPHONE = SV(260, 360, `${PHONE(60, 4, 140, 352, `
+  ${T(76, 30, "10:45", { fs: 10, b: 1 })}${box(70, 40, 120, 26, "#EEF2F8", null, 13)}${T(84, 58, "☰", { fs: 14, b: 1 })}${T(102, 57, "Hľadať", { fs: 10, c: "#666" })}<circle cx="176" cy="53" r="10" fill="#0B7A75"/>${T(176, 57, "J", { a: "middle", fs: 10, b: 1, c: "#fff" })}
+  ${[["Katka", "Kino v piatok?"], ["Tréner", "Zápas v sobotu"], ["Babka", "Recept na buchty"], ["Knižnica", "Vráť knihu"]].map(([a, b], i) => `<circle cx="84" cy="${92 + i * 46}" r="11" fill="${["#E57373", "#64B5F6", "#81C784", "#FFB74D"][i]}"/>${T(100, 90 + i * 46, a, { fs: 10.5, b: 1 })}${T(100, 104 + i * 46, b, { fs: 9, c: "#555" })}`).join("")}
+  ${box(122, 286, 70, 30, "#C2E7FF", null, 11)}${T(157, 305, "✏️ Napísať", { a: "middle", fs: 10, b: 1, c: "#0B3A66" })}
+  <rect x="65" y="322" width="130" height="24" fill="#F3F6FC"/>${T(130, 338, "✉️ Pošta    📹 Meet", { a: "middle", fs: 9.5 })}`)}`, "Aplikácia Gmail v mobile");
+const GEST = [
+  { id: "g1", e: "🗑️", n: "Chceš otvoriť priečinok Kôš.", a: "o1", why: "Priečinky (aj Kôš) nájdeš v <b>menu ☰</b> vľavo hore." },
+  { id: "g2", e: "🏫", n: "Chceš prepnúť na školský účet.", a: "o2", why: "Účty prepneš klepnutím na <b>kruh s profilom</b> vpravo hore." },
+  { id: "g3", e: "📦", n: "Správu chceš rýchlo archivovať.", a: "o3", why: "Správu archivuješ, keď ju <b>potiahneš prstom do strany</b>." }
+];
+const GOPTS = [{ id: "o1", t: "klepnem na ☰ vľavo hore" }, { id: "o2", t: "klepnem na kruh s písmenom J vpravo hore" }, { id: "o3", t: "potiahnem správu prstom do strany" }, { id: "o4", t: "klepnem na ✏️ Napísať vpravo dole" }];
+
+/* ===== ÚLOHA 7: SITUÁCIE ===== */
+function scenSVG(srv, ph, pc) {
+  const L = (x, w, title, arr) => box(x, 10, w, 150, "#fff", "#C9D1DF", 10) + T(x + w / 2, 32, title, { a: "middle", fs: 12.5, b: 1 }) + (arr.length ? arr.map((m, i) => `<rect x="${x + 8}" y="${44 + i * 32}" width="${w - 16}" height="26" rx="5" fill="${m[0] ? "#F4F7FC" : "#E6EDFD"}"/>${T(x + 14, 62 + i * 32, (m[0] ? "📖 " : "✉️ ") + m[1], { fs: 11, b: !m[0] })}`).join("") : T(x + w / 2, 92, "(prázdne)", { a: "middle", fs: 12, c: "#999" }));
+  return SV(450, 170, L(4, 144, "🗄️ server", srv) + L(153, 144, "📱 mobil", ph) + L(302, 144, "💻 počítač", pc), "Pošta na serveri, v mobile a v počítači");
+}
+const MAILS_R = [[1, "Výlet do Tatier"], [0, "Krúžok v piatok"], [0, "Fotky z akcie"]];
+
+/* ===== KALENDÁR (misia 6) ===== */
+const DAYS = ["Po", "Ut", "St", "Št", "Pi", "So", "Ne"];
+const CAL0 = [{ d: 0, h: 14, t: "🎹 Klavír" }, { d: 2, h: 15, t: "🇬🇧 Angličtina" }, { d: 5, h: 13, t: "👵 U babky" }];
+const INVS = [
+  { id: "a", e: "🏑", t: "Tréning florbalu", d: 5, h: 9, from: "tréner Peter", a: "acc", why: "V sobotu o 9:00 máš voľno, preto pozvánku <b>prijmeš</b>. K babke ideš až o 13:00." },
+  { id: "b", e: "🎤", t: "Skúška speváckeho zboru", d: 2, h: 15, from: "pani učiteľka Malá", a: "dec", why: "V stredu o 15:00 už máš <b>angličtinu</b>, preto pozvánku <b>odmietneš</b>." }
+];
+const IOPTS = [["acc", "✔ Prijať"], ["may", "? Možno"], ["dec", "✖ Odmietnuť"]];
+function calHTML(extra) {
+  const ev = CAL0.map(e => ({ ...e, k: "" })).concat(extra || []);
+  return `<div class="cal">${DAYS.map((dn, i) => `<div class="cday"><div class="cdh">${dn}</div>${ev.filter(e => e.d === i).sort((a, b) => a.h - b.h).map(e => `<div class="cev ${e.k || ""}"><b>${e.h}:00</b> ${e.t}</div>`).join("")}</div>`).join("")}</div>`;
+}
+
+/* ===== ÚLOHY ===== */
+const TASKS = {
+  wsort: { id: "wsort", type: "sort", max: 2, per: 2, bins: [{ id: "w", t: "🌐 webmail (v prehliadači)", bg: C.inS, c: C.in }, { id: "k", t: "📬 e‑mailový klient (aplikácia)", bg: C.okS, c: C.ok }], items: [
+    { id: "1", t: "U babky si poštu pozriem v prehliadači na jej počítači.", a: "w" }, { id: "2", t: "Otvorím stránku outlook.com a prihlásim sa.", a: "w" },
+    { id: "3", t: "V jednej aplikácii mám školský aj súkromný účet.", a: "k" }, { id: "4", t: "Stiahnuté správy si čítam vo vlaku aj bez internetu.", a: "k" }] },
+  apps: { id: "apps", type: "apps", max: 3 },
+  tbfind: { id: "tbfind", type: "find", max: 3 },
+  tbq: { id: "tbq", type: "mc", qs: [
+    { id: "1", q: "V zozname správ v Thunderbirde je správa od Katky napísaná <b>tučným písmom</b>. Čo to znamená?", opts: ["Správu ešte nikto neotvoril, je neprečítaná.", "Správa je veľmi dôležitá a súrna.", "Správa má prílohu s fotkou.", "Správu poslala pani učiteľka."], a: 0, why: "Tučným písmom klient zvýrazní <b>neprečítané</b> správy. Po otvorení sa písmo zmení na obyčajné." },
+    { id: "2", q: "Brat Tomáš má školský aj súkromný e‑mail. Chce ich čítať v Thunderbirde v jednom okne. Čo mu poradíš?", opts: ["Pridá do Thunderbirdu oba účty. Každý bude mať vľavo svoje priečinky.", "Musí si nainštalovať dva rôzne e‑mailové klienty.", "Musí jeden účet zrušiť, lebo klient zvládne iba jeden.", "Thunderbird vie iba jeden účet, druhý musí čítať vo webmaile."], a: 0, why: "Do jedného klienta môžeš pridať <b>viac účtov</b> a poštu zo všetkých vidíš v jednom okne." }] },
+  gest: { id: "gest", type: "cards", max: 3 },
+  comic: { id: "comic", type: "comic", panels: [
+    { w: "e", mood: "sad", t: "Doručko, pomoc! 😟 Školskú poštu čítam v Outlooku na počítači. Teraz idem na týždeň k babke a počítač tam mať nebudem. Ako si poštu prečítam v mobile?" },
+    { w: "d", q: "1", opts: ["Nainštaluj si do mobilu e‑mailového klienta, napríklad Outlook, a pridaj doň ten istý školský účet.", "Prepošli si všetky správy na nový e‑mail, ktorý si vytvoríš v mobile.", "Mobil školskú poštu zobraziť nevie, musíš počkať, kým sa vrátiš domov.", "Odfoť si mobilom obrazovku počítača so všetkými správami."], a: 0, why: "E‑mailový klient je aj pre mobil. Keď doň pridáš <b>ten istý účet</b>, uvidíš rovnakú poštu ako v počítači." },
+    { w: "e", t: "Super, funguje to! 🎉 Klepla som na správu od tety a otvorila sa na celej obrazovke. Ale zoznam správ mi zmizol!" },
+    { w: "d", q: "2", opts: ["Nezmizol. Mobil ukazuje časti jednu po druhej. Klepni na šípku ← vľavo hore a vrátiš sa do zoznamu.", "Správu si omylom zmazala, celý zoznam nájdeš v Koši.", "Mobil zoznam schová vždy, keď má viac ako 10 správ.", "Musíš mobil reštartovať, aby sa zoznam znova načítal."], a: 0, why: "Na malej obrazovke mobilu sa zoznam a správa <b>striedajú</b>. Šípka <b>←</b> ťa vráti späť." },
+    { w: "d", t: "Vidíš, Ema? Mobil ukazuje poštu inak ako počítač, ale pošta je stále tá istá. 🐶📬" }] },
+  scen: { id: "scen", type: "mc", qs: [] },
+  path: { id: "path", type: "order", max: 2, items: [{ id: "a", t: "Ema napíše správu a klikne na Odoslať." }, { id: "b", t: "Klient odošle správu na poštový server." }, { id: "c", t: "Server uloží správu do Kubovej schránky." }, { id: "d", t: "Kubov mobil sa spojí so serverom a ukáže oznámenie." }] },
+  popq: { id: "popq", type: "mc", qs: [
+    { id: "1", q: "Kubo má v počítači nastavený <b>POP3</b>. Ráno si do počítača stiahol 5 nových správ. Čo uvidí, keď si potom otvorí poštu v mobile?", opts: ["Tých 5 správ v mobile neuvidí, lebo zo servera sa po stiahnutí zmazali.", "Uvidí všetkých 5 správ a budú označené ako prečítané.", "Uvidí tých 5 správ, ale bez príloh.", "Mobil si tých 5 správ stiahne z počítača cez Bluetooth."], a: 0, why: "POP3 poštu zo servera <b>stiahne</b> do jedného zariadenia a predvolene ju zo servera zmaže. Mobil už nemá odkiaľ ju zobrať." }] },
+  wiz: { id: "wiz", type: "wiz", max: 2 },
+  clean: { id: "clean", type: "sort", max: 2, per: 3, bins: [{ id: "s", t: "📁 presunúť do priečinka Škola", bg: C.okS, c: C.ok }, { id: "f", t: "🚩 príznak: treba ešte niečo urobiť", bg: C.ambS, c: C.amb }, { id: "x", t: "🚫 nevyžiadaná pošta (spam)", bg: C.badS, c: C.bad }], items: [
+    { id: "1", t: "Pani učiteľka Malá: Rozvrh písomiek na november", a: "s" }, { id: "2", t: "Pán učiteľ Kováč: Výsledky testu z matematiky", a: "s" },
+    { id: "3", t: "Triedna učiteľka: Do piatku prines podpísanú prihlášku", a: "f" }, { id: "4", t: "Mama: Zajtra po škole kúp chlieb", a: "f" },
+    { id: "5", t: "SuperZľavy: TOP PONUKA!!! Tenisky za 1 €", a: "x" }, { id: "6", t: "Výherná centrála: Vyhral si tablet! Pošli nám adresu", a: "x" }] },
+  spamq: { id: "spamq", type: "mc", qs: [
+    { id: "1", q: "Do Doručenej pošty ti stále chodia reklamy z obchodu, v ktorom si nikdy nič nekúpil. Čo urobíš?", opts: ["Označím ich ako nevyžiadanú poštu. Klient ďalšie také správy presunie do priečinka Nevyžiadaná.", "Odpíšem im, nech mi už nič neposielajú.", "Prepošlem ich kamarátom, aby si dali pozor.", "Zruším si celý e‑mailový účet a založím nový."], a: 0, why: "Tlačidlo <b>Nevyžiadaná</b> naučí klienta spoznať spam. Odpoveď by odosielateľovi iba prezradila, že tvoja adresa funguje." }] },
+  inv: { id: "inv", type: "inv", max: 2 },
+  event: { id: "event", type: "event", max: 2 },
+  calq: { id: "calq", type: "mc", qs: [
+    { id: "1", q: "Pozvánku na tréning si prijal v mobile. Večer otvoríš kalendár v Outlooku v počítači, kde máš ten istý účet. Čo uvidíš?", opts: ["Tréning je zapísaný aj tam, lebo kalendár sa synchronizuje cez tvoj účet.", "Nič. Pozvánku treba prijať ešte raz aj v počítači.", "Tréning tam bude, iba ak mobil a počítač spojíš káblom.", "Pozvánka sa v počítači znova objaví v Doručenej pošte."], a: 0, why: "Kalendár je uložený v tvojom <b>účte</b>. Rovnako ako pošta pri IMAP ho vidíš na všetkých zariadeniach." }] }
+};
+TASKS.scen.qs = [
+  { id: "1", q: `Jakub si v mobile prečítal správu o výlete. Potom zapol počítač. Takto to vyzerá. Ktorý protokol Jakub používa?${scenSVG(MAILS_R, MAILS_R, MAILS_R)}`, opts: ["IMAP", "POP3", "SMTP"], a: 0, why: "Pošta ostala na serveri a v mobile aj v počítači je rovnaká, aj s označením prečítané. To robí <b>IMAP</b>." },
+  { id: "2", q: `Lucia si do mobilu stiahla poštu. Potom zapla počítač. Takto to vyzerá. Ktorý protokol Lucia používa?${scenSVG([], MAILS_R.map(m => [0, m[1]]), [])}`, opts: ["IMAP", "POP3", "SMTP"], a: 1, why: "Správy sú iba v mobile, server aj počítač sú prázdne. Pošta sa stiahla a zo servera zmazala, to je <b>POP3</b>." }
+];
+const THEORY = {
+  m1: ["<b>Webmail</b> = pošta v prehliadači, nič sa neinštaluje, potrebuješ internet.", "<b>E‑mailový klient</b> = aplikácia v počítači alebo mobile, poštu si sťahuje zo servera.", "Klient zvládne <b>viac účtov</b> naraz, posiela <b>oznámenia</b> a stiahnuté správy ukáže aj bez internetu.", "Windows: <b>Outlook</b>, <b>Thunderbird</b>. Android: <b>Gmail</b>, <b>Outlook</b>, <b>Samsung E‑mail</b>."],
+  m2: ["Okno klienta: <b>priečinky</b>, <b>zoznam správ</b> a <b>čitáreň</b>.", "Hore je tlačidlo na <b>novú správu</b> a pás s nástrojmi.", "Najznámejšie klienty pre Windows: <b>Outlook</b> a <b>Thunderbird</b>.", "Klient má aj <b>kalendár</b>, <b>kontakty</b> a <b>úlohy</b>."],
+  m3: ["Mobilný klient sa ovláda <b>dotykom</b>.", "Na malej obrazovke sa časti pošty <b>striedajú</b>.", "Novú poštu ohlási <b>oznámenie</b>.", "Mobil chráň <b>zámkom obrazovky</b>."],
+  m4: ["<b>SMTP</b> = odosielanie pošty.", "<b>IMAP</b> = pošta ostáva na serveri, všetky zariadenia ukazujú to isté.", "<b>POP3</b> = pošta sa stiahne do jedného zariadenia a zo servera sa zmaže.", "<b>Protokol</b> = pravidlá, podľa ktorých sa klient „rozpráva“ so serverom."],
+  m5: ["Pri pridaní účtu väčšinou stačí <b>e‑mail a heslo</b>.", "<b>Priečinky</b> udržia poštu prehľadnú.", "<b>Príznak</b> 🚩 = treba ešte niečo urobiť.", "<b>Spam</b> = nevyžiadaná pošta, na reklamy a podvody neodpovedaj."],
+  m6: ["Klient má <b>kalendár</b> s udalosťami.", "<b>Pozvánka</b> = e‑mail s tlačidlami Prijať, Možno, Odmietnuť.", "Prijatá pozvánka sa <b>zapíše do kalendára</b>.", "Udalosť má názov, deň, čas a môže mať <b>pripomienku</b>."]
+};
+
+/* ===== ENGINE ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max || (T.qs ? T.qs.length : T.items ? T.items.length : T.panels ? T.panels.filter(p => p.q).length : 0); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return { v: 1, attempt: 1, early: false, confirmEarly: false, name: "", cls: CLASS_DEFAULT, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, sel: {}, found: {}, forder: [], fmsg: "", wz: { step: 1, meno: "", mail: "", pass: "", proto: "" }, res: {} }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
+const NSTOP = STEPS.length - 2;
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
+const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
+const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 2.3 E‑mailoví klienti</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
+function checkBar(T, ready, hint, label) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+}
+const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
+
+/* výber odpovede */
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, Q = T.qs;
+  const qs = T.keep ? Q : ord(T.id + ":q", Q.map(q => q.id)).map(id => Q.find(q => q.id === id));
+  return qs.map((q, qi) => { const o = T.keep ? q.opts.map((_, i) => i) : ord(T.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span class="qt">${q.q}</span></legend><div class="opts">${o.map(i => `<button class="${optCls(done, d[q.id], i, q.a)}" data-mc="${T.id}|${q.id}|${i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`).join("")}</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`; }).join("") + checkBar(T, Q.every(q => d[q.id] !== undefined), Q.length > 1 ? "Odpovedz na všetky otázky." : "Vyber odpoveď.");
+}
+/* triedenie do stĺpcov */
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, io = ord(T.id + ":i", T.items.map(x => x.id)), sel = S.sel[T.id];
+  const items = io.map(id => T.items.find(x => x.id === id));
+  const chip = x => { let c = "chip"; if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad"; return `<button class="${c}" data-sti="${T.id}|${x.id}" ${done ? "disabled" : ""}>${x.t}</button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? T.items.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na kartičku a potom na nadpis stĺpca, kam patrí. Kartičku presunieš, keď na ňu klikneš a potom na iný stĺpec. Za každé ${T.per} správne zatriedené kartičky získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(chip).join("") : `<span class="muted" style="font-size:14.5px">Všetky kartičky sú zatriedené.</span>`}</div>
+    <div class="bins${T.bins.length === 2 ? " two" : ""}">${T.bins.map(g => `<div class="bin"><button class="bh" style="background:${g.bg};color:${g.c}" data-stb="${T.id}|${g.id}" ${done ? "disabled" : ""}>${g.t}</button>${items.filter(x => d[x.id] === g.id).map(chip).join("")}</div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === T.items.length ? "good" : "miss"}">Správne zatriedených: <b>${nOk} z ${T.items.length}</b>. ${T.items.filter(x => d[x.id] !== x.a).map(x => `„${x.t}“ → <b>${T.bins.find(b => b.id === x.a).t}</b>`).join(" · ")}</p>` : ""}` +
+    checkBar(T, T.items.every(x => d[x.id]), "Zatrieď všetky kartičky.");
+}
+/* karty s výberom (úlohy 2 a 5) */
+function cardsHTML(tid, list, opts, key) {
+  const done = S.t[tid], d = S.d[tid] || {};
+  return list.map(w => { const ro = ord(tid + ":" + w.id, opts.map(r => r.id)), good = done && d[w.id] === w.a;
+    return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd"><span class="e">${w.e}</span><span>${w.n}</span></div><p class="ins" style="margin:0 0 6px">${key}</p>
+      <div class="chips">${ro.map(r => `<button class="${optCls(done, d[w.id], r, w.a)}" data-cr="${tid}|${w.id}|${r}" ${done ? "disabled" : ""}>${opts.find(x => x.id === r).t}</button>`).join("")}</div>${done ? `<p class="why ${good ? "good" : "miss"}">${w.why}</p>` : ""}</div>`; }).join("");
+}
+/* M1 – stôl */
+function appsHTML() {
+  const T = TASKS.apps, d = S.d.apps || {}, nf = CL.filter(w => S.found[w.id]).length, all = nf === CL.length;
+  const list = S.forder.map(id => CL.find(w => w.id === id));
+  return `<div class="room">${deskSVG()}</div><div class="msg" aria-live="polite">${S.fmsg || `Klikaj na ikony na počítači aj v mobile. Nájdené e‑mailové klienty: <b>${nf} z 3</b>.`}</div>
+    ${list.length ? `<div class="fgrid">${cardsHTML("apps", list, CROLES, "Čo platí o tejto aplikácii?")}</div>` : ""}` +
+    (all ? checkBar(T, CL.every(w => d[w.id]), "Pri každom klientovi vyber, čo o ňom platí.") : `<p class="hint muted" style="margin-top:12px">Keď nájdeš všetky 3 e‑mailové klienty, pri každom vyberieš, čo o ňom platí.</p>`);
+}
+/* M2 – Thunderbird */
+function findHTML() {
+  const T = TASKS.tbfind, done = S.t.tbfind, d = S.d.tbfind || { act: "1", a: {} };
+  return `<p class="ins">Klikni na otázku a potom na miesto v okne Thunderbirdu. Na mieste sa objaví žltý špendlík s číslom otázky. Odpoveď zmeníš, keď klikneš na iné miesto.</p>
+    <div class="fq">${TBQ.map((q, i) => { const z = d.a[q.id], good = done && z === q.a; let c = "fqb"; if (!done && d.act === q.id) c += " on"; if (done) c += good ? " ok" : " bad";
+      return `<button class="${c}" data-fq="${q.id}" ${done ? "disabled" : ""}><span class="qn">${i + 1}</span><span>${q.q}<small>${z ? (done ? (good ? "✅ správne" : "❌ " + q.why) : "📌 označené") : "zatiaľ neoznačené"}</small></span></button>`; }).join("")}</div>
+    <div class="tbw">${tbSVG()}</div>` + checkBar(T, TBQ.every(q => d.a[q.id]), "Pri všetkých otázkach označ miesto v okne.");
+}
+/* M3 – mobil */
+function gestHTML() {
+  const T = TASKS.gest, d = S.d.gest || {};
+  return `<div class="gwrap"><div class="gph">${GPHONE}</div><div class="fgrid" style="margin-top:0">${cardsHTML("gest", GEST, GOPTS, "Čo urobíš?")}</div></div>` + checkBar(T, GEST.every(w => d[w.id]), "Pri každej situácii vyber, čo urobíš.");
+}
+/* komiks */
+function comicHTML() {
+  const T = TASKS.comic, done = S.t.comic, d = S.d.comic || {};
+  const who = { e: ["Ema", EMA], d: ["Doručko", DOG] };
+  return `<div class="comic">${T.panels.map(p => { const [nm, pic] = who[p.w];
+    if (!p.q) return `<div class="panel ${p.w === "d" ? "c" : ""}">${pic(p.mood || (p.w === "d" ? "wow" : ""))}<div class="bub"><div class="nm">${nm}</div>${p.t}</div></div>`;
+    const o = ord("comic:" + p.q, p.opts.map((_, i) => i));
+    return `<div class="panel choice">${pic("")}<div class="bub"><div class="nm">${nm} – vyber, čo odpovie</div><div class="opts">${o.map(i => `<button class="${optCls(done, d[p.q], i, p.a)}" data-cm="${p.q}|${i}" ${done ? "disabled" : ""}>„${p.opts[i]}“</button>`).join("")}</div>${done ? `<p class="why ${d[p.q] === p.a ? "good" : "miss"}">${p.why}</p>` : ""}</div></div>`; }).join("")}</div>` +
+    checkBar(T, T.panels.filter(p => p.q).every(p => d[p.q] !== undefined), "Vyber obe odpovede Doručka.");
+}
+/* M4 – poradie */
+function orderHTML() {
+  const T = TASKS.path, done = S.t.path, seq = S.d.path || [], ids = ord("path", T.items.map(x => x.id)), by = Object.fromEntries(T.items.map(x => [x.id, x])), pool = ids.filter(id => !seq.includes(id));
+  let h = `<p class="ins">Ema posiela Kubovi správu. Klikaj na kroky v poradí, v akom sa stanú. Krok vrátiš späť, keď naň klikneš hore. Za každé 2 kroky na správnom mieste získaš 1 ⭐.</p>
+    <ol class="seq">${T.items.map((_, i) => { const id = seq[i]; if (!id) return `<li class="slot2"><span class="n">${i + 1}</span><span class="ph2">${i === seq.length ? "sem príde ďalší krok" : "…"}</span></li>`;
+      let c = "slot2"; if (done) c += id === T.items[i].id ? " ok" : " bad"; return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="path|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`; }).join("")}</ol>`;
+  if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chip" data-place="path|${id}">${by[id].t}</button>`).join("") : `<span class="muted" style="font-size:14.5px">Všetky kroky sú poukladané.</span>`}</div>`;
+  if (done && S.t.path.score < T.max) h += `<p class="why miss">Správne poradie: ${T.items.map(x => x.t).join(" → ")}</p>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky 4 kroky.");
+}
+/* M5 – pridanie účtu */
+const WMAIL = "jakub.mraz@skola.sk";
+function wizHTML() {
+  const T = TASKS.wiz, done = S.t.wiz, W = S.wz, dis = done ? "disabled" : "";
+  let body;
+  if (W.step === 1) body = `<label for="wzm">Tvoje meno</label><input id="wzm" data-wz="meno" value="${esc(W.meno)}" ${dis} autocomplete="off" placeholder="napr. Jakub Mráz">
+    <label for="wze">E‑mailová adresa</label><input id="wze" data-wz="mail" value="${esc(W.mail)}" ${dis} autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="meno@domena.sk">
+    <label for="wzh">Heslo</label><input id="wzh" type="password" data-wz="pass" value="${esc(W.pass)}" ${dis} autocomplete="off">
+    <div class="row" style="justify-content:flex-end"><button class="btn" data-wza="next" ${W.mail.trim() && W.pass ? "" : "disabled"} ${dis}>Pokračovať ▶</button></div>`;
+  else body = `<div class="wfound">🔍 Hľadám nastavenie servera…<br><b>✅ Nastavenie pre skola.sk som našiel.</b></div>
+    <p style="margin:10px 0 6px;font-size:14.5px"><b>Ako chceš čítať poštu?</b></p>
+    <div class="wpro">${["IMAP", "POP3"].map(p => `<button class="opt ${W.proto === p ? "sel" : ""} ${done ? (p === "IMAP" ? "ok" : W.proto === p ? "bad" : "") : ""}" data-wza="p:${p}" ${dis}>${p}</button>`).join("")}</div>
+    <div class="row" style="justify-content:space-between"><button class="ghost" data-wza="back" ${dis}>◀ Späť</button><span class="muted" style="font-size:13.5px">${esc(W.mail)}</span></div>`;
+  return `<div class="wizw"><div class="card2">📋 <b>Kubo</b> chce čítať školskú poštu <b>v mobile aj v počítači</b> v škole. Pomôž mu pridať účet do Thunderbirdu.<br><br>Jeho školská adresa: <b>${WMAIL}</b><br>Heslo pozná iba Kubo. V simulátore napíš ľubovoľné, nekontroluje sa.</div>
+    <div class="reg"><h4>🐦 Thunderbird – nový e‑mailový účet</h4><p class="muted" style="margin:0;font-size:13px">Krok ${W.step} z 2</p>${body}</div></div>
+    ${done ? `<div class="fb ${done.score === done.max ? "ok" : "bad"}">${S.res.wiz || ""}</div>` : ""}` + checkBar(T, W.step === 2 && !!W.proto, "Vyplň údaje, klikni na Pokračovať a vyber spôsob čítania pošty.", "📤 Pridať účet");
+}
+function gradeWiz() {
+  const W = S.wz, c1 = W.mail.trim().toLowerCase() === WMAIL, c2 = W.proto === "IMAP";
+  S.res.wiz = `<ul>${[[c1, c1 ? `e‑mailová adresa <b>${WMAIL}</b> je správna` : `adresa ${W.mail.trim() ? `<b>${esc(W.mail.trim())}</b>` : "(nevyplnená)"} nie je Kubova, správne je <b>${WMAIL}</b>`], [c2, c2 ? "IMAP je správna voľba: Kubo uvidí poštu v mobile aj v počítači" : "správne je <b>IMAP</b>, lebo Kubo chce poštu v mobile aj v počítači. POP3 by ju stiahol iba do jedného zariadenia"]].map(([o, t]) => `<li>${o ? "✅" : "❌"} ${t}</li>`).join("")}</ul>`;
+  return (c1 ? 1 : 0) + (c2 ? 1 : 0);
+}
+/* M6 – pozvánky */
+function invHTML() {
+  const T = TASKS.inv, done = S.t.inv, d = S.d.inv || {};
+  const extra = INVS.filter(v => d[v.id] === "acc" || d[v.id] === "may").map(v => ({ d: v.d, h: v.h, t: `${v.e} ${v.t}`, k: d[v.id] === "acc" ? "new" : "maybe" }));
+  return `<p class="ins">Prišli ti dve pozvánky. Pri každej sa pozri do svojho kalendára. Ak máš v tom čase voľno, pozvánku prijmi. Ak už máš v tom čase niečo iné, odmietni ju.</p>
+    <div class="invs">${INVS.map(v => { const good = done && d[v.id] === v.a;
+      return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd"><span class="e">📅</span><span>Pozvánka: ${v.e} ${v.t}</span></div><p style="margin:0 0 8px;font-size:15px">🕒 <b>${["pondelok", "utorok", "streda", "štvrtok", "piatok", "sobota", "nedeľa"][v.d]} ${v.h}:00</b><br><span class="muted">od: ${v.from}</span></p>
+        <div class="chips">${IOPTS.map(([k, l]) => `<button class="opt ${d[v.id] === k ? "sel" : ""} ${done ? (k === v.a ? "ok" : d[v.id] === k ? "bad" : "") : ""}" data-iv="${v.id}|${k}" ${done ? "disabled" : ""}>${l}</button>`).join("")}</div>${done ? `<p class="why ${good ? "good" : "miss"}">${v.why}</p>` : ""}</div>`; }).join("")}</div>
+    <p class="ins" style="margin:14px 0 6px"><b>📆 Môj kalendár na budúci týždeň</b> (zelenou sa zapisujú prijaté pozvánky)</p>${calHTML(extra)}` +
+    checkBar(T, INVS.every(v => d[v.id]), "Pri oboch pozvánkach sa rozhodni.");
+}
+/* M6 – nová udalosť */
+function eventHTML() {
+  const T = TASKS.event, done = S.t.event, d = S.d.event || {}, dis = done ? "disabled" : "";
+  const extra = d.d !== undefined && d.d !== "" && d.h ? [{ d: +d.d, h: +d.h, t: "🎂 " + esc(d.n || "Emina oslava"), k: "new" }] : [];
+  const okD = +d.d === 4, okH = +d.h === 16;
+  return `<div class="mailcard"><div class="mh">✉️ <b>Ema</b> · Pozvánka na oslavu</div><p style="margin:8px 0 0">Ahoj! 🎉 Pozývam ťa na moju narodeninovú oslavu. Bude v <b>piatok o 16:00</b> u nás doma. Teším sa! Ema 🎂</p></div>
+    <p class="ins" style="margin:12px 0 6px">Ema poslala obyčajný e‑mail, nie pozvánku z kalendára. Zapíš si oslavu do kalendára sám. Hodnotí sa deň a čas.</p>
+    <div class="reg evf"><h4>➕ Nová udalosť</h4>
+      <label for="evn">Názov</label><input id="evn" data-ev="n" value="${esc(d.n || "")}" placeholder="napr. Emina oslava" ${dis} autocomplete="off">
+      <div class="row2"><div><label for="evd">Deň</label><select id="evd" data-ev="d" ${dis}><option value="">— vyber —</option>${DAYS.map((x, i) => `<option value="${i}" ${String(d.d) === String(i) ? "selected" : ""}>${["pondelok", "utorok", "streda", "štvrtok", "piatok", "sobota", "nedeľa"][i]}</option>`).join("")}</select></div>
+      <div><label for="evh">Čas</label><select id="evh" data-ev="h" ${dis}><option value="">— vyber —</option>${[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map(h => `<option value="${h}" ${String(d.h) === String(h) ? "selected" : ""}>${h}:00</option>`).join("")}</select></div></div></div>
+    ${done ? `<div class="fb ${done.score === done.max ? "ok" : "bad"}"><ul><li>${okD ? "✅ deň: piatok" : "❌ deň: oslava je v <b>piatok</b>"}</li><li>${okH ? "✅ čas: 16:00" : "❌ čas: oslava začína o <b>16:00</b>"}</li></ul></div>` : ""}
+    <p class="ins" style="margin:14px 0 6px"><b>📆 Môj kalendár</b></p>${calHTML(extra)}` + checkBar(T, d.d !== undefined && d.d !== "" && !!d.h, "Vyber deň aj čas.", "💾 Uložiť udalosť");
+}
+function memo() { const L = THEORY[STEPS[S.cur].id]; return L ? `<section class="memo"><h3>📌 Zapamätaj si</h3><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "🏆 Zobraziť výsledok" : "Ďalšia misia: " + n.title + " ▶"}</button></div>` : ""); }
+
+const VIEWS = {
+  start() {
+    return `<div class="hero"><div><p class="kicker">Informatika · Prima · domáca úloha k hodine 2.3</p><h1>Domáca úloha: E‑mailoví klienti</h1>
+      <p style="font-size:18.5px">Haf, ahoj! Som <b>Doručko</b>, psík poštár. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: nájdeš e‑mailové klienty na stole, preskúmaš Thunderbird aj poštu v mobile, zistíš, ako sa správy dostanú všade, pridáš účet, upraceš schránku a naplánuješ si týždeň v kalendári. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
+      <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
+      <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
+      <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Pri známke 1 alebo 2 je domáca úloha hotová, pri známke 3, 4 alebo 5 máš ešte <b>jednu opravu</b>.</div></div>`;
+  },
+  m1() {
+    return banner(1, "Poštu môžeš čítať v prehliadači alebo v aplikácii. Zisti, aký je v tom rozdiel.") +
+    say(`Haf! Som psík <b>Doručko</b> 🐶 a pošta je moja práca. Poštu si môžeš pozrieť na stránke v prehliadači, ale aj v špeciálnej aplikácii, <b>e‑mailovom klientovi</b>. Poďme zistiť, čím sa líšia!`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Webmail</b> otvoríš v internetovom prehliadači, napríklad na stránke outlook.com alebo gmail.com. Nič neinštaluješ a funguje na akomkoľvek počítači, ale potrebuješ internet.</p>
+      <p><b>E‑mailový klient</b> je <b>aplikácia</b> v počítači alebo mobile. Poštu si sťahuje zo servera, takže stiahnuté správy prečítaš aj bez internetu. Zvládne <b>viac účtov</b> naraz a na novú poštu ťa upozorní <b>oznámením</b>.</p>
+      <table class="rtab"><thead><tr><th>Systém</th><th>E‑mailové klienty</th></tr></thead><tbody>
+        <tr><td><b>Windows</b></td><td><b>Outlook</b> od Microsoftu (má aj kalendár a kontakty), <b>Thunderbird</b> od Mozilly (zadarmo)</td></tr>
+        <tr><td><b>Android</b></td><td><b>Gmail</b> (predinštalovaný), <b>Outlook</b>, <b>Samsung E‑mail</b></td></tr></tbody></table>
+    </div><div class="tfigs">${FIG_WEB}${FIG_ZAK}</div></div>
+    ${VEDEL("Slovo <b>klient</b> znamená zákazník. E‑mailový klient sa správa ako zákazník v obchode: od servera si „objedná“ nové správy a server mu ich vydá.")}
+    ${H3(1, "🗂️", "webmail, alebo klient?", "wsort")}<div class="task">${sortHTML(TASKS.wsort)}</div>
+    ${H3(2, "🔎", "nájdi e‑mailové klienty na stole", "apps")}<div class="task">${appsHTML()}</div>` + nextBar();
+  },
+  m2() {
+    return banner(2, "Preskúmaj okno Thunderbirdu a nájdi v ňom dôležité miesta.") +
+    say(`V škole ste skúmali Outlook. Dnes sa pozrieme na <b>Thunderbird</b> 🐦. Vyzerá trochu inak, ale má tie isté časti. Kto pozná jeden klient, ľahko sa vyzná aj v ďalšom!`) +
+    `<div class="theory tsplit"><div>
+      <p>E‑mailové klienty vo Windows, napríklad <b>Outlook</b> a <b>Thunderbird</b>, majú podobné okno:</p>
+      <table class="rtab"><thead><tr><th>Časť okna</th><th>Na čo slúži</th></tr></thead><tbody>
+        <tr><td><b>účty a priečinky</b></td><td>Doručená pošta, Odoslaná pošta, Kôš… pri každom účte zvlášť</td></tr>
+        <tr><td><b>zoznam správ</b></td><td>správy vo vybranom priečinku</td></tr>
+        <tr><td><b>čitáreň</b></td><td>obsah správy, na ktorú si klikol</td></tr>
+        <tr><td><b>tlačidlo na novú správu</b></td><td>otvorí okno na písanie e‑mailu</td></tr></tbody></table>
+      <p>Klient vie viac ako poštu: má aj <b>kalendár</b>, <b>kontakty</b> a <b>úlohy</b>. Medzi nimi sa prepínaš ikonami.</p>
+    </div><div class="tfigs">${FIG_LAY}${FIG_VIAC}</div></div>
+    ${VEDEL("Thunderbird znamená po anglicky <b>hromový vták</b>. Je to bájny vták z povestí severoamerických indiánov. Preto má Thunderbird v logu vtáka, ktorý obtáča obálku.")}
+    ${H3(3, "🐦", "nájdi v okne Thunderbirdu", "tbfind")}<div class="task">${findHTML()}</div>
+    ${H3(4, "💬", "otázky o klientovi", "tbq")}<div class="task">${mcHTML(TASKS.tbq)}</div>` + nextBar();
+  },
+  m3() {
+    return banner(3, "V mobile vyzerá pošta inak ako v počítači. Nauč sa ju ovládať prstom.") +
+    say(`Poštu nosím aj v mobile! 📱 V ňom sa všetko ovláda <b>dotykom</b>. Najprv mi ukáž, ako sa v aplikácii Gmail vyznáš, a potom pomôž mojej kamarátke <b>Eme</b>.`) +
+    `<div class="theory tsplit"><div>
+      <p>V mobiloch s Androidom je predinštalovaná aplikácia <b>Gmail</b>. Môžeš si nainštalovať aj iného klienta, napríklad <b>Outlook</b>.</p>
+      <p>Mobil má malú obrazovku, preto sa časti pošty <b>striedajú</b>. Nevidíš priečinky, zoznam a správu naraz ako v počítači.</p>
+      <p>Mobil ovládaš <b>klepnutím</b> a <b>potiahnutím</b> prsta. Aplikácia ťa na novú poštu upozorní <b>oznámením</b>, aj keď je zatvorená. Pošta v mobile je stále pri tebe, preto mobil chráň <b>zámkom obrazovky</b>.</p>
+    </div><div class="tfigs">${FIG_MOB}${FIG_NOTIF}</div></div>
+    ${VEDEL("Prvý mobil s Androidom sa začal predávať v roku <b>2008</b>. Mal vysúvaciu klávesnicu a aplikáciu Gmail v ňom našiel každý majiteľ už od prvého dňa.")}
+    ${H3(5, "👆", "ovládaj poštu v mobile", "gest")}<div class="task">${gestHTML()}</div>
+    ${H3(6, "💬", "komiks: Ema ide k babke", "comic")}<div class="task">${comicHTML()}</div>` + nextBar();
+  },
+  m4() {
+    return banner(4, "Ako sa správa dostane z jedného mobilu do druhého? Spoznaj tri skratky: SMTP, IMAP a POP3.") +
+    say(`Klient a server sa rozprávajú podľa presných pravidiel. Hovoríme im <b>protokoly</b>. 🔄 Pozri sa, ako vyzerá pošta u dvoch spolužiakov, a uhádni, aký protokol používajú.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p><b>Protokol</b> sú pravidlá, podľa ktorých sa klient „rozpráva“ so serverom.</p>
+      <table class="rtab"><thead><tr><th>Protokol</th><th>Čo robí</th></tr></thead><tbody>
+        <tr><td><b>SMTP</b></td><td><b>odosiela</b> poštu na server</td></tr>
+        <tr><td><b>IMAP</b></td><td>pošta <b>ostáva na serveri</b>. Mobil, počítač aj tablet ukazujú to isté a aj označenie „prečítané“ sa prenesie všade.</td></tr>
+        <tr><td><b>POP3</b></td><td>poštu <b>stiahne</b> do jedného zariadenia a zo servera ju predvolene <b>zmaže</b>.</td></tr></tbody></table>
+      <p>Ktorý protokol klient použije na čítanie pošty, si vyberieš pri pridaní účtu.</p>
+    </div><div class="tfigs">${FIG_PROTO}${FIG_SCHR}</div></div>
+    ${VEDEL("Protokol <b>POP</b> vznikol v roku 1984 a <b>IMAP</b> v roku 1986. Sú teda starší ako tvoji rodičia a pošta v nich funguje dodnes!")}
+    ${H3(7, "🕵️", "ktorý protokol používajú?", "scen")}<div class="task">${mcHTML(TASKS.scen)}</div>
+    ${H3(8, "📨", "cesta správy od Emy ku Kubovi", "path")}<div class="task">${orderHTML()}</div>
+    ${H3(9, "❓", "čo uvidí Kubo v mobile?", "popq")}<div class="task">${mcHTML(TASKS.popq)}</div>` + nextBar();
+  },
+  m5() {
+    return banner(5, "Pridaj kamarátovi účet do klienta a potom uprac preplnenú schránku.") +
+    say(`Môj kamarát <b>Kubo</b> má nový školský účet a v Doručenej pošte poriadny neporiadok. 🧹 Pomôž mu najprv účet pridať a potom poštu roztriediť.`) +
+    `<div class="theory tsplit"><div>
+      <p>Keď pridávaš účet do klienta, väčšinou stačí zadať <b>e‑mailovú adresu</b> a <b>heslo</b>. Klient si nastavenie servera nájde sám. Potom si vyberieš, či chceš poštu čítať cez <b>IMAP</b> alebo <b>POP3</b>.</p>
+      <p>Aby bola schránka prehľadná, pri každej správe sa rozhodni, čo s ňou urobíš:</p>
+      <table class="rtab"><thead><tr><th>Možnosť</th><th>Kedy ju použiješ</th></tr></thead><tbody>
+        <tr><td><b>📁 priečinok</b></td><td>správu si chceš nechať, napríklad v priečinku Škola</td></tr>
+        <tr><td><b>🚩 príznak</b></td><td>kvôli správe musíš ešte niečo urobiť</td></tr>
+        <tr><td><b>🚫 nevyžiadaná</b></td><td><b>spam</b>: otravné reklamy a podvody</td></tr></tbody></table>
+    </div><div class="tfigs">${FIG_AUTO}${FIG_SPAM}</div></div>
+    ${VEDEL("Slovo <b>spam</b> pochádza zo scénky britských komikov Monty Python. V reštaurácii v nej majú všetky jedlá Spam, mäsovú konzervu, a hostia sa ho nevedia zbaviť. Presne tak otravný je aj nevyžiadaný e‑mail.")}
+    ${H3(10, "➕", "pridaj Kubovi účet do Thunderbirdu", "wiz")}<div class="task">${wizHTML()}</div>
+    ${H3(11, "🧹", "uprac Kubovu schránku", "clean")}<div class="task">${sortHTML(TASKS.clean)}</div>
+    ${H3(12, "🚫", "otravné reklamy", "spamq")}<div class="task">${mcHTML(TASKS.spamq)}</div>` + nextBar();
+  },
+  m6() {
+    return banner(6, "E‑mailový klient vie strážiť aj tvoj čas. Naplánuj si týždeň v kalendári.") +
+    say(`Posledná misia! 📅 Klient nie je iba na poštu. Má aj <b>kalendár</b>, do ktorého ti prichádzajú <b>pozvánky</b>. Pozri sa na svoj týždeň a rozhodni, kam pôjdeš.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>V Outlooku, Thunderbirde aj v Gmaile nájdeš <b>kalendár</b>. Zapisuješ si do neho <b>udalosti</b>: tréningy, krúžky, oslavy alebo písomky.</p>
+      <p><b>Pozvánka</b> je špeciálny e‑mail s tlačidlami <b>Prijať</b>, <b>Možno</b> a <b>Odmietnuť</b>. Keď pozvánku prijmeš, udalosť sa sama <b>zapíše do kalendára</b> a organizátor dostane tvoju odpoveď.</p>
+      <p>Ak ťa niekto pozve obyčajným e‑mailom, udalosť si do kalendára zapíšeš sám. Vyplníš <b>názov</b>, <b>deň</b> a <b>čas</b> a môžeš si nastaviť aj <b>pripomienku</b>.</p>
+    </div><div class="tfigs">${FIG_POZV}${FIG_UDAL}</div></div>
+    ${VEDEL("Pozvánka do kalendára sa posiela ako malý súbor s príponou <b>.ics</b>. Rozumie mu Outlook, Thunderbird aj Gmail, preto môžeš pozvať kamaráta, aj keď používa iný klient ako ty.")}
+    ${H3(13, "📨", "prijmi, alebo odmietni?", "inv")}<div class="task">${invHTML()}</div>
+    ${H3(14, "🎂", "zapíš si oslavu do kalendára", "event")}<div class="task">${eventHTML()}</div>
+    ${H3(15, "🎓", "záverečná otázka", "calq")}<div class="task">${mcHTML(TASKS.calq)}</div>` + nextBar();
+  },
+  vysledok() {
+    if (!S.finished && !allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i)).map(([s, i]) => [s, i, STEP_TASKS[s.id].filter(t => !S.t[t]).length]);
+      const left = Object.keys(TASKS).filter(k => !S.t[k]).length;
+      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú tieto misie (kliknutím sa do nich vrátiš):</p><div class="row" style="margin-top:0">${miss.map(([s, i, n]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} <span class="muted">· ${n} ${n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh"}</span></button>`).join("")}</div>
+        ${S.confirmEarly ? `<div class="vedel" style="margin-top:18px"><b>⚠️ Naozaj chceš domácu úlohu ukončiť?</b> Nedokončených úloh: <b>${left}</b>. Rozpracované úlohy sa vyhodnotia podľa toho, čo si v nich vybral, nedotknuté dostanú 0 ⭐. Potom sa už nič nedá zmeniť.<div class="row"><button class="primary" data-earlyyes style="background:#C0392B">Áno, odoslať</button><button class="ghost" data-earlyno>Späť k úlohám</button></div></div>`
+        : `<div class="row" style="margin-top:18px"><button class="primary" data-early>🏁 Ukončiť a odoslať výsledok</button><span class="muted" style="font-size:14.5px">Ak už nechceš pokračovať, môžeš domácu úlohu ukončiť aj teraz.</span></div>`}</div>`; }
+    if (!S.finished) { S.finished = Date.now(); save(); }
+    const gr = gradeOf(total(), MAX);
+    try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: S.name, cls: S.cls, score: total(), max: MAX, at: S.finished, grade: gr, attempts: S.attempt || 1 })); } catch (e) {}
+    const pct = Math.round(total() / MAX * 100), g = gr;
+    return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Haf, haf! Si skvelý poštár! Klientov poznáš, schránka je upratená a týždeň naplánovaný. 🐶📬" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil, a vyskúšaj si e‑mailový klient aj doma v mobile.", "wow")}
+      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <div class="row">${sendResults()}</div>
+      ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
+      ${(S.attempt || 1) === 1 && g >= 3 ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš ešte jednu opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu vypracovať ešte raz. Najprv si pozri vysvetlenia pri úlohách, kde si sa pomýlil. Oprava je posledný pokus.<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>` : ""}
+      ${(S.attempt || 1) === 2 ? `<p class="muted" style="margin-top:12px">Toto bola oprava, ďalší pokus už nie je možný.</p>` : ""}</div>`;
+  }
+};
+/* čas vypracovania (DOMACA): pripíše sa k bodom */
+function durTxt() { if (!S.started || !S.finished) return ""; let t = Math.max(0, Math.round((S.finished - S.started) / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+  return " · " + (h ? h + " h " + m + " min" : m ? m + " min " + s + " s" : s + " s"); }
+function sendResults() {
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.early ? " (nedokončené)" : "") + ((S.attempt || 1) === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)` + durTxt()); p.set(E.detail, String(gradeOf(total(), MAX)));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished, S.attempt].join("|"), manual = RESULTS_FORM.url + "?usp=pp_url&" + p.toString();
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Klikni na Odoslať ručne.", "#B3261E"); }); }
+  return `<a class="ghost" style="text-decoration:none" target="_blank" rel="noopener" href="${esc(manual)}">Odoslať ručne</a><span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
+}
+function doneRec() { try { let r = localStorage.getItem(DONE_KEY); if (r) return JSON.parse(r);
+    for (const k of OLD_DONE_KEYS) { r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); o.grade = o.grade || gradeOf(o.score, o.max || 30); o.attempts = Math.min(o.attempts || 1, 1); o.old = true; return o; } } } catch (e) {} return null; }
+function lockedDone() { if (S.finished) return null; const r = doneRec(); if (!r) return null; if ((S.attempt || 1) === 2 && (r.attempts || 1) < 2) return null; return r; }
+function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const can = (L.grade || gradeOf(L.score, L.max || MAX)) >= 3 && (L.attempts || 1) < 2;
+    document.getElementById("main").innerHTML = can ? `<div class="result"><h2>🔁 Oprava domácej úlohy</h2>${say(`${esc(L.name)} (${esc(L.cls)}), ${L.old ? "v predchádzajúcej verzii tejto domácej úlohy" : "v prvom pokuse"} si získal/a <b>${L.score} z ${L.max || MAX} ⭐</b> (známka ${L.grade}). Máš ešte <b>jednu opravu</b>. Je to posledný pokus.`)}<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>`
+      : `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${L.score} z ${L.max || MAX} ⭐</b>. Opakovať ju nie je možné.`)}</div>`; return; }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); hitAreas(m); typo(m); typo(document.getElementById("top"));
+  window.scrollTo({ top: scroll ? 0 : y }); }
+function hitAreas(m) { m.querySelectorAll(".room [data-hot]").forEach(g => { try { const r = g.getBBox(), pad = 6, n = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  n.setAttribute("x", r.x - pad); n.setAttribute("y", r.y - pad); n.setAttribute("width", r.width + 2 * pad); n.setAttribute("height", r.height + 2 * pad); n.setAttribute("fill", "transparent"); g.insertBefore(n, g.firstChild); } catch (e) {} }); }
+function scoreOf(id) {
+  const T = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (T.type === "mc") sc = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") sc = Math.floor(T.items.filter(x => d[x.id] === x.a).length / T.per);
+  if (T.type === "apps") sc = CL.filter(w => d[w.id] === w.a).length;
+  if (T.type === "cards") sc = GEST.filter(w => d[w.id] === w.a).length;
+  if (T.type === "find") { const a = (S.d.tbfind || {}).a || {}; sc = TBQ.filter(q => a[q.id] === q.a).length; }
+  if (T.type === "order") sc = Math.floor(T.items.filter((x, i) => (S.d.path || [])[i] === x.id).length / 2);
+  if (T.type === "comic") sc = T.panels.filter(p => p.q && d[p.q] === p.a).length;
+  if (T.type === "wiz") sc = gradeWiz();
+  if (T.type === "inv") sc = INVS.filter(v => d[v.id] === v.a).length;
+  if (T.type === "event") sc = (+d.d === 4 && d.d !== "" && d.d !== undefined ? 1 : 0) + (+d.h === 16 ? 1 : 0);
+  return Math.min(sc, maxOf(T));
+}
+function check(id) { award(id, scoreOf(id)); save(); render(false); }
+function finishEarly() { Object.keys(TASKS).forEach(id => { if (!S.t[id]) award(id, scoreOf(id)); }); S.early = true; S.confirmEarly = false; S.finished = Date.now(); }
+const gradeOf = (sc, mx) => { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; };
+function startRetry(rec) { const n = (rec && rec.name) || S.name, c = (rec && rec.cls) || S.cls; S = fresh(); S.name = n; S.cls = c; S.attempt = 2; save(); render(true); }
+const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
+document.addEventListener("click", e => {
+  const fz = e.target.closest("[data-fz]");
+  if (fz) { if (S.t.tbfind) return; const d = S.d.tbfind = S.d.tbfind || { act: "1", a: {} }; d.a[d.act] = fz.dataset.fz; const nx = TBQ.find(q => !d.a[q.id]); if (nx) d.act = nx.id; save(); render(false); return; }
+  const hot = e.target.closest("[data-hot]");
+  if (hot) { const id = hot.dataset.hot, w = CL.find(x => x.id === id);
+    if (w) { if (!S.found[id]) { S.found[id] = 1; S.forder.push(id); } const nf = CL.filter(x => S.found[x.id]).length; S.fmsg = `✅ Našiel si: <b>${w.e} ${w.n}</b>. Nájdené e‑mailové klienty: <b>${nf} z 3</b>.` + (nf === 3 ? " 🎉 Všetky! Pod obrázkom vyber, čo o nich platí." : ""); }
+    else S.fmsg = DECOY[id] || S.fmsg;
+    save(); render(false); return; }
+  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
+  if (ds.cls) { S.cls = ds.cls; save(); render(false); return; }
+  if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
+  if (ds.check) { check(ds.check); return; }
+  if (ds.early !== undefined) { S.confirmEarly = true; save(); render(false); return; }
+  if (ds.earlyno !== undefined) { S.confirmEarly = false; save(); render(false); return; }
+  if (ds.earlyyes !== undefined) { finishEarly(); save(); render(true); return; }
+  if (ds.retry !== undefined) { const r = S.finished ? { name: S.name, cls: S.cls } : doneRec(); startRetry(r); return; }
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; setD(t, q, +i); save(); render(false); return; }
+  if (ds.sti) { const [t, id] = ds.sti.split("|"); if (S.t[t]) return; S.sel[t] = S.sel[t] === id ? null : id; save(); render(false); return; }
+  if (ds.stb) { const [t, b] = ds.stb.split("|"); if (S.t[t] || !S.sel[t]) return; setD(t, S.sel[t], b); S.sel[t] = null; save(); render(false); return; }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); render(false); return; }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); render(false); return; }
+  if (ds.cr) { const [t, id, r] = ds.cr.split("|"); if (S.t[t]) return; setD(t, id, r); save(); render(false); return; }
+  if (ds.cm) { const [q, i] = ds.cm.split("|"); if (S.t.comic) return; setD("comic", q, +i); save(); render(false); return; }
+  if (ds.fq) { if (S.t.tbfind) return; const d = S.d.tbfind = S.d.tbfind || { act: "1", a: {} }; d.act = ds.fq; save(); render(false); return; }
+  if (ds.iv) { const [id, k] = ds.iv.split("|"); if (S.t.inv) return; setD("inv", id, k); save(); render(false); return; }
+  if (ds.wza) { if (S.t.wiz) return; const W = S.wz, a = ds.wza;
+    if (a === "next" && W.mail.trim() && W.pass) W.step = 2; if (a === "back") W.step = 1; if (a.startsWith("p:")) W.proto = a.slice(2);
+    save(); render(false); return; }
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.wz) { if (S.t.wiz) return; S.wz[t.dataset.wz] = t.value; save(); const b = document.querySelector('[data-wza="next"]'); if (b) b.disabled = !(S.wz.mail.trim() && S.wz.pass); return; }
+  if (t.dataset.ev === "n") { if (S.t.event) return; setD("event", "n", t.value); save(); return; }
+  const f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
+});
+document.addEventListener("change", e => {
+  const t = e.target; if (t.dataset.ev && t.dataset.ev !== "n") { if (S.t.event) return; setD("event", t.dataset.ev, t.value); save(); render(false); }
+});
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.dataset && e.target.dataset.wz) { e.preventDefault(); const b = document.querySelector('[data-wza="next"]'); if (b && !b.disabled) b.click(); } });
+render(false);
+</script></body></html>
