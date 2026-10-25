@@ -114,7 +114,7 @@ label.f{display:block;font-weight:600;margin:12px 0 4px}
 const KEY = "tercia-test1-v1";
 const LESSON = "Tercia – Test 1 (2.1 – 3.3)";
 const TITLE = "Test 1: Komprimácia, zvuk a konverzia formátov";
-const CLASS_DEFAULT = "Tercia";
+const CLASSES = ["TERCIA_1", "TERCIA_2"];
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
 
 /* ===== pomôcky ===== */
@@ -205,10 +205,16 @@ const poolOf = q => q.pool || [...new Set(q.rows.map(r => r[1]))];
 const HINT = { mc: "Vyber jednu odpoveď.", multi: "Označ všetky správne tvrdenia. Za každé nesprávne označenie sa ti jedno správne odpočíta.", match: "Ku každému riadku vyber odpoveď zo zoznamu.", order: "Klikaj na kartičky v správnom poradí. Kliknutím na umiestnenú kartičku ju vrátiš späť.", input: "Napíš odpoveď." };
 
 /* ===== stav ===== */
-function fresh() { return { v: 1, name: "", cls: CLASS_DEFAULT, phase: "start", order: [], perm: {}, ans: {}, result: null, finished: null, attempt: 0, sentKey: null }; }
+function fresh() { return { v: 1, name: "", cls: "", phase: "start", order: [], perm: {}, ans: {}, result: null, finished: null, attempt: 0, sentKey: null }; }
 function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.v === 1) return Object.assign(fresh(), o); } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
+/* úvodná obrazovka s menom a triedou sa ukáže vždy pri otvorení testu aj pred novým pokusom */
+let GATE = S.phase !== "start";
+const D = { name: "", cls: "" };
+const nameOk = n => String(n).trim().split(/\s+/).filter(w => w.length >= 2).length >= 2;
+const canStart = () => nameOk(D.name) && CLASSES.includes(D.cls);
+const startHint = () => !nameOk(D.name) ? "Napíš svoje meno aj priezvisko." : !CLASSES.includes(D.cls) ? "Vyber svoju triedu." : "";
 
 function newAttempt() {
   const groups = []; Q.forEach(q => { if (q.glue && groups.length) groups[groups.length - 1].push(q.id); else groups.push([q.id]); });
@@ -265,19 +271,20 @@ function card(q, n, done) { const r = done ? S.result.per[q.id] : null;
     <div class="qb">${q.img ? `<figure class="fig">${q.img}${q.cap ? `<figcaption>${q.cap}</figcaption>` : ""}</figure>` : ""}${body}</div></section>`; }
 
 /* ===== obrazovky ===== */
-function renderTop() { const n = S.order.filter(id => answered(BY[id])).length;
+function renderTop() { const n = S.order.filter(id => answered(BY[id])).length, PH = GATE ? "start" : S.phase;
   let right = "";
-  if (S.phase === "test") right = `<div class="pts" id="cnt">📝 Zodpovedané <b>${n}</b> z ${Q.length}</div>`;
-  if (S.phase === "done") right = `<div class="pts">⭐ <b>${S.result.tot}</b> z ${MAX}</div>`;
-  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>Test 1 · Tercia</div>${right}</div>${S.phase === "test" ? `<div class="prog"><i id="bar" style="width:${Math.round(n / Q.length * 100)}%"></i></div>` : ""}`; }
-function viewStart() { const ok = S.name.trim().length >= 3;
+  if (PH === "test") right = `<div class="pts" id="cnt">📝 Zodpovedané <b>${n}</b> z ${Q.length}</div>`;
+  if (PH === "done") right = `<div class="pts">⭐ <b>${S.result.tot}</b> z ${MAX}</div>`;
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>Test 1 · Tercia</div>${right}</div>${PH === "test" ? `<div class="prog"><i id="bar" style="width:${Math.round(n / Q.length * 100)}%"></i></div>` : ""}`; }
+function viewStart() { const ok = canStart();
   return `<p class="kicker">Informatika, Tercia</p><h1>${TITLE}</h1>
   <p>Test z učiva 2.1 až 3.3: komprimácia údajov (RLE, slovníková metóda, kompresný pomer), komprimačné programy a 7-Zip, nahrávanie a úprava zvuku, vzorkovanie a konverzia formátov.</p>
   <div class="facts"><div class="fact"><b>21</b><span>úloh</span></div><div class="fact"><b>${MAX}</b><span>bodov</span></div><div class="fact"><b>40</b><span>minút</span></div></div>
   <div class="warnbox">Úlohy aj odpovede má každý v inom poradí. Za ťažšie úlohy je viac bodov a pri niektorých dostaneš aj časť bodov. Keď test odovzdáš, výsledok sa automaticky pošle učiteľovi a uvidíš správne odpovede.</div>
-  <div class="panel"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
-  <label class="f" for="cl">Trieda</label><input class="in" id="cl" data-field="cls" value="${esc(S.cls)}">
-  <div class="row"><button class="primary" data-start ${ok ? "" : "disabled"}>Začať test</button><span class="muted" id="sthint">${ok ? "" : "Napíš svoje meno a priezvisko."}</span></div></div>`; }
+  ${S.phase === "test" ? `<div class="warnbox">V tomto prehliadači je rozpracovaný test: <b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())}. Ak je tvoj, môžeš v ňom pokračovať.<div class="row" style="margin-top:8px"><button class="ghost" data-resume>Pokračovať v rozpracovanom teste</button></div></div>` : ""}
+  <div class="panel"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(D.name)}" autocomplete="off" placeholder="napr. Jana Nováková">
+  <label class="f" for="cl">Trieda</label><select class="in" id="cl" data-field="cls"><option value="">— vyber triedu —</option>${CLASSES.map(c => `<option ${D.cls === c ? "selected" : ""}>${c}</option>`).join("")}</select>
+  <div class="row"><button class="primary" data-start ${ok ? "" : "disabled"}>Začať test</button><span class="muted" id="sthint">${startHint()}</span></div></div>`; }
 let ARM = false;
 function viewTest() { const left = S.order.filter(id => !answered(BY[id])).length;
   return `<p class="kicker">${esc(S.name.trim())}, ${esc(S.cls.trim())}${S.attempt > 1 ? ` · ${S.attempt}. pokus` : ""}</p><h1>Test 1</h1>
@@ -299,7 +306,7 @@ function viewDone() { const tot = S.result.tot, pct = Math.round(tot / MAX * 100
     <div class="row" style="margin-top:4px">${sendResults()}</div></div>
   <h2>Prehľad odpovedí</h2><p class="muted">Zelená = správne, červená = nesprávne. Pri nesprávnych odpovediach vidíš aj správne riešenie.</p>
   ${S.order.map((id, i) => card(BY[id], i + 1, true)).join("")}
-  <div class="submitbar"><button class="primary ${ARM ? "warn" : ""}" data-again>${ARM ? "Naozaj začať nový pokus?" : "Nový pokus"}</button><span class="muted">${ARM ? "Úlohy sa znova premiešajú a začneš od začiatku." : "Test môžeš skúsiť znova, každý pokus sa pošle učiteľovi."}</span></div>`; }
+  <div class="submitbar"><button class="primary ${ARM ? "warn" : ""}" data-again>${ARM ? "Naozaj začať nový pokus?" : "Nový pokus"}</button><span class="muted">${ARM ? "Napíšeš meno, vyberieš triedu, úlohy sa znova premiešajú a začneš od začiatku." : "Test môžeš skúsiť znova, každý pokus sa pošle učiteľovi."}</span></div>`; }
 
 /* ===== kontrola uloženého stavu (po úprave testu sa starý rozpracovaný pokus zahodí) ===== */
 function stateOk() {
@@ -318,16 +325,18 @@ try { if (!stateOk()) resetState(); } catch (e) { resetState(); }
 const main = document.getElementById("main");
 function render(toTop) { try { render0(toTop); } catch (e) { console.error(e); resetState(); ARM = false; render0(true); } }
 function render0(toTop) { const y = window.scrollY; renderTop();
-  main.innerHTML = S.phase === "start" ? viewStart() : S.phase === "test" ? viewTest() : viewDone();
+  main.innerHTML = GATE || S.phase === "start" ? viewStart() : S.phase === "test" ? viewTest() : viewDone();
   typo(main); window.scrollTo(0, toTop ? 0 : y); }
 function updateCount() { const n = S.order.filter(id => answered(BY[id])).length, c = document.getElementById("cnt"), b = document.getElementById("bar");
   if (c) c.innerHTML = `📝 Zodpovedané <b>${n}</b> z ${Q.length}`; if (b) b.style.width = Math.round(n / Q.length * 100) + "%"; }
 
+function onField(t) { D[t.dataset.field] = t.value; const b = document.querySelector("[data-start]"), h = document.getElementById("sthint"); if (b) b.disabled = !canStart(); if (h) h.textContent = startHint(); }
 /* ===== udalosti ===== */
 document.addEventListener("click", e => {
   const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
-  if (ds.start !== undefined) { if (S.name.trim().length < 3) return; newAttempt(); ARM = false; return render(true); }
-  if (S.phase === "test") {
+  if (ds.resume !== undefined) { GATE = false; ARM = false; return render(true); }
+  if (ds.start !== undefined) { if (!canStart()) return; S.name = D.name.trim().replace(/\s+/g, " "); S.cls = D.cls; D.name = ""; D.cls = ""; GATE = false; newAttempt(); ARM = false; return render(true); }
+  if (S.phase === "test" && !GATE) {
     if (ds.mc) { const [q, i] = ds.mc.split("|"); S.ans[q] = +i; ARM = false; save(); return render(false); }
     if (ds.mu) { const [q, i] = ds.mu.split("|"), a = S.ans[q] = S.ans[q] || [], k = a.indexOf(+i); if (k >= 0) a.splice(k, 1); else a.push(+i); ARM = false; save(); return render(false); }
     if (ds.place) { const [q, i] = ds.place.split("|"), a = S.ans[q] = S.ans[q] || []; if (!a.includes(+i)) a.push(+i); ARM = false; save(); return render(false); }
@@ -337,12 +346,13 @@ document.addEventListener("click", e => {
       ARM = false; const per = {}; let tot = 0; Q.forEach(q => { per[q.id] = gradeQ(q); tot += per[q.id].sc; });
       S.result = { tot, per }; S.finished = Date.now(); S.phase = "done"; save(); return render(true); }
   }
-  if (ds.again !== undefined) { if (!ARM) { ARM = true; return render(false); } ARM = false; newAttempt(); return render(true); }
+  if (ds.again !== undefined) { if (!ARM) { ARM = true; return render(false); } ARM = false; GATE = true; return render(true); }
 });
-document.addEventListener("change", e => { const t = e.target; if (t.dataset.mt && S.phase === "test") { const [q, i] = t.dataset.mt.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); } });
+document.addEventListener("change", e => { const t = e.target; if (t.dataset.mt && S.phase === "test" && !GATE) { const [q, i] = t.dataset.mt.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); return; }
+  if (t.dataset.field) onField(t); });
 document.addEventListener("input", e => { const t = e.target;
-  if (t.dataset.in && S.phase === "test") { const [q, i] = t.dataset.in.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); return; }
-  if (t.dataset.field) { S[t.dataset.field] = t.value; save(); const ok = S.name.trim().length >= 3, b = document.querySelector("[data-start]"), h = document.getElementById("sthint"); if (b) b.disabled = !ok; if (h) h.textContent = ok ? "" : "Napíš svoje meno a priezvisko."; } });
+  if (t.dataset.in && S.phase === "test" && !GATE) { const [q, i] = t.dataset.in.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); return; }
+  if (t.dataset.field) onField(t); });
 render(true);
 </script>
 </body>
