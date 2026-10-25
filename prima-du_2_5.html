@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DU_2.5 Interaktívna komunikácia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;
+  --acc:#2F5BEA;--accSoft:#D5DFFB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#C9D1DF;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D6DCE6;
+  --font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}}
+:root[data-theme="dark"]{--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .du{background:#F2A516;color:#3A2600;border-radius:7px;padding:1px 8px;font-size:14px;font-weight:800}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.reset{background:none;border:1.5px solid var(--border);border-radius:999px;padding:6px 14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.reset.arm{border-color:var(--bad);color:var(--bad);background:var(--badSoft)}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:35px;height:35px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:16px;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff;font-size:14px;font-weight:700}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.18);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:21px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+/* misia – banner */
+.ban{position:relative;overflow:hidden;border-radius:22px;padding:20px 22px 18px;color:#fff;margin:0 0 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;box-shadow:0 14px 30px -18px rgba(10,20,60,.6)}
+.ban .pill{display:inline-block;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 12px;font-size:13.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ban h2{color:#fff;margin:8px 0 4px}
+.ban p{margin:0;font-size:16px;opacity:.95}
+.ban .big{font-size:64px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.ban::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+@media (max-width:560px){.ban .big{font-size:44px}}
+/* holub Pípo */
+.say{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:end;margin:6px 0 18px}
+.say svg{width:92px;height:92px}
+.bubble{position:relative;background:var(--surface);border:2px solid var(--acc);border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:16.5px}
+.bubble b.n{color:var(--acc)}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:0 0 12px}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.tfigs{display:grid;gap:12px}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E4A66;text-align:center;padding:0 4px}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.93em}
+code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px}
+kbd{font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-bottom-width:3px;border-radius:6px;padding:0 6px;font-size:.88em}
+/* tlačidlá a otázky */
+.primary{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:30px;padding-top:20px;border-top:1px dashed var(--track);display:flex;justify-content:flex-end}
+.q{border:0;padding:0;margin:0 0 22px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px}
+.why.good{background:var(--okSoft)}.why.miss{background:var(--badSoft)}
+.lock{display:flex;gap:10px;align-items:center;background:var(--surface2);border:1.5px dashed var(--track);border-radius:12px;padding:12px 16px;color:var(--muted)}
+/* párovanie */
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:640px){.pairs{grid-template-columns:1fr}}
+.pcol{display:grid;gap:8px;align-content:start}
+.pcol h4{margin:0 0 2px;font-size:15px;color:var(--muted)}
+.pi{display:flex;align-items:center;gap:10px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:9px 12px;cursor:pointer;width:100%}
+.pi:hover:not(:disabled){border-color:var(--acc)}
+.pi.sel{border-color:var(--amber);box-shadow:0 0 0 4px var(--amberSoft)}
+.pi .e{font-size:24px;flex:0 0 30px;text-align:center}
+.pi .tag{margin-left:auto;flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff}
+.pi.ok{border-color:var(--ok);background:var(--okSoft)}
+.pi.bad{border-color:var(--bad);background:var(--badSoft)}
+.pi:disabled{cursor:default;color:var(--ink)}
+/* štart a výsledok */
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px}
+@media (max-width:800px){.hero{grid-template-columns:1fr}}
+.hero svg{width:100%;height:auto;display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.mcard{border-radius:14px;padding:10px 12px;color:#fff;font-weight:600;font-size:15px}
+.mcard small{display:block;font-weight:400;opacity:.9}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{width:100%;max-width:380px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px}
+.bign{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.bign .n{font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.bign .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
+table.res{border-collapse:collapse;width:100%;font-size:15.5px}
+table.res td,table.res th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+table.res td:last-child,table.res th:last-child{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+@media (prefers-reduced-motion: no-preference){.fly{animation:fly 1.4s ease-in-out}@keyframes fly{from{opacity:.2;transform:translateX(-30px)}to{opacity:1;transform:none}}}
+.muted{color:var(--muted)}
+.say svg{width:92px;height:92px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .opt{padding:6px 12px;font-size:14.5px;border-radius:999px}
+.tnum{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;margin-right:6px}
+.msg{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--accSoft);font-size:15.5px;min-height:44px}
+/* izba (misia 1) */
+.room svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--border)}
+.room [data-hot]{cursor:pointer}
+.room [data-hot]:hover{filter:brightness(1.12) drop-shadow(0 0 4px #F2A516)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.fc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px 14px;position:relative}
+.fc.okc{border-color:var(--ok);background:var(--okSoft)}.fc.badc{border-color:var(--bad);background:var(--badSoft)}
+.fc .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}
+.fc .hd .e{font-size:28px;line-height:1}
+.dig{margin-left:auto;background:#16213A;color:#F2C94C;font-family:var(--mono);font-weight:700;border-radius:8px;padding:2px 10px;font-size:18px}
+.fc .why{margin-top:8px}
+.safe{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:18px;align-items:center;margin-top:16px;background:linear-gradient(135deg,#2B3550,#16213A);color:#E8EDF7;border-radius:18px;padding:16px 18px}
+@media (max-width:720px){.safe{grid-template-columns:1fr}}
+.safe svg{width:100%;max-width:220px;height:auto;display:block;margin:0 auto}
+.safe .rule{background:#FFF8E1;color:#3A2E00;border-radius:10px;padding:10px 12px;font-size:15px;margin-bottom:10px}
+.codes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.codes .opt{font-family:var(--mono);font-size:22px;font-weight:700;text-align:center;letter-spacing:.2em;background:#0E1424;color:#F2C94C;border-color:#3E4A66}
+.codes .opt.sel{border-color:#F2A516;background:#2A2410}
+.codes .opt.ok{border-color:#3CCB8E;background:#123A2C;color:#9FF0C8}
+.codes .opt.bad{border-color:#FF7A6B;background:#46221F;color:#FFB4AA}
+/* pátranie doma (misia 2) */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.hc{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:10px 6px;cursor:pointer;text-align:center;font-size:14.5px;font-weight:600;line-height:1.25}
+.hc .e{font-size:30px;line-height:1}
+.hc:hover:not(:disabled){border-color:var(--acc)}
+.hc.on{border-color:var(--amber);background:var(--amberSoft);box-shadow:0 0 0 3px var(--amberSoft)}
+.hc:disabled{cursor:default;opacity:.45}
+.hc.on:disabled{opacity:1}
+/* dielňa (misia 3) */
+.inv{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.ic{background:var(--surface);border:2px solid var(--border);border-radius:18px;padding:14px 16px}
+.ic.okc{border-color:var(--ok)}.ic.badc{border-color:var(--bad)}
+.ic .hd{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.ic .hd .e{font-size:40px;line-height:1}
+.ic .hd b{font-size:17px}
+.ic .st{font-size:15px;color:var(--muted);margin:0 0 8px}
+.ic .lab{font-size:13.5px;font-weight:700;color:var(--muted);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+.bprev{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-top:10px;font-size:15px}
+.bprev .slot{min-width:92px;text-align:center;border-radius:12px;padding:6px 8px;background:var(--surface);border:2px solid var(--border)}
+.bprev .slot .e{display:block;font-size:28px;line-height:1.1}
+.bprev .core{background:#16213A;color:#fff;border-color:#16213A}
+/* komiks (misia 4) */
+.comic{display:grid;grid-template-columns:1fr;gap:14px}
+.panel:not(.choice){max-width:560px}.panel.c{justify-self:center}
+.panel{background:#FFFDF5;border:3px solid #16213A;border-radius:6px;padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;color:#16213A;box-shadow:4px 4px 0 #16213A}
+.panel svg{width:76px;height:76px}
+.panel .bub{background:#fff;border:2px solid #16213A;border-radius:14px;padding:8px 12px;font-size:15.5px;position:relative}
+.panel .nm{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#566381;margin-bottom:2px}
+.panel.choice{grid-column:1/-1;background:#EEF4FF}
+.panel .opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel .opt{background:#fff;color:#16213A}
+.panel .opt.sel{background:#E6EDFD}
+.panel .opt.ok{background:#DDF3EA}.panel .opt.bad{background:#FBE3E0}
+.panel .why{color:#16213A}
+/* triedenie */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.chip.ok{border-color:var(--ok);background:var(--okSoft)}.chip.bad{border-color:var(--bad);background:var(--badSoft)}
+.chip:disabled{cursor:default;color:var(--ink)}
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.bins{grid-template-columns:1fr}}
+.bin{border:2px solid var(--border);border-radius:16px;padding:10px;min-height:120px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bin .bh{width:100%;text-align:center;font-weight:700;border-radius:10px;padding:6px;cursor:pointer;border:0;font-size:15px}
+.bin .bh:disabled{cursor:default}
+/* príbeh (misia 5) */
+.story{background:#FFFDF5;color:#2A2410;border:1px solid #E6D6A8;border-radius:16px;padding:16px 18px;font-size:17px;line-height:1.9}
+.story p{margin:0 0 10px}
+.ph{display:inline;font:inherit;color:inherit;background:none;border:0;border-bottom:2px dotted #B08D4F;padding:0 2px;cursor:pointer;border-radius:4px;line-height:inherit}
+.ph:hover:not(:disabled){background:#FDF1D6}
+.ph.on{background:#FDE3A7;border-bottom:2px solid #E0A800}
+.ph.ok{background:#DDF3EA;border-bottom:2px solid #12805A}
+.ph.bad{background:#FBE3E0;border-bottom:2px solid #C0392B}
+.ph.miss{background:none;border-bottom:3px solid #C0392B}
+.ph:disabled{cursor:default}
+/* rozpočet (misia 6) */
+.shop{display:grid;gap:14px}
+.cat h4{margin:0 0 6px;font-size:16px}
+.prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.prod{display:flex;flex-direction:column;gap:2px;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:10px 12px;cursor:pointer;font-size:14.5px;line-height:1.35}
+.prod b{font-size:15px}
+.prod .pr{font-weight:700;color:var(--acc);font-size:16px;margin-top:4px}
+.prod:hover:not(:disabled){border-color:var(--acc)}
+.prod.on{border-color:var(--acc);background:var(--accSoft)}
+.prod:disabled{cursor:default}
+.cart{position:sticky;bottom:10px;z-index:5;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:10px 14px;margin-top:14px;box-shadow:0 10px 24px -14px rgba(10,20,60,.5)}
+.cart .bar{height:12px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:6px}
+.cart .bar span{display:block;height:100%;background:var(--ok)}
+.cart.over{border-color:var(--bad)}.cart.over .bar span{background:var(--bad)}
+.crit{list-style:none;padding:0;margin:12px 0 0}
+.crit li{padding:6px 10px;border-radius:10px;margin:4px 0;font-size:15.5px}
+.crit li.y{background:var(--okSoft)}.crit li.n{background:var(--badSoft)}
+@media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
+.panel{min-width:0}.panel .bub{min-width:0}
+@media (max-width:640px){.room{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px}.room svg{min-width:760px}.room::after{content:"↔️ Obrázok posúvaj prstom do strany.";display:block;font-size:13.5px;color:var(--muted);padding:4px 2px}}
+/* ===== DU 2.3: simulátor IDLE a nové typy úloh ===== */
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14.5px}
+.wt{background:#E9EDF3;padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:13.5px;border-bottom:1px solid #D5DCE6;color:#1B1B1F;min-width:0}
+.wt .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .dots{margin-left:auto;color:#666;letter-spacing:6px;flex:0 0 auto}
+.menubar{display:flex;flex-wrap:wrap;gap:2px;background:#F6F7F9;border-bottom:1px solid #E0E4EA;padding:2px 6px;position:relative}
+.menubar button{border:0;background:none;padding:4px 10px;font-size:13.5px;cursor:pointer;border-radius:4px;color:#1B1B1F}
+.menubar button:hover:not(:disabled),.menubar button.on{background:#DCE6F5}
+.menubar button:disabled{opacity:.45;cursor:default}
+.drop{position:absolute;top:30px;background:#fff;border:1px solid #BCC6D3;box-shadow:0 8px 20px rgba(0,0,0,.2);border-radius:6px;padding:4px;z-index:3;min-width:210px}
+.drop button{display:block;width:100%;text-align:left;padding:6px 10px}
+.drop small{color:#667}
+.shell{background:#fff;font-family:"Courier New",var(--mono);font-size:14px;padding:10px 12px;min-height:96px;max-height:170px;overflow:auto;white-space:pre-wrap;color:#000}
+.shell .p{color:#7A2E00}.shell .e{color:#D10000}
+.ws{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start;margin-top:12px}
+.editor textarea{width:100%;min-height:250px;border:0;border-radius:0;font-family:"Courier New",var(--mono);font-size:15px;line-height:1.5;padding:10px 12px;background:#fff;color:#000;resize:vertical;outline:none;display:block}
+.editor textarea[readonly]{background:#F6F7F9;color:#3A3A44}
+.editor .status{background:#F1F3F6;border-top:1px solid #E0E4EA;font-size:12px;color:#555;padding:3px 10px;text-align:right}
+.edempty{min-height:290px;display:grid;place-items:center;text-align:center;color:#667;background:#F6F7F9;padding:16px;font-size:14px}
+.twin svg{display:block;width:100%;height:auto;background:#fff}
+.twin .empty{height:250px;display:grid;place-items:center;color:#667;background:#F6F7F9;font-size:14px;text-align:center;padding:10px}
+.dlgbox{background:#fff;color:#1B1B1F;border:1px solid #9FB0C8;border-radius:10px;box-shadow:0 14px 30px rgba(0,0,0,.25);padding:14px 16px;margin:10px 0;max-width:460px}
+.dlgbox h5{margin:0 0 8px;font-size:15px}
+.dlgbox input{width:100%;border:1px solid #A9B4C4;border-radius:4px;padding:6px 8px;font-family:var(--mono);font-size:14px;color:#1B1B1F;background:#fff}
+.dlgbox .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA;padding:6px 14px}
+.filelist button{display:block;width:100%;text-align:left;border:0;background:#F4F6F9;border-radius:6px;padding:6px 10px;margin:4px 0;cursor:pointer;font-family:var(--mono);color:#1B1B1F}
+.tgtbar{display:grid;grid-template-columns:210px minmax(0,1fr);gap:16px;align-items:start}
+.tprev svg{width:100%;max-width:210px;height:auto;display:block;background:#fff;border:1px solid var(--border);border-radius:12px}
+.tprev .cap{font-size:13px;color:var(--muted);text-align:center;margin-top:4px}
+.goals{list-style:none;padding:0;margin:6px 0 0}.goals li{padding:3px 0}
+.fb{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
+.fb ul{margin:4px 0 0;padding-left:20px}
+.code{font-family:var(--mono);font-size:14.5px;line-height:1.6;background:#0F1A2E;color:#DCE7FF;border-radius:10px;padding:10px 14px;white-space:pre;overflow-x:auto;margin:8px 0;font-weight:500}
+.code .k{color:#FFB86B;font-weight:700}
+/* poradie riadkov */
+.seq{list-style:none;padding:0;margin:14px 0 12px;display:grid;gap:8px;max-width:520px}
+.slot2{display:flex;align-items:center;gap:12px}
+.slot2 .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accSoft);color:var(--acc)}
+.slot2 .ph2{color:var(--muted);flex:1;border:1.5px dashed var(--track);border-radius:10px;padding:8px 14px;font-size:15px}
+.slotbtn{flex:1;text-align:left;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:8px 14px;cursor:pointer;font-family:var(--mono);font-size:15px}
+.slotbtn:hover:not(:disabled){border-color:var(--acc)}
+.slot2.ok .slotbtn{border-color:var(--ok);background:var(--okSoft)}.slot2.bad .slotbtn{border-color:var(--bad);background:var(--badSoft)}
+.slotbtn:disabled{cursor:default;color:var(--ink)}
+.chip.mono{font-family:var(--mono);font-weight:500}
+.bins.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.seq .slotbtn{font-family:var(--font)}
+/* kód s chybami */
+.codebox{background:#fff;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;color:#000;max-width:560px}
+.codebox .wt{border-radius:0}
+.cl{display:flex;width:100%;align-items:center;gap:14px;border:0;border-bottom:1px solid #EEF1F5;background:#fff;padding:6px 12px;font-family:"Courier New",var(--mono);font-size:16px;text-align:left;cursor:pointer;color:#000}
+.cl .ln{color:#8A93A6;width:22px;text-align:right;font-size:13px;flex:0 0 22px}
+.cl:hover:not(:disabled){background:#FFF6DB}
+.cl.on{background:#FDE3A7}.cl.ok{background:#DDF3EA}.cl.bad{background:#FBE3E0}.cl.miss{box-shadow:inset 5px 0 0 #C0392B;background:#FFF0EE}
+.cl:disabled{cursor:default}
+.fixrow{margin-top:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.fixrow .hd{font-weight:600;margin-bottom:6px;font-size:15.5px}
+.fixrow .opt{font-family:var(--mono)}
+.errc{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.errc .opts{grid-template-columns:1fr;gap:6px}
+.errc .opt{font-family:var(--mono);font-size:13.5px;padding:8px 10px;color:#9A1F12}
+.errc .opt.ok,.errc .opt.bad,.errc .opt.sel{color:var(--ink)}
+.opts.pics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.pics .opt{padding:8px}
+.opt svg{width:100%;height:auto;display:block;background:#fff;border-radius:8px;border:1px solid #E3E8EF}
+/* priečinok */
+.fwin{margin-bottom:14px;max-width:620px}
+.frow{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #EEF1F5;font-size:14.5px;color:#1B1B1F}
+.frow .nm{font-family:var(--mono);overflow-wrap:anywhere}
+.frow .nm s{color:#9AA3B5}
+.frow .ds{color:#566381;font-size:13px;text-align:right}
+/* displej */
+.segs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.segc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px;display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;align-items:center}
+.segc.okc{border-color:var(--ok);background:var(--okSoft)}.segc.badc{border-color:var(--bad);background:var(--badSoft)}
+.segc svg{width:110px;height:auto;display:block;background:#16213A;border-radius:12px}
+.segc [data-sg]{cursor:pointer}
+.segc .goal{font-size:15px}
+.segc .goal b{font-family:var(--mono);font-size:36px;color:var(--acc);display:block;line-height:1.1}
+@media (max-width:900px){.ws{grid-template-columns:minmax(0,1fr)}.drop{left:auto!important;right:0}}
+@media (max-width:720px){.bins.two{grid-template-columns:1fr}.tgtbar{grid-template-columns:1fr}}
+/* ===== DU 2.3 Prima: nové typy úloh ===== */
+.room svg{min-width:0}
+.qt svg{display:block;width:100%;max-width:560px;height:auto;margin:10px 0 2px;background:var(--surface2);border:1px solid var(--border);border-radius:12px}
+.q legend .qt{flex:1;min-width:0}
+.fq{display:grid;gap:8px;margin-bottom:12px}
+.fqb{display:flex;gap:10px;align-items:flex-start;text-align:left;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:9px 12px;cursor:pointer;font-weight:600;width:100%}
+.fqb small{display:block;font-weight:400;font-size:14px;color:var(--muted);margin-top:2px}
+.fqb:hover:not(:disabled){border-color:var(--acc)}
+.fqb.on{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.fqb.ok{border-color:var(--ok);background:var(--okSoft)}.fqb.bad{border-color:var(--bad);background:var(--badSoft)}
+.fqb:disabled{cursor:default;color:var(--ink)}
+.tbw svg{width:100%;height:auto;display:block}
+.fz{cursor:pointer}.fz rect{fill:transparent;stroke:transparent;stroke-width:3;transition:fill .15s,stroke .15s}
+.fz:hover rect{stroke:#F2A516;fill:rgba(242,165,22,.14)}
+.fz.ok rect{stroke:#12805A;fill:rgba(18,128,90,.16);stroke-width:4}.fz.bad rect{stroke:#C0392B;fill:rgba(192,57,43,.14);stroke-width:4}
+.fz.ok,.fz.bad{cursor:default}
+@media (max-width:640px){.tbw{overflow-x:auto;-webkit-overflow-scrolling:touch}.tbw svg{min-width:640px}.tbw::after{content:"↔️ Obrázok posúvaj prstom do strany.";display:block;font-size:13.5px;color:var(--muted);padding:4px 2px}}
+.gwrap{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px;align-items:start}
+.gph svg{width:100%;max-width:220px;height:auto;display:block;margin:0 auto}
+@media (max-width:720px){.gwrap{grid-template-columns:1fr}.gph svg{max-width:180px}}
+.wizw{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:16px;align-items:start}
+@media (max-width:760px){.wizw{grid-template-columns:1fr}}
+.card2{background:#FFFBEA;color:#3A2E00;border:1.5px dashed #E0A100;border-radius:14px;padding:12px 14px;font-size:15px;line-height:1.5}
+.reg{background:#fff;color:#1B1F2A;border:1px solid #BFC7D5;border-radius:14px;padding:16px 18px;box-shadow:0 12px 30px -14px rgba(10,20,60,.35);font-family:"Segoe UI",var(--font)}
+.reg h4{margin:0 0 2px;font-size:18px}
+.reg label{display:block;font-size:13px;color:#555;margin:10px 0 3px}
+.reg input,.reg select{width:100%;border:1.5px solid #C9D1DE;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;color:#1B1F2A;background:#fff}
+.reg input:disabled,.reg select:disabled{background:#F4F6F9}
+.reg .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.reg .btn{background:#2F5BEA;color:#fff;border:0;border-radius:8px;padding:9px 18px;font-weight:700;cursor:pointer}
+.reg .btn:disabled{background:#C9D1DF;color:#667;cursor:not-allowed}
+.reg .ghost{color:#1B1F2A;background:#fff;border-color:#C9D0DA;padding:6px 14px}
+.reg .opt{color:#1B1F2A;background:#F5F7FA}
+.reg .opt.sel{background:#E6EDFD}.reg .opt.ok{background:#DDF3EA}.reg .opt.bad{background:#FBE3E0}
+.wfound{background:#DDF3EA;color:#0B5C3F;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14.5px}
+.wpro{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wpro .opt{text-align:center;font-family:var(--mono);font-weight:700;font-size:18px}
+.evf{max-width:480px;margin-top:4px}
+.mailcard{background:#fff;color:#1B1F2A;border:1px solid #BFC7D5;border-radius:12px;padding:12px 16px;max-width:560px;font-size:15.5px}
+.mailcard .mh{background:#EEF2F8;margin:-12px -16px 0;padding:8px 16px;border-radius:12px 12px 0 0;font-size:14.5px}
+.invs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.invs .chips .opt{border-radius:999px;padding:6px 14px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(84px,1fr));gap:6px;overflow-x:auto;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:8px}
+.cday{background:var(--surface);border:1px solid var(--border);border-radius:10px;min-height:110px;padding:6px;display:flex;flex-direction:column;gap:5px}
+.cdh{text-align:center;font-weight:700;font-size:14px;color:var(--acc);border-bottom:1px solid var(--border);padding-bottom:3px}
+.cev{font-size:12.5px;line-height:1.3;background:var(--accSoft);border-left:4px solid var(--acc);border-radius:6px;padding:4px 6px}
+.cev.new{background:var(--okSoft);border-left-color:var(--ok)}
+.cev.maybe{background:var(--amberSoft);border-left-color:var(--amber);opacity:.85}
+/* ===== DU 2.5: triedna skupina ===== */
+.gchat{max-width:600px;background:#EEF3F9;border:1px solid #BCC6D3;border-radius:16px;overflow:hidden;padding-bottom:6px}
+.gchat .gh{background:#2F5BEA;color:#fff;padding:9px 14px;font-weight:600}
+.gchat .gh small{font-weight:400;opacity:.9}
+.gm{display:block;width:calc(100% - 20px);margin:8px 10px 0;text-align:left;background:#fff;border:2px solid #DCE3EE;border-radius:14px 14px 14px 4px;padding:6px 12px 8px;cursor:pointer;color:#16213A;font-size:15.5px;line-height:1.45}
+.gm .who{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:#566381;margin-bottom:2px}
+.gm:hover:not(:disabled){border-color:#F2A516}
+.gm.on{border-color:#F2A516;background:#FDF1D6}.gm.ok{border-color:#12805A;background:#DDF3EA}.gm.bad{border-color:#C0392B;background:#FBE3E0}.gm.miss{box-shadow:inset 5px 0 0 #C0392B;background:#FFF0EE}
+.gm:disabled{cursor:default}
+.fixrow .opt{font-family:var(--font)}
+.mailcard .seq{max-width:none;margin:10px 0 0}
+.fc .hd .e{min-width:44px;text-align:center}
+</style></head><body>
+<header class="top" id="top"></header><main id="main" tabindex="-1"></main>
+<script>
+/* ===== DU 2.5 – Prima: Interaktívna komunikácia ===== */
+const KEY = "du-p25-v1";
+const LESSON = "Prima – DU_2.5 Interaktívna komunikácia";
+const CLASS_DEFAULT = "";
+const CLASSES = ["PRIMA_1", "PRIMA_2"];
+const DONE_KEY = "du-p25-done-v1"; /* zámok: pokusy (1 pokus, pri známke 3 – 5 jedna oprava) */
+const OLD_DONE_KEYS = [];
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+
+const STEPS = [
+  { id: "start", title: "Štart", ic: "🚀", min: 1 },
+  { id: "m1", title: "Hneď, alebo neskôr?", ic: "⚡", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+  { id: "m2", title: "Četovacie aplikácie", ic: "💬", min: 4, col: "linear-gradient(120deg,#0B6F8A,#2BB3D6)" },
+  { id: "m3", title: "Triedna skupina", ic: "👥", min: 3, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
+  { id: "m4", title: "Videohovor", ic: "📹", min: 3, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
+  { id: "m5", title: "Bezpečne s neznámymi", ic: "🛡️", min: 3, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
+  { id: "m6", title: "Tón správy a skratky", ic: "✉️", min: 3, col: "linear-gradient(120deg,#A0640A,#E2A23B)" },
+  { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
+];
+const STEP_TASKS = { m1: ["s1", "ksort"], m2: ["stat", "chq", "emq"], m3: ["gch", "grq"], m4: ["s2", "vcom"], m5: ["scom", "send", "fpq"], m6: ["letter", "skr", "toolq"] };
+
+/* ===== LENKA: typografia ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,kbd,textarea,input") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐″])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+/* ===== OBRÁZKY: pomôcky ===== */
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 13}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}" pointer-events="none">${s}</text>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.6"` : ""}/>`;
+const EM = (x, y, e, fs = 24) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}" pointer-events="none">${e}</text>`;
+const ARR = (x1, y1, x2, y2, c = "#566381", w = 2.5) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return `<line x1="${x1}" y1="${y1}" x2="${x2 - Math.cos(a) * 4}" y2="${y2 - Math.sin(a) * 4}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2} L${x2 - h * Math.cos(a - .45)} ${y2 - h * Math.sin(a - .45)} L${x2 - h * Math.cos(a + .45)} ${y2 - h * Math.sin(a + .45)}z" fill="${c}"/>`; };
+const C = { ink: "#16213A", mut: "#566381", acc: "#2F5BEA", accS: "#D5DFFB", ok: "#12805A", okS: "#DDF3EA", bad: "#C0392B", badS: "#FBE3E0", amb: "#8A5A00", ambS: "#FDF1D6", bg: "#F5F7FA", line: "#D6DCE6", inS: "#E3EEFC", in: "#1E6FD9", pur: "#6A3FD0", purS: "#ECE5FC" };
+const WIN = (x, y, w, h, title, o = {}) => `${box(x, y, w, h, o.fill || "#fff", "#9AA6B8", 8)}<path d="M${x} ${y + 8} a8 8 0 0 1 8 -8 h${w - 16} a8 8 0 0 1 8 8 v14 h-${w} z" fill="${o.bar || "#E9EDF3"}"/>${T(x + 9, y + 15, title, { fs: o.tfs || 10.5, b: 1, c: C.mut })}${[0, 1, 2].map(i => `<circle cx="${x + w - 11 - i * 12}" cy="${y + 11}" r="3.6" fill="${["#E5534B", "#E0A800", "#2DA44E"][i]}"/>`).join("")}`;
+const PHONE = (x, y, w, h, inner = "") => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${Math.min(w, h) * .16}" fill="#1B1B1F"/><rect x="${x + 5}" y="${y + 10}" width="${w - 10}" height="${h - 20}" rx="${Math.min(w, h) * .08}" fill="#F4F7FC"/>${inner}`;
+const LAPTOP = (x, y, w, inner = "") => { const h = w * .62; return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#16213A"/><rect x="${x + 5}" y="${y + 5}" width="${w - 10}" height="${h - 10}" rx="3" fill="#EAF2FF"/>${inner}<path d="M${x - 10} ${y + h} h${w + 20} l-8 9 h${-w - 4} z" fill="#566381"/>`; };
+const BUB = (x, y, w, t, me, fs = 11) => `${box(x, y, w, 24, me ? "#DCF3E6" : "#fff", me ? "#9BD3B3" : C.line, 12)}${T(x + 10, y + 16, t, { fs })}`;
+const AV = (x, y, t, c, r = 14) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>${T(x, y + r * .35, t, { a: "middle", fs: r * .9, b: 1, c: "#fff" })}`;
+
+/* tučniak Pingo – sprievodca */
+function pingo(x, y, s, mood) {
+  const eyes = mood === "wow"
+    ? `<circle cx="42" cy="35" r="5" fill="#fff" stroke="#16213A" stroke-width="1.3"/><circle cx="43" cy="35" r="2.8" fill="#16213A"/><circle cx="58" cy="35" r="5" fill="#fff" stroke="#16213A" stroke-width="1.3"/><circle cx="59" cy="35" r="2.8" fill="#16213A"/><path d="M44 44 L56 44 L50 54 Z" fill="#F29C1F" stroke="#B4650A" stroke-width="1.4"/><path d="M45 47 L55 47" stroke="#B4650A" stroke-width="1.3"/>`
+    : `<circle cx="43" cy="36" r="3.3" fill="#16213A"/><circle cx="44" cy="35" r="1.1" fill="#fff"/><circle cx="57" cy="36" r="3.3" fill="#16213A"/><circle cx="58" cy="35" r="1.1" fill="#fff"/><path d="M44 44 L56 44 L50 52 Z" fill="#F29C1F" stroke="#B4650A" stroke-width="1.4"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})">
+    <ellipse cx="50" cy="96" rx="30" ry="4" fill="#000" opacity=".12"/>
+    <ellipse cx="38" cy="93" rx="10" ry="5" fill="#F29C1F" stroke="#B4650A" stroke-width="1.6"/><ellipse cx="62" cy="93" rx="10" ry="5" fill="#F29C1F" stroke="#B4650A" stroke-width="1.6"/>
+    <path d="M24 56 Q12 70 18 84 Q26 78 28 66 Z" fill="#1F2A44" stroke="#0E1424" stroke-width="1.6"/>
+    <path d="M76 56 Q90 64 90 78 Q80 76 72 66 Z" fill="#1F2A44" stroke="#0E1424" stroke-width="1.6"/>
+    <ellipse cx="50" cy="62" rx="27" ry="31" fill="#1F2A44" stroke="#0E1424" stroke-width="2"/>
+    <ellipse cx="50" cy="68" rx="18" ry="23" fill="#FFFFFF"/>
+    <circle cx="50" cy="36" r="22" fill="#1F2A44" stroke="#0E1424" stroke-width="2"/>
+    <path d="M32 38 Q34 24 44 26 Q50 30 56 26 Q66 24 68 38 Q66 52 50 54 Q34 52 32 38 Z" fill="#FFFFFF"/>
+    <circle cx="36" cy="45" r="3" fill="#F4B6C2" opacity=".9"/><circle cx="64" cy="45" r="3" fill="#F4B6C2" opacity=".9"/>
+    ${eyes}
+    <path d="M26 34 Q50 4 74 34" fill="none" stroke="#2F5BEA" stroke-width="4.5" stroke-linecap="round"/>
+    <rect x="21" y="29" width="9" height="15" rx="4" fill="#2F5BEA" stroke="#16213A" stroke-width="1.5"/><rect x="70" y="29" width="9" height="15" rx="4" fill="#2F5BEA" stroke="#16213A" stroke-width="1.5"/>
+    <path d="M25 44 Q26 56 38 56" fill="none" stroke="#16213A" stroke-width="2"/><circle cx="39" cy="56" r="2.8" fill="#F2C94C" stroke="#16213A" stroke-width="1.2"/>
+  </g>`;
+}
+const PNG = mood => SV(104, 102, pingo(0, 2, 1, mood), "Tučniak Pingo");
+const say = (html, mood) => `<div class="say">${PNG(mood)}<div class="bubble">${html}</div></div>`;
+/* kamarátka Ema (komiks) */
+const emaIn = mood => `<path d="M14 80 Q40 58 66 80" fill="#E2558A"/>
+  <path d="M14 46 Q10 70 22 74 M66 46 Q70 70 58 74" stroke="#A0522D" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="40" cy="42" r="24" fill="#F6C9A0" stroke="#16213A" stroke-width="2.5"/>
+  <path d="M16 42 Q14 16 40 15 Q66 16 64 42 Q60 26 48 24 Q40 32 22 30 Q18 34 16 42z" fill="#A0522D" stroke="#16213A" stroke-width="2"/>
+  <circle cx="31" cy="45" r="3.4" fill="#16213A"/><circle cx="49" cy="45" r="3.4" fill="#16213A"/>
+  ${mood === "sad" ? `<path d="M26 37 L35 40 M54 37 L45 40" stroke="#16213A" stroke-width="2.2"/><path d="M32 59 Q40 53 48 59" fill="none" stroke="#C0392B" stroke-width="2.5"/>` : `<path d="M32 56 Q40 63 48 56" fill="none" stroke="#C0392B" stroke-width="2.5"/>`}`;
+const EMA = mood => SV(80, 80, emaIn(mood), "Ema");
+
+/* ===== ÚVODNÝ OBRÁZOK ===== */
+const HERO = SV(420, 300, `
+  <defs><linearGradient id="hs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFD9FF"/><stop offset="1" stop-color="#EAF3FF"/></linearGradient></defs>
+  <rect width="420" height="300" rx="18" fill="url(#hs)"/>
+  <rect x="0" y="236" width="420" height="64" fill="#E9F2FB"/><path d="M0 236 Q60 222 120 236 T240 236 T360 232 T420 236 V300 H0z" fill="#FFFFFF"/>
+  ${WIN(150, 46, 150, 112, "📹 Videohovor", { tfs: 9.5 })}<rect x="151" y="68" width="148" height="89" fill="#2C3240"/>
+  <circle cx="200" cy="104" r="20" fill="#2F5BEA"/>${T(200, 111, "E", { a: "middle", fs: 18, b: 1, c: "#fff" })}<circle cx="262" cy="104" r="20" fill="#E57373"/>${T(262, 111, "T", { a: "middle", fs: 18, b: 1, c: "#fff" })}
+  ${["🎤", "📷", "✋", "📞"].map((e, i) => EM(190 + i * 24, 150, e, 12)).join("")}
+  ${PHONE(318, 96, 78, 132, `${BUB(328, 118, 58, "Ahoj! 👋", 0, 10)}${BUB(330, 148, 56, "Ideš? 🎮", 1, 10)}${BUB(328, 178, 50, "Jasné!", 0, 10)}`)}
+  ${box(160, 176, 120, 34, "#fff", C.line, 17)}${T(220, 198, "💬 píše…", { a: "middle", fs: 12, c: C.mut })}
+  ${EM(42, 74, "👍", 26)}${EM(126, 40, "😂", 22)}${EM(318, 40, "❤️", 22)}${EM(392, 62, "🎧", 22)}
+  ${pingo(14, 128, 1.45, "wow")}
+  ${T(210, 26, "Pingo a 6 misií o komunikácii", { a: "middle", fs: 15, b: 1, c: "#1F45C2" })}`, "Tučniak Pingo so slúchadlami, mobilom a videohovorom");
+
+/* ===== TEÓRIA: OBRÁZKY ===== */
+/* M1 */
+const FIG_SYNC = fig(SV(440, 236, `
+  ${box(8, 8, 424, 106, C.okS, C.ok, 12)}${T(20, 30, "⚡ v reálnom čase (synchrónne)", { fs: 13, b: 1, c: C.ok })}
+  ${T(22, 62, "14:00:02", { fs: 10, c: C.mut })}${BUB(74, 46, 92, "Ideš von? ⚽", 0)}
+  ${T(182, 88, "14:00:09", { fs: 10, c: C.mut })}${BUB(234, 72, 88, "Áno, o 5!", 1)}
+  ${T(336, 62, "14:00:15", { fs: 10, c: C.mut })}${BUB(330, 76, 80, "Super 👍", 0)}
+  ${T(420, 106, "odpoveď o pár sekúnd", { a: "end", fs: 11, b: 1, c: C.ok })}
+  ${box(8, 122, 424, 106, C.ambS, "#E0A800", 12)}${T(20, 144, "📨 s odstupom (asynchrónne)", { fs: 13, b: 1, c: C.amb })}
+  ${box(24, 156, 118, 50, "#fff", C.line, 8)}${EM(48, 188, "✉️", 20)}${T(66, 178, "pondelok", { fs: 11, b: 1 })}${T(66, 194, "odoslaná", { fs: 10.5, c: C.mut })}
+  ${ARR(148, 181, 290, 181, C.amb)}${T(219, 172, "správa čaká…", { a: "middle", fs: 11, c: C.mut })}
+  ${box(298, 156, 118, 50, "#fff", C.line, 8)}${EM(322, 188, "👀", 20)}${T(340, 178, "streda", { fs: 11, b: 1 })}${T(340, 194, "prečítaná", { fs: 10.5, c: C.mut })}
+  ${T(420, 222, "odpoveď o hodiny až dni", { a: "end", fs: 11, b: 1, c: C.amb })}`, "Komunikácia v reálnom čase a s odstupom"),
+  "V <b>reálnom čase</b> si odpovedáte hneď. Pri komunikácii <b>s odstupom</b> správa počká, kým si ju niekto prečíta.");
+const FIG_KINDS = fig(SV(440, 190, `
+  ${[["💬", "chat", "text, emoji, fotky", C.in, C.inS], ["📞", "hlasový hovor", "iba hlas", C.ok, C.okS], ["🎥", "videohovor", "hlas aj obraz", C.pur, C.purS]].map(([e, a, b, c, s], i) => { const x = 8 + i * 146; return `${box(x, 10, 132, 170, s, c, 14)}${EM(x + 66, 70, e, 40)}${T(x + 66, 112, a, { a: "middle", fs: 14, b: 1, c })}${T(x + 66, 136, b, { a: "middle", fs: 12 })}${box(x + 26, 150, 80, 20, "#fff", null, 10)}${T(x + 66, 164, "hneď", { a: "middle", fs: 11, b: 1, c: C.ok })}`; }).join("")}`, "Tri spôsoby komunikácie v reálnom čase"),
+  "Tri najčastejšie spôsoby komunikácie <b>v reálnom čase</b> a čo si v nich posielate.");
+/* M2 */
+const FIG_APPS = fig(SV(440, 244, `
+  ${[["WhatsApp", "správy, hovory, skupiny", "#25A244"], ["Messenger", "chat od firmy Meta", "#1E6FD9"], ["Signal", "dôraz na súkromie", "#3A76F0"], ["Discord", "servery a kanály komunít", "#5865F2"], ["Teams", "chat v škole a v práci", "#6264A7"]].map(([n, d, c], i) => `${box(10, 8 + i * 47, 420, 40, "#fff", C.line, 10)}<circle cx="34" cy="${28 + i * 47}" r="13" fill="${c}"/>${T(34, 33 + i * 47, n[0], { a: "middle", fs: 13, b: 1, c: "#fff" })}${T(58, 33 + i * 47, n, { fs: 13.5, b: 1 })}${T(420, 33 + i * 47, d, { fs: 11.5, c: C.mut, a: "end" })}`).join("")}`, "Známe četovacie aplikácie"),
+  "Známe <b>četovacie aplikácie</b>. Väčšina z nich zvláda aj hlasové hovory a videohovory.");
+const FIG_CHAT = fig(SV(440, 262, `
+  <rect x="14" y="6" width="200" height="250" rx="22" fill="#1B1B1F"/><rect x="22" y="18" width="184" height="226" rx="12" fill="#EEF3F9"/>
+  <rect x="22" y="18" width="184" height="38" rx="12" fill="${C.in}"/><rect x="22" y="44" width="184" height="12" fill="${C.in}"/>
+  ${AV(42, 37, "K", "#E57373", 12)}<circle cx="51" cy="46" r="4" fill="#3CCB8E" stroke="#fff" stroke-width="1.5"/>${T(60, 35, "Kubo", { fs: 12, b: 1, c: "#fff" })}${T(60, 49, "online", { fs: 9.5, c: "#fff" })}
+  ${box(30, 66, 140, 26, "#fff", C.line, 12)}${T(40, 83, "Kedy je tréning?", { fs: 11 })}
+  ${box(56, 104, 142, 46, "#DCF3E6", "#9BD3B3", 12)}<rect x="64" y="110" width="3" height="16" rx="1.5" fill="${C.in}"/>${T(72, 122, "Kedy je tréning?", { fs: 9.5, c: C.mut })}${T(66, 142, "V piatok o 16:00 ⚽", { fs: 11 })}
+  ${box(30, 162, 116, 26, "#fff", C.line, 12)}${T(40, 179, "Super, vďaka!", { fs: 11 })}${box(120, 182, 30, 18, "#fff", C.line, 9)}${T(135, 195, "❤️", { a: "middle", fs: 10 })}
+  ${box(28, 212, 140, 24, "#fff", C.line, 12)}${T(38, 228, "Napíš správu…", { fs: 10, c: C.mut })}<circle cx="186" cy="224" r="13" fill="${C.in}"/>${T(186, 229, "🎤", { a: "middle", fs: 12 })}
+  ${[[37, 52, "meno a stav online"], [116, 196, "citovaná správa (Odpovedať)"], [191, 150, "reakcia na správu"], [224, 199, "hlasová správa"]].map(([y, x, t]) => `<line x1="${x}" y1="${y}" x2="226" y2="${y}" stroke="${C.acc}" stroke-width="1.5"/><circle cx="${x}" cy="${y}" r="3" fill="${C.acc}"/>${T(232, y + 4, t, { fs: 12, b: 1, c: C.acc })}`).join("")}`, "Časti četovacej aplikácie"),
+  "Takto vyzerá rozhovor v četovacej aplikácii. Každá ikonka má svoj význam.");
+/* M3 */
+const FIG_NET = fig(SV(440, 230, `
+  ${T(220, 22, "Netiketa v skupine", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[["🙂", "píš slušne a pokojne", "bez urážok a kriku"], ["🕗", "v rozumnom čase", "nie neskoro v noci"], ["🎯", "k veci", "jedna správa namiesto desiatich"], ["📸", "cudzie fotky", "iba so súhlasom"]].map(([e, a, b], i) => { const x = 10 + (i % 2) * 214, y = 36 + Math.floor(i / 2) * 96; return `${box(x, y, 206, 88, "#fff", C.ok, 12)}${EM(x + 32, y + 54, e, 28)}${T(x + 60, y + 40, a, { fs: 13, b: 1, c: C.ok })}${T(x + 60, y + 62, b, { fs: 11.5 })}`; }).join("")}`, "Pravidlá netikety"),
+  "<b>Netiketa</b> sú pravidlá slušného správania na internete. V triednej skupine platia rovnako ako v triede.");
+const FIG_GROUP = fig(SV(440, 200, `
+  ${AV(60, 100, "Ty", C.acc, 26)}${box(96, 84, 110, 32, "#fff", C.line, 16)}${T(151, 105, "1 správa", { a: "middle", fs: 12, b: 1 })}
+  ${Array.from({ length: 24 }, (_, i) => { const x = 250 + (i % 6) * 30, y = 30 + Math.floor(i / 6) * 38; return AV(x, y, "", ["#E57373", "#43A047", "#F2A516", "#6A3FD0", "#1E6FD9", "#E2558A"][i % 6], 11); }).join("")}
+  ${ARR(208, 100, 234, 100, C.acc)}
+  ${T(325, 186, "uvidí 24 ľudí naraz", { a: "middle", fs: 13, b: 1, c: C.bad })}`, "Správa v skupine"),
+  "Správu v <b>skupine</b> uvidia všetci jej členovia. Mysli na to skôr, ako ju odošleš.");
+/* M4 */
+const FIG_VCBAR = fig(SV(440, 210, `
+  ${box(8, 8, 424, 194, "#1F2430", null, 12)}
+  ${[["Mgr. Nová", "#2F5BEA"], ["Ema", "#E57373"], ["Tomáš", "#43A047"], ["Ty", "#F2A516"]].map(([n, c], i) => { const x = 18 + i * 104; return `${box(x, 20, 96, 92, "#2C3240", null, 8)}<circle cx="${x + 48}" cy="58" r="20" fill="${c}"/>${T(x + 48, 65, n[0], { a: "middle", fs: 16, b: 1, c: "#fff" })}${T(x + 8, 104, n, { fs: 10, c: "#fff" })}`; }).join("")}
+  ${[["🎤", "mikrofón"], ["📷", "kamera"], ["✋", "ruka"], ["💬", "chat"], ["🖥️", "zdieľať"], ["📞", "odísť"]].map(([e, t], i) => { const x = 48 + i * 69; return `<circle cx="${x}" cy="146" r="18" fill="${i === 5 ? "#E53935" : "#2F3645"}"/>${EM(x, 152, e, 15)}${T(x, 186, t, { a: "middle", fs: 11, c: "#C9CED6" })}`; }).join("")}`, "Tlačidlá videohovoru"),
+  "Tlačidlá, ktoré nájdeš takmer v každej aplikácii na <b>videohovory</b>.");
+const FIG_CAM = fig(SV(440, 210, `
+  <rect x="0" y="0" width="440" height="210" rx="12" fill="#F3EEF8"/><rect x="0" y="160" width="440" height="50" fill="#D9C3A0"/>
+  ${box(250, 30, 170, 110, "#E8DDF3", "#B9A6D6", 8)}${T(335, 22, "stena za tebou", { a: "middle", fs: 11, b: 1, c: C.pur })}
+  ${box(300, 52, 70, 46, "#fff", "#C9D1DF", 4)}${EM(335, 84, "🖼️", 22)}<rect x="262" y="112" width="60" height="8" fill="#8B5E3C"/>${EM(278, 110, "📚", 16)}${EM(380, 132, "🪴", 22)}
+  <path d="M86 112 L250 30 L250 140 Z" fill="${C.acc}" opacity=".14"/><line x1="86" y1="112" x2="250" y2="30" stroke="${C.acc}" stroke-dasharray="5 4"/><line x1="86" y1="112" x2="250" y2="140" stroke="${C.acc}" stroke-dasharray="5 4"/>
+  ${LAPTOP(30, 104, 90)}<circle cx="75" cy="108" r="2.4" fill="#3CCB8E"/>
+  <g transform="translate(150,72) scale(.9)">${emaIn("")}</g>
+  ${T(14, 196, "Kamera vidí teba aj všetko, čo je za tebou.", { fs: 12.5, b: 1, c: C.acc })}`, "Čo vidí kamera"),
+  "Kamera neukazuje iba tvoju tvár. Ostatní uvidia aj <b>pozadie</b> za tebou.");
+/* M5 */
+const FIG_DATA = fig(SV(440, 220, `
+  ${T(220, 22, "Toto neznámym nedávaj", { a: "middle", fs: 14, b: 1, c: C.bad })}
+  ${[["🏠", "adresa"], ["🏫", "škola"], ["📞", "telefón"], ["📸", "fotky"], ["🔑", "heslo"], ["📍", "kde práve si"]].map(([e, t], i) => { const x = 10 + (i % 3) * 142, y = 36 + Math.floor(i / 3) * 90; return `${box(x, y, 134, 82, C.badS, C.bad, 12)}${EM(x + 67, y + 42, e, 28)}${T(x + 67, y + 68, t, { a: "middle", fs: 13, b: 1 })}<circle cx="${x + 118}" cy="${y + 16}" r="10" fill="${C.bad}"/>${T(x + 118, y + 20, "✕", { a: "middle", fs: 11, b: 1, c: "#fff" })}`; }).join("")}`, "Osobné údaje"),
+  "Toto sú <b>osobné údaje</b>. Človeku, ktorého poznáš iba z internetu, ich neposielaj.");
+const FIG_HELP = fig(SV(440, 200, `
+  ${T(220, 22, "Keď ťa niečo na internete trápi, povedz to", { a: "middle", fs: 13.5, b: 1, c: C.ok })}
+  ${[["👨‍👩‍👧", "rodičom", "doma"], ["👩‍🏫", "učiteľovi", "v škole"], ["☎️", "116 111", "Linka detskej istoty"]].map(([e, a, b], i) => { const x = 10 + i * 142; return `${box(x, 36, 134, 150, C.okS, C.ok, 14)}${EM(x + 67, 92, e, 36)}${T(x + 67, 132, a, { a: "middle", fs: 15, b: 1, c: C.ok })}${T(x + 67, 156, b, { a: "middle", fs: 11 })}`; }).join("")}`, "Kto ti pomôže"),
+  "Na <b>Linku detskej istoty 116 111</b> môžeš zavolať bezplatne a nemusíš povedať ani svoje meno.");
+/* M6 */
+const FIG_TONE = fig(SV(440, 220, `
+  ${box(8, 8, 206, 204, C.okS, C.ok)}${T(111, 32, "💬 kamarátovi", { a: "middle", b: 1, fs: 13, c: C.ok })}
+  ${box(20, 48, 182, 48, "#fff", C.line, 12)}${T(30, 68, "čau, ideš večer na", { fs: 12 })}${T(30, 86, "bicykel? 🚲😄", { fs: 12 })}
+  ${T(111, 140, "neformálne:", { a: "middle", fs: 12, b: 1, c: C.ok })}${T(111, 160, "krátko, emoji aj skratky", { a: "middle", fs: 11 })}${T(111, 176, "sú v poriadku", { a: "middle", fs: 11 })}
+  ${box(226, 8, 206, 204, C.inS, C.in)}${T(329, 32, "✉️ pani knihovníčke", { a: "middle", b: 1, fs: 13, c: C.in })}
+  ${box(236, 42, 186, 118, "#fff", C.line, 8)}${["Dobrý deň,", "chcel by som si predĺžiť", "výpožičku knihy o vesmíre.", "Ďakujem.", "Peter Malý"].map((t, i) => T(246, 62 + i * 21, t, { fs: 11 })).join("")}
+  ${T(329, 182, "formálne: pozdrav, celé vety,", { a: "middle", fs: 11.5, b: 1, c: C.in })}${T(329, 199, "poďakovanie a podpis", { a: "middle", fs: 11 })}`, "Neformálna a formálna správa"),
+  "Kamarátovi píšeš <b>neformálne</b>. Dospelým, ktorých nepoznáš blízko, a úradom píšeš <b>formálne</b>.");
+const FIG_EMOJI = fig(SV(440, 200, `
+  ${T(220, 22, "Ten istý emoji, iný význam", { a: "middle", fs: 14, b: 1, c: C.acc })}
+  ${[["🙂", "priateľský úsmev", "niekto to číta ako „no dobre…“"], ["👍", "súhlasím, super", "niekomu príde príliš stručný"], ["😂", "to je vtipné", "pri smutnej správe raní"]].map(([e, a, b], i) => { const y = 36 + i * 54; return `${box(10, y, 420, 46, i % 2 ? "#fff" : C.bg, C.line, 10)}${EM(38, y + 32, e, 24)}${T(66, y + 20, a, { fs: 12.5, b: 1, c: C.ok })}${T(66, y + 37, b, { fs: 11.5, c: C.bad })}`; }).join("")}`, "Význam emoji"),
+  "Emoji nenahradia tón hlasu. Ten istý obrázok si každý môže vysvetliť <b>inak</b>.");
+
+/* ===== SCÉNY NA KLIKANIE ===== */
+const found = (k, H) => Object.keys(H).filter(id => (S.found[k] || {})[id]).map(id => { const [x, y] = H[id]; return `<g pointer-events="none"><circle cx="${x}" cy="${y}" r="34" fill="#12805A" opacity=".18"/><circle cx="${x}" cy="${y}" r="34" fill="none" stroke="#12805A" stroke-width="4" stroke-dasharray="7 5"/>${EM(x, y + 10, "✅", 28)}</g>`; }).join("");
+const SCN = {
+  s1: { what: "Nájdená komunikácia v reálnom čase", key: "Aký je to spôsob komunikácie?",
+    items: [
+      { id: "ph", e: "📱", n: "Mobil na stole", a: "r1", why: "Na displeji vidno babku a v malom okienku aj Emu. Vidia sa a počujú v reálnom čase, je to <b>videohovor</b>." },
+      { id: "hs", e: "🎧", n: "Slúchadlá a hra na televízore", a: "r2", why: "Ema sa počas hry rozpráva s kamarátmi cez mikrofón na slúchadlách. Iba sa počujú, je to <b>hlasový hovor</b>." },
+      { id: "tb", e: "📲", n: "Tablet na gauči", a: "r3", why: "Na tablete prichádzajú správy a kamarátka práve píše odpoveď. Je to <b>chat</b> v reálnom čase." }],
+    roles: [{ id: "r1", t: "videohovor: vidia sa aj počujú" }, { id: "r2", t: "hlasový hovor: iba sa počujú" }, { id: "r3", t: "chat: píšu si a hneď si odpovedajú" }, { id: "r4", t: "e‑mail: správa počká, kým si ju niekto prečíta" }],
+    decoy: { mail: "💻 Notebook s e‑mailom. E‑mail počká, kým si ho niekto prečíta, je to komunikácia <b>s odstupom</b>. Hľadaj ďalej!", card: "📮 Pohľadnica od tety z dovolenky. Prišla po týždni, to je poriadny odstup! 😄", cat: "🐈 Mačka Micka. Komunikuje mňaukaním, ale to sa nepočíta. 😺", clock: "🕒 Hodiny. Pri komunikácii v reálnom čase čakáš na odpoveď iba chvíľu.", books: "📚 Knihy. Autor sa ti cez ne „prihovára“, ale odpovedať mu hneď nemôžeš.", win: "🪟 Okno. Vonku je pekne, ale hľadaj zariadenia, cez ktoré sa Ema s niekým práve teraz rozpráva." },
+    hot: { ph: [258, 200], hs: [610, 232], tb: [440, 400] },
+    svg() { const g = (id, s) => `<g data-hot="s1|${id}">${s}</g>`;
+      let s = `<rect width="800" height="470" fill="#F6EBDD"/><rect x="0" y="360" width="800" height="110" fill="#C9A86A"/><rect x="0" y="356" width="800" height="6" fill="#B08D4F"/>`;
+      s += g("win", `<rect x="40" y="40" width="140" height="110" rx="6" fill="#BFE0FF" stroke="#fff" stroke-width="7"/><circle cx="140" cy="76" r="16" fill="#F7C948"/><path d="M40 130 Q80 110 120 128 T180 124 V150 H40z" fill="#8BC57A"/><line x1="110" y1="40" x2="110" y2="150" stroke="#fff" stroke-width="5"/><line x1="40" y1="95" x2="180" y2="95" stroke="#fff" stroke-width="5"/>`);
+      s += g("card", `<rect x="215" y="45" width="150" height="100" rx="6" fill="#C99A5B" stroke="#8B5E3C" stroke-width="3"/><g transform="rotate(-6 290 95)"><rect x="240" y="62" width="96" height="66" rx="3" fill="#fff"/><rect x="246" y="68" width="84" height="34" fill="#7EC8E3"/><path d="M246 92 Q270 84 288 92 T330 90 V102 H246z" fill="#F2D49B"/>${EM(312, 90, "☀️", 13)}${T(288, 120, "Pozdrav z mora!", { a: "middle", fs: 9.5, b: 1, c: "#8B5E3C" })}</g><circle cx="290" cy="58" r="5" fill="#C0392B"/>`);
+      s += g("clock", `<circle cx="440" cy="90" r="32" fill="#fff" stroke="#16213A" stroke-width="4"/><line x1="440" y1="90" x2="440" y2="68" stroke="#16213A" stroke-width="4" stroke-linecap="round"/><line x1="440" y1="90" x2="456" y2="98" stroke="#16213A" stroke-width="3" stroke-linecap="round"/><circle cx="440" cy="90" r="3" fill="#C0392B"/>`);
+      s += g("books", `<rect x="560" y="110" width="210" height="10" fill="#8B5E3C"/>${[["#C0392B", 24, 58], ["#2F5BEA", 18, 50], ["#12805A", 22, 62], ["#F2A516", 16, 46], ["#6A3FD0", 24, 56], ["#E2558A", 20, 52]].map(([c, w, h], i, a) => { const x = 572 + a.slice(0, i).reduce((t, b) => t + b[1] + 4, 0); return `<rect x="${x}" y="${110 - h}" width="${w}" height="${h}" rx="2" fill="${c}"/>`; }).join("")}`);
+      s += `<rect x="20" y="250" width="300" height="14" rx="3" fill="#8B5E3C"/><rect x="30" y="264" width="12" height="96" fill="#7A5232"/><rect x="298" y="264" width="12" height="96" fill="#7A5232"/>`;
+      s += g("mail", LAPTOP(38, 155, 150, `<rect x="43" y="160" width="140" height="16" fill="#1E6FD9"/>${T(50, 172, "📧 Pošta", { fs: 10, b: 1, c: "#fff" })}${[0, 1, 2, 3].map(i => `<rect x="50" y="${184 + i * 15}" width="${120 - i * 14}" height="8" rx="3" fill="${i === 0 ? "#9BB7E8" : "#C9D1DF"}"/>`).join("")}`));
+      s += g("ph", `<path d="M236 252 L258 222 L280 252 Z" fill="#566381"/>${PHONE(222, 140, 72, 112, `<rect x="227" y="150" width="62" height="92" rx="5" fill="#2C3240"/><circle cx="258" cy="186" r="17" fill="#F6C9A0"/><path d="M241 182 Q242 164 258 164 Q274 164 275 182 Q268 172 258 172 Q248 172 241 182z" fill="#D9D9D9"/><circle cx="252" cy="188" r="2" fill="#16213A"/><circle cx="264" cy="188" r="2" fill="#16213A"/><path d="M252 196 Q258 201 264 196" fill="none" stroke="#C0392B" stroke-width="1.8"/><path d="M236 242 Q258 214 280 242 Z" fill="#7E57C2"/><rect x="268" y="214" width="16" height="22" rx="3" fill="#E2558A" stroke="#fff" stroke-width="1.5"/>`)}`);
+      s += g("hs", `<rect x="470" y="300" width="290" height="60" rx="4" fill="#8B5E3C"/><rect x="480" y="312" width="130" height="38" rx="3" fill="#7A5232"/><rect x="620" y="312" width="130" height="38" rx="3" fill="#7A5232"/>
+        <rect x="500" y="168" width="220" height="128" rx="6" fill="#16213A"/><rect x="507" y="175" width="206" height="114" fill="#3A71A8"/><path d="M507 262 Q560 236 610 258 T713 248 V289 H507z" fill="#4CAF50"/>${EM(600, 254, "🏰", 26)}${EM(660, 270, "🧝", 18)}
+        <rect x="514" y="182" width="104" height="54" rx="6" fill="#0E1424" opacity=".85"/>${T(522, 198, "🎙️ hlasový chat", { fs: 10, b: 1, c: "#fff" })}${T(522, 214, "🔊 Kubo", { fs: 10, c: "#9FF0C8" })}${T(522, 229, "🔇 Tomi", { fs: 10, c: "#C9CED6" })}
+        <rect x="586" y="296" width="48" height="8" fill="#16213A"/><rect x="540" y="284" width="0" height="0"/>
+        <path d="M690 286 Q718 240 746 286" fill="none" stroke="#16213A" stroke-width="6" stroke-linecap="round"/><rect x="682" y="278" width="16" height="24" rx="6" fill="#E53935" stroke="#16213A" stroke-width="2"/><rect x="738" y="278" width="16" height="24" rx="6" fill="#E53935" stroke="#16213A" stroke-width="2"/><path d="M690 300 Q694 318 712 318" fill="none" stroke="#16213A" stroke-width="2.5"/><circle cx="714" cy="318" r="3.5" fill="#16213A"/>`);
+      s += g("cat", `<path d="M720 432 Q760 420 772 440" fill="none" stroke="#6B6B6B" stroke-width="6" stroke-linecap="round"/><ellipse cx="700" cy="436" rx="34" ry="18" fill="#8E8E8E"/><circle cx="668" cy="420" r="16" fill="#8E8E8E"/><path d="M656 410 L658 394 L668 406 Z M672 406 L682 394 L682 410 Z" fill="#8E8E8E"/><circle cx="662" cy="420" r="2.2" fill="#16213A"/><circle cx="674" cy="420" r="2.2" fill="#16213A"/>`);
+      s += `<rect x="300" y="360" width="270" height="44" rx="12" fill="#5C7FB3"/><rect x="286" y="372" width="28" height="78" rx="10" fill="#4C6EA0"/><rect x="556" y="372" width="28" height="78" rx="10" fill="#4C6EA0"/><rect x="300" y="398" width="270" height="48" rx="8" fill="#6C8EBF"/>`;
+      s += g("tb", `<g transform="rotate(-6 440 400)"><rect x="392" y="366" width="96" height="66" rx="8" fill="#1B1B1F"/><rect x="398" y="372" width="84" height="54" rx="4" fill="#F4F7FC"/>${box(404, 377, 52, 13, "#fff", C.line, 6)}${box(426, 394, 50, 13, "#DCF3E6", "#9BD3B3", 6)}${box(404, 411, 40, 11, "#fff", C.line, 5)}${T(412, 420, "píše…", { fs: 7.5, c: C.mut })}</g>`);
+      return SV(800, 470, s + found("s1", this.hot), "Izba, v ktorej Ema komunikuje");
+    } },
+  s2: { what: "Nájdené problémy", key: "Ako to napravíš?",
+    items: [
+      { id: "mess", e: "🧺", n: "Neporiadok na posteli za Emou", a: "f1", why: "Kamera ukáže všetkým aj to, čo je za tebou. Uprac alebo zapni <b>rozmazanie pozadia</b>." },
+      { id: "batt", e: "🔋", n: "Batéria na 7 %", a: "f2", why: "So 7 % by sa notebook počas hodiny vypol. <b>Nabíjačku</b> zapoj ešte pred hovorom." },
+      { id: "noise", e: "🥁", n: "Brat bubnuje za otvorenými dverami", a: "f3", why: "Hluk z domu by počuli všetci. <b>Zavri dvere</b> a mikrofón maj <b>vypnutý</b>, kým nehovoríš." }],
+    roles: [{ id: "f1", t: "uprac to alebo zapni rozmazanie pozadia" }, { id: "f2", t: "zapoj nabíjačku ešte pred hovorom" }, { id: "f3", t: "zavri dvere a mikrofón maj vypnutý, keď nehovoríš" }, { id: "f4", t: "vypni kameru aj zvuk na celú hodinu" }],
+    decoy: { ema: "🙂 To je Ema v náhľade kamery. Usmieva sa a je pripravená, s ňou je všetko v poriadku.", poster: "🪐 Plagát s planétami. Je pekný a v pozadí neruší.", shelf: "📚 Polica s knihami. Je uprataná, v poriadku.", plant: "🪴 Kvetinka. Tá nikomu neprekáža.", join: "▶️ Tlačidlo Pripojiť sa. Najprv však nájdi všetky problémy, ktoré treba vyriešiť!", ctl: "🎤📷 Tlačidlá mikrofónu a kamery. Fungujú, tu problém nie je.", head: "📹 Názov hovoru. Hodina začína o 2 minúty, ponáhľaj sa! ⏱️" },
+    hot: { mess: [150, 262], batt: [712, 436], noise: [690, 210] },
+    svg() { const g = (id, s) => `<g data-hot="s2|${id}">${s}</g>`;
+      let s = `<rect width="800" height="470" rx="12" fill="#fff" stroke="#9AA6B8" stroke-width="2"/>`;
+      s += g("head", `<path d="M0 12 a12 12 0 0 1 12 -12 h776 a12 12 0 0 1 12 12 v20 h-800 z" fill="#E9EDF3"/>${T(16, 22, "📹 Online hodina informatiky · začína o 2 minúty", { fs: 13, b: 1, c: C.mut })}${[0, 1, 2].map(i => `<circle cx="${780 - i * 16}" cy="16" r="5" fill="${["#E5534B", "#E0A800", "#2DA44E"][i]}"/>`).join("")}`);
+      s += `<rect x="16" y="42" width="768" height="350" rx="8" fill="#E8DDF3"/><rect x="16" y="302" width="768" height="90" fill="#D9C3A0"/>${T(28, 62, "náhľad kamery", { fs: 11, b: 1, c: "#7E6A9A" })}`;
+      s += g("poster", `<rect x="250" y="66" width="120" height="88" rx="4" fill="#1B2B55" stroke="#fff" stroke-width="4"/><circle cx="282" cy="104" r="16" fill="#F2A516"/><ellipse cx="282" cy="104" rx="26" ry="6" fill="none" stroke="#FFE08A" stroke-width="2"/><circle cx="334" cy="88" r="9" fill="#5B8CFF"/><circle cx="342" cy="130" r="6" fill="#E57373"/>${[[262, 76], [356, 74], [312, 140], [300, 80]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.6" fill="#fff"/>`).join("")}`);
+      s += g("shelf", `<rect x="440" y="120" width="130" height="9" fill="#8B5E3C"/>${[["#2F5BEA", 16, 40], ["#12805A", 20, 46], ["#F2A516", 14, 36], ["#C0392B", 18, 44], ["#6A3FD0", 16, 38]].map(([c, w, h], i, a) => { const x = 452 + a.slice(0, i).reduce((t, b) => t + b[1] + 3, 0); return `<rect x="${x}" y="${120 - h}" width="${w}" height="${h}" rx="2" fill="${c}"/>`; }).join("")}`);
+      s += g("mess", `<rect x="30" y="196" width="18" height="130" rx="4" fill="#8B5E3C"/><rect x="40" y="250" width="226" height="44" rx="8" fill="#fff" stroke="#C9D1DF" stroke-width="2"/><rect x="40" y="268" width="226" height="40" rx="8" fill="#9CC3E6"/><rect x="40" y="306" width="226" height="16" fill="#8B5E3C"/>
+        <path d="M96 252 L110 226 L132 232 L150 220 L170 236 L160 254 Z" fill="#E53935"/><ellipse cx="190" cy="246" rx="34" ry="14" fill="#3B5BA9"/><path d="M216 240 Q236 228 248 246 Q236 252 222 252 Z" fill="#43A047"/><ellipse cx="128" cy="258" rx="26" ry="8" fill="#F2A516"/>${EM(232, 236, "🧦", 18)}
+        <g transform="rotate(-8 110 340)"><rect x="62" y="326" width="96" height="22" rx="3" fill="#C98B4A" stroke="#8B5E3C" stroke-width="2"/>${T(110, 342, "PIZZA", { a: "middle", fs: 11, b: 1, c: "#7A3E10" })}</g>${EM(186, 352, "🥤", 20)}`);
+      s += g("noise", `<rect x="610" y="90" width="150" height="212" fill="#4A3B5C"/><rect x="606" y="86" width="158" height="216" fill="none" stroke="#8B5E3C" stroke-width="7"/><polygon points="610,90 646,112 646,284 610,302" fill="#B07A4A" stroke="#8B5E3C" stroke-width="2"/><circle cx="638" cy="200" r="3.5" fill="#F2C94C"/>
+        <circle cx="704" cy="176" r="15" fill="#F6C9A0"/><path d="M690 170 Q692 156 704 156 Q716 156 718 170 Q710 164 704 164 Q698 164 690 170z" fill="#6B3E1E"/><rect x="690" y="191" width="28" height="40" rx="8" fill="#43A047"/><ellipse cx="704" cy="256" rx="34" ry="13" fill="#E53935" stroke="#fff" stroke-width="2"/><rect x="670" y="256" width="68" height="26" fill="#E53935"/><ellipse cx="704" cy="282" rx="34" ry="8" fill="#B71C1C"/>
+        <line x1="682" y1="216" x2="668" y2="246" stroke="#F2C94C" stroke-width="4" stroke-linecap="round"/><line x1="726" y1="216" x2="740" y2="246" stroke="#F2C94C" stroke-width="4" stroke-linecap="round"/>${T(704, 128, "BUM! BUM!", { a: "middle", fs: 16, b: 1, c: "#FFD54F" })}`);
+      s += g("plant", `<path d="M560 300 L590 300 L585 336 L565 336 Z" fill="#C0602B"/><path d="M575 300 Q560 268 548 262 M575 300 Q576 262 584 250 M575 300 Q592 276 604 272" stroke="#2E7D32" stroke-width="6" fill="none" stroke-linecap="round"/>`);
+      s += g("ema", `<rect x="352" y="318" width="110" height="74" rx="18" fill="#E2558A"/><g transform="translate(330,168) scale(1.9)">${emaIn("")}</g>`);
+      s += `<rect x="0" y="398" width="800" height="72" fill="#F1F3F6"/><rect x="0" y="458" width="800" height="12" rx="0" fill="#F1F3F6"/>`;
+      s += g("ctl", `<circle cx="290" cy="434" r="21" fill="#2F3645"/>${EM(290, 441, "🎤", 17)}<circle cx="346" cy="434" r="21" fill="#2F3645"/>${EM(346, 441, "📷", 17)}`);
+      s += g("join", `<rect x="400" y="414" width="160" height="40" rx="10" fill="${C.acc}"/>${T(480, 439, "▶ Pripojiť sa", { a: "middle", fs: 14, b: 1, c: "#fff" })}`);
+      s += g("batt", `<rect x="652" y="414" width="122" height="42" rx="10" fill="#fff" stroke="#C0392B" stroke-width="2"/><rect x="664" y="425" width="40" height="20" rx="3" fill="none" stroke="#16213A" stroke-width="2.4"/><rect x="704" y="431" width="4" height="8" fill="#16213A"/><rect x="667" y="428" width="5" height="14" fill="#C0392B"/>${T(744, 441, "7 %", { a: "middle", fs: 15, b: 1, c: "#C0392B" })}`);
+      return SV(800, 470, s + found("s2", this.hot), "Náhľad kamery pred online hodinou");
+    } }
+};
+
+/* ===== TRIEDNA SKUPINA (úloha 6) ===== */
+const GCH = [
+  { id: "1", w: "Mgr. Nová (triedna)", h: "15:10", t: "Deti, zajtra si prineste pastelky a nožnice. 🖍️✂️", opts: ["Deti, PRINESTE SI PASTELKY!!!", "pastelky zajtra", "Zajtra pastelky, inak poznámka!"] },
+  { id: "2", w: "Ema", h: "15:12", t: "Ďakujeme, pani učiteľka 🙂", opts: ["ĎAKUJEME!!!", "ok", "Ďakujem, ďakujem, ďakujem, ďakujem"] },
+  { id: "3", w: "Marek", h: "17:40", t: "PREČO MI NIKTO NEODPISUJE?! KTO VIE ÚLOHU Z MATIKY?!", err: 1, opts: ["Ahoj, vie mi niekto poradiť s úlohou z matiky? 🙂", "Odpíšte mi hneď, inak sa urazím!", "Kto vie úlohu??? Kto??? Kto???"], why: "Text veľkými písmenami a s výkrikmi pôsobí ako <b>krik</b>. Slušná otázka dostane odpoveď skôr." },
+  { id: "4", w: "Sára", h: "17:45", t: "Marek, úloha je v zošite na strane 24 👍", opts: ["MAREK, STRANA 24!!!", "si hlupák, strana 24", "Strana 24, strana 24, strana 24"] },
+  { id: "5", w: "Peťo", h: "19:02", t: "Pošli túto správu 10 ľuďom, inak budeš mať 7 rokov smolu!!! 🔁", err: 1, opts: ["Takúto správu nepošlem ďalej ani do skupiny.", "Pošlem ju iba piatim ľuďom.", "Dám ju do skupiny, ale bez výkričníkov."], why: "Je to <b>reťazová správa</b>. Straší, aby ju ľudia posielali ďalej, a zahlcuje skupiny. Nikdy ju neposielaj ďalej." },
+  { id: "6", w: "Jakub", h: "19:30", t: "Mám dve pravítka, ak niekto zabudne, požičiam 📏", opts: ["MÁM PRAVÍTKA!!!", "pravitka mam", "Pravítka, pravítka, pravítka!"] },
+  { id: "7", w: "Lucia", h: "23:48", t: "Haló! Spí niekto? 🔔🔔🔔🔔", err: 1, opts: ["Napíšem to až ráno, keď už nikto nespí.", "Pošlem to ešte trikrát, aby si to všimli.", "Pridám ešte viac zvončekov, nech to počuť."], why: "Takmer o polnoci by správa zobudila celú triedu. Do skupiny píš v <b>rozumnom čase</b>." }
+];
+const GCOL = { "Mgr. Nová (triedna)": "#2F5BEA", Ema: "#E2558A", Marek: "#43A047", Sára: "#F2A516", Peťo: "#6A3FD0", Jakub: "#1E6FD9", Lucia: "#C0392B" };
+
+/* ===== ÚLOHY ===== */
+const TICK = (s, c) => `<span style="font-family:Arial,sans-serif;font-weight:700;letter-spacing:-4px;color:${c};font-size:26px">${s}</span>`;
+const TASKS = {
+  s1: { id: "s1", type: "scene", max: 3 },
+  ksort: { id: "ksort", type: "sort", per: 2, max: 2, bins: [{ id: "s", t: "⚡ v reálnom čase", bg: C.okS, c: C.ok }, { id: "a", t: "📨 s odstupom", bg: C.ambS, c: C.amb }], items: [
+    { id: "1", t: "Hlasový chat s kamarátmi počas hrania hry", a: "s" }, { id: "2", t: "Komentár pod videom, na ktorý autor odpíše o dva dni", a: "a" },
+    { id: "3", t: "Videohovor s ockom, ktorý je na služobnej ceste", a: "s" }, { id: "4", t: "Odkaz v hlasovej schránke, ktorý si mama vypočuje večer", a: "a" }] },
+  stat: { id: "stat", type: "cards", per: 2, max: 2, key: "Čo to znamená?", items: [
+    { id: "c", e: "🕓", n: "hodinky pri správe", a: "o1", why: "<b>Hodinky</b>: správa ešte neodišla, napríklad preto, že mobil nie je pripojený na internet." },
+    { id: "1", e: TICK("✓", "#8A93A6"), n: "jedna sivá fajka", a: "o2", why: "<b>Jedna sivá fajka</b>: správa odišla na server aplikácie, ale do mobilu kamaráta ešte nedošla, napríklad má vypnutý mobil." },
+    { id: "2", e: TICK("✓✓", "#8A93A6"), n: "dve sivé fajky", a: "o3", why: "<b>Dve sivé fajky</b>: správa je doručená do mobilu kamaráta, ale ešte si ju neotvoril." },
+    { id: "3", e: TICK("✓✓", "#2D9CDB"), n: "dve modré fajky", a: "o4", why: "<b>Dve modré fajky</b>: kamarát si správu prečítal." }],
+    opts: [{ id: "o1", t: "správa sa ešte odosiela" }, { id: "o2", t: "správa odišla, ale do mobilu kamaráta ešte nedošla" }, { id: "o3", t: "správa je doručená, ale ešte neprečítaná" }, { id: "o4", t: "kamarát si správu prečítal" }, { id: "o5", t: "kamarát ťa zablokoval" }] },
+  chq: { id: "chq", type: "mc", qs: [
+    { id: "1", q: "Pri Eme svieti zelená bodka <b>online</b>, ale na tvoju správu 10 minút neodpísala. Čo to znamená?", opts: ["Môže mať aplikáciu otvorenú, ale práve robí niečo iné. Netreba ju naháňať.", "Určite sa na teba hnevá a schválne neodpisuje.", "Správa sa určite stratila, treba ju poslať ešte päťkrát.", "Zelená bodka znamená, že si ťa Ema stlmila."], a: 0, why: "Stav <b>online</b> iba ukazuje, že má aplikáciu otvorenú. Každý má právo odpísať, keď má čas." },
+    { id: "2", q: "V skupine sa naraz píše o výlete, o úlohe aj o futbale. Chceš odpovedať na otázku, <b>kedy odchádza autobus</b>. Ako to urobíš, aby bolo jasné, na čo odpovedáš?", opts: ["Pri tej otázke použijem Odpovedať a napíšem čas.", "Napíšem iba „o ôsmej“ ako novú správu.", "Pošlem do skupiny hlasovú správu „o ôsmej“.", "Napíšem „O ÔSMEJ“ veľkými písmenami, nech si to všimnú."], a: 0, why: "Funkcia <b>Odpovedať</b> zobrazí pri tvojej správe aj otázku, na ktorú odpovedáš. Nikto sa nepomýli." }] },
+  emq: { id: "emq", type: "mc", qs: [
+    { id: "1", q: "Pani triedna poslala do skupiny oznam o výlete. Chceš dať najavo, že si ho čítal, ale nechceš skupinu zahltiť ďalšou správou. Čo urobíš?", opts: ["Pridám k jej správe reakciu 👍.", "Napíšem do skupiny samostatnú správu „ok“.", "Pošlem do skupiny hlasovú správu „čítal som“.", "Skopírujem jej oznam a pošlem ho ešte raz."], a: 0, why: "<b>Reakcia</b> sa pridá priamo k správe a nevznikne nová správa. Skupina ostane prehľadná." }] },
+  gch: { id: "gch", type: "gchat", max: 3 },
+  grq: { id: "grq", type: "mc", qs: [
+    { id: "1", q: "Triedna skupina má 24 členov a mobil ti pípa aj počas obeda. Správy si chceš prečítať neskôr naraz. Čo urobíš?", opts: ["Skupinu stlmím a správy si prečítam, keď budem mať čas.", "Zo skupiny odídem a zajtra sa do nej vrátim.", "Napíšem do skupiny, aby všetci prestali písať.", "Zablokujem všetkých členov skupiny."], a: 0, why: "<b>Stlmená</b> skupina nepípa, ale správy v nej ostanú. Prečítaš si ich, kedy chceš." },
+    { id: "2", q: "Chceš sa Emy opýtať, či príde v sobotu na tvoju oslavu. Kam to napíšeš?", opts: ["Do súkromného chatu s Emou.", "Do triednej skupiny, nech to vidia všetci.", "Do komentára pod školským videom.", "Do skupiny rodičov našej triedy."], a: 0, why: "Otázka patrí iba Eme, preto ju napíš do <b>súkromného chatu</b>. Ostatní ju nepotrebujú čítať a nik sa necíti odstrčený." }] },
+  s2: { id: "s2", type: "scene", max: 3 },
+  vcom: { id: "vcom", type: "comic", panels: [
+    { w: "e", t: "Pingo, som na online hodine! 📹 Pani učiteľka práve vysvetľuje a ja nerozumiem jednej veci. Mám jej hneď skočiť do reči?" },
+    { w: "p", q: "1", opts: ["Zdvihni ruku ✋ v aplikácii a počkaj, kým ťa pani učiteľka vyvolá.", "Zapni mikrofón a hovor nahlas, nech ťa určite počuje.", "Odíď z hovoru a pripoj sa znova, všimne si ťa.", "Napíš otázku do chatu desaťkrát, aby ju neprehliadla."], a: 0, why: "Tlačidlo <b>Zdvihnúť ruku</b> ukáže, že sa chceš ozvať, a nikoho neprerušíš. Ako v triede." },
+    { w: "e", mood: "sad", t: "Funguje to! 🙂 Ale Tomáš v chate píše, že si hodinu nahrá aj s nami a dá ju na internet, aby sa všetci zasmiali." },
+    { w: "p", q: "2", opts: ["To nie je v poriadku. Nahrávať a zverejňovať iných sa smie iba s ich súhlasom.", "To je v poriadku, online hodina je predsa verejná.", "Nevadí to, ak video po týždni z internetu zmaže.", "Smie, ak z videa vystrihne iba pani učiteľku."], a: 0, why: "Bez <b>súhlasu</b> ľudí ich nahrávať ani zverejňovať nesmieš. Čo raz dáš na internet, ťažko vrátiš späť." },
+    { w: "p", t: "Online hodina je tiež trieda. Platia v nej rovnaké pravidlá slušnosti. 🐧" }] },
+  scom: { id: "scom", type: "comic", panels: [
+    { w: "e", mood: "sad", t: "Pingo, v hre mi začal písať nejaký <b>Max_13</b>. Je milý a dáva mi darčeky v hre. Teraz chce moju fotku a vraj to nemám hovoriť mame. 😕" },
+    { w: "p", q: "1", opts: ["Neodpisuj mu, zablokuj ho, nahlás ho v hre a hneď to povedz mame.", "Pošli mu fotku, ale iba jednu a bez tváre.", "Napíš mu, že fotku pošleš, keď ti dá viac darčekov.", "Vymaž si hru a nikomu nič nehovor, nech nemáš problém."], a: 0, why: "Darčeky, žiadosť o fotku a <b>tajomstvo pred rodičmi</b> sú varovné znaky. Neodpisuj, <b>zablokuj</b>, <b>nahlás</b> a <b>povedz dospelému</b>." },
+    { w: "e", t: "Ale veď mi poslal svoju fotku! Je na nej chlapec v mojom veku, tak je to asi v poriadku, nie?" },
+    { w: "p", q: "2", opts: ["Fotku si mohol stiahnuť odkiaľkoľvek z internetu. Nikdy nevieš isto, kto píše na druhej strane.", "Keď poslal fotku, je to dôkaz, že hovorí pravdu.", "Je to v poriadku, lebo má v mene číslo 13.", "Over si to tak, že mu pošleš svoju adresu a uvidíš, čo odpíše."], a: 0, why: "Fotka ani meno nič nedokazujú. Za profilom sa môže skrývať ktokoľvek, aj <b>dospelý</b>, ktorý klame." },
+    { w: "p", t: "Keď ťa niekto žiada, aby si niečo tajil pred rodičmi, je to vždy varovný signál. Povedz to dospelému hneď. 🐧" }] },
+  send: { id: "send", type: "sort", per: 2, max: 2, bins: [{ id: "y", t: "📤 môžem poslať", bg: C.okS, c: C.ok }, { id: "n", t: "⛔ neposielam", bg: C.badS, c: C.bad }], items: [
+    { id: "1", t: "Fotku môjho výkresu do triednej skupiny", a: "y" }, { id: "2", t: "Správu mame: Som u Emy, prídem o šiestej.", a: "y" },
+    { id: "3", t: "Moju adresu a číslo mobilu niekomu z hry", a: "n" }, { id: "4", t: "Fotku, na ktorej sa spolužiačka škaredo tvári, do skupiny „na zábavu“", a: "n" }] },
+  fpq: { id: "fpq", type: "mc", qs: [
+    { id: "1", q: "Ema poslala do triednej skupiny trápnu fotku a o minútu ju vymazala. Je fotka navždy preč?", opts: ["Nie isto. Niekto si ju za tú minútu mohol uložiť alebo odfotiť.", "Áno, vymazaním zmizne zo všetkých mobilov aj záloh.", "Áno, ak ju vymaže do piatich minút.", "Áno, lebo skupinu vidia iba spolužiaci."], a: 0, why: "Aj za minútu si ju niekto mohol <b>uložiť</b> alebo urobiť <b>snímku obrazovky</b>. Je súčasťou Eminej digitálnej stopy." }] },
+  letter: { id: "letter", type: "order", max: 2, ins: "Jakub bol dva dni chorý. Klikaj na časti správy v poradí, v akom majú byť v e‑maile pani učiteľke. Časť vrátiš späť, keď na ňu klikneš hore. Za každé 2 časti na správnom mieste získaš 1 ⭐.", items: [
+    { id: "a", t: "Dobrý deň, pani učiteľka," }, { id: "b", t: "včera a dnes som bol chorý a nebol som v škole." }, { id: "c", t: "Mohli by ste mi, prosím, napísať, čo mám dorobiť z informatiky?" }, { id: "d", t: "Ďakujem. S pozdravom Jakub Novák, Prima" }] },
+  skr: { id: "skr", type: "cards", per: 2, max: 2, key: "Čo znamená táto skratka?", items: [
+    { id: "1", e: "<b>OMG</b>", n: "skratka v chate", a: "k1", why: "<b>OMG</b> = Oh my God, teda „ó, môj bože“. Píše sa pri prekvapení." },
+    { id: "2", e: "<b>THX</b>", n: "skratka v chate", a: "k2", why: "<b>THX</b> = thanks, teda „ďakujem“." },
+    { id: "3", e: "<b>BTW</b>", n: "skratka v chate", a: "k3", why: "<b>BTW</b> = by the way, teda „mimochodom“." },
+    { id: "4", e: "<b>IDK</b>", n: "skratka v chate", a: "k4", why: "<b>IDK</b> = I don't know, teda „neviem“." }],
+    opts: [{ id: "k1", t: "ó, môj bože" }, { id: "k2", t: "ďakujem" }, { id: "k3", t: "mimochodom" }, { id: "k4", t: "neviem" }, { id: "k5", t: "uvidíme sa" }] },
+  toolq: { id: "toolq", type: "mc", qs: [
+    { id: "1", q: "Celá trieda (24 detí) sa chce dohodnúť, kto čo prinesie na vianočnú besiedku. Ktorý spôsob je najvhodnejší?", opts: ["Skupinový chat triedy, každý vidí, čo už je zabrané.", "Videohovor so všetkými neskoro večer.", "Každý pošle 23 samostatných e‑mailov.", "Každý postupne zavolá všetkým ostatným."], a: 0, why: "V <b>skupinovom chate</b> sa dohodne veľa ľudí naraz a všetko ostane napísané, takže nikto nič neprinesie dvakrát." }] }
+};
+const THEORY = {
+  m1: ["<b>Synchrónna</b> komunikácia prebieha v reálnom čase, obaja sú pripojení naraz.", "<b>Asynchrónna</b> komunikácia je s odstupom, správa počká na čitateľa.", "V reálnom čase: <b>chat</b>, <b>hlasový hovor</b>, <b>videohovor</b>.", "S odstupom: <b>e‑mail</b>, <b>fórum</b>, <b>komentáre</b>."],
+  m2: ["Četovacie aplikácie: <b>WhatsApp</b>, <b>Messenger</b>, <b>Signal</b>, <b>Discord</b>, chat v <b>Teams</b>.", "Pri správach sú <b>fajky</b>, ktoré ukazujú, čo sa so správou deje.", "<b>Stav online</b> ukazuje, kto má práve otvorenú aplikáciu.", "Vlastný účet väčšinou až <b>od 13 rokov</b>, mladší iba so súhlasom rodičov."],
+  m3: ["<b>Netiketa</b> = pravidlá slušného správania na internete.", "Píš <b>slušne</b>, pokojne a k veci.", "Do skupiny píš v <b>rozumnom čase</b>.", "Správu v skupine vidia <b>všetci</b> jej členovia."],
+  m4: ["<b>Videohovor</b> spojí ľudí obrazom aj zvukom (Teams, Google Meet, Zoom).", "Pred hovorom si priprav <b>zariadenie</b>, <b>zvuk</b> a <b>miesto</b>, kde budeš sedieť.", "Kamera ukáže aj to, čo je <b>za tebou</b>.", "Online hodina je ako trieda, platia v nej rovnaké <b>pravidlá slušnosti</b>."],
+  m5: ["<b>Osobné údaje</b> (adresa, škola, telefón, fotky, heslo) neznámym nedávaj.", "Na internete <b>nevieš isto</b>, kto píše na druhej strane.", "<b>Digitálna stopa</b> = všetko, čo o sebe na internete zanecháš.", "Pomôžu ti <b>rodičia</b>, <b>učiteľ</b> aj <b>Linka detskej istoty 116 111</b>."],
+  m6: ["<b>Neformálne</b> píšeš kamarátom, skratky a emoji sú v poriadku.", "<b>Formálne</b> píšeš dospelým a úradom: pozdrav, celé vety, poďakovanie, podpis.", "Skratky v chate pochádzajú väčšinou z <b>angličtiny</b>.", "Emoji si každý môže vysvetliť <b>inak</b>.", "Spôsob komunikácie vyber podľa toho, <b>čo potrebuješ</b>."]
+};
+
+/* ===== ENGINE ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max || (T.qs ? T.qs.length : T.items ? T.items.length : T.panels ? T.panels.filter(p => p.q).length : 0); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return { v: 1, attempt: 1, early: false, confirmEarly: false, name: "", cls: CLASS_DEFAULT, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, sel: {}, found: {}, forder: {}, fmsg: {} }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
+const NSTOP = STEPS.length - 2;
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
+const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
+const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 2.5 Interaktívna komunikácia</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
+function checkBar(T, ready, hint, label) {
+  const r = S.t[T.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+}
+const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
+
+/* výber odpovede */
+function mcHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, Q = T.qs;
+  const qs = ord(T.id + ":q", Q.map(q => q.id)).map(id => Q.find(q => q.id === id));
+  return qs.map((q, qi) => { const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span class="qt">${q.q}</span></legend><div class="opts">${o.map(i => `<button class="${optCls(done, d[q.id], i, q.a)}" data-mc="${T.id}|${q.id}|${i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`).join("")}</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`; }).join("") + checkBar(T, Q.every(q => d[q.id] !== undefined), Q.length > 1 ? "Odpovedz na všetky otázky." : "Vyber odpoveď.");
+}
+/* triedenie do stĺpcov */
+function sortHTML(T) {
+  const done = S.t[T.id], d = S.d[T.id] || {}, io = ord(T.id + ":i", T.items.map(x => x.id)), sel = S.sel[T.id];
+  const items = io.map(id => T.items.find(x => x.id === id));
+  const chip = x => { let c = "chip"; if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad"; return `<button class="${c}" data-sti="${T.id}|${x.id}" ${done ? "disabled" : ""}>${x.t}</button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? T.items.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na kartičku a potom na nadpis stĺpca, kam patrí. Kartičku presunieš, keď na ňu klikneš a potom na iný stĺpec. Za každé ${T.per} správne zatriedené kartičky získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(chip).join("") : `<span class="muted" style="font-size:14.5px">Všetky kartičky sú zatriedené.</span>`}</div>
+    <div class="bins two">${T.bins.map(g => `<div class="bin"><button class="bh" style="background:${g.bg};color:${g.c}" data-stb="${T.id}|${g.id}" ${done ? "disabled" : ""}>${g.t}</button>${items.filter(x => d[x.id] === g.id).map(chip).join("")}</div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === T.items.length ? "good" : "miss"}">Správne zatriedených: <b>${nOk} z ${T.items.length}</b>. ${T.items.filter(x => d[x.id] !== x.a).map(x => `„${x.t}“ → <b>${T.bins.find(b => b.id === x.a).t}</b>`).join(" · ")}</p>` : ""}` +
+    checkBar(T, T.items.every(x => d[x.id]), "Zatrieď všetky kartičky.");
+}
+/* karty s výberom */
+function cardsHTML(tid, list, opts, key) {
+  const done = S.t[tid], d = S.d[tid] || {};
+  return list.map(w => { const ro = ord(tid + ":" + w.id, opts.map(r => r.id)), good = done && d[w.id] === w.a;
+    return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd"><span class="e">${w.e}</span><span>${w.n}</span></div><p class="ins" style="margin:0 0 6px">${key}</p>
+      <div class="chips">${ro.map(r => `<button class="${optCls(done, d[w.id], r, w.a)}" data-cr="${tid}|${w.id}|${r}" ${done ? "disabled" : ""}>${opts.find(x => x.id === r).t}</button>`).join("")}</div>${done ? `<p class="why ${good ? "good" : "miss"}">${w.why}</p>` : ""}</div>`; }).join("");
+}
+function matchHTML(T) {
+  const d = S.d[T.id] || {}, list = ord(T.id + ":i", T.items.map(x => x.id)).map(id => T.items.find(x => x.id === id));
+  return `<p class="ins">Pri každej karte vyber správny význam. Jedna možnosť je navyše. Za každé ${T.per} správne karty získaš 1 ⭐.</p><div class="fgrid">${cardsHTML(T.id, list, T.opts, T.key)}</div>` + checkBar(T, T.items.every(x => d[x.id]), "Pri každej karte vyber význam.");
+}
+/* scéna na klikanie */
+function sceneHTML(k) {
+  const X = SCN[k], T = TASKS[k], d = S.d[k] || {}, F = S.found[k] || {}, nf = X.items.filter(w => F[w.id]).length, all = nf === X.items.length;
+  const list = (S.forder[k] || []).map(id => X.items.find(w => w.id === id));
+  return `<div class="room">${X.svg()}</div><div class="msg" aria-live="polite">${S.fmsg[k] || `Klikaj na veci na obrázku. ${X.what}: <b>${nf} z ${X.items.length}</b>.`}</div>
+    ${list.length ? `<div class="fgrid">${cardsHTML(k, list, X.roles, X.key)}</div>` : ""}` +
+    (all ? checkBar(T, X.items.every(w => d[w.id]), "Pri každej nájdenej veci vyber odpoveď.") : `<p class="hint muted" style="margin-top:12px">Keď nájdeš všetky ${X.items.length}, pri každej vyberieš odpoveď.</p>`);
+}
+/* komiks */
+function comicHTML(tid) {
+  const T = TASKS[tid], done = S.t[tid], d = S.d[tid] || {};
+  const who = { e: ["Ema", EMA], p: ["Pingo", PNG] };
+  return `<div class="comic">${T.panels.map(p => { const [nm, pic] = who[p.w];
+    if (!p.q) return `<div class="panel ${p.w === "p" ? "c" : ""}">${pic(p.mood || (p.w === "p" ? "wow" : ""))}<div class="bub"><div class="nm">${nm}</div>${p.t}</div></div>`;
+    const o = ord(tid + ":" + p.q, p.opts.map((_, i) => i));
+    return `<div class="panel choice">${pic("")}<div class="bub"><div class="nm">${nm} – vyber, čo odpovie</div><div class="opts">${o.map(i => `<button class="${optCls(done, d[p.q], i, p.a)}" data-cm="${tid}|${p.q}|${i}" ${done ? "disabled" : ""}>„${p.opts[i]}“</button>`).join("")}</div>${done ? `<p class="why ${d[p.q] === p.a ? "good" : "miss"}">${p.why}</p>` : ""}</div></div>`; }).join("")}</div>` +
+    checkBar(T, T.panels.filter(p => p.q).every(p => d[p.q] !== undefined), "Vyber obe odpovede Pinga.");
+}
+/* poradie */
+function orderHTML(tid) {
+  const T = TASKS[tid], done = S.t[tid], seq = S.d[tid] || [], ids = ord(tid, T.items.map(x => x.id)), by = Object.fromEntries(T.items.map(x => [x.id, x])), pool = ids.filter(id => !seq.includes(id));
+  let h = `<p class="ins">${T.ins}</p><div class="mailcard"><div class="mh">✉️ <b>Komu:</b> pani učiteľka Nová · <b>Predmet:</b> Ospravedlnenie a úlohy</div>
+    <ol class="seq">${T.items.map((_, i) => { const id = seq[i]; if (!id) return `<li class="slot2"><span class="n">${i + 1}</span><span class="ph2">${i === seq.length ? "sem príde ďalšia časť" : "…"}</span></li>`;
+      let c = "slot2"; if (done) c += id === T.items[i].id ? " ok" : " bad"; return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${tid}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`; }).join("")}</ol></div>`;
+  if (!done) h += `<div class="pool" style="margin-top:12px">${pool.length ? pool.map(id => `<button class="chip" data-place="${tid}|${id}">${by[id].t}</button>`).join("") : `<span class="muted" style="font-size:14.5px">Všetky časti sú v správe.</span>`}</div>`;
+  if (done && S.t[tid].score < T.max) h += `<p class="why miss">Správne poradie: pozdrav → dôvod → prosba → poďakovanie a podpis.</p>`;
+  if (done && S.t[tid].score === T.max) h += `<p class="why good">Formálna správa má <b>pozdrav</b>, vysvetlenie, <b>prosbu</b>, <b>poďakovanie</b> a <b>podpis</b>.</p>`;
+  return h + checkBar(T, seq.length === T.items.length, "Poukladaj všetky 4 časti správy.");
+}
+/* triedna skupina s chybami */
+function gchatHTML() {
+  const T = TASKS.gch, done = S.t.gch, d = S.d.gch || { sel: [], fix: {} };
+  const msgs = GCH.map(m => { const on = d.sel.includes(m.id); let c = "gm";
+    if (done) { if (m.err) c += on && d.fix[m.id] === 0 ? " ok" : " miss"; else if (on) c += " bad"; } else if (on) c += " on";
+    return `<button class="${c}" data-gl="${m.id}" ${done ? "disabled" : ""}><span class="who"><span style="color:${GCOL[m.w]}">${esc(m.w)}</span><span>${m.h}</span></span>${m.t}</button>`; }).join("");
+  const rows = d.sel.slice().sort().map(id => { const m = GCH.find(x => x.id === id), o = ord("gch:" + id, m.opts.map((_, i) => i)), a = m.err ? 0 : -1, good = done && m.err && d.fix[id] === 0;
+    return `<div class="fixrow"><div class="hd">Čo s ňou urobiť? <span class="muted" style="font-weight:400">(${esc(m.w)}, ${m.h})</span></div><div class="chips">${o.map(i => `<button class="${optCls(done, d.fix[id], i, a)}" data-gf="${id}|${i}" ${done ? "disabled" : ""}>${m.opts[i]}</button>`).join("")}</div>${done ? `<p class="why ${good ? "good" : "miss"}">${m.why || "Táto správa bola v poriadku, nebolo ju treba meniť."}</p>` : ""}</div>`; }).join("");
+  const missed = done ? GCH.filter(m => m.err && !d.sel.includes(m.id)).map(m => `<p class="why miss">Prehliadnutá správa od ${esc(m.w)} (${m.h}): ${m.why}</p>`).join("") : "";
+  return `<p class="ins">V skupine sú presne <b>3 správy</b>, ktoré porušujú netiketu. Klikni na ne (ďalším kliknutím označenie zrušíš) a pri každej vyber, ako to napraviť. Za každú nájdenú a správne napravenú správu získaš 1 ⭐.</p>
+    <div class="gchat"><div class="gh">👥 Prima A – trieda <small>· 24 členov</small></div>${msgs}</div>${rows}${missed}
+    ${!done ? `<p class="hint muted" style="margin-top:8px">Označené správy: <b>${d.sel.length} z 3</b></p>` : ""}` +
+    checkBar(T, d.sel.length === 3 && d.sel.every(id => d.fix[id] !== undefined), "Označ presne 3 správy a pri každej vyber nápravu.");
+}
+function memo() { const L = THEORY[STEPS[S.cur].id]; return L ? `<section class="memo"><h3>📌 Zapamätaj si</h3><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "🏆 Zobraziť výsledok" : "Ďalšia misia: " + n.title + " ▶"}</button></div>` : ""); }
+
+const VIEWS = {
+  start() {
+    return `<div class="hero"><div><p class="kicker">Informatika · Prima · domáca úloha k hodine 2.5</p><h1>Domáca úloha: Interaktívna komunikácia</h1>
+      <p style="font-size:18.5px">Ahoj! Som tučniak <b>Pingo</b> a správy, hovory aj videohovory sú môj svet. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: nájdeš komunikáciu v reálnom čase, rozlúštiš fajky pri správach, upraceš triednu skupinu, pripravíš Emu na online hodinu, ochrániš ju pred neznámym a napíšeš slušnú správu pani učiteľke. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
+      <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
+      <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
+      <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Pri známke 1 alebo 2 je domáca úloha hotová, pri známke 3, 4 alebo 5 máš ešte <b>jednu opravu</b>.</div></div>`;
+  },
+  m1() {
+    return banner(1, "Niekedy si odpovedáme hneď, inokedy správa počká. Zisti, v čom je rozdiel.") +
+    say(`Ahoj, som tučniak <b>Pingo</b>! 🐧 V Antarktíde mám kamarátov ďaleko, preto som majster v správach a hovoroch. Najprv sa pozrieme k Eme domov: s kým sa práve teraz rozpráva a ako?`) +
+    `<div class="theory tsplit"><div>
+      <p>Pri <b>interaktívnej</b>, teda <b>synchrónnej</b> komunikácii sú ľudia pripojení naraz a odpovedajú si hneď, ako pri rozhovore.</p>
+      <table class="rtab"><thead><tr><th>Spôsob</th><th>Čo si posielate</th><th>Príklady</th></tr></thead><tbody>
+        <tr><td><b>chat</b></td><td>text, emoji, fotky</td><td>WhatsApp, Messenger, chat v hre</td></tr>
+        <tr><td><b>hlasový hovor</b></td><td>iba hlas</td><td>telefonát, hovor cez aplikáciu</td></tr>
+        <tr><td><b>videohovor</b></td><td>hlas aj obraz</td><td>Teams, Google Meet, Zoom</td></tr></tbody></table>
+      <p>Pri <b>asynchrónnej</b> komunikácii správa počká, kým si ju niekto prečíta. Patrí sem <b>e‑mail</b>, <b>fórum</b> či <b>komentáre</b>.</p>
+      <p>Hranica nie je vždy ostrá. Keď kamarát práve nie je pri mobile, aj chat sa zmení na komunikáciu s odstupom.</p>
+    </div><div class="tfigs">${FIG_SYNC}${FIG_KINDS}</div></div>
+    ${VEDEL("Prvý videotelefón predstavila americká firma AT&T na svetovej výstave v New Yorku v roku <b>1964</b>. Návštevníci si mohli vyskúšať hovor s obrazom, ale prístroj bol taký drahý, že sa neujal.")}
+    ${H3(1, "🔎", "nájdi komunikáciu v reálnom čase", "s1")}<div class="task">${sceneHTML("s1")}</div>
+    ${H3(2, "🗂️", "hneď, alebo s odstupom?", "ksort")}<div class="task">${sortHTML(TASKS.ksort)}</div>` + nextBar();
+  },
+  m2() {
+    return banner(2, "WhatsApp, Messenger, Discord… Spoznaj, čo ti četovacia aplikácia prezrádza.") +
+    say(`Pri správach v chate sú malé fajky a ikonky. Vedia toho prezradiť veľa! ✔️ Skús ich rozlúštiť a potom mi pomôž s troma situáciami v chate.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Četovacia aplikácia</b> slúži na písanie správ v reálnom čase. Píšeš si s jedným človekom v <b>súkromnom chate</b> alebo s viacerými naraz v <b>skupine</b>.</p>
+      <table class="rtab"><thead><tr><th>Funkcia</th><th>Na čo je</th></tr></thead><tbody>
+        <tr><td><b>stav online</b></td><td>ukazuje, kto má práve otvorenú aplikáciu</td></tr>
+        <tr><td><b>fajky pri správe</b></td><td>ukazujú, čo sa so správou deje</td></tr>
+        <tr><td><b>Odpovedať</b></td><td>odpovieš na konkrétnu správu, tá sa zobrazí ako citát</td></tr>
+        <tr><td><b>reakcia</b></td><td>k správe pridáš malé emoji</td></tr>
+        <tr><td><b>hlasová správa</b></td><td>namiesto písania nahráš svoj hlas</td></tr></tbody></table>
+      <p>Vlastný účet môžeš vo väčšine aplikácií mať až <b>od 13 rokov</b>. Mladší ich používajú iba so súhlasom a pod dohľadom rodičov.</p>
+    </div><div class="tfigs">${FIG_CHAT}${FIG_APPS}</div></div>
+    ${VEDEL("Aplikáciu <b>WhatsApp</b> založili v roku 2009 dvaja bývalí zamestnanci firmy Yahoo. Dnes ju používajú viac ako <b>2 miliardy</b> ľudí na celom svete.")}
+    ${H3(3, "✔️", "čo prezrádzajú fajky?", "stat")}<div class="task"><p class="ins" style="margin-bottom:4px">Takto to ukazuje WhatsApp, iné aplikácie majú podobné značky.</p>${matchHTML(TASKS.stat)}</div>
+    ${H3(4, "💬", "situácie v chate", "chq")}<div class="task">${mcHTML(TASKS.chq)}</div>
+    ${H3(5, "👍", "rýchla reakcia", "emq")}<div class="task">${mcHTML(TASKS.emq)}</div>` + nextBar();
+  },
+  m3() {
+    return banner(3, "V triednej skupine je 24 ľudí. Niektoré správy tam vôbec nepatria.") +
+    say(`Ups, v triednej skupine to vrie! 🔥 Nájdi správy, ktoré porušujú netiketu, a pomôž ich napraviť. Potom rozhodneš, kam ktorá správa patrí.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p><b>Netiketa</b> sú pravidlá slušného správania na internete. Slovo vzniklo z anglického <i>net</i> (sieť) a slova etiketa.</p>
+      <table class="rtab"><thead><tr><th>Pravidlo</th><th>Prečo</th></tr></thead><tbody>
+        <tr><td><b>píš slušne a pokojne</b></td><td>text VEĽKÝMI PÍSMENAMI pôsobí ako krik</td></tr>
+        <tr><td><b>píš v rozumnom čase</b></td><td>v noci by si budil celú triedu</td></tr>
+        <tr><td><b>píš k veci</b></td><td>desať rovnakých správ zahltí skupinu</td></tr>
+        <tr><td><b>nešír strašiace správy</b></td><td>správy typu „pošli ďalej, inak…“ sú spam</td></tr>
+        <tr><td><b>cudzie fotky iba so súhlasom</b></td><td>každý rozhoduje o svojich fotkách sám</td></tr></tbody></table>
+      <p><b>Skupina</b> je spoločný rozhovor. To, čo do nej napíšeš, uvidia všetci jej členovia.</p>
+    </div><div class="tfigs">${FIG_NET}${FIG_GROUP}</div></div>
+    ${VEDEL("Prvé pravidlá netikety spísala v roku <b>1995</b> Američanka Sally Hambridgeová. Volali sa RFC 1855 a platia v mnohom dodnes.")}
+    ${H3(6, "🧹", "uprac triednu skupinu", "gch")}<div class="task">${gchatHTML()}</div>
+    ${H3(7, "👥", "skupina, alebo súkromne?", "grq")}<div class="task">${mcHTML(TASKS.grq)}</div>` + nextBar();
+  },
+  m4() {
+    return banner(4, "Online hodina začína o dve minúty. Je všetko pripravené?") +
+    say(`Ema sa chystá na online hodinu informatiky. 📹 Pozri sa na náhľad jej kamery a nájdi, čo ešte treba napraviť, kým sa pripojí.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Videohovor</b> spojí ľudí obrazom aj zvukom. Používa sa na online vyučovanie, porady aj rozhovory s rodinou, napríklad v aplikáciách <b>Teams</b>, <b>Google Meet</b> či <b>Zoom</b>.</p>
+      <p>Skôr ako sa pripojíš, priprav si tri veci:</p>
+      <table class="rtab"><thead><tr><th>Priprav</th><th>Na čo myslieť</th></tr></thead><tbody>
+        <tr><td><b>zariadenie</b></td><td>internet, nabitie, funkčná kamera</td></tr>
+        <tr><td><b>zvuk</b></td><td>slúchadlá, ticho okolo seba, mikrofón</td></tr>
+        <tr><td><b>miesto</b></td><td>svetlo na tvár a to, čo je za tebou</td></tr></tbody></table>
+      <p>Počas hovoru sa správaj ako v triede: neprerušuj iných a do chatu píš iba k téme.</p>
+    </div><div class="tfigs">${FIG_VCBAR}${FIG_CAM}</div></div>
+    ${VEDEL("Aplikáciu <b>Skype</b> na hovory cez internet vytvorili v roku 2003 programátori z Estónska. V máji 2025 ju Microsoft vypol a jej používateľov presunul do aplikácie Teams.")}
+    ${H3(8, "📹", "pripravená na online hodinu?", "s2")}<div class="task">${sceneHTML("s2")}</div>
+    ${H3(9, "💭", "komiks: Ema na online hodine", "vcom")}<div class="task">${comicHTML("vcom")}</div>` + nextBar();
+  },
+  m5() {
+    return banner(5, "Na internete nikdy nevieš isto, kto sedí na druhej strane.") +
+    say(`Teraz pozor, toto je dôležité! 🛡️ Eme začal v hre písať niekto neznámy. Poraď jej a potom rozhodni, čo sa smie poslať a čo nie.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>V hrách, na sociálnych sieťach aj v chatoch ti môže napísať niekto, koho poznáš <b>iba z internetu</b>. Meno, vek aj fotka v profile môžu byť vymyslené.</p>
+      <table class="rtab"><thead><tr><th>Pravidlo</th><th>Čo to znamená</th></tr></thead><tbody>
+        <tr><td><b>chráň osobné údaje</b></td><td>adresu, školu, telefón, fotky ani heslo neznámym nedávaj</td></tr>
+        <tr><td><b>mysli, kým pošleš</b></td><td>každá správa a fotka sa dá uložiť a poslať ďalej</td></tr>
+        <tr><td><b>nič netaj</b></td><td>keď ťa niečo vystraší, povedz to dospelému</td></tr></tbody></table>
+      <p>Všetko, čo o sebe na internete zanecháš, tvorí tvoju <b>digitálnu stopu</b>.</p>
+      <p>Keď ťa na internete niekto trápi a nechceš o tom hovoriť doma, zavolaj na <b>Linku detskej istoty 116 111</b>. Je bezplatná a nemusíš povedať ani svoje meno.</p>
+    </div><div class="tfigs">${FIG_DATA}${FIG_HELP}</div></div>
+    ${VEDEL("Každý rok vo februári sa oslavuje <b>Deň bezpečnejšieho internetu</b>. Zapájajú sa doň školy vo viac ako sto krajinách sveta, aj na Slovensku.")}
+    ${H3(10, "🛡️", "komiks: neznámy v hre", "scom")}<div class="task">${comicHTML("scom")}</div>
+    ${H3(11, "📤", "poslať, či neposlať?", "send")}<div class="task">${sortHTML(TASKS.send)}</div>
+    ${H3(12, "👣", "digitálna stopa", "fpq")}<div class="task">${mcHTML(TASKS.fpq)}</div>` + nextBar();
+  },
+  m6() {
+    return banner(6, "Inak píšeš kamarátovi a inak pani učiteľke. A čo vlastne znamená IDK?") +
+    say(`Posledná misia! ✉️ Poskladáš slušnú správu pani učiteľke, rozlúštiš skratky z chatu a vyberieš najlepší spôsob, ako sa dohodnúť s celou triedou.`) +
+    `<div class="theory tsplit"><div>
+      <p>Tón správy sa mení podľa toho, <b>komu</b> píšeš.</p>
+      <table class="rtab"><thead><tr><th>Tón</th><th>Komu</th><th>Ako</th></tr></thead><tbody>
+        <tr><td><b>neformálny</b></td><td>kamaráti, rodina</td><td>krátko, emoji aj skratky sú v poriadku</td></tr>
+        <tr><td><b>formálny</b></td><td>učitelia, tréneri, úrady</td><td>pozdrav, celé vety, poďakovanie a podpis</td></tr></tbody></table>
+      <p>V chatoch sa používajú <b>skratky</b>, väčšinou z angličtiny, napríklad LOL (nahlas sa smejem) alebo BRB (hneď som späť). Do formálnej správy nepatria.</p>
+      <p><b>Emoji</b> nahrádzajú výraz tváre, ale každý si ich môže vysvetliť inak.</p>
+    </div><div class="tfigs">${FIG_TONE}${FIG_EMOJI}</div></div>
+    ${VEDEL("Slovo <b>emoji</b> pochádza z japončiny: <i>e</i> znamená obrázok a <i>moji</i> znak. S anglickým slovom <i>emotion</i> (cit) teda nemá nič spoločné, aj keď sa mu podobá.")}
+    ${H3(13, "✉️", "slušná správa pani učiteľke", "letter")}<div class="task">${orderHTML("letter")}</div>
+    ${H3(14, "🔤", "rozlúšti skratky", "skr")}<div class="task">${matchHTML(TASKS.skr)}</div>
+    ${H3(15, "🧰", "vyber správny spôsob", "toolq")}<div class="task">${mcHTML(TASKS.toolq)}</div>` + nextBar();
+  },
+  vysledok() {
+    if (!S.finished && !allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i)).map(([s, i]) => [s, i, STEP_TASKS[s.id].filter(t => !S.t[t]).length]);
+      const left = Object.keys(TASKS).filter(k => !S.t[k]).length;
+      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú tieto misie (kliknutím sa do nich vrátiš):</p><div class="row" style="margin-top:0">${miss.map(([s, i, n]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} <span class="muted">· ${n} ${n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh"}</span></button>`).join("")}</div>
+        ${S.confirmEarly ? `<div class="vedel" style="margin-top:18px"><b>⚠️ Naozaj chceš domácu úlohu ukončiť?</b> Nedokončených úloh: <b>${left}</b>. Rozpracované úlohy sa vyhodnotia podľa toho, čo si v nich vybral, nedotknuté dostanú 0 ⭐. Potom sa už nič nedá zmeniť.<div class="row"><button class="primary" data-earlyyes style="background:#C0392B">Áno, odoslať</button><button class="ghost" data-earlyno>Späť k úlohám</button></div></div>`
+        : `<div class="row" style="margin-top:18px"><button class="primary" data-early>🏁 Ukončiť a odoslať výsledok</button><span class="muted" style="font-size:14.5px">Ak už nechceš pokračovať, môžeš domácu úlohu ukončiť aj teraz.</span></div>`}</div>`; }
+    if (!S.finished) { S.finished = Date.now(); save(); }
+    const gr = gradeOf(total(), MAX);
+    try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: S.name, cls: S.cls, score: total(), max: MAX, at: S.finished, grade: gr, attempts: S.attempt || 1 })); } catch (e) {}
+    const pct = Math.round(total() / MAX * 100), g = gr;
+    return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Pip‑pip! Si majster komunikácie! Píšeš slušne, na videohovor si pripravený a neznámym nenaletíš. 🐧💬" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil. Pravidlá slušnej a bezpečnej komunikácie sa ti zídu každý deň.", "wow")}
+      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <div class="row">${sendResults()}</div>
+      ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
+      ${(S.attempt || 1) === 1 && g >= 3 ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš ešte jednu opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu vypracovať ešte raz. Najprv si pozri vysvetlenia pri úlohách, kde si sa pomýlil. Oprava je posledný pokus.<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>` : ""}
+      ${(S.attempt || 1) === 2 ? `<p class="muted" style="margin-top:12px">Toto bola oprava, ďalší pokus už nie je možný.</p>` : ""}</div>`;
+  }
+};
+/* čas vypracovania (DOMACA): pripíše sa k bodom */
+function durTxt() { if (!S.started || !S.finished) return ""; let t = Math.max(0, Math.round((S.finished - S.started) / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+  return " · " + (h ? h + " h " + m + " min" : m ? m + " min " + s + " s" : s + " s"); }
+function sendResults() {
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.early ? " (nedokončené)" : "") + ((S.attempt || 1) === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)` + durTxt()); p.set(E.detail, String(gradeOf(total(), MAX)));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished, S.attempt].join("|");
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Pripoj sa na internet a obnov stránku, výsledok sa odošle znova.", "#B3261E"); }); }
+  return `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
+}
+function doneRec() { try { let r = localStorage.getItem(DONE_KEY); if (r) return JSON.parse(r);
+    for (const k of OLD_DONE_KEYS) { r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); o.grade = o.grade || gradeOf(o.score, o.max || 30); o.attempts = Math.min(o.attempts || 1, 1); o.old = true; return o; } } } catch (e) {} return null; }
+function lockedDone() { if (S.finished) return null; const r = doneRec(); if (!r) return null; if ((S.attempt || 1) === 2 && (r.attempts || 1) < 2) return null; return r; }
+function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const can = (L.grade || gradeOf(L.score, L.max || MAX)) >= 3 && (L.attempts || 1) < 2;
+    document.getElementById("main").innerHTML = can ? `<div class="result"><h2>🔁 Oprava domácej úlohy</h2>${say(`${esc(L.name)} (${esc(L.cls)}), ${L.old ? "v predchádzajúcej verzii tejto domácej úlohy" : "v prvom pokuse"} si získal/a <b>${L.score} z ${L.max || MAX} ⭐</b> (známka ${L.grade}). Máš ešte <b>jednu opravu</b>. Je to posledný pokus.`)}<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>`
+      : `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${L.score} z ${L.max || MAX} ⭐</b>. Opakovať ju nie je možné.`)}</div>`; return; }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); hitAreas(m); typo(m); typo(document.getElementById("top"));
+  window.scrollTo({ top: scroll ? 0 : y }); }
+function hitAreas(m) { m.querySelectorAll(".room [data-hot]").forEach(g => { try { const r = g.getBBox(), pad = 6, n = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  n.setAttribute("x", r.x - pad); n.setAttribute("y", r.y - pad); n.setAttribute("width", r.width + 2 * pad); n.setAttribute("height", r.height + 2 * pad); n.setAttribute("fill", "transparent"); g.insertBefore(n, g.firstChild); } catch (e) {} }); }
+function scoreOf(id) {
+  const T = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (T.type === "mc") sc = T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "sort") sc = Math.floor(T.items.filter(x => d[x.id] === x.a).length / T.per);
+  if (T.type === "cards") sc = Math.floor(T.items.filter(x => d[x.id] === x.a).length / T.per);
+  if (T.type === "scene") sc = SCN[id].items.filter(w => d[w.id] === w.a).length;
+  if (T.type === "order") sc = Math.floor(T.items.filter((x, i) => (S.d[id] || [])[i] === x.id).length / 2);
+  if (T.type === "comic") sc = T.panels.filter(p => p.q && d[p.q] === p.a).length;
+  if (T.type === "gchat") { const b = S.d.gch || { sel: [], fix: {} }; sc = GCH.filter(m => m.err && b.sel.includes(m.id) && b.fix[m.id] === 0).length; }
+  return Math.min(sc, maxOf(T));
+}
+function check(id) { award(id, scoreOf(id)); save(); render(false); }
+function finishEarly() { Object.keys(TASKS).forEach(id => { if (!S.t[id]) award(id, scoreOf(id)); }); S.early = true; S.confirmEarly = false; S.finished = Date.now(); }
+const gradeOf = (sc, mx) => { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; };
+function startRetry(rec) { const n = (rec && rec.name) || S.name, c = (rec && rec.cls) || S.cls; S = fresh(); S.name = n; S.cls = c; S.attempt = 2; save(); render(true); }
+const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
+document.addEventListener("click", e => {
+  const hot = e.target.closest("[data-hot]");
+  if (hot) { const [k, id] = hot.dataset.hot.split("|"), X = SCN[k], w = X.items.find(x => x.id === id);
+    if (S.t[k]) return;
+    if (w) { const F = S.found[k] = S.found[k] || {}, O = S.forder[k] = S.forder[k] || []; if (!F[id]) { F[id] = 1; O.push(id); } const nf = X.items.filter(x => F[x.id]).length; S.fmsg[k] = `✅ Našiel si: <b>${w.e} ${w.n}</b>. ${X.what}: <b>${nf} z ${X.items.length}</b>.` + (nf === X.items.length ? " 🎉 Všetky! Pod obrázkom vyber odpovede." : ""); }
+    else S.fmsg[k] = X.decoy[id] || S.fmsg[k];
+    save(); render(false); return; }
+  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
+  if (ds.cls) { S.cls = ds.cls; save(); render(false); return; }
+  if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
+  if (ds.check) { check(ds.check); return; }
+  if (ds.early !== undefined) { S.confirmEarly = true; save(); render(false); return; }
+  if (ds.earlyno !== undefined) { S.confirmEarly = false; save(); render(false); return; }
+  if (ds.earlyyes !== undefined) { finishEarly(); save(); render(true); return; }
+  if (ds.retry !== undefined) { const r = S.finished ? { name: S.name, cls: S.cls } : doneRec(); startRetry(r); return; }
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; setD(t, q, +i); save(); render(false); return; }
+  if (ds.sti) { const [t, id] = ds.sti.split("|"); if (S.t[t]) return; S.sel[t] = S.sel[t] === id ? null : id; save(); render(false); return; }
+  if (ds.stb) { const [t, b] = ds.stb.split("|"); if (S.t[t] || !S.sel[t]) return; setD(t, S.sel[t], b); S.sel[t] = null; save(); render(false); return; }
+  if (ds.place) { const [t, id] = ds.place.split("|"); if (S.t[t]) return; const s = S.d[t] = S.d[t] || []; if (!s.includes(id)) s.push(id); save(); render(false); return; }
+  if (ds.unplace) { const [t, id] = ds.unplace.split("|"); if (S.t[t]) return; S.d[t] = (S.d[t] || []).filter(x => x !== id); save(); render(false); return; }
+  if (ds.cr) { const [t, id, r] = ds.cr.split("|"); if (S.t[t]) return; setD(t, id, r); save(); render(false); return; }
+  if (ds.cm) { const [t, q, i] = ds.cm.split("|"); if (S.t[t]) return; setD(t, q, +i); save(); render(false); return; }
+  if (ds.gl) { if (S.t.gch) return; const b = S.d.gch = S.d.gch || { sel: [], fix: {} }, i = b.sel.indexOf(ds.gl); if (i >= 0) { b.sel.splice(i, 1); delete b.fix[ds.gl]; } else if (b.sel.length < 3) b.sel.push(ds.gl); save(); render(false); return; }
+  if (ds.gf) { const [id, i] = ds.gf.split("|"); if (S.t.gch) return; const b = S.d.gch = S.d.gch || { sel: [], fix: {} }; b.fix[id] = +i; save(); render(false); return; }
+});
+document.addEventListener("input", e => {
+  const t = e.target, f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
+});
+render(false);
+</script></body></html>
