@@ -103,6 +103,34 @@ label.f{display:block;font-weight:600;margin:12px 0 4px}
 .grade b{display:block;font-size:32px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
 .warnbox{background:var(--amberSoft);border-left:5px solid var(--amber);border-radius:0 12px 12px 0;padding:10px 14px;margin:12px 0}
 .submitbar{margin-top:26px;padding-top:20px;border-top:1px dashed var(--border);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+/* klikanie do obrázka */
+.fig.hot{max-width:560px}
+.hz{fill:rgba(47,91,234,.001);stroke:transparent;stroke-width:3;cursor:pointer;transition:fill .12s}
+.hz:hover,.hz:focus{fill:rgba(47,91,234,.16);stroke:#2F5BEA;outline:none}
+.hz.hsel{fill:rgba(47,91,234,.30);stroke:#2F5BEA;stroke-width:4}
+.hz.hok{fill:rgba(18,128,90,.30);stroke:#12805A;stroke-width:4}
+.hz.hbad{fill:rgba(192,57,43,.30);stroke:#C0392B;stroke-width:4}
+.hz.hmiss{fill:rgba(18,128,90,.12);stroke:#12805A;stroke-width:3;stroke-dasharray:7 5}
+.fig.done .hz{cursor:default}
+.hst{font-size:15px;margin:2px 0 0}
+/* triedenie do skupín */
+.sgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px}
+.sg{border:2px dashed var(--border);border-radius:12px;padding:8px 10px;min-height:92px;background:var(--surface2)}
+.sg.armed{border-color:var(--acc);background:var(--accSoft);cursor:pointer}
+.sgh{font-weight:700;font-size:14.5px;margin-bottom:6px}
+.sgb{display:flex;flex-wrap:wrap;gap:6px}
+.sge{color:var(--muted);font-size:14px}
+.sg .chipb{padding:5px 11px;font-size:15px}
+.chipb.picked{background:var(--acc);color:#fff;border-color:var(--acc)}
+.chipb.cok{border-color:var(--ok);background:var(--okSoft);cursor:default}
+.chipb.cbad{border-color:var(--bad);background:var(--badSoft);cursor:default}
+.chipb small{font-weight:600;color:var(--bad)}
+/* doplňovanie do textu */
+.gtext{line-height:2.35}
+.gsel{padding:3px 8px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);max-width:100%;font-size:16px}
+.gsel.good{border-color:var(--ok);background:var(--okSoft)}
+.gsel.badsel{border-color:var(--bad);background:var(--badSoft)}
+.gfix{font-size:14.5px;margin:0 4px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
@@ -111,7 +139,7 @@ label.f{display:block;font-weight:600;margin:12px 0 4px}
 <main id="main"></main>
 <script>
 /* ===== nastavenia ===== */
-const KEY = "2rocnik-test1-v1";
+const KEY = "2rocnik-test1-v2";
 const LESSON = "2. ročník – Test 1 (1.3 – 1.6)";
 const TITLE = "Test 1: Základná doska, pamäte, disky a periférie";
 const CLASSES = ["II.A", "SEPTIMA_1", "SEPTIMA_2"];
@@ -175,7 +203,185 @@ const FRAG = (() => { const cx = 150, cy = 115;
   <circle cx="300" cy="200" r="12" fill="#6B7280"/><line x1="300" y1="200" x2="212" y2="92" stroke="#6B7280" stroke-width="7" stroke-linecap="round"/><rect x="202" y="82" width="16" height="12" rx="2" fill="#374151" transform="rotate(-50 210 88)"/>
   </svg>`; })();
 
-/* ===== úlohy (spolu 37 bodov) ===== */
+
+/* ===== nové obrázky ===== */
+const FONT = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const zone = (id, x, y, w, h, rx = 6) => `<rect class="hz" data-z="${id}" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}"/>`;
+const zoneC = (id, cx, cy, r) => `<circle class="hz" data-z="${id}" cx="${cx}" cy="${cy}" r="${r}"/>`;
+
+/* podrobná základná doska bez popisov (klikanie) */
+const BOARD2 = (() => {
+  let pins = ""; for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) pins += `<circle cx="${86 + c * 9}" cy="${78 + r * 9}" r="1.7" fill="#9CA3AF"/>`;
+  let vrm = ""; for (let i = 0; i < 7; i++) vrm += `<rect x="${72 + i * 17}" y="26" width="13" height="13" rx="2" fill="#4B5563" stroke="#1F2937"/>`;
+  for (let i = 0; i < 4; i++) vrm += `<rect x="40" y="${72 + i * 22}" width="13" height="13" rx="2" fill="#4B5563" stroke="#1F2937"/>`;
+  let eps = ""; for (let r = 0; r < 2; r++) for (let c = 0; c < 4; c++) eps += `<rect x="${24 + c * 9}" y="${20 + r * 9}" width="7" height="7" rx="1.5" fill="#111827"/>`;
+  let dimm = ""; [236, 254, 272, 290].forEach(x => { dimm += `<rect x="${x}" y="40" width="10" height="170" rx="2" fill="#23272F"/><rect x="${x - 1}" y="34" width="12" height="8" rx="2" fill="#E5E7EB"/><rect x="${x - 1}" y="206" width="12" height="8" rx="2" fill="#E5E7EB"/>`; });
+  let atx = ""; for (let r = 0; r < 12; r++) for (let c = 0; c < 2; c++) atx += `<rect x="${462 + c * 11}" y="${72 + r * 9.5}" width="8" height="7" rx="1.5" fill="#111827"/>`;
+  let sata = ""; [0, 1].forEach(r => [0, 1].forEach(c => { sata += `<path d="M${448 + c * 30} ${262 + r * 26} h24 v14 h-16 v-5 h-8 z" fill="#111827"/>`; }));
+  return `<svg viewBox="0 0 520 360" role="img" aria-label="Základná doska bez popisov" ${FONT}>
+  <rect x="8" y="8" width="504" height="344" rx="10" fill="#1F6B4A" stroke="#144C34" stroke-width="2"/>
+  ${[[22, 22], [498, 22], [22, 338], [498, 338], [300, 180]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="#D1D5DB" stroke="#9CA3AF"/>`).join("")}
+  <path d="M60 140 C 140 150, 200 200, 330 240 M190 120 C 260 130, 300 230, 420 300" stroke="#2C8A60" stroke-width="2" fill="none"/>
+  <rect x="18" y="14" width="44" height="26" rx="3" fill="#F3F4F6" stroke="#111827"/>${eps}
+  ${vrm}
+  <rect x="74" y="66" width="104" height="104" rx="6" fill="#C9CDD4" stroke="#6B7280" stroke-width="2"/><rect x="82" y="74" width="88" height="88" fill="#E5E7EB"/>${pins}<line x1="182" y1="70" x2="182" y2="166" stroke="#6B7280" stroke-width="3"/>
+  ${dimm}
+  <rect x="456" y="66" width="30" height="124" rx="3" fill="#F3F4F6" stroke="#111827" stroke-width="1.5"/>${atx}
+  <rect x="350" y="206" width="60" height="60" rx="6" fill="#4B5563" stroke="#1F2937"/>${[0, 1, 2, 3, 4].map(i => `<line x1="${357 + i * 11}" y1="212" x2="${357 + i * 11}" y2="260" stroke="#6B7280" stroke-width="3"/>`).join("")}
+  <rect x="40" y="226" width="250" height="15" rx="2" fill="#1F2937"/><rect x="284" y="222" width="12" height="23" rx="2" fill="#E5E7EB"/>
+  <rect x="104" y="268" width="168" height="12" rx="2" fill="#0F172A" stroke="#64748B"/><rect x="96" y="266" width="10" height="16" rx="2" fill="#E5E7EB"/><circle cx="286" cy="274" r="6" fill="#D1D5DB" stroke="#6B7280" stroke-width="2"/><circle cx="286" cy="274" r="2" fill="#6B7280"/>
+  <rect x="40" y="306" width="52" height="13" rx="2" fill="#1F2937"/>
+  <rect x="300" y="300" width="24" height="24" rx="2" fill="#111827"/><circle cx="305" cy="305" r="2" fill="#9CA3AF"/>
+  <circle cx="392" cy="310" r="20" fill="#D1D5DB" stroke="#6B7280" stroke-width="2"/><circle cx="392" cy="310" r="14" fill="none" stroke="#9CA3AF"/>
+  ${sata}
+  ${zone("eps", 14, 10, 52, 34)}${zone("vrm", 34, 20, 156, 140)}${zone("cpu", 70, 62, 116, 112)}${zone("dimm", 228, 28, 76, 190)}${zone("atx", 452, 62, 38, 132)}${zone("chip", 344, 200, 72, 72)}
+  ${zone("pcie16", 34, 218, 268, 30)}${zone("m2", 90, 260, 206, 28)}${zone("pcie1", 34, 298, 64, 29)}${zone("bios", 294, 294, 36, 36)}${zoneC("bat", 392, 310, 26)}${zone("sata", 440, 254, 70, 52)}
+  </svg>`; })();
+const BOARD2_N = { eps: "napájanie procesora (EPS 8-pin)", vrm: "VRM", cpu: "pätica procesora", dimm: "sloty RAM (DIMM)", atx: "konektor ATX 24-pin", chip: "čipová sada", pcie16: "slot PCIe x16", m2: "slot M.2", pcie1: "slot PCIe x1", bios: "čip BIOS/UEFI", bat: "batéria CMOS", sata: "porty SATA" };
+
+/* zadná strana počítača so samostatnou grafickou kartou */
+const BACK = (() => {
+  const usb = (x, y) => `<rect x="${x}" y="${y}" width="30" height="13" rx="2" fill="#111827"/><rect x="${x + 4}" y="${y + 3}" width="22" height="4" fill="#2F5BEA"/>`;
+  const hdmi = (x, y) => `<path d="M${x} ${y} h44 v11 l-7 7 h-30 l-7 -7 z" fill="#111827"/><rect x="${x + 8}" y="${y + 4}" width="28" height="4" fill="#9CA3AF"/>`;
+  const dp = (x, y) => `<path d="M${x} ${y} h42 v18 h-35 l-7 -7 z" fill="#111827"/><rect x="${x + 8}" y="${y + 5}" width="28" height="4" fill="#9CA3AF"/>`;
+  const lbl = (x, y, t) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="11" fill="#374151" font-weight="600">${t}</text>`;
+  return `<svg viewBox="0 0 420 330" role="img" aria-label="Zadná strana počítača: panel základnej dosky hore, grafická karta dole" ${FONT}>
+  <rect x="10" y="10" width="400" height="310" rx="12" fill="#9CA3AF" stroke="#4B5563" stroke-width="2"/>
+  <text x="30" y="34" font-size="13" font-weight="700" fill="#16213A">zadný panel základnej dosky</text>
+  <rect x="26" y="42" width="368" height="116" rx="6" fill="#D1D5DB" stroke="#6B7280"/>
+  ${usb(44, 62)}${usb(44, 92)}${lbl(59, 124, "USB")}
+  ${hdmi(104, 66)}${lbl(126, 104, "HDMI")}
+  ${dp(172, 66)}${lbl(193, 104, "DP")}
+  <rect x="236" y="60" width="34" height="30" rx="3" fill="#F9FAFB" stroke="#374151"/><rect x="242" y="66" width="22" height="16" fill="#111827"/><rect x="248" y="82" width="10" height="5" fill="#111827"/>${lbl(253, 104, "LAN")}
+  <circle cx="306" cy="74" r="11" fill="#22A355" stroke="#14532D"/><circle cx="306" cy="74" r="4" fill="#111827"/><circle cx="340" cy="74" r="11" fill="#EC6FA6" stroke="#9D174D"/><circle cx="340" cy="74" r="4" fill="#111827"/>
+  ${usb(296, 112)}${usb(334, 112)}
+  <text x="30" y="190" font-size="13" font-weight="700" fill="#16213A">rozširujúce sloty</text>
+  ${[0, 1, 2, 3].map(i => `<rect x="26" y="${198 + i * 28}" width="368" height="22" rx="3" fill="${i < 2 ? "#374151" : "#C4C9D2"}" stroke="#4B5563"/>`).join("")}
+  <rect x="26" y="198" width="368" height="50" rx="4" fill="#2A2F3A" stroke="#111827"/>
+  ${hdmi(60, 210)}${dp(134, 210)}${dp(200, 210)}<text x="82" y="243" text-anchor="middle" font-size="11" fill="#E5E7EB" font-weight="600">HDMI</text><text x="155" y="243" text-anchor="middle" font-size="11" fill="#E5E7EB" font-weight="600">DP</text><text x="221" y="243" text-anchor="middle" font-size="11" fill="#E5E7EB" font-weight="600">DP</text>
+  <text x="300" y="228" font-size="12" font-weight="700" fill="#E5E7EB">grafická karta</text>
+  ${zone("mbUsb", 38, 56, 42, 72)}${zone("mbHdmi", 98, 58, 56, 52)}${zone("mbDp", 166, 58, 54, 52)}${zone("lan", 230, 54, 46, 56)}${zone("audio", 290, 58, 64, 32)}
+  ${zone("gHdmi", 54, 204, 56, 36)}${zone("gDp1", 128, 204, 54, 36)}${zone("gDp2", 194, 204, 54, 36)}
+  </svg>`; })();
+const BACK_N = { mbUsb: "USB na doske", mbHdmi: "HDMI na doske", mbDp: "DisplayPort na doske", lan: "sieťový port", audio: "zvukové konektory", gHdmi: "HDMI na grafickej karte", gDp1: "DisplayPort na grafickej karte", gDp2: "DisplayPort na grafickej karte" };
+
+/* vnútro pevného disku */
+const HDDIN = `<svg viewBox="0 0 420 300" role="img" aria-label="Otvorený pevný disk" ${FONT}>
+  <rect x="20" y="14" width="380" height="272" rx="16" fill="#B8BEC8" stroke="#6B7280" stroke-width="2"/>
+  ${[[38, 32], [382, 32], [38, 268], [382, 268]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6" fill="#E5E7EB" stroke="#6B7280"/>`).join("")}
+  <circle cx="160" cy="150" r="112" fill="#D9DEE6" stroke="#8B93A1" stroke-width="2"/>
+  ${[90, 70, 50].map(r => `<circle cx="160" cy="150" r="${r}" fill="none" stroke="#C3CAD5" stroke-width="1"/>`).join("")}
+  <path d="M110 70 A 95 95 0 0 1 230 85" stroke="#fff" stroke-width="6" opacity=".7" fill="none"/>
+  <circle cx="160" cy="150" r="24" fill="#9CA3AF" stroke="#6B7280" stroke-width="2"/>${[0, 60, 120, 180, 240, 300].map(a => `<circle cx="${(160 + 15 * Math.cos(a * Math.PI / 180)).toFixed(1)}" cy="${(150 + 15 * Math.sin(a * Math.PI / 180)).toFixed(1)}" r="2.5" fill="#4B5563"/>`).join("")}
+  <circle cx="330" cy="220" r="26" fill="#6B7280" stroke="#374151" stroke-width="2"/><circle cx="330" cy="220" r="8" fill="#374151"/>
+  <path d="M318 206 L 214 98 L 222 90 L 342 210 Z" fill="#7C8594" stroke="#374151" stroke-width="1.5"/>
+  <rect x="202" y="80" width="20" height="14" rx="3" fill="#C2410C" stroke="#7C2D12" transform="rotate(-46 212 87)"/>
+  <rect x="368" y="96" width="28" height="80" rx="3" fill="#111827"/>${[0, 1, 2, 3, 4, 5].map(i => `<rect x="374" y="${103 + i * 11}" width="16" height="5" fill="#D4AF37"/>`).join("")}
+  ${zoneC("plat", 160, 150, 112)}${zoneC("spin", 160, 150, 30)}${zone("arm", 236, 120, 80, 70, 10)}${zoneC("motor", 330, 220, 32)}${zoneC("head", 211, 88, 17)}${zone("conn", 362, 90, 40, 92)}
+  </svg>`;
+const HDDIN_N = { plat: "magnetická platňa", spin: "os, na ktorej sa platne otáčajú", arm: "rameno", motor: "motor ramena", head: "čítacia hlava", conn: "konektor" };
+
+/* bok notebooku s portmi */
+const LAPTOP = (() => {
+  return `<svg viewBox="0 0 480 170" role="img" aria-label="Bok notebooku s rôznymi portmi" ${FONT}>
+  <rect x="10" y="14" width="460" height="22" rx="6" fill="#94A3B8"/><rect x="10" y="40" width="460" height="74" rx="10" fill="#CBD5E1" stroke="#64748B" stroke-width="2"/>
+  <rect x="38" y="66" width="26" height="12" rx="6" fill="#111827"/><rect x="44" y="70" width="14" height="4" rx="2" fill="#9CA3AF"/>
+  <rect x="88" y="62" width="40" height="18" rx="2" fill="#111827"/><rect x="93" y="66" width="30" height="5" fill="#2F5BEA"/>
+  <path d="M154 62 h46 v11 l-7 7 h-32 l-7 -7 z" fill="#111827"/><rect x="162" y="66" width="30" height="4" fill="#9CA3AF"/>
+  <rect x="226" y="56" width="36" height="32" rx="3" fill="#F9FAFB" stroke="#374151"/><rect x="232" y="62" width="24" height="17" fill="#111827"/><rect x="238" y="79" width="12" height="5" fill="#111827"/>
+  <circle cx="300" cy="71" r="10" fill="#111827"/><circle cx="300" cy="71" r="4" fill="#4B5563"/>
+  <rect x="336" y="68" width="58" height="7" rx="2" fill="#111827"/>
+  <circle cx="436" cy="71" r="7" fill="#22C55E" opacity=".8"/>
+  <path d="M10 118 h460" stroke="#64748B" stroke-width="2"/>
+  ${zone("usbc", 28, 52, 46, 38)}${zone("usba", 80, 52, 56, 38)}${zone("hdmi", 146, 52, 62, 38)}${zone("rj45", 218, 48, 52, 46)}${zoneC("jack", 300, 71, 20)}${zone("sd", 328, 56, 74, 32)}
+  </svg>`; })();
+const LAPTOP_N = { usbc: "USB-C", usba: "USB-A", hdmi: "HDMI", rj45: "RJ-45 (sieť)", jack: "jack 3,5 mm", sd: "čítačka SD kariet" };
+
+/* SD karta */
+const SDCARD = `<svg viewBox="0 0 300 330" role="img" aria-label="Pamäťová karta SD s označeniami" ${FONT}>
+  <path d="M60 20 H220 L250 50 V310 H60 Z" fill="#1F2937" stroke="#0B1220" stroke-width="2"/>
+  ${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<rect x="${78 + i * 19}" y="30" width="12" height="34" rx="2" fill="#D4AF37"/>`).join("")}
+  <rect x="74" y="80" width="162" height="216" rx="8" fill="#B91C1C"/>
+  <text x="155" y="122" text-anchor="middle" font-size="30" font-weight="800" fill="#fff">64 GB</text>
+  <text x="155" y="166" text-anchor="middle" font-size="26" font-weight="800" fill="#fff" font-style="italic">SDXC</text>
+  <path d="M96 200 v22 a16 16 0 0 0 32 0 v-22" fill="none" stroke="#fff" stroke-width="5"/><text x="112" y="226" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">3</text>
+  <text x="182" y="230" text-anchor="middle" font-size="26" font-weight="800" fill="#fff">V30</text>
+  <circle cx="114" cy="268" r="17" fill="none" stroke="#fff" stroke-width="4"/><text x="114" y="275" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">10</text>
+  <rect x="44" y="110" width="18" height="70" rx="2" fill="#4B5563"/><rect x="40" y="120" width="16" height="24" rx="3" fill="#E5E7EB" stroke="#6B7280"/>
+  ${zone("lock", 30, 100, 36, 92)}${zone("pins", 70, 24, 158, 46)}${zone("cap", 92, 92, 126, 40)}${zone("type", 100, 138, 110, 38)}${zone("u3", 88, 192, 50, 50)}${zone("v30", 150, 200, 64, 42)}${zone("c10", 92, 246, 44, 44)}
+  </svg>`;
+const SDCARD_N = { lock: "prepínač na boku karty", pins: "kontakty", cap: "kapacita", type: "typ karty SDXC", u3: "značka U3", v30: "značka V30", c10: "značka C10" };
+
+/* SD karty s kapacitami (triedenie) */
+const CARDS = (() => { const caps = ["2 GB", "16 GB", "32 GB", "128 GB", "1 TB", "8 TB"], cols = ["#2563EB", "#0F766E", "#7C3AED", "#B91C1C", "#B45309", "#334155"];
+  return `<svg viewBox="0 0 480 120" role="img" aria-label="Šesť pamäťových kariet s rôznou kapacitou" ${FONT}>${caps.map((c, i) => { const x = 10 + i * 78;
+    return `<path d="M${x} 12 h52 l14 14 v84 h-66 z" fill="#1F2937"/><rect x="${x + 6}" y="34" width="54" height="68" rx="5" fill="${cols[i]}"/><text x="${x + 33}" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">${c}</text>${[0, 1, 2, 3].map(k => `<rect x="${x + 8 + k * 11}" y="16" width="7" height="12" rx="1" fill="#D4AF37"/>`).join("")}`; }).join("")}</svg>`; })();
+
+/* súčiastky (triedenie do slotov) */
+const PARTS = `<svg viewBox="0 0 480 120" role="img" aria-label="Súčiastky počítača: procesor, modul RAM, grafická karta, rozširujúca karta a disk" ${FONT}>
+  <rect x="14" y="22" width="76" height="76" rx="6" fill="#C9CDD4" stroke="#6B7280" stroke-width="2"/><rect x="26" y="34" width="52" height="52" rx="3" fill="#9CA3AF"/><text x="52" y="66" text-anchor="middle" font-size="11" font-weight="700" fill="#1F2937">CPU</text>
+  <rect x="106" y="42" width="96" height="36" rx="3" fill="#166534"/>${[0, 1, 2, 3].map(i => `<rect x="${114 + i * 22}" y="48" width="16" height="18" fill="#111827"/>`).join("")}<rect x="108" y="74" width="92" height="5" fill="#D4AF37"/>
+  <rect x="218" y="26" width="120" height="58" rx="5" fill="#27272A"/><circle cx="256" cy="55" r="20" fill="#3F3F46" stroke="#71717A"/><circle cx="302" cy="55" r="20" fill="#3F3F46" stroke="#71717A"/><rect x="226" y="84" width="80" height="7" fill="#D4AF37"/>
+  <rect x="352" y="40" width="44" height="40" rx="3" fill="#1E40AF"/><rect x="358" y="80" width="26" height="6" fill="#D4AF37"/><rect x="364" y="48" width="18" height="14" fill="#111827"/>
+  <rect x="410" y="28" width="58" height="68" rx="5" fill="#94A3B8" stroke="#475569" stroke-width="2"/><circle cx="439" cy="56" r="20" fill="#CBD5E1" stroke="#64748B"/><circle cx="439" cy="56" r="4" fill="#64748B"/>
+  </svg>`;
+
+/* ikony zariadení (monitor, tlačiareň, projektor, webkamera) */
+const DEV4 = `<svg viewBox="0 0 480 110" role="img" aria-label="Monitor, tlačiareň, projektor a webkamera" ${FONT}>
+  <rect x="20" y="14" width="96" height="62" rx="5" fill="#1F2937"/><rect x="26" y="20" width="84" height="50" fill="#60A5FA"/><rect x="62" y="76" width="12" height="14" fill="#4B5563"/><rect x="46" y="90" width="44" height="6" rx="2" fill="#4B5563"/>
+  <rect x="146" y="40" width="96" height="44" rx="6" fill="#9CA3AF" stroke="#4B5563"/><rect x="162" y="18" width="64" height="26" fill="#F9FAFB" stroke="#9CA3AF"/><rect x="162" y="76" width="64" height="22" fill="#F9FAFB" stroke="#9CA3AF"/><circle cx="230" cy="52" r="3" fill="#22C55E"/>
+  <rect x="272" y="44" width="92" height="40" rx="8" fill="#E5E7EB" stroke="#6B7280"/><circle cx="344" cy="64" r="13" fill="#1F2937"/><circle cx="344" cy="64" r="6" fill="#93C5FD"/><path d="M357 58 L 380 40 M357 70 L 380 88" stroke="#FDE68A" stroke-width="3"/>
+  <circle cx="430" cy="46" r="24" fill="#1F2937"/><circle cx="430" cy="46" r="10" fill="#3B82F6"/><circle cx="430" cy="46" r="4" fill="#111827"/><rect x="420" y="72" width="20" height="10" fill="#4B5563"/><rect x="408" y="82" width="44" height="6" rx="2" fill="#4B5563"/>
+  </svg>`;
+
+/* procesor so 4 jadrami */
+const CPUDIE = `<svg viewBox="0 0 480 200" role="img" aria-label="Schéma procesora so štyrmi jadrami a spoločnou cache" ${FONT}>
+  <rect x="120" y="10" width="240" height="180" rx="10" fill="#C9CDD4" stroke="#6B7280" stroke-width="2"/>
+  ${[0, 1, 2, 3].map(i => { const x = 136 + (i % 2) * 108, y = 24 + Math.floor(i / 2) * 78; return `<rect x="${x}" y="${y}" width="100" height="66" rx="6" fill="#1E3A8A"/><rect x="${x + 8}" y="${y + 34}" width="24" height="22" rx="3" fill="#60A5FA"/><rect x="${x + 38}" y="${y + 34}" width="24" height="22" rx="3" fill="#93C5FD"/><rect x="${x + 68}" y="${y + 34}" width="24" height="22" rx="3" fill="#BFDBFE"/>`; }).join("")}
+  <rect x="136" y="178" width="208" height="6" rx="3" fill="#F0B429"/>
+  ${[...Array(10).keys()].map(i => `<rect x="${128 + i * 23}" y="0" width="8" height="10" fill="#D4AF37"/><rect x="${128 + i * 23}" y="190" width="8" height="10" fill="#D4AF37"/>`).join("")}
+  </svg>`;
+
+/* okno disku vo Windows a krabica s diskom */
+const DISKWIN = `<svg viewBox="0 0 480 150" role="img" aria-label="Krabica s diskom 1 TB a ten istý disk vo Windows s neznámou kapacitou" ${FONT}>
+  <rect x="14" y="18" width="130" height="116" rx="8" fill="#1E40AF"/><rect x="28" y="34" width="102" height="62" rx="5" fill="#94A3B8"/><circle cx="79" cy="65" r="22" fill="#CBD5E1" stroke="#64748B"/><circle cx="79" cy="65" r="4" fill="#64748B"/>
+  <text x="79" y="122" text-anchor="middle" font-size="22" font-weight="800" fill="#fff">1 TB</text>
+  <path d="M158 76 h40" stroke="#566381" stroke-width="3"/><path d="M192 68 l12 8 l-12 8 z" fill="#566381"/>
+  <rect x="214" y="20" width="252" height="112" rx="8" fill="#fff" stroke="#9AA3B5"/><rect x="214" y="20" width="252" height="24" rx="8" fill="#E5E7EB"/><text x="226" y="37" font-size="12" fill="#374151">Tento počítač</text>
+  <rect x="230" y="58" width="36" height="28" rx="3" fill="#9CA3AF"/><rect x="234" y="80" width="28" height="3" fill="#22C55E"/>
+  <text x="278" y="70" font-size="14" font-weight="600" fill="#16213A">Nový disk (D:)</text>
+  <rect x="278" y="78" width="170" height="12" rx="2" fill="#E5E7EB" stroke="#9CA3AF"/><rect x="278" y="78" width="12" height="12" fill="#26A0DA"/>
+  <text x="278" y="110" font-size="13" fill="#566381">??? GB voľných z ??? GB</text>
+  </svg>`;
+
+/* monitor s uhlopriečkou */
+const MONITOR = `<svg viewBox="0 0 480 220" role="img" aria-label="Monitor 27 palcov s vyznačenou uhlopriečkou" ${FONT}>
+  <rect x="90" y="10" width="300" height="176" rx="8" fill="#1F2937"/><rect x="100" y="20" width="280" height="156" fill="#DBEAFE"/>
+  <path d="M106 170 L374 26" stroke="#C0392B" stroke-width="4"/><path d="M106 170 l14 -2 l-6 -12 z M374 26 l-14 2 l6 12 z" fill="#C0392B"/>
+  <rect x="198" y="80" width="84" height="32" rx="6" fill="#fff" stroke="#C0392B" stroke-width="2"/><text x="240" y="103" text-anchor="middle" font-size="20" font-weight="800" fill="#C0392B">27″</text>
+  <rect x="226" y="186" width="28" height="18" fill="#4B5563"/><rect x="192" y="204" width="96" height="8" rx="3" fill="#4B5563"/>
+  </svg>`;
+
+/* ikony periférií (k úlohe vstupné / výstupné) */
+const PERIPH = `<svg viewBox="0 0 480 96" role="img" aria-label="Skener, webkamera, projektor, reproduktory, dotyková obrazovka a headset" ${FONT}>
+  <rect x="8" y="40" width="64" height="30" rx="5" fill="#9CA3AF" stroke="#4B5563"/><rect x="8" y="34" width="64" height="8" rx="3" fill="#6B7280"/><rect x="16" y="50" width="48" height="4" fill="#38BDF8"/>
+  <circle cx="114" cy="42" r="20" fill="#1F2937"/><circle cx="114" cy="42" r="8" fill="#3B82F6"/><rect x="98" y="66" width="32" height="6" rx="2" fill="#4B5563"/>
+  <rect x="160" y="36" width="70" height="32" rx="7" fill="#E5E7EB" stroke="#6B7280"/><circle cx="214" cy="52" r="10" fill="#1F2937"/><circle cx="214" cy="52" r="4" fill="#93C5FD"/>
+  <rect x="252" y="22" width="30" height="56" rx="5" fill="#374151"/><circle cx="267" cy="40" r="8" fill="#6B7280"/><circle cx="267" cy="62" r="11" fill="#6B7280"/><rect x="290" y="22" width="30" height="56" rx="5" fill="#374151"/><circle cx="305" cy="40" r="8" fill="#6B7280"/><circle cx="305" cy="62" r="11" fill="#6B7280"/>
+  <rect x="340" y="20" width="44" height="64" rx="6" fill="#1F2937"/><rect x="344" y="26" width="36" height="50" fill="#A7F3D0"/><circle cx="366" cy="54" r="6" fill="#F0B429" opacity=".9"/>
+  <path d="M410 56 a30 30 0 0 1 60 0" fill="none" stroke="#374151" stroke-width="6"/><rect x="404" y="50" width="16" height="26" rx="6" fill="#374151"/><rect x="460" y="50" width="16" height="26" rx="6" fill="#374151"/><path d="M412 74 q 6 14 26 12" stroke="#374151" stroke-width="3" fill="none"/><circle cx="440" cy="86" r="4" fill="#374151"/>
+  </svg>`;
+
+/* ikony spôsobov pripojenia */
+const LINKS = `<svg viewBox="0 0 480 90" role="img" aria-label="Bluetooth, Wi-Fi, jack 3,5 mm, VGA a USB-C" ${FONT}>
+  <circle cx="48" cy="40" r="28" fill="#2563EB"/><path d="M40 26 L58 46 L48 56 V22 L58 32 L40 52" stroke="#fff" stroke-width="4" fill="none" stroke-linejoin="round"/>
+  <g transform="translate(144 52)" fill="none" stroke="#0F766E" stroke-width="6" stroke-linecap="round"><path d="M-30 -18 a42 42 0 0 1 60 0"/><path d="M-19 -6 a27 27 0 0 1 38 0"/></g><circle cx="144" cy="56" r="6" fill="#0F766E"/>
+  <rect x="208" y="34" width="60" height="12" rx="3" fill="#9CA3AF"/><rect x="250" y="31" width="40" height="18" rx="4" fill="#1F2937"/><circle cx="214" cy="40" r="3" fill="#4B5563"/>
+  <path d="M316 22 h80 l-8 34 h-64 z" fill="#1E3A8A"/>${[0, 1, 2, 3, 4].map(i => `<circle cx="${334 + i * 11}" cy="32" r="2.6" fill="#E5E7EB"/>`).join("")}${[0, 1, 2, 3].map(i => `<circle cx="${339 + i * 11}" cy="44" r="2.6" fill="#E5E7EB"/>`).join("")}
+  <rect x="418" y="30" width="48" height="20" rx="10" fill="#111827"/><rect x="428" y="37" width="28" height="6" rx="3" fill="#9CA3AF"/>
+  </svg>`;
+
+/* ===== úlohy (30 úloh, bez A/B/C/D) ===== */
 function buildQ() {
   return [
   { id: "q1", type: "match", pts: 2, q: "Na obrázku je zjednodušená základná doska. Čo je označené písmenom?", img: BOARD,
@@ -192,8 +398,6 @@ function buildQ() {
   { id: "q5", type: "match", pts: 3, q: "Na obrázku je zadný panel počítača. Čo zapojíš do ktorého konektora?", img: PANEL,
     pool: ["sieťový kábel (Ethernet)", "USB kľúč", "televízor (obraz aj zvuk)", "herný monitor s vysokou frekvenciou", "reproduktory", "mikrofón", "starý monitor s analógovým obrazom"],
     rows: [["konektor A", "sieťový kábel (Ethernet)"], ["konektor B", "USB kľúč"], ["konektor C", "televízor (obraz aj zvuk)"], ["konektor D", "herný monitor s vysokou frekvenciou"], ["konektor E", "reproduktory"], ["konektor F", "mikrofón"]] },
-  { id: "q6", type: "mc", pts: 1, q: "Jakub si do počítača vložil samostatnú grafickú kartu. Monitor nechal zapojený v HDMI na zadnom paneli dosky a obrazovka zostala čierna. Čo má urobiť?",
-    opts: ["Zapojiť monitor do portu na grafickej karte, nie do dosky.", "Nainštalovať ovládač monitora cez Správcu zariadení.", "Presunúť grafickú kartu do slotu PCIe x1.", "V UEFI nastaviť grafickú kartu na prvé miesto v poradí zavádzania."], a: 0 },
   { id: "q7", type: "order", pts: 2, q: "Zoraď pamäte od <b>najrýchlejšej</b> po <b>najpomalšiu</b>.",
     items: ["registre", "cache L1, L2, L3", "RAM", "SSD", "HDD", "cloud"], ends: ["najrýchlejšia", "najpomalšia"] },
   { id: "q8", type: "match", pts: 2, q: "Je pamäť <b>stratová</b> (volatilná), alebo <b>nestratová</b>?", fixed: true, pool: ["Stratová", "Nestratová"],
@@ -206,11 +410,7 @@ function buildQ() {
     rows: [["počítač veľmi pomaly štartuje", "SSD"], ["spomalí sa, keď je spustených veľa programov naraz", "viac RAM"], ["hry sa trhajú", "grafická karta"], ["renderovanie videa trvá dlho", "viac jadier"], ["disk je stále plný", "väčšie úložisko"], ["počítač sa prehrieva", "čistenie chladenia"]] },
   { id: "q12", type: "match", pts: 2, q: "Platí to pre <b>HDD</b>, alebo pre <b>SSD</b>?", fixed: true, pool: ["HDD", "SSD"],
     rows: [["magnetické platne a čítacia hlava na ramene", "HDD"], ["citlivý na otrasy", "HDD"], ["lacnejší za 1 TB", "HDD"], ["údaje vo flash čipoch bez pohyblivých častí", "SSD"]] },
-  { id: "q13", type: "mc", pts: 1, q: "Na obrázku je platňa pevného disku. Modré úseky sú časti <b>jedného súboru</b>. Čo platí?", img: FRAG, cap: "🟦 časti jedného súboru · ⬜ iné údaje",
-    opts: ["Súbor je fragmentovaný, hlava musí skákať a čítanie je pomalšie. Pomôže defragmentácia (Optimalizácia jednotiek).", "Súbor je fragmentovaný. Pomôže defragmentácia, ktorú treba pravidelne robiť aj na SSD.", "Súbor je skomprimovaný, preto zaberá menej miesta. Rýchlejšie sa načíta po rozbalení.", "Platňa je rozdelená na stopy a sektory, preto je každý súbor vždy uložený po kúskoch a nedá sa to zmeniť."], a: 0 },
-  { id: "q17", type: "mc", pts: 1, q: "Čo znamená pravidlo zálohovania <b>3-2-1</b>?",
-    opts: ["3 kópie údajov, na 2 rôznych médiách, 1 kópia mimo domu", "3 disky, 2 počítače, 1 záloha v cloude", "3 kópie údajov, 2 z nich na tom istom disku, 1 v cloude", "3 zálohy za týždeň, 2 za mesiac, 1 za rok"], a: 0 },
-  { id: "q18", type: "match", pts: 2, q: "Je periféria <b>vstupná</b>, <b>výstupná</b>, alebo <b>vstupno-výstupná</b>?", fixed: true, pool: ["Vstupná", "Výstupná", "Vstupno-výstupná"],
+  { id: "q18", type: "match", pts: 2, q: "Je periféria <b>vstupná</b>, <b>výstupná</b>, alebo <b>vstupno-výstupná</b>?", img: PERIPH, cap: "skener · webkamera · projektor · reproduktory · dotyková obrazovka · headset", fixed: true, pool: ["Vstupná", "Výstupná", "Vstupno-výstupná"],
     rows: [["skener", "Vstupná"], ["webkamera", "Vstupná"], ["projektor", "Výstupná"], ["reproduktory", "Výstupná"], ["dotyková obrazovka", "Vstupno-výstupná"], ["headset", "Vstupno-výstupná"]] },
   { id: "q19", type: "match", pts: 2, q: "Ktorá tlačiareň je na danú úlohu najvhodnejšia?",
     pool: ["atramentová", "laserová", "ihličková", "3D tlačiareň"],
@@ -220,22 +420,52 @@ function buildQ() {
     rows: [["rozlíšenie Full HD", "1920 × 1080"], ["rozlíšenie 4K", "3840 × 2160"], ["frekvencia monitora", "Hz"], ["jemnosť tlače alebo skenovania", "DPI"], ["zariadenie sa po pripojení samo rozpozná", "Plug and Play"]] },
   { id: "q21", type: "order", pts: 2, q: "Zoraď verzie USB od <b>najpomalšej</b> po <b>najrýchlejšiu</b>.",
     items: ["USB 2.0", "USB 3.2 Gen 1", "USB 3.2 Gen 2", "USB4"], ends: ["najpomalšia", "najrýchlejšia"] },
-  { id: "q22", type: "mc", pts: 1, q: "Počas kopírovania súborov ti spadol notebook na zem. Ktorý disk sa pravdepodobnejšie poškodí a prečo?",
-    opts: ["HDD, lebo má otáčajúce sa platne a čítaciu hlavu na ramene.", "SSD, lebo flash čipy sú citlivé na náraz.", "Oba rovnako, lebo oba ukladajú údaje natrvalo.", "Žiadny, lebo počas kopírovania sa disk nehýbe."], a: 0 },
-  { id: "q23", type: "match", pts: 2, q: "Priraď k spôsobu pripojenia jeho popis.",
+  { id: "q23", type: "match", pts: 2, q: "Priraď k spôsobu pripojenia jeho popis.", img: LINKS, cap: "Bluetooth · Wi-Fi · jack 3,5 mm · VGA · USB-C",
     pool: ["bezdrôtovo nablízko", "bezdrôtová sieť, sieťové tlačiarne", "analógové slúchadlá, mikrofón", "starý analógový obraz", "obojstranný, dáta, obraz aj nabíjanie", "obraz aj zvuk do televízora"],
     rows: [["Bluetooth", "bezdrôtovo nablízko"], ["Wi-Fi", "bezdrôtová sieť, sieťové tlačiarne"], ["jack 3,5 mm", "analógové slúchadlá, mikrofón"], ["VGA", "starý analógový obraz"], ["USB-C", "obojstranný, dáta, obraz aj nabíjanie"]] },
-  { id: "q24", type: "mc", pts: 1, q: "Na čo slúži malý prepínač na boku <b>SD karty</b>?",
-    opts: ["chráni kartu proti zápisu", "prepína medzi SD a microSD", "zapína rýchlejší režim zápisu", "naformátuje kartu"], a: 0 }
+
+  /* ----- nové úlohy: klikanie do obrázka ----- */
+  { id: "h1", type: "hot", pts: 1, q: "Klikni na miesto na doske, kam priskrutkuješ rýchly <b>SSD NVMe</b>.", img: BOARD2, names: BOARD2_N, a: ["m2"] },
+  { id: "h2", type: "hot", pts: 1, q: "Klikni na konektor, ktorým zdroj napája <b>procesor</b>.", img: BOARD2, names: BOARD2_N, a: ["eps"] },
+  { id: "h3", type: "hot", pts: 2, q: "Jakub si do počítača vložil samostatnú grafickú kartu. Klikni na port, do ktorého musí zapojiť <b>monitor</b>, aby nemal čiernu obrazovku.", img: BACK, names: BACK_N, a: ["gHdmi", "gDp1", "gDp2"], one: "port na grafickej karte (HDMI alebo DisplayPort)" },
+  { id: "h4", type: "hot", pts: 1, q: "Na obrázku je otvorený pevný disk. Klikni na časť, ktorá <b>číta a zapisuje</b> údaje na platňu.", img: HDDIN, names: HDDIN_N, a: ["head"] },
+  { id: "h5", type: "hot", pts: 1, q: "Klikni na port notebooku, ktorý je <b>obojstranný</b> a cez ktorý notebook aj nabiješ.", img: LAPTOP, names: LAPTOP_N, a: ["usbc"] },
+  { id: "h6", type: "hot", pts: 1, q: "Klikni na časť SD karty, ktorá ju <b>chráni proti zápisu</b>.", img: SDCARD, names: SDCARD_N, a: ["lock"], figw: 300 },
+  /* ----- nové úlohy: triedenie do skupín ----- */
+  { id: "s1", type: "sort", pts: 2, q: "Kde sa daná pamäť nachádza? Roztrieď kartičky.", groups: ["v procesore", "na základnej doske", "mimo počítača"],
+    items: [["registre", 0], ["cache L1", 0], ["cache L3", 0], ["moduly RAM", 1], ["čip s firmvérom BIOS/UEFI", 1], ["SSD M.2 NVMe", 1], ["cloud", 2], ["externý HDD", 2]] },
+  { id: "s2", type: "sort", pts: 3, q: "Akého typu je karta s danou kapacitou? Roztrieď karty.", img: CARDS, groups: ["SD", "SDHC", "SDXC", "SDUC"],
+    items: [["2 GB", 0], ["16 GB", 1], ["32 GB", 1], ["128 GB", 2], ["1 TB", 2], ["8 TB", 3]] },
+  { id: "s3", type: "sort", pts: 2, q: "Kam na základnej doske zapojíš danú súčiastku?", img: PARTS, groups: ["pätica (socket)", "slot DIMM", "slot PCIe x16", "slot PCIe x1", "port SATA"],
+    items: [["procesor", 0], ["modul DDR5", 1], ["grafická karta", 2], ["sieťová karta", 3], ["zvuková karta", 3], ["3,5\" HDD", 4], ["2,5\" SSD", 4]] },
+  { id: "s4", type: "sort", pts: 2, q: "Ku ktorému zariadeniu patrí daný parameter?", img: DEV4, groups: ["monitor", "tlačiareň", "projektor", "webkamera"],
+    items: [["uhlopriečka v palcoch", 0], ["frekvencia v Hz", 0], ["odozva v ms", 0], ["strany za minútu (ppm)", 1], ["svietivosť v lúmenoch", 2], ["snímky za sekundu (fps)", 3]] },
+  /* ----- nové úlohy: doplňovanie do textu ----- */
+  { id: "g1", type: "gap", pts: 2, q: "Doplň text o montáži a nastaveniach UEFI.", img: BOARD,
+    text: "Procesor a RAM vkladáme do dosky {0}, kým je doska {1}. Do nastavení UEFI sa dostaneš klávesom {2} hneď po zapnutí. V nich nastavíš {3}, teda odkiaľ sa načíta systém. Napätie 12 V zo zdroja zníži pre procesor na asi 1 V {4}.",
+    gaps: [["najprv", "nakoniec", "až po pripojení zdroja"], ["mimo skrinky", "priskrutkovaná v skrinke", "zapnutá"], ["Del alebo F2", "Esc alebo F12", "Ctrl + Alt + Del"], ["poradie bootovania", "veľkosť RAM", "rozlíšenie monitora"], ["VRM", "čipová sada", "batéria CMOS"]] },
+  { id: "g2", type: "gap", pts: 3, q: "Doplň text o mikroprocesore.", img: CPUDIE,
+    text: "Procesor vykonáva inštrukcie v cykle načítanie → {0} → vykonanie. Výpočty robí {1}. Takt {2} znamená 4 miliardy taktov za sekundu. Viac {3} umožní robiť úlohy naozaj naraz. Mobily používajú architektúru {4}, počítače s procesormi Intel a AMD architektúru {5}.",
+    gaps: [["dekódovanie", "komprimácia", "uloženie na disk"], ["ALU (aritmeticko-logická jednotka)", "cache L3", "čipová sada"], ["4 GHz", "4 GB", "4 MT/s"], ["jadier", "registrov", "slotov DIMM"], ["ARM", "x64", "DDR5"], ["x64", "ARM", "NVMe"]] },
+  { id: "g3", type: "gap", pts: 3, q: "Na obrázku je platňa pevného disku, modré úseky sú časti <b>jedného súboru</b>. Doplň text.", img: FRAG, cap: "🟦 časti jedného súboru · ⬜ iné údaje",
+    text: "Platňa disku sa delí na {0} a sektory. Súbor na obrázku je {1}, preto musí čítacia hlava {2} a čítanie je pomalšie. Kúsky poskladá za sebou {3}, Windows ju robí automaticky v nástroji {4}. {5} sa nedefragmentuje.",
+    gaps: [["stopy", "vrstvy", "priečinky"], ["fragmentovaný", "skomprimovaný", "zašifrovaný"], ["skákať", "stáť na mieste", "chladnúť"], ["defragmentácia", "formátovanie", "záloha"], ["Optimalizácia jednotiek", "Správca zariadení", "Správca úloh"], ["SSD", "HDD 3,5\"", "HDD 2,5\""]] },
+  { id: "g4", type: "gap", pts: 2, q: "Kúpil si disk 1 TB a vo Windows vidíš menšie číslo. Doplň vysvetlenie aj pravidlo zálohovania.", img: DISKWIN,
+    text: "1 B = {0}. Výrobcovia počítajú kapacitu po {1}, Windows po 1024, preto 1 TB disk ukáže asi {2}. Podľa pravidla 3-2-1 máš 3 kópie údajov na 2 {3} a 1 kópiu {4}.",
+    gaps: [["8 bitov", "10 bitov", "1024 bitov"], ["1000", "1024", "8"], ["931 GB", "1000 GB", "1024 GB"], ["rôznych médiách", "oddieloch toho istého disku", "priečinkoch"], ["mimo domu", "v koši", "na tom istom disku"]] },
+  { id: "g5", type: "gap", pts: 2, q: "Doplň text o monitore a pripájaní zariadení.", img: MONITOR,
+    text: "1″ = {0}, preto má monitor 27″ uhlopriečku asi {1}. Na hry má monitor mať frekvenciu aspoň {2}. V monitore {3} svieti každý pixel sám. USB 2.0 prenáša 480 Mb/s, čo je {4}. Či zariadenie funguje a má ovládač, ukáže {5}.",
+    gaps: [["2,54 cm", "1 cm", "10 cm"], ["68,6 cm", "27 cm", "10,6 cm"], ["144 Hz", "60 Hz", "30 Hz"], ["OLED", "LCD IPS", "LCD TN"], ["60 MB/s", "480 MB/s", "3840 MB/s"], ["Správca zariadení", "Optimalizácia jednotiek", "Správca úloh"]] }
+
   ];
 }
 
 const poolOf = q => q.pool || [...new Set(q.rows.map(r => r[1]))];
-const HINT = { mc: "Vyber jednu odpoveď.", multi: "Označ všetky správne tvrdenia. Za každé nesprávne označenie sa ti jedno správne odpočíta.", match: "Ku každému riadku vyber odpoveď zo zoznamu.", order: "Klikaj na kartičky v správnom poradí. Kliknutím na umiestnenú kartičku ju vrátiš späť.", input: "Napíš odpoveď." };
+const HINT = { hot: "Klikni na správne miesto na obrázku. Výber zmeníš kliknutím na iné miesto.", sort: "Klikni na kartičku a potom na skupinu, kam patrí. Kliknutím na umiestnenú kartičku ju vrátiš späť.", gap: "V každom prázdnom mieste vyber zo zoznamu správnu možnosť.", mc: "Vyber jednu odpoveď.", multi: "Označ všetky správne tvrdenia. Za každé nesprávne označenie sa ti jedno správne odpočíta.", match: "Ku každému riadku vyber odpoveď zo zoznamu.", order: "Klikaj na kartičky v správnom poradí. Kliknutím na umiestnenú kartičku ju vrátiš späť.", input: "Napíš odpoveď." };
 
 /* ===== stav ===== */
-function fresh() { return { v: 1, name: "", cls: "", phase: "start", order: [], perm: {}, ans: {}, result: null, finished: null, attempt: 0, sentKey: null }; }
-function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.v === 1) return Object.assign(fresh(), o); } catch (e) {} return null; }
+function fresh() { return { v: 2, name: "", cls: "", phase: "start", order: [], perm: {}, ans: {}, result: null, finished: null, attempt: 0, sentKey: null }; }
+function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.v === 2) return Object.assign(fresh(), o); } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
 /* úvodná obrazovka s menom a triedou sa ukáže vždy pri otvorení testu aj pred novým pokusom */
@@ -254,8 +484,10 @@ function newAttempt() {
     if (q.type === "mc" || q.type === "multi") S.perm[q.id] = shuffled(q.opts.length);
     if (q.type === "match") { const p = poolOf(q); S.perm[q.id] = { rows: shuffled(q.rows.length), pool: q.fixed ? p.map((_, i) => i) : shuffled(p.length) }; }
     if (q.type === "order") S.perm[q.id] = shuffled(q.items.length);
+    if (q.type === "sort") S.perm[q.id] = shuffled(q.items.length);
+    if (q.type === "gap") S.perm[q.id] = q.gaps.map(g => shuffled(g.length));
   });
-  S.ans = {}; S.result = null; S.finished = null; S.phase = "test"; S.attempt++; save();
+  PICK = null; S.ans = {}; S.result = null; S.finished = null; S.phase = "test"; S.attempt++; save();
 }
 
 /* ===== vyhodnotenie ===== */
@@ -265,12 +497,18 @@ function answered(q) { const a = S.ans[q.id];
   if (q.type === "match") return !!a && q.rows.every((_, i) => a[i]);
   if (q.type === "order") return Array.isArray(a) && a.length === q.items.length;
   if (q.type === "input") return !!a && q.fields.every((_, i) => String(a[i] || "").trim());
+  if (q.type === "hot") return !!a;
+  if (q.type === "sort") return !!a && q.items.every((_, i) => a[i] != null);
+  if (q.type === "gap") return !!a && q.gaps.every((_, k) => a[k] != null);
   return false; }
 function gradeQ(q) { const a = S.ans[q.id]; let u = 0, n = 1;
   if (q.type === "mc") u = a === q.a ? 1 : 0;
   if (q.type === "multi") { const ch = a || []; const good = ch.filter(i => q.opts[i][1]).length, bad = ch.length - good; n = q.opts.filter(o => o[1]).length; u = Math.max(0, good - bad); }
   if (q.type === "match") { n = q.rows.length; u = q.rows.filter((r, i) => a && a[i] === r[1]).length; }
   if (q.type === "order") { n = q.items.length; u = q.items.filter((_, i) => a && a[i] === i).length; }
+  if (q.type === "hot") u = a && q.a.includes(a) ? 1 : 0;
+  if (q.type === "sort") { n = q.items.length; u = q.items.filter((it, i) => a && a[i] === it[1]).length; }
+  if (q.type === "gap") { n = q.gaps.length; u = q.gaps.filter((_, k) => a && a[k] === 0).length; }
   if (q.type === "input") { n = q.fields.length; u = q.fields.filter((f, i) => a && f.ok(String(a[i] || ""))).length; }
   return { sc: Math.floor(u * q.pts / n + 1e-9), u, n }; }
 const gradeOf = pct => pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
@@ -294,12 +532,28 @@ function orderBody(q, done) { const seq = S.ans[q.id] || [], pool = S.perm[q.id]
 function inputBody(q, done) { const a = S.ans[q.id] || {};
   return q.fields.map((f, i) => { const v = a[i] || "", ok = done ? f.ok(String(v)) : null;
     return `<div class="iq"><div class="lbl">${esc(f.label)}</div><div class="iqa"><input type="text" class="in ${f.mono ? "mono" : ""} ${f.wide ? "wide" : ""} ${done ? (ok ? "good" : "badin") : ""}" data-in="${q.id}|${i}" value="${esc(v)}" placeholder="${esc(f.ph || "")}" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="decimal" ${done ? "disabled" : ""} aria-label="${esc(f.label)}">${f.unit ? `<span class="unit">${esc(f.unit)}</span>` : ""}${done ? (ok ? `<span class="okm">✓ správne</span>` : `<span class="badm">✗ správne: ${esc(f.show)}</span>`) : ""}</div></div>`; }).join(""); }
+
+let PICK = null;
+function hotBody(q, done) { const a = S.ans[q.id], ok = done && q.a.includes(a), name = a ? q.names[a] || a : "";
+  if (!done) return `<p class="hst muted">${a ? `Vybral si: <b>${esc(name)}</b>` : "Zatiaľ si nič nevybral."}</p>`;
+  return `<p class="hst">${ok ? `<span class="okm">✓ správne: ${esc(name)}</span>` : `<span class="badm">✗ ${a ? `vybral si ${esc(name)}, ` : "nič si nevybral, "}správne: ${esc(q.one || q.names[q.a[0]])}</span>`}</p>`; }
+function sortBody(q, done) { const a = S.ans[q.id] || {}, P = S.perm[q.id], armed = !done && PICK && PICK.q === q.id;
+  let h = `<div class="sgs">${q.groups.map((g, gi) => `<div class="sg ${armed ? "armed" : ""}" data-grp="${q.id}|${gi}"><div class="sgh">${esc(g)}</div><div class="sgb">${P.filter(i => a[i] === gi).map(i => done
+      ? `<span class="chipb ${q.items[i][1] === gi ? "cok" : "cbad"}">${esc(q.items[i][0])}${q.items[i][1] === gi ? " ✓" : ` <small>→ ${esc(q.groups[q.items[i][1]])}</small>`}</span>`
+      : `<button class="chipb" data-unsort="${q.id}|${i}">${esc(q.items[i][0])}</button>`).join("") || `<span class="sge">${armed ? "Klikni sem" : "…"}</span>`}</div></div>`).join("")}</div>`;
+  const rest = P.filter(i => a[i] == null);
+  if (!done) h += `<div class="pool">${rest.length ? rest.map(i => `<button class="chipb ${PICK && PICK.q === q.id && PICK.i === i ? "picked" : ""}" data-pick="${q.id}|${i}" aria-pressed="${!!(PICK && PICK.q === q.id && PICK.i === i)}">${esc(q.items[i][0])}</button>`).join("") : '<span class="empty">Všetko je roztriedené.</span>'}</div>`;
+  else if (rest.length) h += `<div class="right"><b>Neroztriedené:</b> ${rest.map(i => `${esc(q.items[i][0])} → ${esc(q.groups[q.items[i][1]])}`).join(" · ")}</div>`;
+  return h; }
+function gapBody(q, done) { const a = S.ans[q.id] || {}, P = S.perm[q.id];
+  return `<p class="gtext">${q.text.replace(/\{(\d+)\}/g, (m, k) => { k = +k; const g = q.gaps[k], v = a[k], ok = v === 0;
+    return `<select class="gsel ${done ? (ok ? "good" : "badsel") : ""}" data-gp="${q.id}|${k}" ${done ? "disabled" : ""} aria-label="Prázdne miesto ${k + 1}"><option value="">— vyber —</option>${P[k].map(j => `<option value="${j}" ${v === j ? "selected" : ""}>${esc(g[j])}</option>`).join("")}</select>${done ? (ok ? ` <span class="okm">✓</span>` : `<span class="badm gfix">(správne: ${esc(g[0])})</span>`) : ""}`; })}</p>`; }
 function card(q, n, done) { const r = done ? S.result.per[q.id] : null;
-  const body = q.type === "mc" || q.type === "multi" ? mcBody(q, done) : q.type === "match" ? matchBody(q, done) : q.type === "order" ? orderBody(q, done) : inputBody(q, done);
+  const body = q.type === "hot" ? hotBody(q, done) : q.type === "sort" ? sortBody(q, done) : q.type === "gap" ? gapBody(q, done) : q.type === "mc" || q.type === "multi" ? mcBody(q, done) : q.type === "match" ? matchBody(q, done) : q.type === "order" ? orderBody(q, done) : inputBody(q, done);
   return `<section class="qc ${done ? (r.sc === q.pts ? "full" : r.sc > 0 ? "part" : "zero") : ""}" id="c-${q.id}">
     <div class="qh"><span class="qn">${n}</span><div class="qt">${q.q}</div><span class="pt">${done ? `${r.sc} / ${q.pts} b` : `${q.pts} ${bw(q.pts)}`}</span></div>
     ${done ? "" : `<div class="ins">${HINT[q.type]}</div>`}
-    <div class="qb">${q.img ? `<figure class="fig">${q.img}${q.cap ? `<figcaption>${q.cap}</figcaption>` : ""}</figure>` : ""}${body}</div></section>`; }
+    <div class="qb">${q.img ? `<figure class="fig${q.type === "hot" ? " hot" + (done ? " done" : "") : ""}"${q.type === "hot" ? ` data-hq="${q.id}"` : ""}${q.figw ? ` style="max-width:${q.figw}px"` : ""}>${q.img}${q.cap ? `<figcaption>${q.cap}</figcaption>` : ""}</figure>` : ""}${body}</div></section>`; }
 
 /* ===== obrazovky ===== */
 function renderTop() { const n = S.order.filter(id => answered(BY[id])).length, PH = GATE ? "start" : S.phase;
@@ -310,7 +564,7 @@ function renderTop() { const n = S.order.filter(id => answered(BY[id])).length, 
 function viewStart() { const ok = canStart();
   return `<p class="kicker">Informatika, 2. ročník</p><h1>${TITLE}</h1>
   <p>Test z učiva 1.3 až 1.6: základná doska, BIOS a UEFI, porty, hierarchia pamätí, procesor a RAM, pevný disk, SSD a pamäťové karty, zálohovanie a periférne zariadenia.</p>
-  <div class="facts"><div class="fact"><b>${Q.length}</b><span>úloh</span></div><div class="fact"><b>${MAX}</b><span>bodov</span></div><div class="fact"><b>40</b><span>minút</span></div></div>
+  <div class="facts"><div class="fact"><b>${Q.length}</b><span>úloh</span></div><div class="fact"><b>${MAX}</b><span>bodov</span></div><div class="fact"><b>45</b><span>minút</span></div></div>
   <div class="warnbox">Úlohy aj odpovede má každý v inom poradí. Za ťažšie úlohy je viac bodov a pri niektorých dostaneš aj časť bodov. Keď test odovzdáš, výsledok sa automaticky pošle učiteľovi a uvidíš správne odpovede.</div>
   ${S.phase === "test" ? `<div class="warnbox">V tomto prehliadači je rozpracovaný test: <b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())}. Ak je tvoj, môžeš v ňom pokračovať.<div class="row" style="margin-top:8px"><button class="ghost" data-resume>Pokračovať v rozpracovanom teste</button></div></div>` : ""}
   <div class="panel"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(D.name)}" autocomplete="off" placeholder="napr. Jana Nováková">
@@ -346,7 +600,8 @@ function stateOk() {
   const ok = S.order.every(id => { const q = BY[id], p = S.perm[id]; if (!q) return false;
     if (q.type === "mc" || q.type === "multi") return Array.isArray(p) && p.length === q.opts.length;
     if (q.type === "match") return !!p && Array.isArray(p.rows) && p.rows.length === q.rows.length && Array.isArray(p.pool) && p.pool.length === poolOf(q).length;
-    if (q.type === "order") return Array.isArray(p) && p.length === q.items.length;
+    if (q.type === "order" || q.type === "sort") return Array.isArray(p) && p.length === q.items.length;
+    if (q.type === "gap") return Array.isArray(p) && p.length === q.gaps.length && p.every((x, k) => Array.isArray(x) && x.length === q.gaps[k].length);
     return true; });
   return ok && (S.phase !== "done" || (!!S.result && !!S.result.per && S.order.every(id => S.result.per[id])));
 }
@@ -357,17 +612,28 @@ const main = document.getElementById("main");
 function render(toTop) { try { render0(toTop); } catch (e) { console.error(e); resetState(); ARM = false; render0(true); } }
 function render0(toTop) { const y = window.scrollY; renderTop();
   main.innerHTML = GATE || S.phase === "start" ? viewStart() : S.phase === "test" ? viewTest() : viewDone();
-  typo(main); window.scrollTo(0, toTop ? 0 : y); }
+  typo(main); paintHot(); window.scrollTo(0, toTop ? 0 : y); }
+function paintHot() { const done = !GATE && S.phase === "done";
+  document.querySelectorAll("[data-hq]").forEach(f => { const q = BY[f.dataset.hq], a = S.ans[q.id], hit = q.a.includes(a);
+    f.querySelectorAll("[data-z]").forEach(z => { const id = z.dataset.z; z.setAttribute("role", "button"); z.setAttribute("tabindex", done ? "-1" : "0"); z.setAttribute("aria-label", q.names[id] || id);
+      if (!done) { z.classList.toggle("hsel", id === a); return; }
+      if (id === a) z.classList.add(hit ? "hok" : "hbad"); else if (!hit && q.a.includes(id)) z.classList.add("hmiss"); }); }); }
+function pickZone(z) { const f = z.closest("[data-hq]"); if (!f || GATE || S.phase !== "test") return; S.ans[f.dataset.hq] = z.dataset.z; ARM = false; save(); render(false); }
 function updateCount() { const n = S.order.filter(id => answered(BY[id])).length, c = document.getElementById("cnt"), b = document.getElementById("bar");
   if (c) c.innerHTML = `📝 Zodpovedané <b>${n}</b> z ${Q.length}`; if (b) b.style.width = Math.round(n / Q.length * 100) + "%"; }
 function onField(t) { D[t.dataset.field] = t.value; const b = document.querySelector("[data-start]"), h = document.getElementById("sthint"); if (b) b.disabled = !canStart(); if (h) h.textContent = startHint(); }
 
 /* ===== udalosti ===== */
 document.addEventListener("click", e => {
-  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  const z = e.target.closest("[data-z]"); if (z) return pickZone(z);
+  const el = e.target.closest("button");
+  if (!el) { const g = e.target.closest("[data-grp]"); if (g && PICK && S.phase === "test" && !GATE) { const [q, gi] = g.dataset.grp.split("|"); if (q === PICK.q) { (S.ans[q] = S.ans[q] || {})[PICK.i] = +gi; PICK = null; ARM = false; save(); render(false); } } return; }
+  const ds = el.dataset;
   if (ds.resume !== undefined) { GATE = false; ARM = false; return render(true); }
   if (ds.start !== undefined) { if (!canStart()) return; S.name = D.name.trim().replace(/\s+/g, " "); S.cls = D.cls; D.name = ""; D.cls = ""; GATE = false; newAttempt(); ARM = false; return render(true); }
   if (S.phase === "test" && !GATE) {
+    if (ds.pick) { const [q, i] = ds.pick.split("|"); PICK = PICK && PICK.q === q && PICK.i === +i ? null : { q, i: +i }; return render(false); }
+    if (ds.unsort) { const [q, i] = ds.unsort.split("|"); if (S.ans[q]) delete S.ans[q][i]; PICK = null; ARM = false; save(); return render(false); }
     if (ds.mc) { const [q, i] = ds.mc.split("|"); S.ans[q] = +i; ARM = false; save(); return render(false); }
     if (ds.mu) { const [q, i] = ds.mu.split("|"), a = S.ans[q] = S.ans[q] || [], k = a.indexOf(+i); if (k >= 0) a.splice(k, 1); else a.push(+i); ARM = false; save(); return render(false); }
     if (ds.place) { const [q, i] = ds.place.split("|"), a = S.ans[q] = S.ans[q] || []; if (!a.includes(+i)) a.push(+i); ARM = false; save(); return render(false); }
@@ -380,12 +646,14 @@ document.addEventListener("click", e => {
   if (ds.again !== undefined) { if (!ARM) { ARM = true; return render(false); } ARM = false; GATE = true; return render(true); }
 });
 document.addEventListener("change", e => { const t = e.target;
+  if (t.dataset.gp && S.phase === "test" && !GATE) { const [q, k] = t.dataset.gp.split("|"), a = S.ans[q] = S.ans[q] || {}; if (t.value === "") delete a[k]; else a[k] = +t.value; save(); updateCount(); return; }
   if (t.dataset.mt && S.phase === "test" && !GATE) { const [q, i] = t.dataset.mt.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); return; }
   if (t.dataset.field) onField(t); });
 document.addEventListener("input", e => { const t = e.target;
   if (t.dataset.in && S.phase === "test" && !GATE) { const [q, i] = t.dataset.in.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); return; }
   if (t.dataset.field) onField(t); });
 render(true);
+document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-z]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); pickZone(z); } });
 </script>
 </body>
 </html>
