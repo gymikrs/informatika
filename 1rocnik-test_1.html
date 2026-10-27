@@ -186,7 +186,9 @@ function genR() {
   return { k: rint(3, 9), w1, w2, r1, r2, bn: 4 * rint(2, 7) + 3, hx: 16 * rint(1, 15) + 15, n, m,
     bulb: rint(20, 250), oc: rint(20, 200), hd: rint(40, 250), db: rint(20, 120), dh: rint(100, 250),
     b8: rint(64, 511), b16: rint(256, 4095), h2: rint(32, 255), ord, bases: shuffle([2, 8, 10, 16, 2]), u, l, c,
-    hb: rint(60, 250), wt: rint(0, 7), dg: two(48, 57), up: two(65, 90), lo: two(97, 122) };
+    hb: rint(60, 250), wt: rint(0, 7), dg: two(48, 57), up: two(65, 90), lo: two(97, 122),
+    lt: pick("BCDEFGHJKLMNPRSTVZ".split("")), wd: pick(["KOD", "BIT", "BAJT", "SIFRA", "KLUC", "ZDROJ", "HESLO", "PRENOS", "SIGNAL"]),
+    dw: pick(["Hej", "Ahoj", "Kod", "Bit", "Byt", "Tim", "Sova", "Les"]), fit: [rint(0, 99), rint(100, 254), rint(257, 999), rint(1000, 5000)] };
 }
 
 /* ===== obrázky ===== */
@@ -251,7 +253,51 @@ const TIMELINE = `<svg viewBox="0 0 480 80" role="img" aria-label="Časová os s
 /* UTF-8 a emoji */
 const CHARS = `<svg viewBox="0 0 480 80" role="img" aria-label="Znaky A, 7, č, ň, euro a smajlík" ${FONT}>${["A", "7", "č", "ň", "€", "😀"].map((c, i) => `<rect x="${12 + i * 78}" y="10" width="66" height="60" rx="10" fill="#F4F7FB" stroke="#C9D3E6"/><text x="${45 + i * 78}" y="52" text-anchor="middle" font-size="28" font-weight="700" fill="#16213A">${c}</text>`).join("")}</svg>`;
 
-/* ===== úlohy (30 úloh, bez A/B/C/D) ===== */
+/* dve písmená ako bajty */
+function pairSvg(L) { const rows = [[L, bin8(L.charCodeAt(0))], [L.toLowerCase(), bin8(L.toLowerCase().charCodeAt(0))]]; let s = "", z = "";
+  rows.forEach(([ch, b], r) => { const y = 14 + r * 66; s += `<text x="26" y="${y + 38}" text-anchor="middle" font-size="28" font-weight="800" fill="#2F5BEA">${ch}</text><text x="52" y="${y + 37}" font-size="20" fill="#566381">=</text>`;
+    [...b].forEach((d, i) => { const x = 74 + i * 48; s += `<rect x="${x}" y="${y}" width="42" height="54" rx="8" fill="${d === "1" ? "#E2E9FD" : "#fff"}" stroke="#2F5BEA" stroke-width="2"/><text x="${x + 21}" y="${y + 37}" text-anchor="middle" font-size="26" font-family="Consolas,monospace" font-weight="700" fill="#16213A">${d}</text>`; }); });
+  for (let i = 0; i < 8; i++) z += zone("c" + i, 70 + i * 48, 8, 50, 132, 9);
+  return `<svg viewBox="0 0 470 148" role="img" aria-label="Dve písmená zapísané ako 8 bitov" ${FONT}>${s}${z}</svg>`; }
+const PAIR_N = Object.fromEntries([...Array(8).keys()].map(i => ["c" + i, `${i + 1}. bit zľava`]));
+/* podobné slová (zmena jedného písmena o 1) */
+function decoys(w) { const ch = (s, i, d) => s.slice(0, i) + String.fromCharCode(s.charCodeAt(i) + d) + s.slice(i + 1);
+  const a = ch(w, w.length - 1, 1), b = ch(w, 1, -1); return [a, b === a ? ch(w, 0, 1) : b]; }
+
+/* ===== ASCII tabuľka (tlačidlo hore, otvorí okno) ===== */
+const CTRL = ["NUL", "SOH", "STX", "ETX", "EOT", "ENQ", "ACK", "BEL", "BS", "TAB", "LF", "VT", "FF", "CR", "SO", "SI", "DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", "EM", "SUB", "ESC", "FS", "GS", "RS", "US"];
+const asciiBtn = () => `<button class="ghost asciib" data-ascii aria-haspopup="dialog">📋 ASCII tabuľka</button>`;
+(function () {
+  const st = document.createElement("style");
+  st.textContent = `.asciib{padding:6px 12px;font-size:15px}
+  .amod{position:fixed;inset:0;z-index:100;background:rgba(10,16,30,.55);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow:auto}
+  .amod.on{display:flex}
+  .abox{background:var(--surface);color:var(--ink);border-radius:16px;max-width:1080px;width:100%;padding:16px 18px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .ahead{display:flex;align-items:center;gap:12px;margin-bottom:8px;position:sticky;top:0;background:var(--surface)}
+  .ahead h3{margin:0;font-size:20px;margin-right:auto}
+  .agrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:12px}
+  .atab{border-collapse:collapse;width:100%;font-size:13.5px;font-family:var(--mono)}
+  .atab th{background:var(--accSoft);color:var(--acc);font-family:var(--font);font-size:12.5px;padding:4px 6px;text-align:left;position:sticky;top:0}
+  .atab td{padding:2px 6px;border-bottom:1px solid var(--border);white-space:nowrap}
+  .atab td.ch{font-weight:700;color:var(--ink);font-size:15px}
+  .atab td.ctl{color:var(--muted);font-size:12px;font-weight:600}
+  .atab tr.sp td.ch{color:var(--acc);font-size:12px}
+  .anote{font-size:13.5px;color:var(--muted);margin:10px 0 0}`;
+  document.head.appendChild(st);
+  const block = from => `<table class="atab"><thead><tr><th>Dec</th><th>Hex</th><th>Bin</th><th>Znak</th></tr></thead><tbody>${[...Array(32).keys()].map(i => { const n = from + i;
+    const ch = n < 32 ? CTRL[n] : n === 32 ? "medzera" : n === 127 ? "DEL" : String.fromCharCode(n);
+    return `<tr class="${n === 32 ? "sp" : ""}"><td>${n}</td><td>${n.toString(16).toUpperCase().padStart(2, "0")}</td><td>${n.toString(2).padStart(8, "0")}</td><td class="${n < 32 || n === 127 ? "ctl" : "ch"}">${esc(ch)}</td></tr>`; }).join("")}</tbody></table>`;
+  const m = document.createElement("div"); m.className = "amod"; m.setAttribute("role", "dialog"); m.setAttribute("aria-modal", "true"); m.setAttribute("aria-label", "ASCII tabuľka");
+  m.innerHTML = `<div class="abox"><div class="ahead"><h3>📋 ASCII tabuľka</h3><button class="primary" data-aclose>Zavrieť</button></div>
+    <div class="agrid">${[0, 32, 64, 96].map(block).join("")}</div>
+    <p class="anote">Dec = desiatkovo, Hex = šestnástkovo, Bin = dvojkovo (8 bitov). Kódy 0 – 31 a 127 sú riadiace znaky (napr. TAB = tabulátor, LF = nový riadok, CR = návrat vozíka).</p></div>`;
+  document.body.appendChild(m);
+  const close = () => m.classList.remove("on");
+  document.addEventListener("click", e => { if (e.target.closest("[data-ascii]")) { m.classList.add("on"); m.querySelector("[data-aclose]").focus(); } else if (e.target.closest("[data-aclose]") || e.target === m) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+})();
+
+/* ===== úlohy (30 úloh) ===== */
 function buildQ(R) {
   const e1 = caesar(R.w1, R.k), e2 = caesar(R.w2, R.k);
   const ordSorted = R.ord.map((v, i) => ({ v, t: inBase(v, R.bases[i]) })).sort((a, b) => a.v - b.v);
@@ -273,20 +319,12 @@ function buildQ(R) {
              { label: `b) Slovo ${e2} bolo zašifrované tým istým kľúčom. Dešifruj ho:`, ph: "veľké písmená", mono: 1, ok: v => clean(v).toUpperCase() === R.w2, show: R.w2 }] },
   { id: "q7", type: "match", pts: 2, q: "Priraď k popisu správny pojem.", pool: ["symetrické šifrovanie", "asymetrické šifrovanie", "HTTPS 🔒", "end-to-end"],
     rows: [["jeden spoločný kľúč", "symetrické šifrovanie"], ["verejný a súkromný kľúč", "asymetrické šifrovanie"], ["šifrované spojenie s webovou stránkou", "HTTPS 🔒"], ["správu prečíta iba odosielateľ a príjemca", "end-to-end"]] },
-  { id: "q9", type: "match", pts: 1, q: "Priraď k pojmu jeho význam.",
-    rows: [["cifra (číslica)", "znak na zápis čísel"], ["číslo", "vyjadruje množstvo"], ["číselná sústava", "pravidlá, ako z cifier skladáme zápis čísla"], ["základ", "počet rôznych cifier sústavy"]] },
   { id: "q10", type: "input", pts: 2, q: "Rímske číslice: I = 1, V = 5, X = 10, L = 50, C = 100, D = 500, M = 1000.",
     fields: [{ label: `a) Prepíš ${toRoman(R.r1)} do desiatkovej sústavy:`, ok: v => parseNum(v) === R.r1, show: String(R.r1) },
              { label: `b) Zapíš ${R.r2} rímskymi číslicami:`, ph: "napr. MCXIV", mono: 1, ok: v => clean(v).toUpperCase() === toRoman(R.r2), show: toRoman(R.r2) }] },
   { id: "q11", type: "multi", pts: 2, q: "Označ <b>všetky</b> pravdivé tvrdenia o číselných sústavách.",
     opts: [["V nepozičnej sústave má znak vždy rovnakú hodnotu.", 1], ["Pozičná sústava potrebuje nulu.", 1], ["1 šestnástková cifra zodpovedá 4 bitom.", 1], ["Zápis 10 v ľubovoľnej sústave znamená hodnotu základu.", 1],
            ["Rímske číslice patria medzi pozičné sústavy.", 0], ["IPv4 adresa má 128 bitov.", 0], ["Sústava so základom 5 používa cifry 1 až 5.", 0]] },
-  { id: "q12", type: "input", pts: 2, q: "Počítadlo: napíš číslo, ktoré nasleduje <b>hneď za</b> daným číslom v tej istej sústave.",
-    fields: [{ label: `a) Za číslom ${inBase(R.bn, 2)} nasleduje:`, mono: 1, ok: v => isBase(v, 2, R.bn + 1), show: inBase(R.bn + 1, 2) },
-             { label: `b) Za číslom ${inBase(R.hx, 16)} nasleduje:`, mono: 1, ok: v => isBase(v, 16, R.hx + 1), show: inBase(R.hx + 1, 16) }] },
-  { id: "q13", type: "input", pts: 2, q: "Koľko sa zmestí do <b>n bitov</b>?",
-    fields: [{ label: `a) Koľko rôznych hodnôt zapíšeš pomocou ${R.n} bitov?`, ok: v => parseNum(v) === 2 ** R.n, show: String(2 ** R.n) },
-             { label: `b) Aké je najväčšie číslo, ktoré zapíšeš pomocou ${R.m} bitov?`, ok: v => parseNum(v) === 2 ** R.m - 1, show: String(2 ** R.m - 1) }] },
   { id: "q14", type: "input", pts: 2, q: "Rad 8 žiaroviek na obrázku ukladá 1 bajt. Zhasnutá žiarovka = 0, rozsvietená = 1.", img: bulbs(R.bulb), cap: "🟡 rozsvietená · ⚪ zhasnutá",
     fields: [{ label: "a) Zapíš stav žiaroviek zľava doprava ako 8 bitov:", ph: "8 číslic 0 alebo 1", mono: 1, ok: v => clean(v) === bin8(R.bulb), show: bin8(R.bulb) },
              { label: "b) Aké číslo v desiatkovej sústave žiarovky ukazujú?", ok: v => parseNum(v) === R.bulb, show: String(R.bulb) }] },
@@ -313,23 +351,15 @@ function buildQ(R) {
   /* ----- klikanie do obrázka ----- */
   { id: "h1", type: "hot", pts: 1, q: `V bajte na obrázku klikni na bit, ktorého váha je <b>${2 ** R.wt}</b>.`, img: byteSvg(R.hb), names: BYTE_N, a: ["b" + (7 - R.wt)] },
   { id: "h2", type: "hot", pts: 1, q: "Telefonát je prenos informácie. Klikni na časť, ktorá je v modeli prenosu <b>kanál</b>.", img: CALL, names: CALL_N, a: ["chan"] },
-  { id: "h3", type: "hot", pts: 2, q: "Text <b>Dobrý deň, čo robíš?</b> bol uložený v kódovaní Windows-1250. Po otvorení vyzerá ako na obrázku. Klikni na údaj, ktorý vysvetľuje, prečo je text „rozsypaný“.", img: NOTEPAD, names: NOTEPAD_N, a: ["enc"] },
   { id: "h4", type: "hot", pts: 2, q: "Jeden zápis rímskymi číslicami je <b>chybný</b>. Klikni naň.", img: ROMAN, names: ROMAN_N, a: ["r3"] },
   /* ----- triedenie ----- */
   { id: "s1", type: "sort", pts: 2, q: "Je číselná sústava <b>pozičná</b>, alebo <b>nepozičná</b>?", groups: ["nepozičná", "pozičná"],
     items: [["rímske číslice", 0], ["egyptské hieroglyfy", 0], ["čiarky (zárezy)", 0], ["desiatková", 1], ["dvojková", 1], ["šestnástková", 1]] },
   { id: "s2", type: "sort", pts: 2, q: "Je heslo podľa pravidla pre silné heslo (12+ znakov, rôzne druhy znakov) <b>silné</b>, alebo <b>slabé</b>?", groups: ["silné", "slabé"],
     items: [["Mo3_ryba!Les7", 0], ["Lienka#Strom42", 0], ["mojeheslomojeheslo", 1], ["Ab1!xY", 1], ["123456789012", 1], ["Slnko2008", 1]] },
-  { id: "s3", type: "sort", pts: 2, q: "Koľko bajtov zaberie znak v kódovaní <b>UTF-8</b>?", img: CHARS, groups: ["1 B", "2 B", "3 B", "4 B"],
-    items: [["A", 0], ["7", 0], ["č", 1], ["ň", 1], ["€", 2], ["😀", 3]] },
   { id: "s4", type: "sort", pts: 2, q: "Aký znak je v tabuľke <b>ASCII</b> pod daným kódom (desiatkovo)?", groups: ["riadiaci znak", "číslica", "veľké písmeno", "malé písmeno"],
     items: [["10", 0], ["13", 0], [String(R.dg[0]), 1], [String(R.dg[1]), 1], [String(R.up[0]), 2], [String(R.up[1]), 2], [String(R.lo[0]), 3], [String(R.lo[1]), 3]] },
-  { id: "m1", type: "match", pts: 2, q: "Ktorú sústavu (základ) používame pri danej veci?", img: CLOCK, pool: ["60", "12", "20", "2", "16", "8"],
-    rows: [["čas a uhly (Babylončania)", "60"], ["tucet, mesiace, ciferník", "12"], ["Mayovia", "20"], ["počítače (Leibniz)", "2"], ["farby a adresy v pamäti", "16"], ["práva v Linuxe (755)", "8"]] },
   /* ----- doplňovanie do textu ----- */
-  { id: "g1", type: "gap", pts: 2, q: "Doplň text o informatike a jej osobnostiach.", img: TIMELINE,
-    text: "Názov informatika vznikol spojením slov informácia a {0}, jej jadrom je {1}. Model prenosu informácie opísal {2} v roku {3} a zaviedol jednotku {4}. World Wide Web a prvú webovú stránku vytvoril {5}.",
-    gaps: [["automatika", "matematika", "technika"], ["algoritmické myslenie", "ovládanie počítača", "programovanie hier"], ["Claude Shannon", "Alan Turing", "John von Neumann"], ["1948", "1984", "1936"], ["bit", "bajt", "baud"], ["Tim Berners-Lee", "Grace Hopper", "Ada Lovelace"]] },
   { id: "g2", type: "gap", pts: 3, q: "Doplň text o dvojkovej a šestnástkovej sústave.",
     text: "Počítače používajú dvojkovú sústavu, lebo elektronika spoľahlivo rozlíši {0}. V dvojkovej sústave 1 + 1 = {1}. Ak sa výsledok nezmestí do počtu bitov, nastane {2}. Adresa IPv4 má {3} bitov, IPv6 má {4} bitov. Jedna šestnástková cifra zodpovedá {5} bitom.",
     gaps: [["dva stavy (prúd tečie / netečie)", "desať stavov", "šestnásť farieb"], ["10", "2", "11"], ["pretečenie (overflow)", "rozsypaný čaj", "šum"], ["32", "128", "8"], ["128", "32", "64"], ["4", "3", "8"]] },
@@ -338,7 +368,25 @@ function buildQ(R) {
     gaps: [["dohoda, ktoré číslo znamená ktorý znak", "zoznam tajných kľúčov", "tabuľka v Exceli"], ["7 bitov a 128 znakov", "8 bitov a 256 znakov", "16 bitov a 65 536 znakov"], ["32", "26", "1"], ["číslo znaku (kódový bod)", "zápis znaku do bajtov", "písmo a veľkosť znaku"], ["zápis čísla znaku do bajtov", "číslo znaku (kódový bod)", "farbu znaku"], ["tým istým kódovaním", "kódovaním príjemcu", "tajným kľúčom"]] },
   { id: "g4", type: "gap", pts: 2, q: "Doplň kódy v tabuľke ASCII (desiatkovo).",
     text: `Písmeno ${R.u} má kód {0}. Malé písmeno ${R.u.toLowerCase()} má kód {1}. Medzera má kód {2}.`,
-    gaps: [[String(R.u.charCodeAt(0)), String(R.u.charCodeAt(0) + 1), String(R.u.charCodeAt(0) + 32)], [String(R.u.charCodeAt(0) + 32), String(R.u.charCodeAt(0)), String(R.u.charCodeAt(0) + 26)], ["32", "0", "48"]] }
+    gaps: [[String(R.u.charCodeAt(0)), String(R.u.charCodeAt(0) + 1), String(R.u.charCodeAt(0) + 32)], [String(R.u.charCodeAt(0) + 32), String(R.u.charCodeAt(0)), String(R.u.charCodeAt(0) + 26)], ["32", "0", "48"]] },
+
+  /* ----- nové úlohy (s ASCII tabuľkou) ----- */
+  { id: "n1", type: "hot", pts: 2, q: `Písmená <b>${R.lt}</b> a <b>${R.lt.toLowerCase()}</b> sú na obrázku zapísané ako bajty. Klikni na bit, ktorým sa líšia. Pomôcť si môžeš ASCII tabuľkou.`, img: pairSvg(R.lt), names: PAIR_N, a: ["c2"] },
+  { id: "n2", type: "order", pts: 2, q: `Zoraď kódy ASCII (desiatkovo) tak, aby vzniklo slovo <b>${R.wd}</b>. Pomôcť si môžeš ASCII tabuľkou.`,
+    items: [...R.wd].map(ch => String(ch.charCodeAt(0))), ends: ["prvé písmeno", "posledné písmeno"] },
+  { id: "n3", type: "gap", pts: 2, q: "Dekóduj bajty pomocou ASCII tabuľky.",
+    text: `Bajty <b>${[...R.dw].map(c => c.charCodeAt(0).toString(16).toUpperCase()).join(" ")}</b> (šestnástkovo) v ASCII znamenajú slovo {0}. Prvý z týchto bajtov je desiatkovo {1}.`,
+    gaps: [[R.dw, ...decoys(R.dw)], [String(R.dw.charCodeAt(0)), R.dw.charCodeAt(0).toString(16).toUpperCase(), String(R.dw.charCodeAt(0) + 16)]] },
+  { id: "n4", type: "gap", pts: 2, q: "Doplň text o zápise v šestnástkovej sústave.",
+    text: "Číslo 2F₁₆ môžeš zapísať aj ako {0}. Jeden bajt sa zapíše {1} šestnástkovými ciframi, a to od {2} po {3}.",
+    gaps: [["0x2F", "2F₂", "0b2F"], ["2", "4", "8"], ["00", "01", "10"], ["FF", "99", "F0"]] },
+  { id: "n5", type: "sort", pts: 2, q: "Zmestí sa číslo do <b>1 bajtu</b> (8 bitov)?", groups: ["zmestí sa", "nezmestí sa"],
+    items: [[String(R.fit[0]), 0], [String(R.fit[1]), 0], ["255", 0], ["256", 1], [String(R.fit[2]), 1], [String(R.fit[3]), 1]] },
+  { id: "n6", type: "multi", pts: 2, q: "Označ <b>všetky</b> pravdivé tvrdenia o šifrovaní.",
+    opts: [["Šifrovanie skrýva obsah, bez tajného kľúča správu neprečítaš.", 1], ["Caesarova šifra má iba 25 kľúčov, preto sa prelomí hrubou silou.", 1], ["Pri asymetrickom šifrovaní sa používa verejný a súkromný kľúč.", 1], ["Pri end-to-end šifrovaní prečíta správu iba odosielateľ a príjemca.", 1],
+           ["Pri symetrickom šifrovaní má každý účastník iný kľúč.", 0], ["Morseovka je šifra, bez kľúča ju neprečítaš.", 0], ["HTTPS 🔒 znamená, že stránka je vždy bezpečná a pravdivá.", 0]] },
+  { id: "n7", type: "mc", pts: 1, q: "Aký <b>kódový bod</b> má v Unicode znak <b>A</b>? Pomôcť si môžeš ASCII tabuľkou.",
+    opts: ["U+0041", "U+0065", "U+0A41", "U+4100"], a: 0 }
 
   ];
 }
@@ -445,7 +493,7 @@ function renderTop() { const n = S.order.filter(id => answered(BY[id])).length, 
   let right = "";
   if (PH === "test") right = `<div class="pts" id="cnt">📝 Zodpovedané <b>${n}</b> z ${Q.length}</div>`;
   if (PH === "done") right = `<div class="pts">⭐ <b>${S.result.tot}</b> z ${MAX}</div>`;
-  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>Test 1 · 1. ročník</div>${right}</div>${PH === "test" ? `<div class="prog"><i id="bar" style="width:${Math.round(n / Q.length * 100)}%"></i></div>` : ""}`; }
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>Test 1 · 1. ročník</div>${PH !== "start" ? asciiBtn() : ""}${right}</div>${PH === "test" ? `<div class="prog"><i id="bar" style="width:${Math.round(n / Q.length * 100)}%"></i></div>` : ""}`; }
 function viewStart() { const ok = canStart();
   return `<p class="kicker">Informatika, 1. ročník</p><h1>${TITLE}</h1>
   <p>Test z učiva 1.2 až 1.6: informatika a informácia, model prenosu, kódovanie a šifrovanie, číselné sústavy, dvojková a šestnástková sústava, prevody medzi sústavami a kód ASCII.</p>
