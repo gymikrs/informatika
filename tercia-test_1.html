@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Test 1 – Tercia</title>
+<title>Test 1 – 2. ročník</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -103,6 +103,34 @@ label.f{display:block;font-weight:600;margin:12px 0 4px}
 .grade b{display:block;font-size:32px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
 .warnbox{background:var(--amberSoft);border-left:5px solid var(--amber);border-radius:0 12px 12px 0;padding:10px 14px;margin:12px 0}
 .submitbar{margin-top:26px;padding-top:20px;border-top:1px dashed var(--border);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+/* klikanie do obrázka */
+.fig.hot{max-width:560px}
+.hz{fill:rgba(47,91,234,.001);stroke:transparent;stroke-width:3;cursor:pointer;transition:fill .12s}
+.hz:hover,.hz:focus{fill:rgba(47,91,234,.16);stroke:#2F5BEA;outline:none}
+.hz.hsel{fill:rgba(47,91,234,.30);stroke:#2F5BEA;stroke-width:4}
+.hz.hok{fill:rgba(18,128,90,.30);stroke:#12805A;stroke-width:4}
+.hz.hbad{fill:rgba(192,57,43,.30);stroke:#C0392B;stroke-width:4}
+.hz.hmiss{fill:rgba(18,128,90,.12);stroke:#12805A;stroke-width:3;stroke-dasharray:7 5}
+.fig.done .hz{cursor:default}
+.hst{font-size:15px;margin:2px 0 0}
+/* triedenie do skupín */
+.sgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px}
+.sg{border:2px dashed var(--border);border-radius:12px;padding:8px 10px;min-height:92px;background:var(--surface2)}
+.sg.armed{border-color:var(--acc);background:var(--accSoft);cursor:pointer}
+.sgh{font-weight:700;font-size:14.5px;margin-bottom:6px}
+.sgb{display:flex;flex-wrap:wrap;gap:6px}
+.sge{color:var(--muted);font-size:14px}
+.sg .chipb{padding:5px 11px;font-size:15px}
+.chipb.picked{background:var(--acc);color:#fff;border-color:var(--acc)}
+.chipb.cok{border-color:var(--ok);background:var(--okSoft);cursor:default}
+.chipb.cbad{border-color:var(--bad);background:var(--badSoft);cursor:default}
+.chipb small{font-weight:600;color:var(--bad)}
+/* doplňovanie do textu */
+.gtext{line-height:2.35}
+.gsel{padding:3px 8px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);max-width:100%;font-size:16px}
+.gsel.good{border-color:var(--ok);background:var(--okSoft)}
+.gsel.badsel{border-color:var(--bad);background:var(--badSoft)}
+.gfix{font-size:14.5px;margin:0 4px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
@@ -111,7 +139,7 @@ label.f{display:block;font-weight:600;margin:12px 0 4px}
 <main id="main"></main>
 <script>
 /* ===== nastavenia ===== */
-const KEY = "tercia-test1-v1";
+const KEY = "tercia-test1-v2";
 const LESSON = "Tercia – Test 1 (2.1 – 3.3)";
 const TITLE = "Test 1: Komprimácia, zvuk a konverzia formátov";
 const CLASSES = ["TERCIA_1", "TERCIA_2"];
@@ -122,7 +150,6 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&a
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function shuffled(n) { const ids = [...Array(n).keys()]; let o; let k = 0; do { o = shuffle(ids.slice()); k++; } while (k < 12 && n > 1 && o.every((x, i) => x === i)); return o; }
 function parseNum(v) { const s = String(v).replace(/\s/g, "").replace(",", "."); return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : NaN; }
-const plain = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const bw = n => n === 1 ? "bod" : n >= 2 && n <= 4 ? "body" : "bodov";
 function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,textarea,svg,select,option") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
   const L = []; while (W.nextNode()) L.push(W.currentNode);
@@ -131,15 +158,28 @@ function typo(root) { if (!root) return; const W = document.createTreeWalker(roo
     if (t !== o) n.nodeValue = t; }); }
 
 /* ===== obrázky ===== */
-const RLE = (() => { const p = "MMMMMBBCCCCM", col = { M: "#2F5BEA", B: "#FFFFFF", C: "#E25A3A" }; let s = "";
-  [...p].forEach((ch, i) => { s += `<rect x="${6 + i * 38}" y="8" width="34" height="34" rx="3" fill="${col[ch]}" stroke="#16213A" stroke-width="1.5"/>`; });
+const FONT = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const zone = (id, x, y, w, h, rx = 6) => `<rect class="hz" data-z="${id}" x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}"/>`;
+const zoneC = (id, cx, cy, r) => `<circle class="hz" data-z="${id}" cx="${cx}" cy="${cy}" r="${r}"/>`;
+const COL = { M: "#2F5BEA", B: "#FFFFFF", C: "#E25A3A", Z: "#12805A", Y: "#F0B429" };
+
+const RLE = (() => { const p = "MMMMMBBCCCCM"; let s = "";
+  [...p].forEach((ch, i) => { s += `<rect x="${6 + i * 38}" y="8" width="34" height="34" rx="3" fill="${COL[ch]}" stroke="#16213A" stroke-width="1.5"/>`; });
   return `<svg viewBox="0 0 468 50" role="img" aria-label="Rad dvanástich farebných štvorčekov">${s}</svg>`; })();
+
+/* tri rady štvorčekov na klikanie */
+const RLE3 = (() => { const rows = [["r1", "MCMBZYCMBYZM"], ["r2", "MMMMMMBBBBBB"], ["r3", "MBMBMBMBMBMB"]]; let s = "", z = "";
+  rows.forEach(([id, p], k) => { const y = 14 + k * 54; s += `<text x="14" y="${y + 24}" font-size="17" font-weight="700" fill="#16213A">${k + 1}.</text>`;
+    [...p].forEach((ch, i) => { s += `<rect x="${40 + i * 35}" y="${y}" width="31" height="31" rx="3" fill="${COL[ch]}" stroke="#16213A" stroke-width="1.5"/>`; });
+    z += zone(id, 6, y - 8, 466, 47, 8); });
+  return `<svg viewBox="0 0 480 172" role="img" aria-label="Tri rady farebných štvorčekov" ${FONT}>${s}${z}</svg>`; })();
+const RLE3_N = { r1: "1. rad", r2: "2. rad", r3: "3. rad" };
 
 const WAVES = (() => { const P = [["A", 14, 2], ["B", 14, 6], ["C", 44, 2]]; let s = "";
   P.forEach(([l, a, f], k) => { const x0 = 14 + k * 158, w = 136, cy = 70; let d = "";
     for (let i = 0; i <= w; i++) { const y = cy - a * Math.sin(i / w * f * 2 * Math.PI); d += (i ? "L" : "M") + (x0 + i).toFixed(1) + " " + y.toFixed(1); }
     s += `<rect x="${x0 - 6}" y="12" width="${w + 12}" height="116" rx="10" fill="#F4F7FB" stroke="#D3DCEA"/><line x1="${x0}" y1="${cy}" x2="${x0 + w}" y2="${cy}" stroke="#B8C3D8" stroke-dasharray="4 4"/><path d="${d}" fill="none" stroke="#12805A" stroke-width="3" stroke-linecap="round"/><text x="${x0 + w / 2}" y="152" text-anchor="middle" font-size="19" font-weight="700" fill="#16213A">${l}</text>`; });
-  return `<svg viewBox="0 0 480 162" role="img" aria-label="Tri zvukové vlny A, B a C" font-family="Rubik,Segoe UI,Arial,sans-serif">${s}</svg>`; })();
+  return `<svg viewBox="0 0 480 162" role="img" aria-label="Tri zvukové vlny A, B a C" ${FONT}>${s}</svg>`; })();
 
 const SHOTS = (() => { let r = 7, blocks = ""; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
   for (let y = 36; y < 96; y += 10) for (let x = 262; x < 462; x += 10) { const g = Math.floor(140 + rnd() * 100), o = (0.12 + rnd() * 0.33).toFixed(2); blocks += `<rect x="${x}" y="${y}" width="10" height="10" fill="rgb(${g},${g - 25},${Math.min(255, g + 15)})" opacity="${o}"/>`; }
@@ -147,21 +187,95 @@ const SHOTS = (() => { let r = 7, blocks = ""; const rnd = () => (r = (r * 9301 
   <defs><filter id="bl" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="1.3"/></filter></defs>
   <rect x="8" y="16" width="214" height="90" rx="8" fill="#fff" stroke="#9AA3B5"/><text x="115" y="72" text-anchor="middle" font-size="30" font-weight="700" fill="#16213A">Úloha 3</text>
   <rect x="252" y="16" width="220" height="90" rx="8" fill="#fff" stroke="#9AA3B5"/><text x="362" y="72" text-anchor="middle" font-size="30" font-weight="700" fill="#16213A" filter="url(#bl)">Úloha 3</text>${blocks}
-  <text x="115" y="130" text-anchor="middle" font-size="17" font-weight="700" fill="#16213A">A</text><text x="362" y="130" text-anchor="middle" font-size="17" font-weight="700" fill="#16213A">B</text></svg>`; })();
+  <text x="115" y="130" text-anchor="middle" font-size="17" font-weight="700" fill="#16213A">A</text><text x="362" y="130" text-anchor="middle" font-size="17" font-weight="700" fill="#16213A">B</text>
+  ${zone("A", 4, 12, 222, 124, 10)}${zone("B", 248, 12, 228, 124, 10)}</svg>`; })();
+const SHOTS_N = { A: "obrázok A", B: "obrázok B" };
 
-/* ===== úlohy (spolu 38 bodov) ===== */
-const Q = [
-  { id: "q1", type: "input", pts: 2, q: "Metóda <b>RLE</b>: písmeno = farba, číslo = počet opakovaní.", img: RLE, cap: "M = modrá · B = biela · C = červená",
-    fields: [{ label: "a) Zakóduj rad štvorčekov na obrázku metódou RLE:", ph: "napr. 2M3B…", mono: 1, ok: v => v.replace(/\s/g, "").toUpperCase() === "5M2B4C1M", show: "5M2B4C1M" },
-             { label: "b) Rozbaľ zápis 3B2C4M späť na jednotlivé znaky:", ph: "písmená B, C, M", mono: 1, wide: 1, ok: v => v.replace(/\s/g, "").toUpperCase() === "BBBCCMMMM", show: "BBBCCMMMM" }] },
-  { id: "q3", type: "mc", pts: 1, q: "Pri <b>slovníkovej metóde</b> sa najviac oplatí nahradiť značkou:",
-    opts: ["dlhé slovné spojenie, ktoré sa v texte opakuje 20-krát", "krátke slovo „je“, ktoré sa v texte opakuje 20-krát", "dlhé slovné spojenie, ktoré je v texte iba raz", "každé slovo v texte, aj keď sa neopakuje"], a: 0 },
+/* dialóg Pridať do archívu */
+const ZIPDLG = (() => { const row = (y, l, v, dd) => `<text x="34" y="${y + 17}" font-size="13" fill="#16213A">${l}</text><rect x="170" y="${y}" width="${dd ? 150 : 270}" height="26" rx="4" fill="#fff" stroke="#9AA3B5"/><text x="180" y="${y + 18}" font-size="13" fill="#16213A">${v}</text>${dd ? `<text x="308" y="${y + 18}" font-size="11" fill="#566381">▼</text>` : ""}`;
+  return `<svg viewBox="0 0 480 300" role="img" aria-label="Dialóg Pridať do archívu s nastaveniami" ${FONT}>
+  <rect x="10" y="8" width="460" height="284" rx="8" fill="#F4F7FB" stroke="#9AA3B5" stroke-width="2"/><rect x="10" y="8" width="460" height="28" rx="8" fill="#E5E7EB"/><text x="24" y="27" font-size="13" font-weight="600" fill="#16213A">Pridať do archívu</text>
+  ${row(50, "Archív:", "projekt.7z", false)}${row(88, "Formát archívu:", "7z", true)}${row(126, "Úroveň kompresie:", "Normálna", true)}${row(164, "Rozdeliť na zväzky:", "", true)}
+  <text x="34" y="214" font-size="13" fill="#16213A">Šifrovanie – heslo:</text><rect x="170" y="198" width="200" height="26" rx="4" fill="#fff" stroke="#9AA3B5"/><text x="180" y="216" font-size="13" fill="#9AA3B5">••••••</text>
+  <rect x="300" y="248" width="70" height="28" rx="5" fill="#2F5BEA"/><text x="335" y="267" text-anchor="middle" font-size="13" fill="#fff">OK</text><rect x="380" y="248" width="76" height="28" rx="5" fill="#fff" stroke="#9AA3B5"/><text x="418" y="267" text-anchor="middle" font-size="13" fill="#16213A">Zrušiť</text>
+  ${zone("name", 26, 46, 418, 34)}${zone("fmt", 26, 84, 300, 34)}${zone("lvl", 26, 122, 300, 34)}${zone("vol", 26, 160, 300, 34)}${zone("pwd", 26, 194, 350, 34)}${zone("ok", 296, 244, 78, 36)}
+  </svg>`; })();
+const ZIPDLG_N = { name: "Archív (meno)", fmt: "Formát archívu", lvl: "Úroveň kompresie", vol: "Rozdeliť na zväzky", pwd: "Šifrovanie – heslo", ok: "tlačidlo OK" };
+
+/* kontextová ponuka archivátora */
+const MENU = (() => { const it = [["open", "Otvoriť archív"], ["ext", "Rozbaliť súbory…"], ["here", "Rozbaliť sem"], ["into", "Rozbaliť do „projekt\\“"], ["add", "Pridať do archívu…"], ["addzip", "Pridať do „projekt.zip“"]];
+  return `<svg viewBox="0 0 480 250" role="img" aria-label="Ponuka po kliknutí pravým tlačidlom na archív" ${FONT}>
+  <text x="40" y="64" font-size="42">🗜️</text><text x="62" y="88" text-anchor="middle" font-size="12" fill="#16213A">projekt.7z</text>
+  <rect x="120" y="20" width="160" height="40" rx="6" fill="#fff" stroke="#9AA3B5"/><text x="134" y="45" font-size="13" fill="#16213A">7-Zip  ▸</text>
+  <rect x="180" y="58" width="280" height="${it.length * 30 + 12}" rx="6" fill="#fff" stroke="#9AA3B5" stroke-width="1.5"/>
+  ${it.map(([id, t], i) => `<text x="196" y="${84 + i * 30}" font-size="13.5" fill="#16213A">${t.replace("\\", "&#92;")}</text>`).join("")}
+  ${it.map(([id], i) => zone(id, 184, 64 + i * 30, 272, 28, 4)).join("")}</svg>`; })();
+const MENU_N = { open: "Otvoriť archív", ext: "Rozbaliť súbory…", here: "Rozbaliť sem", into: "Rozbaliť do „projekt\\“", add: "Pridať do archívu…", addzip: "Pridať do „projekt.zip“" };
+
+/* stránka sťahovacieho portálu (vymyslená) */
+const DLPAGE = `<svg viewBox="0 0 480 300" role="img" aria-label="Stránka sťahovacieho portálu s veľkými tlačidlami a malým odkazom" ${FONT}>
+  <rect x="8" y="8" width="464" height="284" rx="8" fill="#fff" stroke="#9AA3B5" stroke-width="2"/><rect x="8" y="8" width="464" height="26" rx="8" fill="#E5E7EB"/><text x="24" y="26" font-size="12" fill="#566381">🔒 free-programy-portal.example/7zip</text>
+  <text x="24" y="60" font-size="17" font-weight="700" fill="#16213A">7-Zip – archivátor</text>
+  <rect x="24" y="74" width="250" height="56" rx="10" fill="#12A150"/><text x="149" y="108" text-anchor="middle" font-size="18" font-weight="800" fill="#fff">⬇ STIAHNUŤ ZADARMO</text><text x="268" y="84" text-anchor="end" font-size="8" fill="#DDF3EA">Reklama</text>
+  <rect x="292" y="56" width="166" height="96" rx="8" fill="#FDE68A" stroke="#F0B429"/><text x="375" y="88" text-anchor="middle" font-size="13" font-weight="800" fill="#C0392B">⚠ Váš počítač</text><text x="375" y="106" text-anchor="middle" font-size="13" font-weight="800" fill="#C0392B">je pomalý!</text><rect x="320" y="118" width="110" height="24" rx="6" fill="#C0392B"/><text x="375" y="135" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">OPRAVIŤ TERAZ</text>
+  ${[0, 1, 2].map(i => `<rect x="24" y="${148 + i * 14}" width="${[240, 210, 230][i]}" height="6" rx="3" fill="#D3DCEA"/>`).join("")}
+  <rect x="24" y="200" width="290" height="44" rx="10" fill="#2F5BEA"/><text x="169" y="228" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">▶ SPUSTIŤ RÝCHLE STIAHNUTIE</text>
+  <text x="24" y="270" font-size="11.5" fill="#566381">Priamy odkaz: <tspan fill="#2F5BEA" text-decoration="underline">7z2408-x64.exe</tspan> (1,6 MB)</text>
+  ${zone("ad1", 20, 70, 258, 64, 12)}${zone("ad2", 288, 52, 174, 104, 10)}${zone("ad3", 20, 196, 298, 52, 12)}${zone("real", 100, 256, 110, 22, 4)}</svg>`;
+const DLPAGE_N = { ad1: "zelené tlačidlo STIAHNUŤ ZADARMO", ad2: "okno „Váš počítač je pomalý!“", ad3: "modré tlačidlo SPUSTIŤ RÝCHLE STIAHNUTIE", real: "malý odkaz 7z2408-x64.exe" };
+
+/* nahrávka s kašľom a tichom */
+const WAVE_ED = (() => { let d = "", r = 3; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280; const cy = 90;
+  for (let x = 20; x <= 460; x += 2) { let a; if (x < 150) a = 18 + rnd() * 26; else if (x < 200) a = 1.5; else if (x < 214) a = 66; else if (x < 330) a = 18 + rnd() * 26; else if (x < 380) a = 1.5; else a = 14 + rnd() * 22; d += `M${x} ${cy - a} V${cy + a} `; }
+  return `<svg viewBox="0 0 480 190" role="img" aria-label="Zvuková vlna nahrávky v zvukovom editore" ${FONT}>
+  <rect x="8" y="10" width="464" height="160" rx="8" fill="#1E2A46"/><line x1="20" y1="90" x2="460" y2="90" stroke="#33415F"/><path d="${d}" stroke="#6E91FF" stroke-width="1.6"/>
+  ${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<text x="${20 + i * 55}" y="184" font-size="10" fill="#566381">${i},0 s</text>`).join("")}
+  ${zone("s1", 18, 16, 132, 148, 4)}${zone("sil", 150, 16, 50, 148, 4)}${zone("cough", 200, 16, 16, 148, 4)}${zone("s2", 216, 16, 114, 148, 4)}${zone("sil2", 330, 16, 50, 148, 4)}${zone("s3", 380, 16, 82, 148, 4)}</svg>`; })();
+const WAVE_ED_N = { s1: "reč", sil: "ticho", cough: "ostrý vysoký hrot", s2: "reč", sil2: "ticho", s3: "reč" };
+
+/* tri nahrávky, jedna s clippingom */
+const CLIP3 = (() => { let s = "", z = ""; ["A", "B", "C"].forEach((l, k) => { const x0 = 14 + k * 158, w = 136, cy = 70, amp = [30, 70, 44][k], cut = k === 1 ? 50 : 999; let d = "";
+    for (let i = 0; i <= w; i++) { let y = amp * Math.sin(i / w * 3 * 2 * Math.PI); y = Math.max(-cut, Math.min(cut, y)); d += (i ? "L" : "M") + (x0 + i).toFixed(1) + " " + (cy - y).toFixed(1); }
+    s += `<rect x="${x0 - 6}" y="12" width="${w + 12}" height="116" rx="10" fill="#F4F7FB" stroke="#D3DCEA"/><line x1="${x0}" y1="${cy - 50}" x2="${x0 + w}" y2="${cy - 50}" stroke="#C0392B" stroke-dasharray="3 4" opacity=".6"/><line x1="${x0}" y1="${cy + 50}" x2="${x0 + w}" y2="${cy + 50}" stroke="#C0392B" stroke-dasharray="3 4" opacity=".6"/><path d="${d}" fill="none" stroke="#12805A" stroke-width="3" stroke-linejoin="round"/><text x="${x0 + w / 2}" y="152" text-anchor="middle" font-size="19" font-weight="700" fill="#16213A">${l}</text>`;
+    z += zone(l, x0 - 8, 8, w + 16, 154, 10); });
+  return `<svg viewBox="0 0 480 162" role="img" aria-label="Tri nahrávky A, B a C" ${FONT}>${s}${z}</svg>`; })();
+const CLIP3_N = { A: "nahrávka A", B: "nahrávka B", C: "nahrávka C" };
+
+/* priečinok a archív */
+const ZIPPIC = `<svg viewBox="0 0 480 120" role="img" aria-label="Priečinok 200 MB a archív ZIP 20 MB" ${FONT}>
+  <path d="M40 30 h50 l12 12 h70 v60 h-132 z" fill="#F0B429"/><rect x="40" y="48" width="132" height="54" rx="4" fill="#F5C451"/><text x="106" y="82" text-anchor="middle" font-size="20" font-weight="800" fill="#16213A">200 MB</text>
+  <path d="M200 66 h70" stroke="#566381" stroke-width="3"/><path d="M264 58 l12 8 l-12 8 z" fill="#566381"/><text x="236" y="56" text-anchor="middle" font-size="12" fill="#566381">ZIP</text>
+  <rect x="300" y="24" width="96" height="80" rx="6" fill="#E2E9FD" stroke="#2F5BEA" stroke-width="2"/>${[0, 1, 2, 3, 4].map(i => `<rect x="342" y="${28 + i * 10}" width="12" height="6" fill="#2F5BEA"/>`).join("")}<text x="348" y="96" text-anchor="middle" font-size="18" font-weight="800" fill="#16213A">20 MB</text></svg>`;
+
+/* reťaz: hlas → mikrofón → počítač → reproduktor */
+const CHAIN = `<svg viewBox="0 0 480 110" role="img" aria-label="Hlas, mikrofón, počítač a reproduktor" ${FONT}>
+  <circle cx="40" cy="50" r="24" fill="#FDE7D2" stroke="#C2660E" stroke-width="2"/><circle cx="33" cy="45" r="3" fill="#16213A"/><path d="M42 58 q8 4 12 -2" stroke="#16213A" stroke-width="2" fill="none"/>
+  ${[0, 1, 2].map(i => `<path d="M${74 + i * 10} 34 q8 16 0 32" stroke="#12805A" stroke-width="3" fill="none"/>`).join("")}
+  <rect x="124" y="26" width="22" height="38" rx="11" fill="#4B5563"/><path d="M116 50 a19 19 0 0 0 38 0" stroke="#4B5563" stroke-width="3" fill="none"/><rect x="133" y="70" width="4" height="16" fill="#4B5563"/>
+  <path d="M164 50 h30" stroke="#F0B429" stroke-width="3" stroke-dasharray="5 4"/>
+  <rect x="204" y="20" width="90" height="58" rx="5" fill="#1F2937"/><text x="249" y="56" text-anchor="middle" font-size="14" font-family="Consolas,monospace" fill="#8AE234">0101</text><rect x="236" y="78" width="26" height="8" fill="#4B5563"/>
+  <path d="M304 50 h30" stroke="#F0B429" stroke-width="3" stroke-dasharray="5 4"/>
+  <path d="M346 38 h16 l20 -16 v56 l-20 -16 h-16 z" fill="#374151"/>${[0, 1, 2].map(i => `<path d="M${394 + i * 12} 30 q12 20 0 40" stroke="#12805A" stroke-width="3" fill="none"/>`).join("")}</svg>`;
+
+/* vzorkovanie */
+const SAMPLE = (() => { let d = "", dots = ""; for (let i = 0; i <= 420; i++) { const y = 70 - 46 * Math.sin(i / 420 * 2 * Math.PI * 1.5); d += (i ? "L" : "M") + (30 + i) + " " + y.toFixed(1); }
+  for (let i = 0; i <= 420; i += 30) { const y = 70 - 46 * Math.sin(i / 420 * 2 * Math.PI * 1.5); dots += `<line x1="${30 + i}" y1="70" x2="${30 + i}" y2="${y.toFixed(1)}" stroke="#F0B429" stroke-width="2"/><circle cx="${30 + i}" cy="${y.toFixed(1)}" r="5" fill="#F0B429" stroke="#B98500"/>`; }
+  return `<svg viewBox="0 0 480 140" role="img" aria-label="Zvuková vlna so žltými vzorkami v pravidelných odstupoch" ${FONT}><line x1="30" y1="70" x2="455" y2="70" stroke="#B8C3D8"/><path d="${d}" fill="none" stroke="#12805A" stroke-width="3"/>${dots}<text x="240" y="134" text-anchor="middle" font-size="12" fill="#566381">čas →</text></svg>`; })();
+
+/* zvukový editor s dvomi stopami */
+const TRACKS = (() => { let a = "", b = "", r = 5; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+  for (let x = 110; x <= 460; x += 3) { const h1 = 8 + rnd() * 22, h2 = 4 + rnd() * 6; a += `M${x} ${52 - h1} V${52 + h1} `; b += `M${x} ${122 - h2} V${122 + h2} `; }
+  return `<svg viewBox="0 0 480 170" role="img" aria-label="Zvukový editor s dvomi stopami: hlas a hudba" ${FONT}>
+  <rect x="8" y="10" width="464" height="150" rx="8" fill="#E9EDF3"/><rect x="16" y="18" width="84" height="66" rx="5" fill="#fff"/><text x="24" y="38" font-size="12" font-weight="700" fill="#16213A">🎙️ Hlas</text><text x="24" y="58" font-size="11" fill="#566381">hlasitosť 80 %</text>
+  <rect x="16" y="90" width="84" height="64" rx="5" fill="#fff"/><text x="24" y="110" font-size="12" font-weight="700" fill="#16213A">🎵 Hudba</text><text x="24" y="130" font-size="11" fill="#566381">hlasitosť 25 %</text>
+  <rect x="106" y="18" width="358" height="66" rx="4" fill="#1E2A46"/><path d="${a}" stroke="#6E91FF" stroke-width="1.6"/><rect x="106" y="90" width="358" height="64" rx="4" fill="#1E2A46"/><path d="${b}" stroke="#3CCB8E" stroke-width="1.6"/></svg>`; })();
+
+/* ===== úlohy (30 úloh, bez A/B/C/D) ===== */
+function buildQ() {
+  return [
+  /* pôvodné úlohy */
   { id: "q4", type: "match", pts: 2, q: "Používa formát <b>bezstratovú</b> alebo <b>stratovú</b> komprimáciu?", fixed: true, pool: ["Bezstratová", "Stratová"],
     rows: [["7z", "Bezstratová"], ["RAR", "Bezstratová"], ["PNG", "Bezstratová"], ["JPEG", "Stratová"], ["MP3", "Stratová"]] },
-  { id: "q5", type: "input", pts: 3, q: "Priečinok s projektom má <b>200 MB</b>, archív ZIP z neho má <b>20 MB</b>. Doplň.",
-    fields: [{ label: "a) Kompresný pomer je", unit: ": 1", ok: v => parseNum(v) === 10, show: "10 : 1" },
-             { label: "b) Úspora je", unit: "%", ok: v => parseNum(v) === 90, show: "90 %" },
-             { label: "c) Archív má z pôvodnej veľkosti", unit: "%", ok: v => parseNum(v) === 10, show: "10 %" }] },
   { id: "q6", type: "multi", pts: 2, q: "Označ <b>všetky</b> pravdivé tvrdenia o komprimácii.",
     opts: [["Komprimácia využíva opakovania a vzory v údajoch.", 1], ["Veľmi krátky súbor sa po komprimácii môže aj zväčšiť.", 1], ["Programy a dokumenty sa komprimujú iba bezstratovo.", 1], ["Náhodné údaje sa skomprimujú najlepšie, lebo sú veľmi rôznorodé.", 0], ["Fotka JPG sa v ZIP-e zmenší približne na polovicu.", 0], ["ZIP archív chráni súbory pred vírusmi.", 0]] },
   { id: "q7", type: "match", pts: 2, q: "Priraď k programu alebo popisu správny typ licencie.", fixed: true, pool: ["Freeware", "Open source", "Shareware / trial"],
@@ -170,14 +284,10 @@ const Q = [
     opts: [["Program sťahuj z oficiálnej stránky výrobcu, napr. 7-zip.org.", 1], ["Pri inštalácii zvoľ Vlastnú inštaláciu a odškrtni „bonusové“ ponuky.", 1], ["Pre dnešné počítače vyber 64-bitovú verziu programu.", 1], ["Výsledok vyhľadávania označený Reklama je oficiálna stránka.", 0], ["Veľké farebné tlačidlo „STIAHNUŤ ZADARMO“ je vždy skutočný odkaz.", 0], ["V škole si program nainštaluješ sám, práva správcu nepotrebuješ.", 0], ["„Cracknutý“ program je bezpečný, ak ho stiahneš z rýchlej stránky.", 0]] },
   { id: "q9", type: "match", pts: 2, q: "V 7-Zip v dialógu <b>Pridať do archívu</b>: čo nastavíš v ktorej situácii?", pool: ["Formát: zip", "Formát: 7z", "Úroveň: Ultra", "Zväzky: 10M", "Šifrovanie: heslo"],
     rows: [["archív musí otvoriť ktorýkoľvek počítač s Windows", "Formát: zip"], ["archív s 45 MB chceš poslať e-mailom s limitom 10 MB na prílohu", "Zväzky: 10M"], ["bez hesla nesmie nikto archív otvoriť", "Šifrovanie: heslo"]] },
-  { id: "q10", type: "mc", pts: 1, q: "Kamarát ti poslal archív <b>projekt.7z</b>. Máš Windows 11 a nemáš nainštalovaný 7-Zip. Čo platí?",
-    opts: ["Windows 11 vie archív 7z rozbaliť aj bez ďalšieho programu.", "Archív 7z otvorí iba 7-Zip, inak sa nedá rozbaliť.", "Stačí zmeniť príponu na .zip a potom ho Windows rozbalí.", "Windows 11 vie archívy 7z vytvárať, ale nie rozbaľovať."], a: 0 },
-  { id: "q11", type: "order", pts: 2, q: "Zoraď, ako sa zvuk dostane z tvojich úst až do slúchadiel kamaráta.",
+  { id: "q11", type: "order", pts: 2, q: "Zoraď, ako sa zvuk dostane z tvojich úst až do slúchadiel kamaráta.", img: CHAIN,
     items: ["hlas rozkmitá vzduch (zvukové vlnenie)", "mikrofón ho zmení na elektrický signál", "počítač ho uloží ako čísla (údaje)", "reproduktor ho zmení späť na vlnenie vzduchu"], ends: ["začiatok", "koniec"] },
   { id: "q12", type: "match", pts: 2, q: "Na obrázku sú tri zvukové vlny, všetky trvajú rovnako dlho. Priraď správne písmeno.", img: WAVES, fixed: true, pool: ["A", "B", "C"],
     rows: [["vlna s najvyšším tónom", "B"], ["vlna s najhlasnejším zvukom", "C"], ["vlna, ktorá má rovnakú výšku tónu ako C, ale je tichšia", "A"]] },
-  { id: "q13", type: "mc", pts: 1, q: "Nahrávku svojho hlasu prehráš <b>rýchlejšie</b>. Čo sa stane?",
-    opts: ["Hlas bude vyšší, lebo vzduch kmitá rýchlejšie (vyššia frekvencia).", "Hlas bude hlbší, lebo vyššia frekvencia znamená hlbší tón.", "Hlas bude hlasnejší, lebo sa zväčší amplitúda.", "Výška hlasu sa nezmení, zmení sa iba dĺžka nahrávky."], a: 0 },
   { id: "q14", type: "match", pts: 2, q: "Ktorý program je na danú úlohu najvhodnejší?", pool: ["Zvukový záznamník", "Audacity", "VLC media player", "Media Player", "Diktafón v mobile"],
     rows: [["nahrať rozhovor so starou mamou na výlete", "Diktafón v mobile"], ["vystrihnúť z nahrávky kašeľ a exportovať ju do MP3", "Audacity"], ["prehrať takmer akýkoľvek zvukový aj video formát, zadarmo", "VLC media player"], ["vo Windows rýchlo nahrať hlas jedným tlačidlom", "Zvukový záznamník"]] },
   { id: "q16", type: "match", pts: 2, q: "Priraď k prípone správny popis.",
@@ -186,27 +296,55 @@ const Q = [
     items: ["povoliť prístup k mikrofónu", "nahrať zvuk", "označiť časť nahrávky", "použiť úpravu alebo efekt", "vypočuť si výsledok", "exportovať do MP3"], ends: ["prvý krok", "posledný krok"] },
   { id: "q18", type: "match", pts: 2, q: "Ktorý príkaz alebo efekt v zvukovom editore použiješ?",
     rows: [["odstrániť kašeľ, nahrávka sa skráti", "Vystrihnúť"], ["stíšiť lupnutie, dĺžka nahrávky zostane rovnaká", "Ticho"], ["hudba na začiatku plynulo zosilnie", "Fade in"], ["hudba na konci plynulo stíchne", "Fade out"]] },
-  { id: "q19", type: "mc", pts: 2, q: "Tú istú snímku obrazovky s textom uložili dvakrát v rôznych formátoch. Čo platí pre obrázok <b>B</b>?", img: SHOTS,
-    opts: ["Je to JPEG s nízkou kvalitou, štvorčeky a šum pri písmenách sú artefakty. Text ukladaj ako PNG.", "Je to PNG, bezstratový formát pri ukladaní vždy rozmaže hrany písmen.", "Vznikol premenovaním prípony .png na .jpg, preto je rozmazaný.", "Je to JPEG, kvalitu mu vrátiš, ak ho znova uložíš ako PNG."], a: 0 },
   { id: "q20", type: "match", pts: 2, q: "Pravda alebo nepravda?", fixed: true, pool: ["Pravda", "Nepravda"],
-    rows: [["Clipping (odrezané vrcholy vlny) sa už nedá opraviť.", "Pravda"],
-           ["Hudba v pozadí má byť tichšia ako hlas.", "Pravda"],
-           ["Konverzia z MP3 do WAV zlepší kvalitu zvuku.", "Nepravda"]] },
-  { id: "q21", type: "mc", pts: 1, q: "Čo je <b>dekomprimácia</b>?",
-    opts: ["rozbalenie, ktoré vráti súbor do pôvodnej podoby", "zmenšenie súboru tak, že sa údaje zapíšu úspornejšie", "spojenie viacerých súborov do jedného archívu", "zahodenie detailov, ktoré oko či ucho takmer nepostrehne"], a: 0 },
+    rows: [["Clipping (odrezané vrcholy vlny) sa už nedá opraviť.", "Pravda"], ["Hudba v pozadí má byť tichšia ako hlas.", "Pravda"], ["Konverzia z MP3 do WAV zlepší kvalitu zvuku.", "Nepravda"]] },
   { id: "q22", type: "multi", pts: 2, q: "Prečo súbory komprimujeme? Označ <b>všetky</b> správne dôvody.",
     opts: [["príloha e-mailu má limit veľkosti", 1], ["šetríme miesto na disku či v mobile", 1], ["súbory sa rýchlejšie nahrajú na internet", 1], ["archív chráni súbory pred vírusmi", 0], ["komprimáciou sa zlepší kvalita fotky", 0], ["komprimovaný súbor sa dá použiť bez rozbalenia", 0]] },
-  { id: "q23", type: "mc", pts: 1, q: "Čo vyjadruje <b>bitrate</b> zvuku (napr. 128 kbps)?",
-    opts: ["koľko údajov pripadá na 1 sekundu zvuku, vyšší bitrate = lepšia kvalita a väčší súbor", "koľkokrát za sekundu vzduch zakmitá, vyšší bitrate = vyšší tón", "ako veľmi vzduch kmitá, vyšší bitrate = hlasnejší zvuk", "počet zvukových stôp v nahrávke, vyšší bitrate = viac stôp"], a: 0 }
-];
-const MAX = Q.reduce((a, q) => a + q.pts, 0);
-const BY = Object.fromEntries(Q.map(q => [q.id, q]));
+  /* pôvodné úlohy na písanie, teraz s výberom */
+  { id: "q1", type: "gap", pts: 2, q: "Metóda <b>RLE</b>: číslo = počet opakovaní, písmeno = farba. Doplň text.", img: RLE, cap: "M = modrá · B = biela · C = červená",
+    text: "Rad štvorčekov na obrázku sa zakóduje ako {0}. Zápis 3B2C4M sa rozbalí na {1}. Zápis ABCD by RLE zmenila na {2}, teda súbor by sa {3}.",
+    gaps: [["5M2B4C1M", "5M2B5C", "M5B2C4M1"], ["BBBCCMMMM", "BCMBCMBCM", "3BBB2CC4MMMM"], ["1A1B1C1D", "ABCD", "4ABCD"], ["zväčšil", "zmenšil", "nezmenil"]] },
+  { id: "q5", type: "gap", pts: 3, q: "Priečinok s projektom má <b>200 MB</b>, archív ZIP z neho má <b>20 MB</b>. Doplň.", img: ZIPPIC,
+    text: "Kompresný pomer je {0}. Úspora je {1}. Archív má z pôvodnej veľkosti {2}.",
+    gaps: [["10 : 1", "1 : 10", "20 : 1"], ["90 %", "10 %", "20 %"], ["10 %", "90 %", "20 %"]] },
+  /* klikanie do obrázka */
+  { id: "h1", type: "hot", pts: 1, q: "Ktorý rad štvorčekov sa metódou RLE skomprimuje <b>najlepšie</b>? Klikni naň.", img: RLE3, names: RLE3_N, a: ["r2"] },
+  { id: "h2", type: "hot", pts: 1, q: "Tú istú snímku obrazovky s textom uložili dvakrát. Klikni na obrázok, ktorý bol uložený ako <b>JPEG s nízkou kvalitou</b>.", img: SHOTS, names: SHOTS_N, a: ["B"] },
+  { id: "h3", type: "hot", pts: 1, q: "Chceš čo najmenší archív, aj keď sa bude dlhšie baliť. Klikni na nastavenie, v ktorom zvolíš <b>Ultra</b>.", img: ZIPDLG, names: ZIPDLG_N, a: ["lvl"] },
+  { id: "h4", type: "hot", pts: 1, q: "Chceš archív rozbaliť tak, aby boli súbory <b>vo vlastnom priečinku</b>. Klikni na správnu položku ponuky.", img: MENU, names: MENU_N, a: ["into"] },
+  { id: "h5", type: "hot", pts: 2, q: "Si na sťahovacom portáli. Klikni na <b>skutočný</b> odkaz na stiahnutie programu.", img: DLPAGE, names: DLPAGE_N, a: ["real"] },
+  { id: "h6", type: "hot", pts: 1, q: "V nahrávke niekto zakašľal. Klikni na miesto, kde je <b>kašeľ</b>.", img: WAVE_ED, names: WAVE_ED_N, a: ["cough"] },
+  { id: "h7", type: "hot", pts: 2, q: "Červené čiary sú maximum, ktoré sa dá uložiť. Klikni na nahrávku, v ktorej nastal <b>clipping</b>.", img: CLIP3, names: CLIP3_N, a: ["B"] },
+  /* triedenie */
+  { id: "s1", type: "sort", pts: 3, q: "Čo konvertuješ v danom nástroji? Roztrieď nástroje.", groups: ["obrázky", "zvuk", "video", "dokumenty"],
+    items: [["Skicár (Uložiť ako)", 0], ["GIMP (Exportovať ako)", 0], ["Audacity (Exportovať)", 1], ["HandBrake", 2], ["Clipchamp", 2], ["Word (Uložiť ako PDF)", 3], ["Tlačiť do PDF", 3]] },
+  { id: "s2", type: "sort", pts: 3, q: "Ako dobre sa súbor skomprimuje v ZIP-e?", groups: ["zmenší sa veľa", "takmer sa nezmenší alebo sa zväčší"],
+    items: [["text, v ktorom sa opakujú tie isté vety", 0], ["nekomprimovaný obrázok s veľkými jednofarebnými plochami", 0], ["fotka JPG", 1], ["pesnička MP3", 1], ["video MP4", 1], ["náhodné údaje", 1], ["veľmi krátky súbor s pár znakmi", 1]] },
+  { id: "s3", type: "sort", pts: 2, q: "Roztrieď zvukové formáty.", groups: ["nekomprimovaný", "bezstratový", "stratový"],
+    items: [[".wav", 0], [".flac", 1], [".mp3", 2], [".m4a / .aac", 2], [".ogg", 2]] },
+  { id: "s4", type: "sort", pts: 2, q: "Platí to pre <b>projekt</b> (.aup3), alebo pre <b>exportovaný</b> zvukový súbor?", img: TRACKS, groups: ["projekt (.aup3)", "export (napr. MP3)"],
+    items: [["obsahuje všetky stopy a úpravy", 0], ["dá sa ďalej upravovať", 0], ["otvorí ho iba ten istý program", 0], ["prehrá ho každý prehrávač a mobil", 1], ["hotový súbor na posielanie a zverejnenie", 1]] },
+  /* doplňovanie do textu */
+  { id: "g1", type: "gap", pts: 3, q: "Doplň text o zvuku.", img: CHAIN,
+    text: "Zvuk je {0}. Frekvencia udáva, koľkokrát za sekundu vzduch zakmitá, meria sa v {1} a určuje {2}. Amplitúda určuje {3}, ktorú meriame v {4}.",
+    gaps: [["vlnenie vzduchu", "elektrický prúd", "svetlo"], ["Hz", "dB", "kbps"], ["výšku tónu", "hlasitosť", "dĺžku nahrávky"], ["hlasitosť", "výšku tónu", "rýchlosť"], ["dB", "Hz", "MB"]] },
+  { id: "g2", type: "gap", pts: 3, q: "Na obrázku sú žlté vzorky zvukovej vlny. Doplň text.", img: SAMPLE,
+    text: "Počítač vie ukladať iba čísla, preto zvuk mnohokrát za sekundu zmeria a každé meranie uloží ako číslo. Tomu sa hovorí {0}. CD má vzorkovaciu frekvenciu {1}, video {2}. Bitová hĺbka 16 bitov dáva {3} úrovní hlasitosti. Stereo má {4}.",
+    gaps: [["vzorkovanie", "komprimácia", "mixovanie"], ["44 100 Hz", "128 kbps", "16 bitov"], ["48 kHz", "44 100 kHz", "320 kbps"], ["65 536", "16", "256"], ["2 kanály", "1 kanál", "16 kanálov"]] },
+  { id: "g3", type: "gap", pts: 2, q: "Doplň text o konverzii formátov.",
+    text: "Premenovanie prípony {0} konverzia. Kodek je {1} a kontajner je {2}. Najkompatibilnejšie video je {3}. Online konvertor {4} na súbory s osobnými údajmi.",
+    gaps: [["nie je", "je", "je rýchla"], ["spôsob kompresie (napr. H.264)", "obal (napr. MP4)", "prehrávač"], ["obal (napr. MP4, MKV)", "spôsob kompresie (napr. MP3)", "priečinok"], ["MP4 + H.264", "MKV + AV1", "WebM + H.265"], ["nepoužívaj", "vždy používaj", "používaj hlavne"]] },
+  { id: "o1", type: "order", pts: 2, q: "Zoraď súbory s <b>1 minútou</b> zvuku od <b>najväčšieho</b> po <b>najmenší</b>.",
+    items: ["WAV", "FLAC", "MP3 320 kbps", "MP3 128 kbps"], ends: ["najväčší", "najmenší"] }
+  ];
+}
+
 const poolOf = q => q.pool || [...new Set(q.rows.map(r => r[1]))];
-const HINT = { mc: "Vyber jednu odpoveď.", multi: "Označ všetky správne tvrdenia. Za každé nesprávne označenie sa ti jedno správne odpočíta.", match: "Ku každému riadku vyber odpoveď zo zoznamu.", order: "Klikaj na kartičky v správnom poradí. Kliknutím na umiestnenú kartičku ju vrátiš späť.", input: "Napíš odpoveď." };
+const HINT = { hot: "Klikni na správne miesto na obrázku. Výber zmeníš kliknutím na iné miesto.", sort: "Klikni na kartičku a potom na skupinu, kam patrí. Kliknutím na umiestnenú kartičku ju vrátiš späť.", gap: "V každom prázdnom mieste vyber zo zoznamu správnu možnosť.", mc: "Vyber jednu odpoveď.", multi: "Označ všetky správne tvrdenia. Za každé nesprávne označenie sa ti jedno správne odpočíta.", match: "Ku každému riadku vyber odpoveď zo zoznamu.", order: "Klikaj na kartičky v správnom poradí. Kliknutím na umiestnenú kartičku ju vrátiš späť.", input: "Napíš odpoveď." };
 
 /* ===== stav ===== */
-function fresh() { return { v: 1, name: "", cls: "", phase: "start", order: [], perm: {}, ans: {}, result: null, finished: null, attempt: 0, sentKey: null }; }
-function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.v === 1) return Object.assign(fresh(), o); } catch (e) {} return null; }
+function fresh() { return { v: 2, name: "", cls: "", phase: "start", order: [], perm: {}, ans: {}, result: null, finished: null, attempt: 0, sentKey: null }; }
+function load() { try { const o = JSON.parse(localStorage.getItem(KEY)); if (o && o.v === 2) return Object.assign(fresh(), o); } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
 /* úvodná obrazovka s menom a triedou sa ukáže vždy pri otvorení testu aj pred novým pokusom */
@@ -215,16 +353,20 @@ const D = { name: "", cls: "" };
 const nameOk = n => String(n).trim().split(/\s+/).filter(w => w.length >= 2).length >= 2;
 const canStart = () => nameOk(D.name) && CLASSES.includes(D.cls);
 const startHint = () => !nameOk(D.name) ? "Napíš svoje meno aj priezvisko." : !CLASSES.includes(D.cls) ? "Vyber svoju triedu." : "";
+let Q, BY, MAX;
+function setup() { Q = buildQ(); BY = Object.fromEntries(Q.map(q => [q.id, q])); MAX = Q.reduce((a, q) => a + q.pts, 0); }
+setup();
 
 function newAttempt() {
-  const groups = []; Q.forEach(q => { if (q.glue && groups.length) groups[groups.length - 1].push(q.id); else groups.push([q.id]); });
-  S.order = shuffle(groups).flat(); S.perm = {};
+  S.order = shuffle(Q.map(q => q.id)); S.perm = {};
   Q.forEach(q => {
     if (q.type === "mc" || q.type === "multi") S.perm[q.id] = shuffled(q.opts.length);
     if (q.type === "match") { const p = poolOf(q); S.perm[q.id] = { rows: shuffled(q.rows.length), pool: q.fixed ? p.map((_, i) => i) : shuffled(p.length) }; }
     if (q.type === "order") S.perm[q.id] = shuffled(q.items.length);
+    if (q.type === "sort") S.perm[q.id] = shuffled(q.items.length);
+    if (q.type === "gap") S.perm[q.id] = q.gaps.map(g => shuffled(g.length));
   });
-  S.ans = {}; S.result = null; S.finished = null; S.phase = "test"; S.attempt++; save();
+  PICK = null; S.ans = {}; S.result = null; S.finished = null; S.phase = "test"; S.attempt++; save();
 }
 
 /* ===== vyhodnotenie ===== */
@@ -234,12 +376,18 @@ function answered(q) { const a = S.ans[q.id];
   if (q.type === "match") return !!a && q.rows.every((_, i) => a[i]);
   if (q.type === "order") return Array.isArray(a) && a.length === q.items.length;
   if (q.type === "input") return !!a && q.fields.every((_, i) => String(a[i] || "").trim());
+  if (q.type === "hot") return !!a;
+  if (q.type === "sort") return !!a && q.items.every((_, i) => a[i] != null);
+  if (q.type === "gap") return !!a && q.gaps.every((_, k) => a[k] != null);
   return false; }
 function gradeQ(q) { const a = S.ans[q.id]; let u = 0, n = 1;
   if (q.type === "mc") u = a === q.a ? 1 : 0;
   if (q.type === "multi") { const ch = a || []; const good = ch.filter(i => q.opts[i][1]).length, bad = ch.length - good; n = q.opts.filter(o => o[1]).length; u = Math.max(0, good - bad); }
   if (q.type === "match") { n = q.rows.length; u = q.rows.filter((r, i) => a && a[i] === r[1]).length; }
   if (q.type === "order") { n = q.items.length; u = q.items.filter((_, i) => a && a[i] === i).length; }
+  if (q.type === "hot") u = a && q.a.includes(a) ? 1 : 0;
+  if (q.type === "sort") { n = q.items.length; u = q.items.filter((it, i) => a && a[i] === it[1]).length; }
+  if (q.type === "gap") { n = q.gaps.length; u = q.gaps.filter((_, k) => a && a[k] === 0).length; }
   if (q.type === "input") { n = q.fields.length; u = q.fields.filter((f, i) => a && f.ok(String(a[i] || ""))).length; }
   return { sc: Math.floor(u * q.pts / n + 1e-9), u, n }; }
 const gradeOf = pct => pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
@@ -262,13 +410,29 @@ function orderBody(q, done) { const seq = S.ans[q.id] || [], pool = S.perm[q.id]
   return h; }
 function inputBody(q, done) { const a = S.ans[q.id] || {};
   return q.fields.map((f, i) => { const v = a[i] || "", ok = done ? f.ok(String(v)) : null;
-    return `<div class="iq"><div class="lbl">${esc(f.label)}</div><div class="iqa"><input type="text" class="in ${f.mono ? "mono" : ""} ${f.wide ? "wide" : ""} ${done ? (ok ? "good" : "badin") : ""}" data-in="${q.id}|${i}" value="${esc(v)}" placeholder="${esc(f.ph || "")}" autocomplete="off" spellcheck="false" ${done ? "disabled" : ""} aria-label="${esc(f.label)}">${f.unit ? `<span class="unit">${esc(f.unit)}</span>` : ""}${done ? (ok ? `<span class="okm">✓ správne</span>` : `<span class="badm">✗ správne: ${esc(f.show)}</span>`) : ""}</div></div>`; }).join(""); }
+    return `<div class="iq"><div class="lbl">${esc(f.label)}</div><div class="iqa"><input type="text" class="in ${f.mono ? "mono" : ""} ${f.wide ? "wide" : ""} ${done ? (ok ? "good" : "badin") : ""}" data-in="${q.id}|${i}" value="${esc(v)}" placeholder="${esc(f.ph || "")}" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="decimal" ${done ? "disabled" : ""} aria-label="${esc(f.label)}">${f.unit ? `<span class="unit">${esc(f.unit)}</span>` : ""}${done ? (ok ? `<span class="okm">✓ správne</span>` : `<span class="badm">✗ správne: ${esc(f.show)}</span>`) : ""}</div></div>`; }).join(""); }
+
+let PICK = null;
+function hotBody(q, done) { const a = S.ans[q.id], ok = done && q.a.includes(a), name = a ? q.names[a] || a : "";
+  if (!done) return `<p class="hst muted">${a ? `Vybral si: <b>${esc(name)}</b>` : "Zatiaľ si nič nevybral."}</p>`;
+  return `<p class="hst">${ok ? `<span class="okm">✓ správne: ${esc(name)}</span>` : `<span class="badm">✗ ${a ? `vybral si ${esc(name)}, ` : "nič si nevybral, "}správne: ${esc(q.one || q.names[q.a[0]])}</span>`}</p>`; }
+function sortBody(q, done) { const a = S.ans[q.id] || {}, P = S.perm[q.id], armed = !done && PICK && PICK.q === q.id;
+  let h = `<div class="sgs">${q.groups.map((g, gi) => `<div class="sg ${armed ? "armed" : ""}" data-grp="${q.id}|${gi}"><div class="sgh">${esc(g)}</div><div class="sgb">${P.filter(i => a[i] === gi).map(i => done
+      ? `<span class="chipb ${q.items[i][1] === gi ? "cok" : "cbad"}">${esc(q.items[i][0])}${q.items[i][1] === gi ? " ✓" : ` <small>→ ${esc(q.groups[q.items[i][1]])}</small>`}</span>`
+      : `<button class="chipb" data-unsort="${q.id}|${i}">${esc(q.items[i][0])}</button>`).join("") || `<span class="sge">${armed ? "Klikni sem" : "…"}</span>`}</div></div>`).join("")}</div>`;
+  const rest = P.filter(i => a[i] == null);
+  if (!done) h += `<div class="pool">${rest.length ? rest.map(i => `<button class="chipb ${PICK && PICK.q === q.id && PICK.i === i ? "picked" : ""}" data-pick="${q.id}|${i}" aria-pressed="${!!(PICK && PICK.q === q.id && PICK.i === i)}">${esc(q.items[i][0])}</button>`).join("") : '<span class="empty">Všetko je roztriedené.</span>'}</div>`;
+  else if (rest.length) h += `<div class="right"><b>Neroztriedené:</b> ${rest.map(i => `${esc(q.items[i][0])} → ${esc(q.groups[q.items[i][1]])}`).join(" · ")}</div>`;
+  return h; }
+function gapBody(q, done) { const a = S.ans[q.id] || {}, P = S.perm[q.id];
+  return `<p class="gtext">${q.text.replace(/\{(\d+)\}/g, (m, k) => { k = +k; const g = q.gaps[k], v = a[k], ok = v === 0;
+    return `<select class="gsel ${done ? (ok ? "good" : "badsel") : ""}" data-gp="${q.id}|${k}" ${done ? "disabled" : ""} aria-label="Prázdne miesto ${k + 1}"><option value="">— vyber —</option>${P[k].map(j => `<option value="${j}" ${v === j ? "selected" : ""}>${esc(g[j])}</option>`).join("")}</select>${done ? (ok ? ` <span class="okm">✓</span>` : `<span class="badm gfix">(správne: ${esc(g[0])})</span>`) : ""}`; })}</p>`; }
 function card(q, n, done) { const r = done ? S.result.per[q.id] : null;
-  const body = q.type === "mc" || q.type === "multi" ? mcBody(q, done) : q.type === "match" ? matchBody(q, done) : q.type === "order" ? orderBody(q, done) : inputBody(q, done);
+  const body = q.type === "hot" ? hotBody(q, done) : q.type === "sort" ? sortBody(q, done) : q.type === "gap" ? gapBody(q, done) : q.type === "mc" || q.type === "multi" ? mcBody(q, done) : q.type === "match" ? matchBody(q, done) : q.type === "order" ? orderBody(q, done) : inputBody(q, done);
   return `<section class="qc ${done ? (r.sc === q.pts ? "full" : r.sc > 0 ? "part" : "zero") : ""}" id="c-${q.id}">
     <div class="qh"><span class="qn">${n}</span><div class="qt">${q.q}</div><span class="pt">${done ? `${r.sc} / ${q.pts} b` : `${q.pts} ${bw(q.pts)}`}</span></div>
     ${done ? "" : `<div class="ins">${HINT[q.type]}</div>`}
-    <div class="qb">${q.img ? `<figure class="fig">${q.img}${q.cap ? `<figcaption>${q.cap}</figcaption>` : ""}</figure>` : ""}${body}</div></section>`; }
+    <div class="qb">${q.img ? `<figure class="fig${q.type === "hot" ? " hot" + (done ? " done" : "") : ""}"${q.type === "hot" ? ` data-hq="${q.id}"` : ""}${q.figw ? ` style="max-width:${q.figw}px"` : ""}>${q.img}${q.cap ? `<figcaption>${q.cap}</figcaption>` : ""}</figure>` : ""}${body}</div></section>`; }
 
 /* ===== obrazovky ===== */
 function renderTop() { const n = S.order.filter(id => answered(BY[id])).length, PH = GATE ? "start" : S.phase;
@@ -279,7 +443,7 @@ function renderTop() { const n = S.order.filter(id => answered(BY[id])).length, 
 function viewStart() { const ok = canStart();
   return `<p class="kicker">Informatika, Tercia</p><h1>${TITLE}</h1>
   <p>Test z učiva 2.1 až 3.3: komprimácia údajov (RLE, slovníková metóda, kompresný pomer), komprimačné programy a 7-Zip, nahrávanie a úprava zvuku, vzorkovanie a konverzia formátov.</p>
-  <div class="facts"><div class="fact"><b>21</b><span>úloh</span></div><div class="fact"><b>${MAX}</b><span>bodov</span></div><div class="fact"><b>40</b><span>minút</span></div></div>
+  <div class="facts"><div class="fact"><b>${Q.length}</b><span>úloh</span></div><div class="fact"><b>${MAX}</b><span>bodov</span></div><div class="fact"><b>45</b><span>minút</span></div></div>
   <div class="warnbox">Úlohy aj odpovede má každý v inom poradí. Za ťažšie úlohy je viac bodov a pri niektorých dostaneš aj časť bodov. Keď test odovzdáš, výsledok sa automaticky pošle učiteľovi a uvidíš správne odpovede.</div>
   ${S.phase === "test" ? `<div class="warnbox">V tomto prehliadači je rozpracovaný test: <b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())}. Ak je tvoj, môžeš v ňom pokračovať.<div class="row" style="margin-top:8px"><button class="ghost" data-resume>Pokračovať v rozpracovanom teste</button></div></div>` : ""}
   <div class="panel"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(D.name)}" autocomplete="off" placeholder="napr. Jana Nováková">
@@ -287,13 +451,13 @@ function viewStart() { const ok = canStart();
   <div class="row"><button class="primary" data-start ${ok ? "" : "disabled"}>Začať test</button><span class="muted" id="sthint">${startHint()}</span></div></div>`; }
 let ARM = false;
 function viewTest() { const left = S.order.filter(id => !answered(BY[id])).length;
-  return `<p class="kicker">${esc(S.name.trim())}, ${esc(S.cls.trim())}${S.attempt > 1 ? ` · ${S.attempt}. pokus` : ""}</p><h1>Test 1</h1>
+  return `<p class="kicker">${esc(S.name.trim())}, ${esc(S.cls)}${S.attempt > 1 ? ` · ${S.attempt}. pokus` : ""}</p><h1>Test 1</h1>
   ${S.order.map((id, i) => card(BY[id], i + 1, false)).join("")}
   <div class="submitbar"><button class="primary ${ARM ? "warn" : ""}" data-submit>${ARM ? "Naozaj odovzdať?" : "Odovzdať test"}</button><span class="muted" id="subhint">${ARM && left ? `Nezodpovedal si ${left} ${left === 1 ? "úlohu" : left <= 4 ? "úlohy" : "úloh"}. Klikni znova, ak chceš test aj tak odovzdať.` : ARM ? "Odovzdaný test sa už nedá meniť." : "Pred odovzdaním si skontroluj všetky odpovede."}</span></div>`; }
 function sendResults() {
   const E = RESULTS_FORM.entries, tot = S.result.tot, pct = Math.round(tot / MAX * 100), p = new URLSearchParams();
-  p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON); p.set(E.body, `${tot}/${MAX} (${pct} %)`); p.set(E.detail, String(gradeOf(pct)));
-  const key = [S.name.trim(), S.cls.trim(), tot, S.finished].join("|");
+  p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls); p.set(E.hodina, LESSON); p.set(E.body, `${tot}/${MAX} (${pct} %)`); p.set(E.detail, String(gradeOf(pct)));
+  const key = [S.name.trim(), S.cls, tot, S.finished].join("|");
   const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
   if (S.sentKey !== key && !S.sending) { S.sending = true;
     fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
@@ -301,7 +465,7 @@ function sendResults() {
   return `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 function viewDone() { const tot = S.result.tot, pct = Math.round(tot / MAX * 100), when = new Date(S.finished).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
   return `<p class="kicker">Výsledok testu</p><h1>Test 1</h1>
-  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}${S.attempt > 1 ? ` · ${S.attempt}. pokus` : ""}</span></p>
+  <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls)} <span class="muted">· ${when}${S.attempt > 1 ? ` · ${S.attempt}. pokus` : ""}</span></p>
     <div class="big"><span class="n">${tot}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${gradeOf(pct)}</b><span>známka</span></div></div>
     <div class="row" style="margin-top:4px">${sendResults()}</div></div>
   <h2>Prehľad odpovedí</h2><p class="muted">Zelená = správne, červená = nesprávne. Pri nesprávnych odpovediach vidíš aj správne riešenie.</p>
@@ -315,7 +479,8 @@ function stateOk() {
   const ok = S.order.every(id => { const q = BY[id], p = S.perm[id]; if (!q) return false;
     if (q.type === "mc" || q.type === "multi") return Array.isArray(p) && p.length === q.opts.length;
     if (q.type === "match") return !!p && Array.isArray(p.rows) && p.rows.length === q.rows.length && Array.isArray(p.pool) && p.pool.length === poolOf(q).length;
-    if (q.type === "order") return Array.isArray(p) && p.length === q.items.length;
+    if (q.type === "order" || q.type === "sort") return Array.isArray(p) && p.length === q.items.length;
+    if (q.type === "gap") return Array.isArray(p) && p.length === q.gaps.length && p.every((x, k) => Array.isArray(x) && x.length === q.gaps[k].length);
     return true; });
   return ok && (S.phase !== "done" || (!!S.result && !!S.result.per && S.order.every(id => S.result.per[id])));
 }
@@ -326,17 +491,28 @@ const main = document.getElementById("main");
 function render(toTop) { try { render0(toTop); } catch (e) { console.error(e); resetState(); ARM = false; render0(true); } }
 function render0(toTop) { const y = window.scrollY; renderTop();
   main.innerHTML = GATE || S.phase === "start" ? viewStart() : S.phase === "test" ? viewTest() : viewDone();
-  typo(main); window.scrollTo(0, toTop ? 0 : y); }
+  typo(main); paintHot(); window.scrollTo(0, toTop ? 0 : y); }
+function paintHot() { const done = !GATE && S.phase === "done";
+  document.querySelectorAll("[data-hq]").forEach(f => { const q = BY[f.dataset.hq], a = S.ans[q.id], hit = q.a.includes(a);
+    f.querySelectorAll("[data-z]").forEach(z => { const id = z.dataset.z; z.setAttribute("role", "button"); z.setAttribute("tabindex", done ? "-1" : "0"); z.setAttribute("aria-label", q.names[id] || id);
+      if (!done) { z.classList.toggle("hsel", id === a); return; }
+      if (id === a) z.classList.add(hit ? "hok" : "hbad"); else if (!hit && q.a.includes(id)) z.classList.add("hmiss"); }); }); }
+function pickZone(z) { const f = z.closest("[data-hq]"); if (!f || GATE || S.phase !== "test") return; S.ans[f.dataset.hq] = z.dataset.z; ARM = false; save(); render(false); }
 function updateCount() { const n = S.order.filter(id => answered(BY[id])).length, c = document.getElementById("cnt"), b = document.getElementById("bar");
   if (c) c.innerHTML = `📝 Zodpovedané <b>${n}</b> z ${Q.length}`; if (b) b.style.width = Math.round(n / Q.length * 100) + "%"; }
-
 function onField(t) { D[t.dataset.field] = t.value; const b = document.querySelector("[data-start]"), h = document.getElementById("sthint"); if (b) b.disabled = !canStart(); if (h) h.textContent = startHint(); }
+
 /* ===== udalosti ===== */
 document.addEventListener("click", e => {
-  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  const z = e.target.closest("[data-z]"); if (z) return pickZone(z);
+  const el = e.target.closest("button");
+  if (!el) { const g = e.target.closest("[data-grp]"); if (g && PICK && S.phase === "test" && !GATE) { const [q, gi] = g.dataset.grp.split("|"); if (q === PICK.q) { (S.ans[q] = S.ans[q] || {})[PICK.i] = +gi; PICK = null; ARM = false; save(); render(false); } } return; }
+  const ds = el.dataset;
   if (ds.resume !== undefined) { GATE = false; ARM = false; return render(true); }
   if (ds.start !== undefined) { if (!canStart()) return; S.name = D.name.trim().replace(/\s+/g, " "); S.cls = D.cls; D.name = ""; D.cls = ""; GATE = false; newAttempt(); ARM = false; return render(true); }
   if (S.phase === "test" && !GATE) {
+    if (ds.pick) { const [q, i] = ds.pick.split("|"); PICK = PICK && PICK.q === q && PICK.i === +i ? null : { q, i: +i }; return render(false); }
+    if (ds.unsort) { const [q, i] = ds.unsort.split("|"); if (S.ans[q]) delete S.ans[q][i]; PICK = null; ARM = false; save(); return render(false); }
     if (ds.mc) { const [q, i] = ds.mc.split("|"); S.ans[q] = +i; ARM = false; save(); return render(false); }
     if (ds.mu) { const [q, i] = ds.mu.split("|"), a = S.ans[q] = S.ans[q] || [], k = a.indexOf(+i); if (k >= 0) a.splice(k, 1); else a.push(+i); ARM = false; save(); return render(false); }
     if (ds.place) { const [q, i] = ds.place.split("|"), a = S.ans[q] = S.ans[q] || []; if (!a.includes(+i)) a.push(+i); ARM = false; save(); return render(false); }
@@ -348,12 +524,15 @@ document.addEventListener("click", e => {
   }
   if (ds.again !== undefined) { if (!ARM) { ARM = true; return render(false); } ARM = false; GATE = true; return render(true); }
 });
-document.addEventListener("change", e => { const t = e.target; if (t.dataset.mt && S.phase === "test" && !GATE) { const [q, i] = t.dataset.mt.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); return; }
+document.addEventListener("change", e => { const t = e.target;
+  if (t.dataset.gp && S.phase === "test" && !GATE) { const [q, k] = t.dataset.gp.split("|"), a = S.ans[q] = S.ans[q] || {}; if (t.value === "") delete a[k]; else a[k] = +t.value; save(); updateCount(); return; }
+  if (t.dataset.mt && S.phase === "test" && !GATE) { const [q, i] = t.dataset.mt.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); return; }
   if (t.dataset.field) onField(t); });
 document.addEventListener("input", e => { const t = e.target;
   if (t.dataset.in && S.phase === "test" && !GATE) { const [q, i] = t.dataset.in.split("|"); (S.ans[q] = S.ans[q] || {})[i] = t.value; save(); updateCount(); return; }
   if (t.dataset.field) onField(t); });
 render(true);
+document.addEventListener("keydown", e => { const z = e.target.closest && e.target.closest("[data-z]"); if (z && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); pickZone(z); } });
 </script>
 </body>
 </html>
