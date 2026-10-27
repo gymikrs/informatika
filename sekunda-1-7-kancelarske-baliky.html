@@ -230,6 +230,27 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 .tsplit>div{min-width:0}
 .rtab td{overflow-wrap:anywhere}
+/* LENKA: obrázky v úlohách a vyrovnané stĺpce */
+.tfigs{align-items:stretch}.tfigs .tfig{justify-content:space-between}
+.qpic{flex:0 0 96px;width:96px;height:72px;background:#fff;border:1px solid var(--border);border-radius:10px;display:block;overflow:hidden}
+.qpic svg{width:100%;height:100%;display:block}
+.q legend>span:last-child:has(.qpic){display:flex;gap:14px;align-items:center}
+.opts:has(>.opt:nth-child(4):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+.opts:has(.ico){grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:760px){.opts:has(.ico){grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.opts:has(>.opt:nth-child(4):last-child){grid-template-columns:1fr}.qpic{flex-basis:72px;width:72px;height:54px}}
+.ico{width:22px;height:22px;vertical-align:-6px;margin-right:8px;flex:0 0 22px}
+.opt:has(.ico){display:flex;align-items:center}
+.chipb .ico{width:18px;height:18px;vertical-align:-4px;margin-right:6px}
+.parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin-top:auto;padding-top:12px}
+.parts button{text-align:left;border:1.5px solid var(--border);background:var(--surface2);border-radius:8px;padding:6px 9px;font-size:13.5px;cursor:pointer;color:var(--ink)}
+.parts button.seen{border-color:var(--ok);background:var(--okSoft)}.parts button.on{border-color:var(--acc);background:var(--accSoft)}
+.fql{list-style:none;margin:auto 0 0;padding:12px 0 0;display:grid;gap:6px;font-size:14px}.fql li{padding:6px 10px;border-radius:8px;background:var(--surface2)}.fql li.cur{background:var(--accSoft);font-weight:600}
+.savegrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:20px;align-items:center}
+.savegrid .sad{max-width:none}
+.sitpic{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px}.sitpic svg{width:100%;height:auto;display:block}
+@media (max-width:760px){.savegrid{grid-template-columns:minmax(0,1fr)}}
+@media (min-width:861px){.scr{align-items:stretch}.scr .side{display:flex;flex-direction:column}.tsplit{align-items:stretch}.tsplit>div:last-child{display:flex;flex-direction:column;gap:12px}.tsplit>div:last-child>.tfig{flex:1;justify-content:center}.tsplit>div:last-child>.vedel{margin:0}}
 </style>
 </head>
 <body>
@@ -245,6 +266,15 @@ function typo(root) { if (!root) return; const W = document.createTreeWalker(roo
     t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ");
     for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
     if (t !== o) n.nodeValue = t; }); }
+function balanceSplits(root) { /* LENKA: text vľavo a obrázky vpravo končia v rovnakej výške */
+  if (!root) return; root.querySelectorAll(".tsplit").forEach(t => { const [L, R] = t.children; if (!L || !R) return;
+    if (innerWidth <= 860) { t.style.gridTemplateColumns = ""; return; }
+    const set = f => { t.style.gridTemplateColumns = `minmax(0,${(1 - f).toFixed(3)}fr) minmax(0,${f.toFixed(3)}fr)`; };
+    t.style.alignItems = "start"; R.style.display = "block";
+    let lo = 0.3, hi = 0.6; for (let i = 0; i < 14; i++) { const m = (lo + hi) / 2; set(m); if (L.offsetHeight > R.offsetHeight) lo = m; else hi = m; } set((lo + hi) / 2);
+    t.style.alignItems = ""; R.style.display = ""; }); }
+(() => { let tm; addEventListener("resize", () => { clearTimeout(tm); tm = setTimeout(() => balanceSplits(document.getElementById("main")), 120); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => balanceSplits(document.getElementById("main"))); })();
 
 const THEORY = {
   balik: ["<b>Kancelársky balík</b> je súbor programov na bežnú prácu s dokumentmi. Programy majú podobné ovládanie a spolupracujú.", "<b>Textový editor</b>: písanie a úprava dokumentov (list, životopis, článok).", "<b>Tabuľkový procesor</b>: tabuľky s číslami, výpočty a grafy.", "<b>Prezentačný program</b>: snímky, ktoré premietaš na projektore.", "<b>Poštový program</b>: e-maily, kontakty a kalendár.", "Obsah z jedného programu vložíš do druhého (napr. graf z tabuľky do dokumentu)."],
@@ -291,7 +321,7 @@ return {
     ${ar(278, 90, 300, 70, A)}${ar(278, 140, 300, 160, A)}
     ${box(304, 30, 128, 74, "#fff", "#2B579A", 10)}${T(312, 50, "📝 do referátu", { fs: 11, b: 1, c: "#2B579A" })}${[0, 1, 2].map(i => `<rect x="314" y="${58 + i * 9}" width="56" height="4" rx="2" fill="${C.line}"/>`).join("")}<rect x="378" y="58" width="44" height="34" fill="#F8CFB1"/>
     ${box(304, 126, 128, 74, "#fff", "#D24726", 10)}${T(312, 146, "📽️ na snímku", { fs: 11, b: 1, c: "#D24726" })}<rect x="314" y="154" width="108" height="38" rx="3" fill="#FBEDE8"/><rect x="346" y="160" width="44" height="26" fill="#F8CFB1"/>
-    ${box(8, 206, 424, 36, AS, null, 8)}${T(220, 229, "Rovnaké ponuky, ikony a skratky vo všetkých programoch", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Spolupráca programov v balíku"),
+    ${box(8, 206, 424, 36, AS, null, 8)}${T(220, 229, "Rovnaké ponuky, ikony a skratky vo všetkých programoch", { a: "middle", fs: 11.5, b: 1, c: A })}<circle r="5" fill="${A}"><animateMotion path="M128 115 H166 M240 100 L304 70" dur="2.6s" repeatCount="indefinite"/></circle><circle r="5" fill="${A}"><animateMotion path="M128 115 H166 M240 130 L304 160" dur="2.6s" begin="1.3s" repeatCount="indefinite"/></circle>`, "Spolupráca programov v balíku"),
     "Graf z <b>tabuľky</b> skopíruješ do <b>dokumentu</b> aj do <b>prezentácie</b>. Programy v balíku sa ovládajú podobne."),
   bezpecne: fig(SV(440, 250, `
     ${box(8, 8, 206, 234, C.okS, C.ok, 12)}${T(111, 30, "✅ Bezpečne", { a: "middle", fs: 13, b: 1, c: C.ok })}
@@ -315,7 +345,7 @@ return {
   historia: fig(SV(440, 210, `
     ${T(220, 22, "Rodokmeň LibreOffice", { a: "middle", fs: 13, b: 1, c: A })}
     <line x1="30" y1="96" x2="410" y2="96" stroke="#E6D3C6" stroke-width="5" stroke-linecap="round"/>
-    ${[["1985", "StarOffice", "nemecká firma", "platený", C.mut], ["2000", "OpenOffice.org", "firma Sun", "otvorený kód", C.blue], ["2010", "LibreOffice", "dobrovoľníci", "zadarmo", C.ok]].map(([y, n, d1, d2, c], i) => { const cx = 76 + i * 144; return `<circle cx="${cx}" cy="96" r="10" fill="${c}"/>${T(cx, 74, y, { a: "middle", fs: 15, b: 1, c })}${box(cx - 66, 120, 132, 76, "#fff", c, 10)}${T(cx, 144, n, { a: "middle", fs: 12.5, b: 1, c })}${T(cx, 164, d1, { a: "middle", fs: 11 })}${T(cx, 182, d2, { a: "middle", fs: 11, c: C.mut })}${i < 2 ? ar(cx + 16, 96, cx + 126, 96, A, 2.5) : ""}`; }).join("")}`, "História LibreOffice"),
+    ${[["1985", "StarOffice", "nemecká firma", "platený", C.mut], ["2000", "OpenOffice.org", "firma Sun", "otvorený kód", C.blue], ["2010", "LibreOffice", "dobrovoľníci", "zadarmo", C.ok]].map(([y, n, d1, d2, c], i) => { const cx = 76 + i * 144; return `<circle cx="${cx}" cy="96" r="10" fill="${c}"/>${T(cx, 74, y, { a: "middle", fs: 15, b: 1, c })}${box(cx - 66, 120, 132, 76, "#fff", c, 10)}${T(cx, 144, n, { a: "middle", fs: 12.5, b: 1, c })}${T(cx, 164, d1, { a: "middle", fs: 11 })}${T(cx, 182, d2, { a: "middle", fs: 11, c: C.mut })}${i < 2 ? ar(cx + 16, 96, cx + 126, 96, A, 2.5) : ""}`; }).join("")}<circle cy="96" r="5" fill="${A}" opacity=".85"><animate attributeName="cx" values="76;364" dur="3.5s" repeatCount="indefinite"/></circle>`, "História LibreOffice"),
     "LibreOffice má dlhú históriu: vznikol z balíka <b>OpenOffice</b>, ktorý pochádza zo <b>StarOffice</b>."),
   pas: fig(SV(440, 250, `
     ${T(220, 22, "Pás s nástrojmi: karta → skupina → tlačidlo", { a: "middle", fs: 13, b: 1, c: A })}
@@ -357,6 +387,126 @@ return {
     ${[["⬇️", "LibreOffice", "stiahni z libreoffice.org", "pre každého", "#1F9D55", C.okS], ["🎓", "Microsoft 365", "prihlás sa školským kontom", "cez školu", "#2B579A", "#E3ECF8"], ["🌐", "Google Dokumenty", "stačí účet Google a prehliadač", "iba online", "#8A5A00", "#FDF1D3"]].map(([e, n, d, tag, c, bg], i) => { const y = 36 + i * 70; return `${box(8, y, 424, 60, "#fff", c, 10)}${T(36, y + 38, e, { a: "middle", fs: 22 })}${T(62, y + 25, n, { fs: 13, b: 1, c })}${T(62, y + 45, d, { fs: 11.5 })}${box(326, y + 18, 96, 24, bg, null, 12)}${T(374, y + 35, tag, { a: "middle", fs: 11, b: 1, c })}`; }).join("")}`, "Legálne cesty ku kancelárskemu balíku"),
     "Žiak môže mať kancelársky balík <b>legálne</b> a bez platenia: LibreOffice, školské konto alebo Google.")
 }; })();
+
+/* ===== Sekunda 1.7: doplnené obrázky (LENKA 2026-10-27) ===== */
+Object.assign(TFIG, (() => { const { C, fig, SV, ar, T, box, win, num } = PF; const A = "#C2560C", AS = "#FBE3D2";
+const tb = x => `<rect x="${x}" y="62" width="136" height="26" fill="#F3F3F3"/>${T(x + 14, 80, "💾", { fs: 12 })}${["B", "I", "U"].map((l, i) => `<rect x="${x + 40 + i * 24}" y="66" width="20" height="18" rx="3" fill="#fff" stroke="#DDD"/><text x="${x + 50 + i * 24}" y="79.5" font-size="12" text-anchor="middle" font-weight="${i ? 400 : 800}"${i === 1 ? ` font-style="italic"` : ""}${i === 2 ? ` text-decoration="underline"` : ""} fill="${C.ink}">${l}</text>`).join("")}`;
+return {
+  ovladanie: fig(SV(440, 250, `
+    ${T(220, 22, "Rovnaké tlačidlá v každom programe", { a: "middle", fs: 12.5, b: 1 })}
+    ${[["Text", "#2B579A"], ["Tabuľka", "#1F9D55"], ["Prezentácia", "#D24726"]].map(([n, c], i) => { const x = 8 + i * 146; return `${box(x, 36, 136, 164, "#fff", c, 8)}<rect x="${x}" y="36" width="136" height="26" rx="8" fill="${c}"/><rect x="${x}" y="50" width="136" height="12" fill="${c}"/>${T(x + 68, 54, n, { a: "middle", fs: 11.5, b: 1, c: "#fff" })}${tb(x)}
+      ${i === 0 ? [0, 1, 2, 3, 4].map(k => `<rect x="${x + 14}" y="${102 + k * 16}" width="${[104, 96, 108, 80, 60][k]}" height="6" rx="3" fill="${C.line}"/>`).join("") : ""}
+      ${i === 1 ? [0, 1, 2, 3, 4].map(r => [0, 1, 2].map(k => `<rect x="${x + 14 + k * 36}" y="${98 + r * 18}" width="36" height="18" fill="${r ? "#fff" : "#E3F3EA"}" stroke="#B9DCC8"/>`).join("")).join("") : ""}
+      ${i === 2 ? `<rect x="${x + 14}" y="100" width="108" height="84" rx="4" fill="#FBEDE8"/><rect x="${x + 28}" y="112" width="80" height="10" rx="3" fill="#E9A28C"/><rect x="${x + 28}" y="132" width="50" height="40" rx="3" fill="#F8CFB1"/><rect x="${x + 84}" y="134" width="26" height="6" rx="3" fill="#E9A28C"/><rect x="${x + 84}" y="148" width="22" height="6" rx="3" fill="#E9A28C"/>` : ""}`; }).join("")}
+    <rect x="46" y="64" width="24" height="22" rx="4" fill="none" stroke="${A}" stroke-width="2.5"><animate attributeName="x" values="46;192;338" dur="3.6s" calcMode="discrete" repeatCount="indefinite"/></rect>
+    ${box(8, 208, 424, 34, AS, null, 8)}${T(220, 230, "Naučíš sa ovládať jeden program, zvládneš aj ostatné", { a: "middle", fs: 11.5, b: 1, c: A })}`, "Rovnaké ovládanie programov v balíku"),
+    "Tlačidlá na <b>uloženie</b>, <b>tučné</b> písmo či <b>kurzívu</b> sú v každom programe balíka na rovnakom mieste."),
+  naraz: fig(SV(440, 210, `
+    ${win(8, 8, 424, 194, "docs.google.com", 1)}
+    ${[["E", "#1E6FD9"], ["T", "#12805A"], ["ty", "#B4235A"]].map(([t, c], i) => `<circle cx="${352 + i * 26}" cy="17" r="0"/>`).join("")}
+    <rect x="9" y="36" width="422" height="165" fill="#F1F3F4"/><rect x="96" y="44" width="248" height="152" fill="#fff" stroke="#DADCE0"/>
+    ${T(112, 64, "Projekt: Naša trieda", { fs: 12.5, b: 1, c: "#1A73E8" })}
+    ${[["#1E6FD9", "Ema", 102, 0], ["#12805A", "Tomáš", 132, 1.2], ["#B4235A", "ty", 162, 2.4]].map(([c, n, y, d]) => `<rect x="112" y="${y - 8}" width="0" height="7" rx="3" fill="#C9CED6"><animate attributeName="width" values="0;180;180" keyTimes="0;.6;1" dur="4.5s" begin="${d}s" repeatCount="indefinite"/></rect>
+      <g><animateTransform attributeName="transform" type="translate" values="0 0;180 0;180 0" keyTimes="0;.6;1" dur="4.5s" begin="${d}s" repeatCount="indefinite"/><line x1="113" y1="${y - 12}" x2="113" y2="${y + 2}" stroke="${c}" stroke-width="2.5"/><rect x="113" y="${y - 24}" width="${n.length * 7 + 10}" height="13" rx="3" fill="${c}"/>${T(118, y - 14, n, { fs: 10.5, b: 1, c: "#fff" })}</g>`).join("")}
+    ${[0, 1].map(k => `<rect x="112" y="${176 + k * 10}" width="${[200, 150][k]}" height="6" rx="3" fill="#E3E6EA"/>`).join("")}
+    ${[["E", "#1E6FD9"], ["T", "#12805A"], ["ty", "#B4235A"]].map(([t, c], i) => `<circle cx="${30 + (i > 0 ? 0 : 0)}" cy="${70 + i * 34}" r="14" fill="${c}"/>${T(30, 74 + i * 34, t, { a: "middle", fs: 11, b: 1, c: "#fff" })}`).join("")}
+    ${T(30, 178, "píšu", { a: "middle", fs: 10.5, c: C.mut })}${T(30, 192, "naraz", { a: "middle", fs: 10.5, c: C.mut })}
+    ${box(356, 60, 68, 66, "#fff", C.line, 8)}${T(390, 84, "☁️", { a: "middle", fs: 18 })}${T(390, 104, "uložené", { a: "middle", fs: 10.5 })}${T(390, 118, "v cloude", { a: "middle", fs: 10.5 })}`, "Viac ľudí píše v jednom dokumente naraz"),
+    "V <b>Google Dokumentoch</b> píše v jednom súbore naraz viac ľudí. Každý má svoj farebný kurzor."),
+  lupa: fig(SV(440, 230, `
+    <defs><clipPath id="s17zoom"><rect x="8" y="8" width="280" height="182" rx="6"/></clipPath></defs>
+    ${box(8, 8, 280, 214, "#E9ECEF", "#C9D1DF", 6)}
+    <g clip-path="url(#s17zoom)"><g transform="translate(148 99)"><g><animateTransform attributeName="transform" type="scale" values="0.6;1.25;0.6" dur="5s" repeatCount="indefinite"/>
+      <rect x="-80" y="-104" width="160" height="208" fill="#fff" stroke="#CCC"/>${T(-64, -80, "Vtáky na Slovensku", { fs: 12, b: 1, c: "#2B579A" })}
+      ${[0, 1, 2, 3, 4, 5].map(k => `<rect x="-64" y="${-66 + k * 12}" width="${[128, 120, 128, 96, 128, 70][k]}" height="5" rx="2" fill="#C9CED6"/>`).join("")}<rect x="-64" y="12" width="60" height="44" rx="3" fill="#CFE3F7"/>${T(-34, 40, "🐦", { a: "middle", fs: 18 })}</g></g></g>
+    <rect x="9" y="190" width="278" height="31" fill="#F3F3F3"/>${T(150, 210, "−", { fs: 13, b: 1 })}<line x1="166" y1="206" x2="252" y2="206" stroke="#999" stroke-width="2"/>${T(260, 210, "+", { fs: 13, b: 1 })}
+    <circle cy="206" r="6" fill="${A}"><animate attributeName="cx" values="176;242;176" dur="5s" repeatCount="indefinite"/></circle>${T(18, 210, "🔍 lupa", { fs: 11, b: 1, c: A })}
+    ${box(300, 8, 132, 104, AS, A, 10)}${T(366, 32, "🔍 Lupa", { a: "middle", fs: 12.5, b: 1, c: A })}${T(310, 54, "zväčší alebo", { fs: 11 })}${T(310, 70, "zmenší iba to,", { fs: 11 })}${T(310, 86, "ako stranu", { fs: 11 })}${T(310, 102, "vidíš", { fs: 11 })}
+    ${box(300, 120, 132, 102, C.okS, C.ok, 10)}${T(366, 144, "📄 Dokument", { a: "middle", fs: 12.5, b: 1, c: C.ok })}${T(310, 166, "sa nemení:", { fs: 11 })}${T(310, 182, "písmo má stále", { fs: 11 })}${T(310, 198, "rovnakú veľkosť", { fs: 11 })}${T(310, 214, "aj pri tlači", { fs: 11 })}`, "Lupa mení iba zobrazenie"),
+    "<b>Lupa</b> v pravom dolnom rohu mení iba zobrazenie. Dokument aj vytlačená strana zostanú rovnaké."),
+  zip: fig(SV(440, 230, `
+    ${T(220, 22, "Čo je vnútri súboru .docx", { a: "middle", fs: 13, b: 1, c: A })}
+    <path d="M24 50 h52 l18 18 v94 h-70z" fill="#fff" stroke="#2B579A" stroke-width="2"/><path d="M76 50 v18 h18" fill="none" stroke="#2B579A" stroke-width="2"/><rect x="32" y="112" width="54" height="22" rx="4" fill="#2B579A"/>${T(59, 127, ".docx", { a: "middle", fs: 11, b: 1, c: "#fff" })}
+    ${T(59, 186, "referat.docx", { a: "middle", fs: 11, b: 1 })}
+    ${ar(110, 106, 166, 106, A)}${T(138, 92, "kópia", { a: "middle", fs: 10.5, c: C.mut })}${T(138, 126, "→ .zip", { a: "middle", fs: 10.5, b: 1, c: A })}
+    ${box(176, 40, 256, 182, "#FFF8E1", "#E0A800", 10)}${T(190, 62, "📦 referat.zip", { fs: 12, b: 1, c: "#8A5A00" })}
+    ${[["📁", "word", "text dokumentu"], ["📄", "document.xml", "samotný text"], ["🖼️", "media / obrazok1.png", "vložený obrázok"], ["📁", "docProps", "autor, dátum"], ["📄", "styles.xml", "štýly a písma"]].map(([e, n, d], i) => `<g>${box(188, 72 + i * 29, 232, 25, "#fff", "#F2D27A", 6)}${T(196, 89 + i * 29, e, { fs: 12 })}${T(216, 89 + i * 29, n, { fs: 11, b: 1, mono: 1 })}${T(412, 89 + i * 29, d, { a: "end", fs: 10.5, c: C.mut })}</g>`).join("")}<rect x="186" y="70" width="236" height="29" rx="7" fill="none" stroke="${A}" stroke-width="2.5"><animate attributeName="y" values="70;99;128;157;186" dur="5s" calcMode="discrete" repeatCount="indefinite"/></rect>`, "Obsah súboru docx"),
+    "Súbor <b>.docx</b> je zbalený archív. Vo vnútri je text, obrázky aj nastavenia v samostatných súboroch."),
+  instal: fig(SV(440, 250, `
+    ${T(220, 20, "Inštalácia LibreOffice v 4 krokoch", { a: "middle", fs: 13, b: 1, c: A })}
+    ${box(8, 32, 206, 102, "#fff", C.line, 10)}${num(24, 48, "1", A)}${win(40, 38, 166, 88, "libreoffice.org")}<rect x="62" y="82" width="122" height="26" rx="5" fill="${C.ok}"/>${T(123, 100, "⬇ Stiahnuť", { a: "middle", fs: 11.5, b: 1, c: "#fff" })}
+    <g><animateTransform attributeName="transform" type="translate" values="40 40;0 0;0 0;40 40" keyTimes="0;.3;.7;1" dur="4s" repeatCount="indefinite"/><path d="M150 96 l0 16 l4 -4 l4 8 l3 -1.5 l-4 -8 l6 0z" fill="#1A1530" stroke="#fff" stroke-width="1"/></g>
+    ${box(226, 32, 206, 102, "#fff", C.line, 10)}${num(242, 48, "2", A)}${T(258, 52, "Stiahnuté súbory", { fs: 11.5, b: 1 })}${box(244, 66, 170, 34, "#F6F5FA", C.line, 6)}${T(256, 88, "📦", { fs: 15 })}${T(278, 88, "LibreOffice.msi", { fs: 11.5, mono: 1 })}${T(258, 120, "dvakrát klikni a spusti", { fs: 11, c: C.mut })}
+    ${box(8, 142, 206, 100, "#fff", C.line, 10)}${num(24, 158, "3", A)}${T(40, 162, "Inštalácia…", { fs: 11.5, b: 1 })}<rect x="24" y="182" width="174" height="16" rx="8" fill="#E6E3EF"/><rect x="24" y="182" width="0" height="16" rx="8" fill="${C.ok}"><animate attributeName="width" values="0;174;174" keyTimes="0;.8;1" dur="4s" repeatCount="indefinite"/></rect>${T(24, 226, "Ďalej → Inštalovať → Dokončiť", { fs: 11, c: C.mut })}
+    ${box(226, 142, 206, 100, "#fff", C.line, 10)}${num(242, 158, "4", A)}${T(258, 162, "Hotovo, v ponuke Štart", { fs: 11.5, b: 1 })}
+    ${[["W", "#1B78C4", "Writer"], ["C", "#1F9D55", "Calc"], ["I", "#D2452C", "Impress"]].map(([l, c, n], i) => `<g><rect x="${246 + i * 60}" y="176" width="34" height="34" rx="7" fill="${c}"/>${T(263 + i * 60, 199, l, { a: "middle", fs: 16, b: 1, c: "#fff" })}${T(263 + i * 60, 228, n, { a: "middle", fs: 10.5, b: 1 })}</g>`).join("")}`, "Inštalácia LibreOffice"),
+    "Stiahni inštalátor z <b>oficiálnej stránky</b>, spusti ho a programy nájdeš v ponuke <b>Štart</b>.")
+}; })());
+
+/* malé obrázky do otázok (neprezrádzajú odpoveď) */
+const QPIC = (() => { const { C } = PF;
+  const sv = (b, l) => `<span class="qpic" aria-hidden="true"><svg viewBox="0 0 96 72" role="img" aria-label="${l}" font-family="Rubik,Segoe UI,Arial,sans-serif">${b}</svg></span>`;
+  const t = (x, y, s, fs = 11, c = C.ink, w = 400, a = "middle") => `<text x="${x}" y="${y}" font-size="${fs}" text-anchor="${a}" fill="${c}" font-weight="${w}">${s}</text>`;
+  const page = (x, y, w, h, s = "#C9D1DF") => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="#fff" stroke="${s}" stroke-width="1.5"/>`;
+  const ln = (x, y, ws, g = 7) => ws.map((w, i) => `<rect x="${x}" y="${y + i * g}" width="${w}" height="3.5" rx="1.7" fill="#C9CED6"/>`).join("");
+  const tile = (x, y, l, c, s = 30) => `<rect x="${x}" y="${y}" width="${s}" height="${s}" rx="6" fill="${c}"/>${t(x + s / 2, y + s * 0.7, l, s * 0.55, "#fff", 700)}`;
+  const file = (x, y, ext, c = C.mut) => `<path d="M${x} ${y} h30 l10 10 v40 h-40z" fill="#fff" stroke="${c}" stroke-width="1.8"/><path d="M${x + 30} ${y} v10 h10" fill="none" stroke="${c}" stroke-width="1.8"/><rect x="${x - 6}" y="${y + 26}" width="${ext.length * 6.5 + 8}" height="14" rx="3" fill="${c}"/>${t(x - 2, y + 37, ext, 10.5, "#fff", 700, "start")}`;
+  return {
+    vtaky: sv(`${page(20, 6, 56, 62)}<rect x="27" y="12" width="36" height="5" rx="2" fill="#2B579A"/>${ln(27, 22, [42, 38, 42])}<rect x="27" y="44" width="28" height="18" rx="2" fill="#CFE3F7"/>${t(41, 58, "🐦", 13)}`, "referát"),
+    znamky: sv(`${[["M", "1"], ["SJ", "2"], ["AJ", "1"], ["F", "3"]].map(([p, z], i) => `<rect x="14" y="${6 + i * 13}" width="34" height="13" fill="#fff" stroke="#B9DCC8"/><rect x="48" y="${6 + i * 13}" width="22" height="13" fill="#fff" stroke="#B9DCC8"/>${t(31, 16 + i * 13, p, 9.5)}${t(59, 16 + i * 13, z, 10, C.ink, 700)}`).join("")}<rect x="14" y="58" width="56" height="12" rx="3" fill="#E3F3EA"/>${t(42, 67.5, "priemer = ?", 9.5, "#0B6B47", 700)}${t(83, 40, "🧮", 16)}`, "známky"),
+    projektor: sv(`<rect x="14" y="4" width="68" height="40" rx="3" fill="#fff" stroke="#9AA5B1" stroke-width="1.5"/><rect x="22" y="10" width="34" height="5" rx="2" fill="#D24726"/><rect x="22" y="20" width="22" height="18" rx="2" fill="#F8CFB1"/>${ln(48, 22, [26, 22, 26])}<path d="M48 44 l-28 22 M48 44 l28 22" stroke="#FFE08A" stroke-width="2"/>${[22, 38, 54, 70].map(x => `<circle cx="${x}" cy="64" r="6" fill="#8E86A8"/>`).join("")}`, "projektor"),
+    fazula: sv(`<rect x="62" y="6" width="12" height="62" rx="2" fill="#FFE08A" stroke="#C9A227"/>${[0, 1, 2, 3, 4, 5].map(k => `<line x1="62" y1="${12 + k * 10}" x2="67" y2="${12 + k * 10}" stroke="#8A5A00"/>`).join("")}<path d="M36 68 C36 50 34 34 40 18" stroke="#2E8B57" stroke-width="3" fill="none"/><ellipse cx="30" cy="30" rx="9" ry="5" fill="#3CB371"/><ellipse cx="46" cy="44" rx="9" ry="5" fill="#3CB371"/><ellipse cx="44" cy="16" rx="7" ry="4" fill="#3CB371"/><rect x="22" y="62" width="30" height="8" rx="2" fill="#B07A4A"/>`, "fazuľa"),
+    pozvanka: sv(`<rect x="16" y="6" width="48" height="60" rx="4" fill="#FFF3E0" stroke="#E0A100" stroke-width="1.5"/>${t(40, 22, "🎉", 14)}${t(40, 36, "POZVÁNKA", 8, "#B07400", 700)}${ln(24, 44, [32, 26, 30])}${t(80, 52, "🖨️", 18)}`, "pozvánka"),
+    posta: sv(`<rect x="8" y="14" width="44" height="32" rx="4" fill="#fff" stroke="#1E6FD9" stroke-width="1.5"/><path d="M8 16 l22 16 l22 -16" fill="none" stroke="#1E6FD9" stroke-width="1.5"/><rect x="54" y="26" width="36" height="38" rx="4" fill="#fff" stroke="#B4235A" stroke-width="1.5"/><rect x="54" y="26" width="36" height="10" rx="4" fill="#B4235A"/>${[0, 1, 2].map(r => [0, 1, 2].map(k => `<rect x="${59 + k * 10}" y="${40 + r * 8}" width="7" height="5" rx="1" fill="${r === 1 && k === 1 ? "#B4235A" : "#E6E3EF"}"/>`).join("")).join("")}`, "e-mail a kalendár"),
+    w: sv(`${tile(10, 20, "W", "#2B579A", 32)}<path d="M48 36 h14" stroke="${C.mut}" stroke-width="2.5" marker-end=""/><path d="M58 31 l6 5 l-6 5" fill="none" stroke="${C.mut}" stroke-width="2.5"/><rect x="68" y="20" width="22" height="32" rx="6" fill="#fff" stroke="${C.mut}" stroke-dasharray="3 2"/>${t(79, 42, "?", 16, C.mut, 700)}`, "Word"),
+    x: sv(`${tile(10, 20, "X", "#217346", 32)}<path d="M48 36 h14" stroke="${C.mut}" stroke-width="2.5"/><path d="M58 31 l6 5 l-6 5" fill="none" stroke="${C.mut}" stroke-width="2.5"/><rect x="68" y="20" width="22" height="32" rx="6" fill="#fff" stroke="${C.mut}" stroke-dasharray="3 2"/>${t(79, 42, "?", 16, C.mut, 700)}`, "Excel"),
+    p: sv(`${tile(10, 20, "P", "#D24726", 32)}<path d="M48 36 h14" stroke="${C.mut}" stroke-width="2.5"/><path d="M58 31 l6 5 l-6 5" fill="none" stroke="${C.mut}" stroke-width="2.5"/><rect x="68" y="20" width="22" height="32" rx="6" fill="#fff" stroke="${C.mut}" stroke-dasharray="3 2"/>${t(79, 42, "?", 16, C.mut, 700)}`, "PowerPoint"),
+    m365: sv(`<rect x="10" y="10" width="50" height="34" rx="3" fill="#1A1530"/><rect x="13" y="13" width="44" height="28" fill="#E8F0FE"/>${tile(17, 17, "W", "#2B579A", 14)}${tile(34, 17, "X", "#217346", 14)}<rect x="28" y="44" width="14" height="6" fill="#5E5877"/><rect x="20" y="50" width="30" height="4" rx="2" fill="#5E5877"/><circle cx="74" cy="34" r="16" fill="#FFF6E0" stroke="#B07400" stroke-width="1.5"/>${t(74, 40, "€?", 14, "#B07400", 700)}`, "Microsoft 365"),
+    tim: sv(`<rect x="30" y="8" width="36" height="44" rx="4" fill="#fff" stroke="#1F9D55" stroke-width="1.5"/><rect x="30" y="8" width="36" height="10" rx="4" fill="#1F9D55"/>${ln(36, 24, [24, 20, 24, 16])}${t(16, 66, "?", 18, C.mut, 700)}${t(48, 68, "?", 18, C.mut, 700)}${t(80, 66, "?", 18, C.mut, 700)}`, "kto ho vyvíja"),
+    open: sv(`<rect x="14" y="20" width="68" height="44" rx="4" fill="#DDF3EA" stroke="#1F9D55" stroke-width="1.5"/><path d="M14 20 l10 -12 h48 l10 12" fill="#BFE6D3" stroke="#1F9D55" stroke-width="1.5"/>${t(48, 40, "open", 11, "#0B6B47", 700)}${t(48, 54, "source", 11, "#0B6B47", 700)}`, "open source"),
+    stiahni: sv(`<path d="M24 40 a14 14 0 0 1 4 -27 a18 18 0 0 1 34 4 a12 12 0 0 1 4 23z" fill="#E3EEFC" stroke="#1E6FD9" stroke-width="1.5"/><path d="M46 30 v24" stroke="#1E6FD9" stroke-width="3"/><path d="M38 47 l8 8 l8 -8" fill="none" stroke="#1E6FD9" stroke-width="3"/>${t(78, 64, "?", 16, C.mut, 700)}`, "stiahnutie"),
+    reklama: sv(`<rect x="8" y="8" width="80" height="56" rx="5" fill="#FDECEA" stroke="#C0392B" stroke-width="1.5"/>${t(48, 26, "ZADARMO", 11, "#C0392B", 800)}${t(48, 40, "+ KĽÚČ!!!", 11, "#C0392B", 800)}<rect x="22" y="46" width="52" height="13" rx="3" fill="#F2A516"/>${t(48, 56, "⬇ DOWNLOAD", 8, C.ink, 700)}`, "podozrivá reklama"),
+    online: sv(`<rect x="6" y="8" width="84" height="56" rx="5" fill="#fff" stroke="#C9D1DF" stroke-width="1.5"/><rect x="6" y="8" width="84" height="12" rx="5" fill="#E9EDF3"/><rect x="12" y="11" width="60" height="6" rx="3" fill="#fff"/>${tile(14, 28, "W", "#2B579A", 20)}${tile(38, 28, "X", "#217346", 20)}${tile(62, 28, "P", "#D24726", 20)}${t(48, 60, "v prehliadači", 8.5, C.mut)}`, "online"),
+    os: sv(`<rect x="18" y="10" width="60" height="38" rx="3" fill="#1A1530"/><rect x="21" y="13" width="54" height="32" fill="#E8F0FE"/>${t(48, 35, "?", 18, C.mut, 700)}<path d="M10 50 h76 l-6 10 h-64z" fill="#5E5877"/>`, "notebook"),
+    balik: sv(`<rect x="10" y="22" width="76" height="44" rx="6" fill="#FBE3D2" stroke="#C2560C" stroke-width="1.5"/><rect x="38" y="14" width="20" height="10" rx="3" fill="none" stroke="#C2560C" stroke-width="2"/>${tile(16, 32, "📝", "#fff", 20)}${tile(38, 32, "📊", "#fff", 20)}${tile(60, 32, "📽️", "#fff", 20)}`, "balík"),
+    cena: sv(`<path d="M20 20 h40 l18 18 l-22 22 l-36 -2z" fill="#E6F4EE" stroke="#12805A" stroke-width="1.5" transform="rotate(-8 48 40)"/><circle cx="30" cy="30" r="4" fill="#fff" stroke="#12805A"/>${t(52, 46, "? €", 15, "#12805A", 700)}`, "cena"),
+    tabulka: sv(`${[0, 1, 2, 3].map(r => [0, 1, 2].map(k => `<rect x="${14 + k * 22}" y="${8 + r * 14}" width="22" height="14" fill="${r ? "#fff" : "#E3F3EA"}" stroke="#B9DCC8"/>`).join("")).join("")}${t(36 + 0, 66, "Σ = ?", 11, "#0B6B47", 700)}`, "tabuľka"),
+    pTile: sv(`${tile(30, 14, "P", "#D24726", 36)}`, "PowerPoint"),
+    pripona: sv(`${file(30, 10, ".???", "#1B78C4")}`, "prípona"),
+    zariadenia: sv(`<rect x="4" y="12" width="40" height="28" rx="2" fill="#1A1530"/><rect x="6" y="14" width="36" height="24" fill="#fff"/>${ln(10, 18, [26, 22, 26])}<rect x="50" y="18" width="24" height="32" rx="3" fill="#1A1530"/><rect x="52" y="21" width="20" height="26" fill="#fff"/>${ln(54, 25, [14, 12, 14])}<rect x="78" y="26" width="14" height="24" rx="3" fill="#1A1530"/><rect x="80" y="29" width="10" height="18" fill="#fff"/>${ln(81, 32, [8, 7, 8], 5)}${t(48, 66, "= = =", 11, C.mut, 700)}`, "zariadenia"),
+    slova: sv(`<rect x="6" y="6" width="84" height="60" rx="4" fill="#E9ECEF" stroke="#C9D1DF"/><rect x="6" y="6" width="84" height="10" rx="4" fill="#2B579A"/>${page(26, 20, 44, 34, "#DDD")}${ln(30, 26, [34, 30, 34, 24])}<rect x="7" y="56" width="82" height="9" fill="#F3F3F3"/>${t(48, 51, "🔢 ?", 10)}`, "okno Wordu"),
+    xlsx: sv(`${file(30, 10, ".xlsx", "#217346")}`, "súbor xlsx"),
+    /* obrázky k situáciám v úlohe Uložiť ako */
+    sit: [
+      `<svg viewBox="0 0 300 250" role="img" aria-label="Učiteľka a rôzne zariadenia" font-family="Rubik,Segoe UI,Arial,sans-serif">${t(150, 46, "👩‍🏫", 38)}${t(150, 74, "pani učiteľka", 12.5, C.ink, 700)}
+        <rect x="18" y="110" width="110" height="74" rx="4" fill="#1A1530"/><rect x="23" y="115" width="100" height="64" fill="#fff"/>${ln(33, 125, [70, 60, 74, 50], 10)}<rect x="62" y="184" width="22" height="10" fill="#5E5877"/><rect x="48" y="194" width="50" height="6" rx="3" fill="#5E5877"/>
+        <rect x="146" y="104" width="70" height="96" rx="7" fill="#1A1530"/><rect x="151" y="111" width="60" height="82" fill="#fff"/>${ln(158, 121, [44, 38, 46, 30], 10)}
+        <rect x="232" y="122" width="50" height="80" rx="8" fill="#1A1530"/><rect x="236" y="130" width="42" height="64" fill="#fff"/>${ln(241, 138, [32, 28, 32, 20], 9)}
+        ${t(150, 232, "Na každom zariadení rovnako?", 12.5, "#6A3FD0", 700)}</svg>`,
+      `<svg viewBox="0 0 300 250" role="img" aria-label="Ty v programe Writer a kamarát s Wordom" font-family="Rubik,Segoe UI,Arial,sans-serif">
+        ${t(70, 40, "🧑", 32)}${t(70, 66, "ty", 12.5, C.ink, 700)}${t(230, 40, "🧒", 32)}${t(230, 66, "kamarát", 12.5, C.ink, 700)}
+        <rect x="12" y="84" width="116" height="100" rx="5" fill="#fff" stroke="#1B78C4" stroke-width="2"/><rect x="12" y="84" width="116" height="20" rx="5" fill="#1B78C4"/>${t(70, 98, "Writer", 11.5, "#fff", 700)}${ln(24, 116, [88, 76, 90, 60, 80], 11)}
+        <rect x="172" y="84" width="116" height="100" rx="5" fill="#fff" stroke="#2B579A" stroke-width="2"/><rect x="172" y="84" width="116" height="20" rx="5" fill="#2B579A"/>${t(230, 98, "Word", 11.5, "#fff", 700)}${t(230, 150, "?", 30, C.mut, 700)}
+        <path d="M134 134 h28" stroke="#C2560C" stroke-width="3"/><path d="M156 127 l8 7 l-8 7" fill="none" stroke="#C2560C" stroke-width="3"/>
+        ${t(150, 222, "Kamarát chce v referáte písať", 12.5, "#6A3FD0", 700)}</svg>`,
+      `<svg viewBox="0 0 300 250" role="img" aria-label="Rozpracovaný referát v LibreOffice" font-family="Rubik,Segoe UI,Arial,sans-serif">
+        <rect x="40" y="20" width="220" height="160" rx="6" fill="#fff" stroke="#1B78C4" stroke-width="2"/><rect x="40" y="20" width="220" height="24" rx="6" fill="#1B78C4"/>${t(150, 37, "LibreOffice Writer", 12, "#fff", 700)}
+        <rect x="70" y="56" width="160" height="114" fill="#F6F5FA" stroke="#DDD"/>${t(150, 76, "Môj referát", 12.5, "#1B78C4", 700)}${ln(84, 88, [130, 120, 132, 70], 12)}<line x1="156" y1="124" x2="156" y2="136" stroke="#1A1530" stroke-width="2"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/></line>
+        ${t(150, 210, "📂 pre seba, ešte ho dopíšem", 12.5, "#6A3FD0", 700)}</svg>`
+    ]
+  };
+})();
+/* ikonky k možnostiam a kartičkám (druh programu, nie balík) */
+const ICO = (() => { const s = (b) => `<svg class="ico" viewBox="0 0 22 22" aria-hidden="true">${b}</svg>`;
+  return {
+    t: s(`<rect x="4" y="2" width="14" height="18" rx="2" fill="#fff" stroke="#5E5877" stroke-width="1.5"/><rect x="7" y="6" width="8" height="1.8" fill="#5E5877"/><rect x="7" y="10" width="8" height="1.8" fill="#5E5877"/><rect x="7" y="14" width="6" height="1.8" fill="#5E5877"/>`),
+    s: s(`<rect x="2" y="4" width="18" height="14" rx="1.5" fill="#fff" stroke="#5E5877" stroke-width="1.5"/><path d="M2 9h18M2 13.5h18M8 4v14M14 4v14" stroke="#5E5877" stroke-width="1.2"/>`),
+    p: s(`<rect x="2" y="3" width="18" height="12" rx="1.5" fill="#fff" stroke="#5E5877" stroke-width="1.5"/><rect x="5" y="6" width="6" height="6" fill="#5E5877"/><path d="M11 15v4M7 19h8" stroke="#5E5877" stroke-width="1.5"/>`),
+    m: s(`<rect x="2" y="5" width="18" height="13" rx="1.5" fill="#fff" stroke="#5E5877" stroke-width="1.5"/><path d="M2 6l9 6 9-6" fill="none" stroke="#5E5877" stroke-width="1.5"/>`),
+    f: s(`<path d="M5 2h9l4 4v14H5z" fill="#fff" stroke="#5E5877" stroke-width="1.5"/><path d="M14 2v4h4" fill="none" stroke="#5E5877" stroke-width="1.5"/>`)
+  }; })();
+const QQ = (p, s) => p + `<span class="qt">${s}</span>`;
+
 
 const KEY = "office-s17-v1";
 const LESSON = "1.7 Kancelárske balíky MS Office a LibreOffice";
@@ -426,47 +576,47 @@ const FMTS = ["ODF textový dokument (.odt)", "Word 2007–365 (.docx)", "PDF", 
 
 const TASKS = {
   typq: { id: "typq", type: "mc", keep: true, qs: [
-    { id: "1", q: "Píšeš referát o vtákoch s nadpisom a obrázkom.", opts: ["Textový editor", "Tabuľkový procesor", "Prezentácie", "Poštový program"], a: 0 },
-    { id: "2", q: "Počítaš priemer známok z viacerých predmetov.", opts: ["Textový editor", "Tabuľkový procesor", "Prezentácie", "Poštový program"], a: 1 },
-    { id: "3", q: "Pripravuješ snímky, ktoré ukážeš triede na projektore.", opts: ["Textový editor", "Tabuľkový procesor", "Prezentácie", "Poštový program"], a: 2 },
-    { id: "4", q: "Kreslíš graf, ako rástla výška fazule každý deň.", opts: ["Textový editor", "Tabuľkový procesor", "Prezentácie", "Poštový program"], a: 1 },
-    { id: "5", q: "Píšeš pozvánku na triednu oslavu, ktorú vytlačíš.", opts: ["Textový editor", "Tabuľkový procesor", "Prezentácie", "Poštový program"], a: 0 },
-    { id: "6", q: "Odpovedáš na e-maily a plánuješ stretnutia v kalendári.", opts: ["Textový editor", "Tabuľkový procesor", "Prezentácie", "Poštový program"], a: 3 }
+    { id: "1", q: QQ(QPIC.vtaky, "Píšeš referát o vtákoch s nadpisom a obrázkom."), opts: [ICO.t + "Textový editor", ICO.s + "Tabuľkový procesor", ICO.p + "Prezentácie", ICO.m + "Poštový program"], a: 0 },
+    { id: "2", q: QQ(QPIC.znamky, "Počítaš priemer známok z viacerých predmetov."), opts: [ICO.t + "Textový editor", ICO.s + "Tabuľkový procesor", ICO.p + "Prezentácie", ICO.m + "Poštový program"], a: 1 },
+    { id: "3", q: QQ(QPIC.projektor, "Pripravuješ snímky, ktoré ukážeš triede na projektore."), opts: [ICO.t + "Textový editor", ICO.s + "Tabuľkový procesor", ICO.p + "Prezentácie", ICO.m + "Poštový program"], a: 2 },
+    { id: "4", q: QQ(QPIC.fazula, "Kreslíš graf, ako rástla výška fazule každý deň."), opts: [ICO.t + "Textový editor", ICO.s + "Tabuľkový procesor", ICO.p + "Prezentácie", ICO.m + "Poštový program"], a: 1 },
+    { id: "5", q: QQ(QPIC.pozvanka, "Píšeš pozvánku na triednu oslavu, ktorú vytlačíš."), opts: [ICO.t + "Textový editor", ICO.s + "Tabuľkový procesor", ICO.p + "Prezentácie", ICO.m + "Poštový program"], a: 0 },
+    { id: "6", q: QQ(QPIC.posta, "Odpovedáš na e-maily a plánuješ stretnutia v kalendári."), opts: [ICO.t + "Textový editor", ICO.s + "Tabuľkový procesor", ICO.p + "Prezentácie", ICO.m + "Poštový program"], a: 3 }
   ]},
   ssort: { id: "ssort", type: "sort",
     buckets: [{ id: "m", label: "🟦 Microsoft Office" }, { id: "l", label: "🟩 LibreOffice" }, { id: "g", label: "🟨 Google (online)" }],
-    items: [{ id: "1", t: "Word", b: "m" }, { id: "2", t: "Excel", b: "m" }, { id: "3", t: "PowerPoint", b: "m" }, { id: "4", t: "Writer", b: "l" }, { id: "5", t: "Calc", b: "l" }, { id: "6", t: "Impress", b: "l" }, { id: "7", t: "Dokumenty", b: "g" }, { id: "8", t: "Tabuľky", b: "g" }, { id: "9", t: "Prezentácie", b: "g" }] },
+    items: [{ id: "1", t: ICO.t + "Word", b: "m" }, { id: "2", t: ICO.s + "Excel", b: "m" }, { id: "3", t: ICO.p + "PowerPoint", b: "m" }, { id: "4", t: ICO.t + "Writer", b: "l" }, { id: "5", t: ICO.s + "Calc", b: "l" }, { id: "6", t: ICO.p + "Impress", b: "l" }, { id: "7", t: ICO.t + "Dokumenty", b: "g" }, { id: "8", t: ICO.s + "Tabuľky", b: "g" }, { id: "9", t: ICO.p + "Prezentácie", b: "g" }] },
   parq: { id: "parq", type: "mc", keep: true, qs: [
-    { id: "1", q: "Aký program v LibreOffice zodpovedá Wordu?", opts: ["Writer", "Calc", "Impress", "Draw"], a: 0 },
-    { id: "2", q: "Aký program v LibreOffice zodpovedá Excelu?", opts: ["Writer", "Calc", "Impress", "Draw"], a: 1 },
-    { id: "3", q: "Aký program v LibreOffice zodpovedá PowerPointu?", opts: ["Writer", "Calc", "Impress", "Draw"], a: 2 }
+    { id: "1", q: QQ(QPIC.w, "Aký program v LibreOffice zodpovedá Wordu?"), opts: ["Writer", "Calc", "Impress", "Draw"], a: 0 },
+    { id: "2", q: QQ(QPIC.x, "Aký program v LibreOffice zodpovedá Excelu?"), opts: ["Writer", "Calc", "Impress", "Draw"], a: 1 },
+    { id: "3", q: QQ(QPIC.p, "Aký program v LibreOffice zodpovedá PowerPointu?"), opts: ["Writer", "Calc", "Impress", "Draw"], a: 2 }
   ]},
   licq: { id: "licq", type: "mc", qs: [
-    { id: "1", q: "Microsoft 365 (Office) sa bežne:", opts: ["platí predplatným, škola ho však žiakom môže poskytnúť", "dá kúpiť iba v obchode na CD", "používa vždy zadarmo pre všetkých", "nedá používať na mobile"], a: 0 },
-    { id: "2", q: "Kto vyvíja LibreOffice?", opts: ["Nezisková nadácia The Document Foundation a dobrovoľníci", "Microsoft", "Google", "Apple"], a: 0 },
-    { id: "3", q: "Čo znamená, že LibreOffice je open source?", opts: ["Jeho zdrojový kód je verejný a ktokoľvek ho môže skúmať a vylepšovať", "Funguje iba s internetom", "Je to skúšobná verzia", "Dá sa otvoriť iba jeden súbor"], a: 0 }
+    { id: "1", q: QQ(QPIC.m365, "Microsoft 365 (Office) sa bežne:"), opts: ["platí predplatným, škola ho však žiakom môže poskytnúť", "dá kúpiť iba v obchode na CD", "používa vždy zadarmo pre všetkých", "nedá používať na mobile"], a: 0 },
+    { id: "2", q: QQ(QPIC.tim, "Kto vyvíja LibreOffice?"), opts: ["Nezisková nadácia The Document Foundation a dobrovoľníci", "Microsoft", "Google", "Apple"], a: 0 },
+    { id: "3", q: QQ(QPIC.open, "Čo znamená, že LibreOffice je open source?"), opts: ["Jeho zdrojový kód je verejný a ktokoľvek ho môže skúmať a vylepšovať", "Funguje iba s internetom", "Je to skúšobná verzia", "Dá sa otvoriť iba jeden súbor"], a: 0 }
   ]},
   find: { id: "find", type: "custom", max: FIND.length },
   esort: { id: "esort", type: "sort",
     buckets: [{ id: "t", label: "📝 Textový dokument" }, { id: "s", label: "📊 Tabuľka" }, { id: "p", label: "📽️ Prezentácia" }],
-    items: [{ id: "1", t: ".docx", b: "t" }, { id: "2", t: ".odt", b: "t" }, { id: "3", t: ".xlsx", b: "s" }, { id: "4", t: ".ods", b: "s" }, { id: "5", t: ".csv", b: "s" }, { id: "6", t: ".pptx", b: "p" }, { id: "7", t: ".odp", b: "p" }],
+    items: [{ id: "1", t: ICO.f + ".docx", b: "t" }, { id: "2", t: ICO.f + ".odt", b: "t" }, { id: "3", t: ICO.f + ".xlsx", b: "s" }, { id: "4", t: ICO.f + ".ods", b: "s" }, { id: "5", t: ICO.f + ".csv", b: "s" }, { id: "6", t: ICO.f + ".pptx", b: "p" }, { id: "7", t: ICO.f + ".odp", b: "p" }],
     after: "Formáty s „o“ (odt, ods, odp) sú OpenDocument, vlastné formáty LibreOffice. Formáty s „x“ na konci (docx, xlsx, pptx) patria Microsoft Office. Oba balíky vedia otvoriť aj ukladať oba druhy." },
   save: { id: "save", type: "custom", max: 3 },
   zq: { id: "zq", type: "mc", qs: [
-    { id: "1", q: "Odkiaľ bezpečne stiahneš LibreOffice?", opts: ["Z oficiálnej stránky libreoffice.org", "Zo stránky s crackom", "Z reklamy „Office zadarmo!“", "Z neznámeho e-mailu"], a: 0 },
-    { id: "2", q: "Nájdeš stránku „Microsoft Office PRO zadarmo + kľúč“. Čo urobíš?", opts: ["Nestiahnem nič, je to nelegálne a často s vírusom", "Stiahnem, veď je zadarmo", "Pošlem ju kamarátom", "Zadám tam svoje heslo"], a: 0 },
-    { id: "3", q: "Ako môžeš používať Word, Excel a PowerPoint bez inštalácie?", opts: ["Online v prehliadači po prihlásení do Microsoft 365", "Nedá sa to", "Iba z USB kľúča", "Cez Kôš"], a: 0 },
-    { id: "4", q: "Na ktorých systémoch beží LibreOffice?", opts: ["Windows, macOS aj Linux", "Iba Windows", "Iba Linux", "Iba Android"], a: 0 }
+    { id: "1", q: QQ(QPIC.stiahni, "Odkiaľ bezpečne stiahneš LibreOffice?"), opts: ["Z oficiálnej stránky libreoffice.org", "Zo stránky s crackom", "Z reklamy „Office zadarmo!“", "Z neznámeho e-mailu"], a: 0 },
+    { id: "2", q: QQ(QPIC.reklama, "Nájdeš stránku „Microsoft Office PRO zadarmo + kľúč“. Čo urobíš?"), opts: ["Nestiahnem nič, je to nelegálne a často s vírusom", "Stiahnem, veď je zadarmo", "Pošlem ju kamarátom", "Zadám tam svoje heslo"], a: 0 },
+    { id: "3", q: QQ(QPIC.online, "Ako môžeš používať Word, Excel a PowerPoint bez inštalácie?"), opts: ["Online v prehliadači po prihlásení do Microsoft 365", "Nedá sa to", "Iba z USB kľúča", "Cez Kôš"], a: 0 },
+    { id: "4", q: QQ(QPIC.os, "Na ktorých systémoch beží LibreOffice?"), opts: ["Windows, macOS aj Linux", "Iba Windows", "Iba Linux", "Iba Android"], a: 0 }
   ]},
   test: { id: "test", type: "mc", qs: [
-    { id: "1", q: "Kancelársky balík je:", opts: ["súbor programov na texty, tabuľky a prezentácie", "jeden program na kreslenie", "operačný systém", "antivírus"], a: 0 },
-    { id: "2", q: "Ktorý balík je zadarmo a open source?", opts: ["LibreOffice", "Microsoft Office", "Adobe Photoshop", "Windows"], a: 0 },
-    { id: "3", q: "Tabuľkový procesor v LibreOffice sa volá:", opts: ["Calc", "Writer", "Impress", "Excel"], a: 0 },
-    { id: "4", q: "PowerPoint slúži na:", opts: ["prezentácie", "tabuľky", "e-maily", "kreslenie grafov"], a: 0 },
-    { id: "5", q: "Vlastný formát textového dokumentu v LibreOffice je:", opts: [".odt", ".docx", ".xlsx", ".exe"], a: 0 },
-    { id: "6", q: "Ktorý formát zaručí, že dokument bude všade vyzerať rovnako a nedá sa ľahko meniť?", opts: ["PDF", "DOCX", "TXT", "ODT"], a: 0 },
-    { id: "7", q: "Kde v okne Wordu vidíš počet slov?", opts: ["V stavovom riadku dole", "V záhlaví", "Na pravítku", "V Koši"], a: 0 },
-    { id: "8", q: "Súbor .xlsx otvoríš:", opts: ["v Exceli aj v LibreOffice Calc", "iba v Exceli", "iba v prehliadači", "v Malovaní"], a: 0 }
+    { id: "1", q: QQ(QPIC.balik, "Kancelársky balík je:"), opts: ["súbor programov na texty, tabuľky a prezentácie", "jeden program na kreslenie", "operačný systém", "antivírus"], a: 0 },
+    { id: "2", q: QQ(QPIC.cena, "Ktorý balík je zadarmo a open source?"), opts: ["LibreOffice", "Microsoft Office", "Adobe Photoshop", "Windows"], a: 0 },
+    { id: "3", q: QQ(QPIC.tabulka, "Tabuľkový procesor v LibreOffice sa volá:"), opts: ["Calc", "Writer", "Impress", "Excel"], a: 0 },
+    { id: "4", q: QQ(QPIC.pTile, "PowerPoint slúži na:"), opts: ["prezentácie", "tabuľky", "e-maily", "kreslenie grafov"], a: 0 },
+    { id: "5", q: QQ(QPIC.pripona, "Vlastný formát textového dokumentu v LibreOffice je:"), opts: [".odt", ".docx", ".xlsx", ".exe"], a: 0 },
+    { id: "6", q: QQ(QPIC.zariadenia, "Ktorý formát zaručí, že dokument bude všade vyzerať rovnako a nedá sa ľahko meniť?"), opts: ["PDF", "DOCX", "TXT", "ODT"], a: 0 },
+    { id: "7", q: QQ(QPIC.slova, "Kde v okne Wordu vidíš počet slov?"), opts: ["V stavovom riadku dole", "V záhlaví", "Na pravítku", "V Koši"], a: 0 },
+    { id: "8", q: QQ(QPIC.xlsx, "Súbor .xlsx otvoríš:"), opts: ["v Exceli aj v LibreOffice Calc", "iba v Exceli", "iba v prehliadači", "v Malovaní"], a: 0 }
   ]}
 };
 
@@ -483,7 +633,7 @@ const VIEWS = {
         <tr><td>✉️ <b>Poštový program</b></td><td>e-maily, kalendár</td></tr></tbody></table>
       <p>Programy v balíku si vedia podávať prácu: tabuľku alebo graf vložíš do dokumentu aj do prezentácie.</p>
     </div><div>${TFIG.kde}</div></div>
-    ${ltfigs(TFIG.spolu)}
+    ${ltfigs(TFIG.spolu, TFIG.ovladanie)}
     ${VEDEL("Prvá verzia programu <b>Word</b> vyšla už v roku <b>1983</b>, ešte pre systém MS-DOS. Je teda starší ako Windows.")}
     <h3>Úloha: ktorý druh programu použiješ?</h3><div class="task">${taskHTML("typq")}</div>` + nextBar();
   },
@@ -504,7 +654,7 @@ const VIEWS = {
       <p class="muted" style="font-size:14px;margin:8px 0 0">Beží na Windows, macOS aj Linuxe. Vznikol v roku 2010 z balíka OpenOffice.</p></div>
       <div class="su"><h4>🟨 Google Dokumenty, Tabuľky, Prezentácie</h4><span class="lic" style="background:#FDF1D3;color:#8A5A00">zadarmo s účtom Google · iba online</span>
       <p class="muted" style="font-size:14px;margin:4px 0 0">Beží v prehliadači, súbory sú v cloude a viac ľudí v nich môže pracovať naraz.</p></div></div>
-    ${ltfigs(TFIG.historia)}
+    ${ltfigs(TFIG.historia, TFIG.naraz)}
     ${VEDEL("LibreOffice je preložený do viac ako <b>100 jazykov</b>, aj do slovenčiny. Preklady robia hlavne dobrovoľníci z celého sveta.")}
     <h3>Úloha 1: do ktorého balíka patrí?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("ssort")}</div>
     <h3>Úloha 2: nájdi dvojičku</h3><div class="task">${taskHTML("parq")}</div>
@@ -526,12 +676,12 @@ const VIEWS = {
         <tr><td><b>stavový riadok</b> a <b>lupa</b></td><td>úplne dole</td></tr></tbody></table>
       <p>Rýchlo uložíš skratkou <b>Ctrl + S</b>, funguje vo všetkých kancelárskych programoch.</p>
     </div><div>${TFIG.pas}</div></div>
-    ${ltfigs(TFIG.wordwriter)}
+    ${ltfigs(TFIG.wordwriter, TFIG.lupa)}
     ${VEDEL("Ikona na uloženie vyzerá ako <b>disketa</b>. Diskety sa už takmer nepoužívajú, ale ikona zostala, lebo ju všetci poznajú.")}
     <h3>Preskúmaj okno</h3>
-    <div class="scr"><div class="fig" style="margin:0">${winSVG("explore")}</div><div class="side">${e ? `<span class="tag">Preskúmané ${X.seen.length} z ${keys.length}</span><h4>${e[0]}</h4><p style="font-size:15.5px;margin:0">${e[1]}</p>` : `<h4>Klikni na časť okna</h4><p class="muted" style="font-size:15px;margin:0">Záhlavie, karty, pás s nástrojmi, písmo, pravítko, stavový riadok…</p>`}<div class="meter"><i style="width:${Math.round(X.seen.length / keys.length * 100)}%"></i></div></div></div>
+    <div class="scr"><div class="fig" style="margin:0">${winSVG("explore")}</div><div class="side">${e ? `<span class="tag">Preskúmané ${X.seen.length} z ${keys.length}</span><h4>${e[0]}</h4><p style="font-size:15.5px;margin:0">${e[1]}</p>` : `<h4>Klikni na časť okna</h4><p class="muted" style="font-size:15px;margin:0">Záhlavie, karty, pás s nástrojmi, písmo, pravítko, stavový riadok…</p>`}<div class="meter"><i style="width:${Math.round(X.seen.length / keys.length * 100)}%"></i></div><div class="parts">${keys.map(k => `<button class="${X.exp === k ? "on" : ""} ${X.seen.includes(k) ? "seen" : ""}" data-wz="${k}|explore">${X.seen.includes(k) ? "✓" : "○"} ${WZ[k][0]}</button>`).join("")}</div></div></div>
     <h3>Úloha: nájdi v okne</h3>
-    <div class="scr"><div class="fig" style="margin:0">${winSVG("find")}</div>${fs}</div>` + nextBar();
+    <div class="scr"><div class="fig" style="margin:0">${winSVG("find")}</div>${fs.replace(/<\/div>$/, `<ol class="fql">${FIND.map((f, i) => { const r = X.res[i]; const st = r === true ? "✅" : r === false ? "❌" : i === X.fi && !done ? "👉" : "⬜"; return `<li class="${i === X.fi && !done ? "cur" : ""}">${st} ${f[1]}</li>`; }).join("")}</ol></div>`)}</div>` + nextBar();
   },
   formaty() {
     const V = S.sv, c = SC[V.sc];
@@ -542,14 +692,13 @@ const VIEWS = {
         <tr><td>📝 text</td><td><code>.docx</code></td><td><code>.odt</code></td></tr><tr><td>📊 tabuľka</td><td><code>.xlsx</code></td><td><code>.ods</code></td></tr><tr><td>📽️ prezentácia</td><td><code>.pptx</code></td><td><code>.odp</code></td></tr></tbody></table>
       <p>Oba balíky vedia otvoriť aj uložiť oba druhy formátov. Formát vyberieš v okne <b>Uložiť ako</b>.</p>
       <p><b>PDF</b> je formát na zdieľanie a tlač: na každom zariadení vyzerá rovnako, ale ťažko sa upravuje. Vytvoríš ho cez Súbor → Exportovať ako PDF (alebo Uložiť ako → PDF).</p>
-    </div><div>${TFIG.pripona}</div></div>
-    ${ltfigs(TFIG.pdfdocx)}
-    ${VEDEL("Súbor <b>.docx</b> je v skutočnosti zbalený archív ZIP. Keď kópii dokumentu zmeníš príponu na .zip, nájdeš v nej text aj obrázky ako samostatné súbory.")}
-    <h3>Úloha 1: roztrieď prípony</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("esort")}</div>
+    </div><div>${TFIG.pripona}${VEDEL("Súbor <b>.docx</b> je v skutočnosti zbalený archív ZIP. Keď kópii dokumentu zmeníš príponu na .zip, nájdeš v nej text aj obrázky ako samostatné súbory.")}</div></div>
+    ${ltfigs(TFIG.pdfdocx, TFIG.zip)}
+        <h3>Úloha 1: roztrieď prípony</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("esort")}</div>
     <h3>Úloha 2: ulož v správnom formáte</h3>
     <div class="scen">${SC.map((s, i) => `<button class="${V.sc === i ? "on" : ""}" data-sc="${i}">${V.done[i] ? "✅" : "⬜"} Situácia ${i + 1}</button>`).join("")}</div>
-    <div class="box v"><p>${c.t}</p></div>
-    <div class="sad"><div class="wt">💾 Uložiť ako</div><div class="bd"><label for="svn">Názov súboru:</label><input id="svn" value="${esc(V.name)}" autocomplete="off"><label for="svf">Uložiť vo formáte:</label><select id="svf"><option value="">— vyber —</option>${FMTS.map(f => `<option ${V.fmt === f ? "selected" : ""}>${f}</option>`).join("")}</select></div><div class="ft"><button data-svok>Uložiť</button></div></div>
+    <div class="savegrid"><div><div class="box v" style="margin-top:0"><p>${c.t}</p></div>
+    <div class="sad"><div class="wt">💾 Uložiť ako</div><div class="bd"><label for="svn">Názov súboru:</label><input id="svn" value="${esc(V.name)}" autocomplete="off"><label for="svf">Uložiť vo formáte:</label><select id="svf"><option value="">— vyber —</option>${FMTS.map(f => `<option ${V.fmt === f ? "selected" : ""}>${f}</option>`).join("")}</select></div><div class="ft"><button data-svok>Uložiť</button></div></div></div><div class="sitpic">${QPIC.sit[V.sc]}</div></div>
     ${V.msg ? `<div class="fb ${V.msg.k}">${V.msg.t}</div>` : ""}
     ${S.t.save ? `<div class="checkbar"><span class="score ${S.t.save.score < 3 ? "part" : ""}">Splnené: ${S.t.save.score} z 3</span></div>` : ""}` + nextBar();
   },
@@ -560,7 +709,7 @@ const VIEWS = {
       <p><b>Microsoft 365</b>: prihlásenie na <code>office.com</code>. Veľa škôl poskytuje žiakom školský účet, v ktorom môžu Word, Excel a PowerPoint používať online aj nainštalované.</p>
       <p>⚠️ „Office zadarmo s kľúčom“ z neznámych stránok je <b>nelegálny</b> a často obsahuje <b>vírus</b>. Ak nechceš platiť, použi LibreOffice alebo online verziu.</p>
     </div><div>${TFIG.cesty}</div></div>
-    ${ltfigs(TFIG.bezpecne)}
+    ${ltfigs(TFIG.bezpecne, TFIG.instal)}
     ${VEDEL("Na LibreOffice prechádzajú aj celé úrady. Nemecká spolková krajina <b>Šlezvicko-Holštajnsko</b> ho od roku 2024 zavádza na desaťtisíce úradných počítačov.")}
     <h3>Úloha: otázky</h3><div class="task">${taskHTML("zq")}</div>` + nextBar();
   },
@@ -738,7 +887,7 @@ function render(toTop) {
   const id = STEPS[S.cur].id;
   main.className = (typeof WIDE !== "undefined" && WIDE[id]) ? "wide" : "";
   main.innerHTML = VIEWS[id]();
-  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main);
+  if (typeof AFTER_RENDER === "function") AFTER_RENDER(id); if (typeof typo === "function") typo(main); if (typeof balanceSplits === "function") balanceSplits(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
