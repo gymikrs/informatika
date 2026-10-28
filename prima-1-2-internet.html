@@ -357,7 +357,7 @@ const TASKS = {
 function maxOf(T) { return T.type === "mc" ? T.qs.length : T.type === "custom" ? T.max : T.items.length; }
 const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
 
-function fresh() { return { v: 1, name: "", cls: "Prima", guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, ftp: null, http: [], httpLast: null, pw: "" }; }
+function fresh() { return { v: 1, name: "", cls: "Prima", guess: null, cur: 0, started: null, finished: null, testLocked: false, t: {}, d: {}, ord: {}, ftp: null, http: [], httpLast: null, pw: "" }; }
 function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return o; } } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
@@ -391,8 +391,8 @@ function renderTop() {
       <button class="reset" data-reset>↺ Začať odznova</button>
     </div>
     <nav class="line" aria-label="Zastávky hodiny">
-      ${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${reached(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}>
-        <span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}
+      ${STEPS.map((s, i) => { const testI = STEPS.findIndex(x => x.id === "test"), lockedBack = S.testLocked && i < testI; return `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${reached(i) ? "reached" : ""}" data-go="${i}" ${(!S.started && i > 0) || lockedBack ? "disabled" : ""} ${lockedBack ? 'title="Po vstupe do záverečného testu sú predchádzajúce zastávky uzamknuté."' : ""} ${i === S.cur ? 'aria-current="step"' : ""}>
+        <span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`; }).join("")}
     </nav>`;
 }
 
@@ -854,7 +854,13 @@ function render(toTop) {
   main.innerHTML = VIEWS[STEPS[S.cur].id](); typo(main);
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
 }
-function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function go(i) {
+  if (!S.started && i > 0) return;
+  const testI = STEPS.findIndex(x => x.id === "test");
+  if (S.testLocked && i < testI) return;
+  if (i >= testI) S.testLocked = true;
+  S.cur = i; SEL = null; save(); render(true);
+}
 
 function scramble() { const h = "0123456789abcdef"; let s = ""; for (let i = 0; i < 40; i++) s += h[Math.floor(Math.random() * 16)]; return s.replace(/(.{8})/g, "$1 ").trim(); }
 
