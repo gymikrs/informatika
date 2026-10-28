@@ -253,62 +253,15 @@ function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadv�
   const key = T.id + ":qo", ids = groups.map(g => g[0].id); let o = S.ord[key];
   if (!o || o.length !== ids.length || !ids.every(x => o.includes(x))) { o = ids.slice(); let n = 0; do { shuffle(o); n++; } while (n < 10 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); }
   return o.flatMap(id => groups.find(g => g[0].id === id)); }
-function sendResults(detail) { /* automatické odoslanie výsledku cez skrytý formulár */
-  const E = RESULTS_FORM.entries;
-  const pct = Math.round(total() / MAX * 100);
-  const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
+function sendResults(detail) { /* automatické odoslanie výsledku do Google Formulára */
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100), when = new Date(S.finished || Date.now()).toLocaleString("sk-SK");
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
   const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|");
-  const statusHTML = `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
-
-  if (S.sentKey === key || S.sending) return statusHTML;
-  S.sending = true; save();
-
-  setTimeout(() => {
-    const st = (text, color) => { const el = document.getElementById("sendst"); if (el) { el.textContent = text; el.style.color = color || ""; } };
-    if (!navigator.onLine) {
-      S.sending = false; save();
-      st("⚠️ Nie je internet. Pripoj sa a obnov stránku; výsledok sa odošle znova.", "#B3261E");
-      return;
-    }
-    try {
-      const frameName = "results_target_" + Date.now();
-      const iframe = document.createElement("iframe");
-      iframe.name = frameName; iframe.setAttribute("aria-hidden", "true");
-      iframe.style.cssText = "position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
-      document.body.appendChild(iframe);
-
-      const form = document.createElement("form");
-      form.method = "POST"; form.action = RESULTS_FORM.post; form.target = frameName;
-      form.acceptCharset = "UTF-8"; form.style.display = "none";
-      const values = {};
-      values[E.meno] = S.name.trim();
-      values[E.trieda] = S.cls.trim();
-      values[E.hodina] = typeof LESSON !== "undefined" ? LESSON : document.title;
-      values[E.body] = `${total()}/${MAX} (${pct} %)`;
-      values[E.detail] = String(grade);
-      Object.entries(values).forEach(([name, value]) => {
-        const input = document.createElement("input"); input.type = "hidden";
-        input.name = name; input.value = value; form.appendChild(input);
-      });
-      document.body.appendChild(form);
-
-      let completed = false;
-      const finish = () => {
-        if (completed) return; completed = true;
-        S.sentKey = key; S.sending = false; save();
-        st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34");
-        setTimeout(() => { form.remove(); iframe.remove(); }, 1500);
-      };
-      iframe.addEventListener("load", finish, { once: true });
-      form.submit();
-      setTimeout(finish, 2500);
-    } catch (err) {
-      S.sending = false; save();
-      st("⚠️ Výsledok sa nepodarilo odoslať. Pripoj sa na internet a obnov stránku.", "#B3261E");
-    }
-  }, 0);
-  return statusHTML;
-}
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Pripoj sa na internet a obnov stránku, výsledok sa odošle znova.", "#B3261E"); }); }
+  return `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 
 const KEY = "internet-prima-v1";
 const STEPS = [
@@ -887,7 +840,7 @@ const VIEWS = {
         ${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}
       </tbody></table></div>
     </div>
-    <div class="row" aria-live="polite">${formBtn}</div>`;
+    <div class="row">${formBtn}</div>`;
   }
 };
 
