@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DU_2.4 Aplikácie na spracovanie, triedenie a archiváciu obrázkov</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;
+  --acc:#2F5BEA;--accSoft:#D5DFFB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#C9D1DF;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D6DCE6;
+  --font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}}
+:root[data-theme="dark"]{--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .du{background:#F2A516;color:#3A2600;border-radius:7px;padding:1px 8px;font-size:14px;font-weight:800}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:35px;height:35px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:16px;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff;font-size:14px;font-weight:700}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.18);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:21px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+.ban{position:relative;overflow:hidden;border-radius:22px;padding:20px 22px 18px;color:#fff;margin:0 0 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;box-shadow:0 14px 30px -18px rgba(10,20,60,.6)}
+.ban .pill{display:inline-block;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 12px;font-size:13.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ban h2{color:#fff;margin:8px 0 4px}
+.ban p{margin:0;font-size:16px;opacity:.95}
+.ban .big{font-size:64px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.ban::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+@media (max-width:560px){.ban .big{font-size:44px}}
+.say{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:end;margin:6px 0 18px}
+.say svg{width:92px;height:92px}
+.bubble{position:relative;background:var(--surface);border:2px solid var(--acc);border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:16.5px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:0 0 12px}
+.tsplit>div{min-width:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.tfigs{display:grid;gap:12px}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E4A66;text-align:center;padding:0 4px}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab td.c{text-align:center}
+.rtab td:first-child{overflow-wrap:normal;white-space:nowrap}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.93em}
+code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.ghost.sm{padding:4px 10px;font-size:14px;border-radius:9px}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:30px;padding-top:20px;border-top:1px dashed var(--track);display:flex;justify-content:flex-end}
+.q{border:0;padding:0;margin:0 0 22px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opts.pics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.pics .opt{padding:8px}
+.opt svg{width:100%;height:auto;display:block;background:#fff;border-radius:8px;border:1px solid #E3E8EF}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px}
+.why.good{background:var(--okSoft)}.why.miss{background:var(--badSoft)}
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px}
+@media (max-width:800px){.hero{grid-template-columns:1fr}}
+.hero svg{width:100%;height:auto;display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.mcard{border-radius:14px;padding:10px 12px;color:#fff;font-weight:600;font-size:15px}
+.mcard small{display:block;font-weight:400;opacity:.9}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{width:100%;max-width:380px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px}
+.bign{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.bign .n{font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.bign .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
+table.res{border-collapse:collapse;width:100%;font-size:15.5px}
+table.res td,table.res th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+table.res td:last-child,table.res th:last-child{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.muted{color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .opt{padding:6px 12px;font-size:14.5px;border-radius:999px}
+.tnum{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;margin-right:6px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.fc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px 14px;position:relative;min-width:0}
+.fc.okc{border-color:var(--ok);background:var(--okSoft)}.fc.badc{border-color:var(--bad);background:var(--badSoft)}
+.fc .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}
+.fc .hd .e{font-size:28px;line-height:1}
+/* triedenie */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px;text-align:left}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.chip.ok{border-color:var(--ok);background:var(--okSoft)}.chip.bad{border-color:var(--bad);background:var(--badSoft)}
+.chip:disabled{cursor:default;color:var(--ink)}
+.bins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.bins{grid-template-columns:1fr}}
+.bin{border:2px solid var(--border);border-radius:16px;padding:10px;min-height:120px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bin .bh{width:100%;text-align:center;font-weight:700;border-radius:10px;padding:6px;cursor:pointer;border:0;font-size:15px}
+.bin .bh:disabled{cursor:default}
+/* komiks */
+.comic{display:grid;grid-template-columns:1fr;gap:14px}
+.panel:not(.choice){max-width:560px}.panel.c{justify-self:center}
+.panel{background:#FFFDF5;border:3px solid #16213A;border-radius:6px;padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;color:#16213A;box-shadow:4px 4px 0 #16213A;min-width:0}
+.panel svg{width:76px;height:76px}
+.panel .bub{background:#fff;border:2px solid #16213A;border-radius:14px;padding:8px 12px;font-size:15.5px;position:relative;min-width:0}
+.panel .nm{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#566381;margin-bottom:2px}
+.panel.choice{grid-column:1/-1;background:#EEF4FF}
+.panel .opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel .opt{background:#fff;color:#16213A}
+.panel .opt.sel{background:#E6EDFD}
+.panel .opt.ok{background:#DDF3EA}.panel .opt.bad{background:#FBE3E0}
+.panel .why{color:#16213A}
+@media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
+/* okná */
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14.5px;min-width:0}
+.wt{background:#E9EDF3;padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:13.5px;border-bottom:1px solid #D5DCE6;color:#1B1B1F;min-width:0}
+.wt .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .dots{margin-left:auto;color:#666;letter-spacing:6px;flex:0 0 auto}
+.fwin{max-width:640px}
+.frow{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #EEF1F5;font-size:14.5px;color:#1B1B1F}
+.frow.new{background:#F1FAF5}
+.frow .nm{font-family:var(--mono);overflow-wrap:anywhere}
+.frow .ds{color:#566381;font-size:13px;text-align:right;white-space:nowrap}
+.frow .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA}
+.dlgbox{background:#fff;color:#1B1B1F;border:1px solid #9FB0C8;border-radius:10px;box-shadow:0 14px 30px rgba(0,0,0,.25);padding:14px 16px;margin:12px 0;max-width:520px}
+.dlgbox h5{margin:0 0 8px;font-size:15px}
+.dlgbox .opt{color:#1B1B1F;background:#F5F7FA;border-color:#C9D0DA}
+.dlgbox .opt.sel{background:#D5DFFB;border-color:#2F5BEA}
+.dlgbox .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA;padding:6px 14px}
+/* lupa */
+.zgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.zview{position:relative;width:150px;height:150px;overflow:hidden;border:1px solid #C9D1DF;border-radius:10px;background:#fff;margin:0 auto}
+.zview img,.zview svg{display:block}
+.zb{justify-content:center;margin-top:8px;gap:6px}
+.zb .ghost{padding:4px 10px;font-size:14px}
+/* RLE */
+.pxrow{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.px{width:34px;height:34px;border:2px solid #9AA6B8;border-radius:6px;cursor:pointer;padding:0;font-weight:700;color:#566381}
+.px:disabled{cursor:default}
+.px.okc{box-shadow:0 0 0 3px var(--ok)}.px.badc{box-shadow:0 0 0 3px var(--bad)}
+.sw{display:inline-block;width:16px;height:16px;border:1.5px solid #9AA6B8;border-radius:3px;vertical-align:-3px;margin:0 4px 0 2px}
+.runs{font-family:var(--mono);font-size:16px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:10px;padding:8px 12px;min-height:44px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.lpart{border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;margin:12px 0;background:var(--surface)}
+.lh{font-weight:600;margin-bottom:8px}
+.ldet{overflow:hidden;height:180px;max-width:480px;border:1px solid var(--border);border-radius:10px;margin:10px 0 6px;position:relative;background:#fff}
+.ldet img{position:absolute;width:960px;height:600px;max-width:none;left:-200px;top:-120px;image-rendering:crisp-edges;image-rendering:pixelated}
+.imgs{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:640px){.imgs{grid-template-columns:1fr}}
+.imgs img{width:100%;max-width:320px;border-radius:8px;display:block;border:1px solid var(--border)}
+/* plagát a animácia */
+.scene svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--border)}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.75)}}
+.blink{animation:blink 1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.fslots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:520px}
+@media (max-width:520px){.fslots{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fslot{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fslot .n{font-weight:700;color:var(--acc);font-size:14px}
+.frm{padding:4px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;width:100%;max-width:110px;aspect-ratio:1}
+.frm svg{width:100%;height:100%;display:block}
+.frm.empty{border-style:dashed;cursor:default;display:grid;place-items:center;color:var(--muted);font-size:13px;background:var(--surface2)}
+.frm.ok{border-color:var(--ok);box-shadow:0 0 0 3px var(--okSoft)}.frm.bad{border-color:var(--bad);box-shadow:0 0 0 3px var(--badSoft)}
+.frm:disabled{cursor:default}
+.anim{position:relative;width:140px;height:140px;border:3px solid var(--acc);border-radius:14px;background:#fff;overflow:hidden;flex:0 0 auto}
+.anim svg{position:absolute;inset:0;width:100%;height:100%;opacity:0;animation:fr 2s step-end infinite}
+@keyframes fr{0%,24.9%{opacity:1}25%,100%{opacity:0}}
+/* EXIF */
+.exg{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:14px;align-items:start}
+@media (max-width:760px){.exg{grid-template-columns:1fr}}
+.xr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #EEF1F5;background:#fff;padding:8px 12px;cursor:pointer;font-size:14.5px;color:#1B1B1F}
+.xr .k{color:#566381}
+.xr:hover:not(:disabled){background:#FFF6DB}
+.xr.on{background:#FDE3A7}.xr.ok{background:#DDF3EA}.xr.bad{background:#FBE3E0}.xr.miss{box-shadow:inset 5px 0 0 #C0392B;background:#FFF0EE}
+.xr:disabled{cursor:default}
+/* DU 2.4 – doplnky */
+.bins.b3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:860px){.bins.b3{grid-template-columns:1fr}}
+.fnm{font-family:var(--mono);font-size:12.5px;color:#566381;overflow-wrap:anywhere}
+.sbar{background:#fff;border:1.5px solid #C9C9C9;border-radius:999px;padding:6px 16px;margin-bottom:12px;max-width:320px;color:#1B1B1F}
+.pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pbtn{position:relative;background:#fff;border:2.5px solid #D6DCE6;border-radius:12px;padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:center;color:#1B1B1F;min-width:0}
+.pbtn svg{width:100%;height:auto;display:block}
+.pbtn:hover:not(:disabled){border-color:var(--acc)}
+.pbtn.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--accSoft)}
+.pbtn.ok{border-color:var(--ok);background:#DDF3EA}.pbtn.bad{border-color:var(--bad);background:#FBE3E0}
+.pbtn:disabled{cursor:default}
+.pbtn .tick{position:absolute;top:8px;right:8px;background:var(--acc);color:#fff;border-radius:50%;width:24px;height:24px;display:grid;place-items:center;font-weight:700;font-size:14px}
+.gpool{gap:10px}
+.gph{display:flex;gap:8px;align-items:center;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:5px 8px 5px 5px;cursor:pointer;text-align:left;min-width:0}
+.gph svg{width:72px;height:48px;flex:0 0 auto;display:block}
+.gph .gi{font-size:12.5px;line-height:1.35;color:var(--ink)}
+.gph:hover:not(:disabled){border-color:var(--acc)}
+.gph.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.gph.ok{border-color:var(--ok);background:var(--okSoft)}.gph.bad{border-color:var(--bad);background:var(--badSoft)}
+.gph:disabled{cursor:default;color:var(--ink)}
+.gin{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.tok{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:8px;padding:2px 8px;font-weight:600;font-size:14.5px;margin:2px}
+.zcols{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(6,auto);grid-auto-flow:column}
+.cbub{background:#fff;border:2px solid #16213A;border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:15px;color:#16213A}
+.fc svg{max-width:100%}
+.fc>svg{width:100%;height:auto;display:block;border-radius:10px}
+.slots3{display:grid;gap:6px}
+.sl3{border:1.5px dashed var(--track);border-radius:10px;padding:6px 10px;font-size:14.5px;background:var(--surface)}
+.sl3.on{border-style:solid;border-color:var(--acc);background:var(--accSoft)}
+.ed{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;background:#2A3142;border-radius:16px;padding:14px}
+@media (max-width:720px){.ed{grid-template-columns:1fr}}
+.edv{display:grid;place-items:center;min-height:300px;background:repeating-conic-gradient(#3A4256 0% 25%,#323A4D 0% 50%) 50%/20px 20px;border-radius:10px;padding:10px;overflow:hidden}
+.edv svg{display:block;border-radius:2px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.edt{background:#fff;border-radius:12px;padding:12px 14px;color:#1B1B1F;min-width:0}
+.etool{border-top:1px solid #E3E8EF;padding:10px 0}
+.etool:first-of-type{border-top:0}
+.edt .opt{color:#1B1B1F;background:#F5F7FA}
+.edt .opt.sel{background:#D5DFFB}.edt .opt.ok{background:#DDF3EA}.edt .opt.bad{background:#FBE3E0}
+.edt .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.anim svg:first-child{opacity:1}}
+</style></head><body>
+<header class="top" id="top"></header><main id="main" tabindex="-1"></main>
+<script>
+/* ===== DU 2.4 – 1. ročník: Aplikácie na spracovanie, triedenie a archiváciu obrázkov ===== */
+const KEY = "du-1r24-v1";
+const LESSON = "1. ročník – DU_2.4 Aplikácie na spracovanie, triedenie a archiváciu obrázkov";
+const CLASS_DEFAULT = "";
+const CLASSES = ["I.A", "I.B", "KVINTA_1", "KVINTA_2"];
+const DONE_KEY = "du-1r24-done-v1"; /* zámok: pokusy (1 pokus, pri známke 3 – 5 jedna oprava) */
+const OLD_DONE_KEYS = [];
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+
+const STEPS = [
+  { id: "start", title: "Štart", ic: "🚀", min: 1 },
+  { id: "m1", title: "Aplikácie na fotky", ic: "🧰", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+  { id: "m2", title: "Upratovanie galérie", ic: "🗂️", min: 4, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
+  { id: "m3", title: "Ako triedi počítač", ic: "🔤", min: 3, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
+  { id: "m4", title: "Detektív metaúdajov", ic: "🕵️", min: 3, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
+  { id: "m5", title: "Zálohy 3‑2‑1", ic: "🛟", min: 3, col: "linear-gradient(120deg,#A0640A,#E2A23B)" },
+  { id: "m6", title: "Mini editor fotiek", ic: "🎨", min: 3, col: "linear-gradient(120deg,#0B6F8A,#2BB3D6)" },
+  { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
+];
+const STEP_TASKS = { m1: ["apps", "srch"], m2: ["gal", "fold"], m3: ["zor", "ren", "zq"], m4: ["kto", "kop", "pic"], m5: ["plan", "kat"], m6: ["prof", "tma", "fin"] };
+
+/* ===== LENKA: typografia ===== */
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,textarea,.fnm") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐×])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ").replace(/(×) (?=\d)/g, "$1 ").replace(/(\d\.) (?=\d)/g, "$1 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+/* ===== OBRÁZKY: pomôcky ===== */
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 13}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,Courier New,monospace" xml:space="preserve"` : ""}>${s}</text>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.6"` : ""}/>`;
+const EM = (x, y, e, fs = 24) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}">${e}</text>`;
+const ARR = (x1, y1, x2, y2, c = "#566381", w = 2.5) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return `<line x1="${x1}" y1="${y1}" x2="${x2 - Math.cos(a) * 4}" y2="${y2 - Math.sin(a) * 4}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2} L${x2 - h * Math.cos(a - .45)} ${y2 - h * Math.sin(a - .45)} L${x2 - h * Math.cos(a + .45)} ${y2 - h * Math.sin(a + .45)}z" fill="${c}"/>`; };
+const C = { ink: "#16213A", mut: "#566381", acc: "#2F5BEA", accS: "#D5DFFB", ok: "#12805A", okS: "#DDF3EA", bad: "#C0392B", badS: "#FBE3E0", amb: "#8A5A00", ambS: "#FDF1D6", bg: "#F5F7FA", line: "#D6DCE6", in: "#1E6FD9", inS: "#E3EEFC", pur: "#6A3FD0", purS: "#ECE5FC", tea: "#0B6F8A", teaS: "#DDF1F7" };
+/* malá „fotka“: farebné pozadie a emoji */
+let PHU = 0;
+const PHOTO = (e, bg, w = 120, h = 84, fs = 40) => { const id = "phg" + (++PHU); const [a, b] = bg; return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="${w}" height="${h}" rx="6" fill="url(#${id})"/>${EM(w / 2, h / 2 + fs * .36, e, fs)}</svg>`; };
+
+/* slon Pamäťko – sprievodca */
+function eleph(x, y, s, mood) {
+  const eye = mood === "wow" ? `<circle cx="64" cy="33" r="4.8" fill="#fff" stroke="#16213A" stroke-width="1.4"/><circle cx="65" cy="33" r="2.7" fill="#16213A"/>` : `<circle cx="64" cy="33" r="3.2" fill="#16213A"/><circle cx="65" cy="32" r="1.1" fill="#fff"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})"><ellipse cx="50" cy="94" rx="36" ry="4" fill="#000" opacity=".12"/>
+    <path d="M14 60 Q4 64 7 76" stroke="#4D6278" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <ellipse cx="40" cy="64" rx="27" ry="21" fill="#9AAFC4" stroke="#4D6278" stroke-width="2"/>
+    <rect x="20" y="72" width="13" height="20" rx="5" fill="#9AAFC4" stroke="#4D6278" stroke-width="2"/><rect x="44" y="74" width="13" height="18" rx="5" fill="#9AAFC4" stroke="#4D6278" stroke-width="2"/>
+    <circle cx="62" cy="38" r="20" fill="#A9BDD1" stroke="#4D6278" stroke-width="2"/>
+    <path d="M78 42 Q92 48 90 64 Q89 74 81 72" stroke="#4D6278" stroke-width="11" fill="none" stroke-linecap="round"/><path d="M78 42 Q92 48 90 64 Q89 74 81 72" stroke="#A9BDD1" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M73 50 q6 5 11 2" stroke="#fff" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    <path d="M52 22 Q28 16 29 42 Q31 62 51 55 Q46 40 52 22Z" fill="#C2D2E3" stroke="#4D6278" stroke-width="2"/><path d="M48 28 Q35 28 36 42 Q38 52 47 50" fill="#F4C6D2"/>
+    ${eye}<path d="M58 22 Q63 19 69 22" stroke="#4D6278" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M52 54 Q58 72 72 70" stroke="#2F5BEA" stroke-width="2.2" fill="none"/>
+    <rect x="62" y="64" width="24" height="16" rx="3" fill="#16213A"/><rect x="66" y="61" width="8" height="4" rx="1.5" fill="#16213A"/><circle cx="74" cy="72" r="5" fill="#5B8CFF" stroke="#fff" stroke-width="1.6"/><circle cx="82" cy="67" r="1.4" fill="#F2A516"/></g>`;
+}
+const PAM = mood => SV(104, 98, eleph(0, 2, 1, mood), "Slon Pamäťko");
+const say = (html, mood) => `<div class="say">${PAM(mood)}<div class="bubble">${html}</div></div>`;
+
+/* ===== ÚVODNÝ OBRÁZOK ===== */
+const HERO = SV(420, 300, `
+  <defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFD9FF"/><stop offset="1" stop-color="#EAF3FF"/></linearGradient></defs>
+  <rect width="420" height="300" rx="18" fill="url(#hg)"/>
+  <rect x="0" y="232" width="420" height="68" fill="#C9A86A"/><rect x="0" y="232" width="420" height="8" fill="#B08D4F"/>
+  ${[[170, 60, -8, "🏔️", ["#9CCBF0", "#E8F4FF"]], [250, 52, 6, "🎄", ["#203A63", "#4C6FA8"]], [320, 76, -4, "🏖️", ["#7EC8E3", "#F7E2A6"]], [210, 128, 5, "🎂", ["#FFD6E0", "#FFF2F5"]], [292, 140, -7, "🐶", ["#B9E4A6", "#E9F7DF"]]].map(([x, y, r, e, bg]) => `<g transform="rotate(${r} ${x + 40} ${y + 32})"><rect x="${x - 4}" y="${y - 4}" width="88" height="72" rx="4" fill="#fff" stroke="#C9D1DF"/><g transform="translate(${x},${y}) scale(.6667)">${PHOTO(e, bg, 120, 84, 40).replace('<svg viewBox="0 0 120 84" aria-hidden="true">', "").replace("</svg>", "")}</g></g>`).join("")}
+  <path d="M330 224 h56 a6 6 0 0 0 6 -6 v-30 a6 6 0 0 0 -6 -6 h-30 l-6 -8 h-20 a6 6 0 0 0 -6 6 v38 a6 6 0 0 0 6 6z" fill="#F2C94C" stroke="#9A7A10" stroke-width="2"/>${T(358, 214, "2026-01", { a: "middle", fs: 11, b: 1, c: "#5A4600" })}
+  <path d="M352 30 a16 16 0 0 1 30 -4 a13 13 0 0 1 14 22 h-46 a10 10 0 0 1 2 -18z" fill="#fff" stroke="#2F5BEA" stroke-width="2"/>${T(374, 44, "3-2-1", { a: "middle", fs: 11, b: 1, c: "#2F5BEA" })}
+  ${eleph(0, 128, 1.5, "wow")}
+  ${T(200, 27, "Slon Pamäťko a 6 misií s fotkami", { a: "middle", fs: 15, b: 1, c: "#1F45C2" })}`, "Slon Pamäťko s fotoaparátom pri kope fotiek, priečinku a cloude");
+
+/* ===== TEÓRIA: OBRÁZKY ===== */
+const FIG_KINDS = fig(SV(440, 214, `${[["👀", "prehliadač", ["prezerá a listuje", "triedi a hľadá", "jednoduché úpravy"], C.in, C.inS], ["🎨", "editor", ["nástroje a štetce", "vrstvy", "filtre a efekty"], C.pur, C.purS], ["🌥️", "záloha a zdieľanie", ["kópia inde", "synchronizácia", "poslanie odkazu"], C.ok, C.okS]].map(([e, n, L, c, cs], i) => { const x = 8 + i * 146;
+  return `${box(x, 10, 132, 194, "#fff", c, 12)}<rect x="${x}" y="10" width="132" height="60" rx="12" fill="${cs}"/>${EM(x + 66, 50, e, 28)}${T(x + 66, 92, n, { a: "middle", fs: 12.5, b: 1, c })}${L.map((t, k) => `<circle cx="${x + 14}" cy="${120 + k * 26}" r="3" fill="${c}"/>` + T(x + 22, 124 + k * 26, t, { fs: 11 })).join("")}`; }).join("")}`, "Tri skupiny aplikácií na obrázky"), "Na obrázky používame tri skupiny aplikácií. Mnohé aplikácie vedia z každej skupiny niečo.");
+const FIG_SEARCH = fig(SV(440, 200, `${box(12, 10, 416, 34, "#fff", "#C9C9C9", 17)}${T(32, 32, "🔍 more", { fs: 13, b: 1 })}${T(410, 32, "3 výsledky", { a: "end", fs: 11, c: C.mut })}
+  ${[["🌊", ["#4FA3D9", "#BDE3F7"], "IMG_2207.jpg"], ["⛵", ["#69B7E8", "#D9F0FB"], "DSC_0412.jpg"], ["🏖️", ["#7EC8E3", "#F7E2A6"], "20250714_1032.jpg"]].map(([e, bg, n], i) => `<g transform="translate(${18 + i * 140},56)">${PHOTO(e, bg, 124, 84, 38).replace('aria-hidden="true"', 'width="124" height="84"')}</g>${T(80 + i * 140, 158, n, { a: "middle", fs: 10.5, mono: 1, c: C.mut })}`).join("")}
+  ${box(12, 168, 416, 26, C.purS, null, 8)}${T(220, 186, "Slovo „more“ nie je v žiadnom názve súboru.", { a: "middle", fs: 11.5, b: 1, c: C.pur })}`, "Vyhľadávanie podľa obsahu fotky"), "<b>Vyhľadávanie podľa obsahu</b>: umelá inteligencia rozpozná, čo je na fotke.");
+const FIG_TREE = fig(SV(440, 214, `${[60, 98, 136, 174].map(y => `<path d="M26 ${y - 22} V${y} H44" stroke="#9AA6B8" stroke-width="2" fill="none"/>`).join("")}
+  ${T(14, 30, "📁 Fotky", { fs: 13, b: 1 })}${[["2024-07 Tábor Počúvadlo", "18 fotiek"], ["2024-10 Halloween", "9 fotiek"], ["2025-02 Karneval", "23 fotiek"], ["2025-05 Turistika Muráň", "31 fotiek"]].map(([n, c], i) => `${T(50, 65 + i * 38, "📁 " + n, { fs: 12.5, b: 1, c: C.ok })}${T(424, 65 + i * 38, c, { a: "end", fs: 11, c: C.mut })}`).join("")}
+  
+  ${box(10, 186, 420, 24, C.okS, null, 8)}${T(220, 203, "jeden priečinok = jedna udalosť", { a: "middle", fs: 11.5, b: 1, c: C.ok })}`, "Priečinky podľa udalostí"), "Priečinky podľa udalostí, s dátumom na začiatku.");
+const FIG_INFO = fig(SV(440, 184, `<g transform="translate(14,16)">${PHOTO("🎭", ["#8E5BD8", "#E2D4FB"], 170, 124, 56).replace('aria-hidden="true"', 'width="170" height="124"')}</g>${T(99, 162, "IMG_7713.jpg", { a: "middle", fs: 11, mono: 1, c: C.mut })}
+  ${ARR(192, 78, 222, 78, C.ok, 2.5)}
+  ${box(226, 16, 202, 140, "#fff", C.line, 10)}${T(240, 38, "ℹ️ Informácie", { fs: 12, b: 1 })}
+  ${[["📅", "12. 2. 2025, 10:31"], ["📍", "Rimavská Sobota"], ["📱", "Xiaomi Redmi 12"], ["📐", "4000 × 3000"]].map(([e, t], i) => `${T(240, 66 + i * 24, e, { fs: 12 })}${T(262, 66 + i * 24, t, { fs: 11.5 })}`).join("")}`, "Fotka a jej informácie"), "Dátum a miesto vzniku ukáže aplikácia v <b>informáciách</b> o fotke.");
+const FIG_ABC = fig(SV(440, 196, `${T(220, 20, "Ako sa porovnávajú dve mená?", { a: "middle", fs: 12.5, b: 1 })}
+  ${[["E", "m", "a"], ["E", "m", "i", "l"], ["E", "v", "a"]].map((L, r) => L.map((ch, k) => `${box(40 + k * 40, 36 + r * 44, 34, 34, k === 1 ? (r === 2 ? C.ambS : C.purS) : k === 2 && r < 2 ? C.inS : "#fff", C.line, 6)}${T(57 + k * 40, 59 + r * 44, ch, { a: "middle", fs: 16, b: 1, mono: 1 })}`).join("")).join("")}
+  ${T(232, 58, "1. znak je rovnaký (E)", { fs: 11.5 })}${T(232, 100, "2. znak: m je pred v", { fs: 11.5, c: C.pur, b: 1 })}${T(232, 144, "3. znak: a je pred i", { fs: 11.5, c: C.in, b: 1 })}
+  ${box(14, 168, 412, 24, C.purS, null, 8)}${T(220, 185, "poradie: Ema → Emil → Eva", { a: "middle", fs: 12, b: 1, c: C.pur })}`, "Porovnávanie znak po znaku"), "Program porovná prvý znak, a ak je rovnaký, pozrie sa na druhý, tretí…");
+const FIG_REN = fig(SV(440, 190, `${T(220, 18, "Hromadné premenovanie podľa vzoru", { a: "middle", fs: 12.5, b: 1 })}
+  ${box(118, 30, 204, 30, C.purS, C.pur, 8)}${T(220, 50, "vzor:  [text] [číslo]", { a: "middle", fs: 12, b: 1, c: C.pur })}
+  ${["DSC_0091.jpg", "DSC_0094.jpg", "DSC_0102.jpg"].map((n, i) => `${box(14, 74 + i * 34, 140, 26, "#fff", C.line, 6)}${T(84, 91 + i * 34, n, { a: "middle", fs: 11.5, mono: 1 })}${ARR(162, 87 + i * 34, 196, 87 + i * 34, C.pur, 2)}${box(202, 74 + i * 34, 140, 26, C.okS, C.ok, 6)}${T(272, 91 + i * 34, "Tabor " + (i + 1) + ".jpg", { a: "middle", fs: 11.5, b: 1, mono: 1, c: C.ok })}`).join("")}
+  ${T(392, 120, "naraz", { a: "middle", fs: 12, b: 1, c: C.pur })}${T(392, 136, "aj 500", { a: "middle", fs: 11, c: C.mut })}${T(392, 150, "súborov", { a: "middle", fs: 11, c: C.mut })}`, "Hromadné premenovanie"), "Program zmení mená všetkých vybraných súborov naraz.");
+const FIG_EXIF = fig(SV(440, 200, `${T(220, 18, "Kde nájdeš metaúdaje", { a: "middle", fs: 12.5, b: 1 })}
+  ${box(10, 30, 204, 160, "#fff", C.line, 10)}${T(112, 52, "💻 Windows", { a: "middle", fs: 12, b: 1, c: C.in })}${["pravý klik na fotku", "Vlastnosti", "karta Podrobnosti"].map((t, i) => `${box(26, 64 + i * 40, 172, 28, C.inS, null, 7)}${T(112, 83 + i * 40, t, { a: "middle", fs: 11.5 })}${i < 2 ? ARR(112, 93 + i * 40, 112, 103 + i * 40, C.in, 2) : ""}`).join("")}
+  ${box(226, 30, 204, 160, "#fff", C.line, 10)}${T(328, 52, "📱 mobil", { a: "middle", fs: 12, b: 1, c: C.bad })}${["otvor fotku v Galérii", "ⓘ alebo potiahni nahor", "dátum, miesto, zariadenie"].map((t, i) => `${box(242, 64 + i * 40, 172, 28, C.badS, null, 7)}${T(328, 83 + i * 40, t, { a: "middle", fs: 11.5 })}${i < 2 ? ARR(328, 93 + i * 40, 328, 103 + i * 40, C.bad, 2) : ""}`).join("")}`, "Kde nájdeš metaúdaje"), "Metaúdaje si pozrieš v počítači aj v mobile.");
+const FIG_CAM = fig(SV(440, 170, `${box(12, 40, 92, 70, "#16213A", null, 12)}<circle cx="58" cy="75" r="22" fill="#5B8CFF" stroke="#fff" stroke-width="3"/><rect x="24" y="32" width="26" height="10" rx="3" fill="#16213A"/>${T(58, 132, "fotenie", { a: "middle", fs: 11.5, b: 1 })}
+  ${ARR(112, 75, 150, 75, C.mut, 2.5)}
+  ${box(156, 20, 270, 116, "#fff", C.bad, 10)}${T(291, 40, "súbor IMG_2041.jpg", { a: "middle", fs: 11.5, b: 1, mono: 1 })}
+  <g transform="translate(168,50)">${PHOTO("🌳", ["#9CCBF0", "#D9F2C9"], 104, 74, 34).replace('aria-hidden="true"', 'width="104" height="74"')}</g>${T(220, 150, "obraz", { a: "middle", fs: 11, c: C.mut })}
+  ${[["📅", "kedy"], ["📱", "čím"], ["📍", "kde"]].map(([e, t], i) => `${box(286, 50 + i * 26, 128, 22, C.badS, null, 6)}${T(296, 66 + i * 26, e + " " + t, { fs: 11.5, b: 1, c: C.bad })}`).join("")}${T(350, 150, "metaúdaje EXIF", { a: "middle", fs: 11, c: C.bad, b: 1 })}`, "Fotka s metaúdajmi"), "Pri fotení mobil zapíše do súboru okrem obrazu aj <b>metaúdaje</b>.");
+const FIG_RULE = fig(SV(440, 172, `${T(220, 18, "Pravidlo 3-2-1", { a: "middle", fs: 13, b: 1, c: C.amb })}
+  ${[["3", "kópie", "originál + 2 zálohy", "🖼️🖼️🖼️"], ["2", "rôzne médiá", "napr. počítač a disk", "💻💽"], ["1", "mimo domu", "napr. cloud", "🌥️"]].map(([n, t, s, e], i) => { const x = 10 + i * 144;
+  return `${box(x, 30, 132, 132, C.ambS, "#E2A23B", 12)}${T(x + 66, 74, n, { a: "middle", fs: 38, b: 1, c: C.amb })}${T(x + 66, 98, t, { a: "middle", fs: 12.5, b: 1 })}${T(x + 66, 116, s, { a: "middle", fs: 10.5, c: C.mut })}${EM(x + 66, 148, e, 18)}`; }).join("")}`, "Pravidlo 3-2-1"), "Zálohy podľa pravidla <b>3-2-1</b>.");
+const FIG_THREAT = fig(SV(440, 196, `${T(220, 18, "Čo môže fotky zničiť?", { a: "middle", fs: 12.5, b: 1 })}
+  ${[["🔥", "požiar"], ["💧", "voda"], ["🕵️", "krádež"], ["💥", "porucha disku"], ["🦠", "vírus"], ["🙈", "omylom vymažeš"]].map(([e, t], i) => { const x = 10 + (i % 3) * 144, y = 30 + Math.floor(i / 3) * 82;
+  return `${box(x, y, 132, 72, "#fff", C.line, 10)}${EM(x + 66, y + 38, e, 26)}${T(x + 66, y + 62, t, { a: "middle", fs: 11.5, b: 1 })}`; }).join("")}`, "Hrozby pre fotky"), "Niektoré nehody zničia jedno zariadenie, iné všetko, čo je v dome.");
+const FIG_RATIO = fig(SV(440, 158, `${T(220, 18, "Pomer strán = šírka : výška", { a: "middle", fs: 12.5, b: 1 })}
+  ${[[16, 34, 120, 90, "4:3", "fotka z mobilu"], [160, 38, 144, 81, "16:9", "video, monitor"], [326, 31, 96, 96, "1:1", "štvorec"]].map(([x, y, w, h, n, s]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${C.teaS}" stroke="${C.tea}" stroke-width="2.5"/>${T(x + w / 2, y + h / 2 + 7, n, { a: "middle", fs: 20, b: 1, c: C.tea })}${T(x + w / 2, 148, s, { a: "middle", fs: 11.5 })}`).join("")}`, "Pomery strán"), "Pri orezaní vyberáš <b>pomer strán</b>, teda tvar obrázka.");
+const FIG_TOOLS = fig(SV(440, 150, `${box(10, 14, 420, 122, "#fff", C.line, 12)}${T(26, 38, "Úpravy", { fs: 12.5, b: 1 })}
+  ${[["↻", "otočiť"], ["✂️", "orezať"], ["☀️", "jas"], ["🌗", "kontrast"], ["🎨", "filter"]].map(([e, t], i) => `${box(24 + i * 80, 52, 70, 54, C.teaS, null, 10)}${EM(59 + i * 80, 82, e, 20)}${T(59 + i * 80, 99, t, { a: "middle", fs: 11, b: 1, c: C.tea })}`).join("")}
+  ${T(220, 126, "zmena sa uloží až po kliknutí na Uložiť", { a: "middle", fs: 11, c: C.mut })}`, "Nástroje na úpravu"), "Základné úpravy vie každý editor aj aplikácia Fotky.");
+
+/* ===== DÁTA ÚLOH ===== */
+/* Úloha 2: vyhľadávanie podľa obsahu */
+const SRCH = [
+  { id: "a", e: "🐕", bg: ["#A8D88E", "#E3F4D7"], n: "IMG_3301.jpg", a: 1 },
+  { id: "b", e: "🐈", bg: ["#F3C98B", "#FFF1DC"], n: "pes_Rexo.jpg", a: 0 },
+  { id: "c", e: "🐶", bg: ["#CFE3F7", "#FFFFFF"], n: "IMG_4410.jpg", a: 1 },
+  { id: "d", e: "🌭", bg: ["#FFE08A", "#FFF7DA"], n: "parok_v_rozku.jpg", a: 0 },
+  { id: "e", e: "🐩", bg: ["#F7C6D9", "#FFF0F6"], n: "20260412_101544.jpg", a: 1 },
+  { id: "f", e: "🦊", bg: ["#6FA35A", "#C8E3B5"], n: "les.jpg", a: 0 },
+  { id: "g", e: "🐕⚽", bg: ["#7FC97F", "#D9F2D0"], n: "IMG_5120.jpg", a: 1 },
+  { id: "h", e: "🐑", bg: ["#B7D7A8", "#EEF7E8"], n: "pes_a_ovce.jpg", a: 0 }
+];
+/* Úloha 3: galéria */
+const GBINS = [{ id: "v", t: "📁 2025-12 Vianoce" }, { id: "l", t: "📁 2026-01 Lyžiarsky výcvik" }, { id: "w", t: "📁 2026-04 Exkurzia Viedeň" }, { id: "j", t: "📁 2026-06 Koniec školského roka" }];
+const GPH = [
+  { id: "1", e: "🎄", bg: ["#203A63", "#4C6FA8"], d: "24. 12. 2025", p: "Rimavská Sobota", a: "v" },
+  { id: "2", e: "⛄", bg: ["#CFE3F7", "#FFFFFF"], d: "26. 12. 2025", p: "Rimavská Sobota", a: "v" },
+  { id: "3", e: "🎁", bg: ["#F7C6D9", "#FFF0F6"], d: "24. 12. 2025", p: "Rimavská Sobota", a: "v" },
+  { id: "4", e: "⛷️", bg: ["#9CCBF0", "#FFFFFF"], d: "20. 1. 2026", p: "Jasná", a: "l" },
+  { id: "5", e: "🎄", bg: ["#5B3A29", "#B07D56"], d: "20. 1. 2026", p: "Jasná", a: "l" },
+  { id: "6", e: "🏔️", bg: ["#8EC5F0", "#E8F4FF"], d: "21. 1. 2026", p: "Jasná", a: "l" },
+  { id: "7", e: "🎡", bg: ["#FF9A62", "#FFD7A0"], d: "15. 4. 2026", p: "Viedeň", a: "w" },
+  { id: "8", e: "🍰", bg: ["#E8D5C0", "#FFF6EC"], d: "15. 4. 2026", p: "Viedeň", a: "w" },
+  { id: "9", e: "🏰", bg: ["#9CCBF0", "#D9F2C9"], d: "16. 4. 2026", p: "Viedeň", a: "w" },
+  { id: "10", e: "🏆", bg: ["#FFE08A", "#FFF7DA"], d: "30. 6. 2026", p: "Rimavská Sobota", a: "j" },
+  { id: "11", e: "🍦", bg: ["#BDE3F7", "#FFFFFF"], d: "30. 6. 2026", p: "Rimavská Sobota", a: "j" },
+  { id: "12", e: "🏊", bg: ["#4FA3D9", "#BDE3F7"], d: "29. 6. 2026", p: "Rimavská Sobota", a: "j" }
+];
+/* Úloha 4: názov priečinka */
+const FOLD_OLD = ["2025-12 Vianoce", "2026-01 Lyžiarsky výcvik", "2026-04 Exkurzia Viedeň"];
+const FEV = [
+  { id: "a", e: "🏞️", t: "Školský výlet do Banskej Štiavnice, <b>5. júna 2026</b>", D: ["2026-06", "06-2026", "jún 2026", "5.6.2026"], N: ["Výlet Banská Štiavnica", "Nový priečinok", "DCIM", "fotky_final_FINAL"] },
+  { id: "b", e: "🎓", t: "Imatrikulácia prvákov, <b>25. septembra 2025</b>", D: ["2025-09", "09-2025", "september 2025", "25.9.2025"], N: ["Imatrikulácia", "Nový priečinok (2)", "IMG", "moje fotky"] }
+];
+const cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0; /* znak po znaku */
+/* Úloha 5: zoradenie */
+const ZOR = ["20.1.2026 Jasná", "24.12.2025 Vianoce", "25.9.2025 Imatrikulácia", "31.12.2025 Silvester", "5.1.2026 Sánkovanie"];
+/* Úloha 6: hromadné premenovanie */
+const RF = [["IMG_5521", "2026-01-20"], ["IMG_5522", "2026-01-20"], ["IMG_5530", "2026-01-20"], ["IMG_5547", "2026-01-21"], ["IMG_5561", "2026-01-21"], ["IMG_5588", "2026-01-22"]];
+const RTOK = { dat: ["📅", "dátum"], mie: ["📍", "miesto"], poc: ["🔢", "počítadlo"], org: ["🏷️", "pôvodné meno"] };
+const renName = (p, f, i) => p.map(t => t === "dat" ? f[1] : t === "mie" ? "Jasna" : t === "poc" ? String(i + 1).padStart(3, "0") : f[0]).join("_") + ".jpg";
+/* Úloha 8: kto hovorí pravdu */
+const CL = [
+  { id: "n", who: "Nina", e: "🏖️", bg: ["#7EC8E3", "#F7E2A6"], f: "IMG_0815.jpg", claim: "Túto fotku som odfotila cez <b>letné prázdniny 2026</b> v Chorvátsku! 🌊", ex: [["📅 Dátum a čas", "16. 7. 2025, 11:24"], ["📱 Zariadenie", "Apple iPhone 13"], ["📍 Miesto", "Makarska, Chorvátsko"], ["📐 Rozlíšenie", "4032 × 3024"]], a: "k", why: "Miesto sedí, ale fotka vznikla <b>16. 7. 2025</b>, teda o rok skôr, ako Nina tvrdí." },
+  { id: "p", who: "Peťo", e: "🌇", bg: ["#FF9A62", "#FFD7A0"], f: "IMG_20261020_174112.jpg", claim: "Tento západ slnka som fotil <b>20. októbra</b> z nášho balkóna v <b>Rimavskej Sobote</b>.", ex: [["📅 Dátum a čas", "20. 10. 2026, 17:41"], ["📱 Zariadenie", "Xiaomi Redmi Note 13"], ["📍 Miesto", "Rimavská Sobota, Slovensko"], ["📐 Rozlíšenie", "4000 × 3000"]], a: "p", why: "Dátum aj miesto v metaúdajoch sedia s tým, čo Peťo hovorí." },
+  { id: "l", who: "Lea", e: "🌸", bg: ["#F7C6D9", "#FFF0F6"], f: "20261027_150318.jpg", claim: "Kúpila som si nový <b>iPhone</b> a toto je moja prvá fotka z neho! 📱", ex: [["📅 Dátum a čas", "27. 10. 2026, 15:03"], ["📱 Zariadenie", "Samsung Galaxy A35"], ["📍 Miesto", "Lučenec, Slovensko"], ["📐 Rozlíšenie", "4080 × 3060"]], a: "k", why: "Podľa metaúdajov fotku urobil <b>Samsung Galaxy A35</b>, nie iPhone." }
+];
+/* Úloha 10: obrázky – čo prezradí obraz */
+function picOpt(v) { let s = "";
+  if (v === 0) s = `<rect width="160" height="110" fill="#E9DCC6"/><rect x="10" y="40" width="70" height="70" fill="#D9C3A0" stroke="#8A7458" stroke-width="2"/><rect x="18" y="50" width="22" height="22" fill="#9CCBF0" stroke="#fff" stroke-width="2"/><rect x="48" y="50" width="22" height="22" fill="#9CCBF0" stroke="#fff" stroke-width="2"/><rect x="90" y="14" width="62" height="24" rx="3" fill="#1E5AA8" stroke="#fff" stroke-width="2"/>${T(121, 31, "Hlavná", { a: "middle", fs: 12, b: 1, c: "#fff" })}<rect x="104" y="48" width="34" height="26" rx="3" fill="#fff" stroke="#16213A" stroke-width="2"/>${T(121, 67, "12", { a: "middle", fs: 15, b: 1 })}${EM(122, 102, "🐕", 22)}`;
+  if (v === 1) s = `<rect width="160" height="110" fill="#C9B79C"/><ellipse cx="80" cy="80" rx="60" ry="22" fill="#B23A48" opacity=".8"/>${EM(80, 82, "🐈", 44)}`;
+  if (v === 2) s = `<rect width="160" height="110" fill="#F1E3C8"/><ellipse cx="80" cy="64" rx="56" ry="30" fill="#fff" stroke="#D6DCE6" stroke-width="2"/>${EM(80, 76, "🥞", 38)}`;
+  if (v === 3) s = `<rect width="160" height="110" fill="#8EC5F0"/>${EM(50, 52, "🌥️", 34)}${EM(112, 80, "🌥️", 28)}<circle cx="132" cy="24" r="12" fill="#FFF3C4"/>`;
+  return `<svg viewBox="0 0 160 110" role="img" aria-label="Fotka ${v + 1}" ${FF}>${s}</svg>`; }
+/* Úloha 11: plán záloh */
+const PL = [
+  { id: "a", e: "👨‍👩‍👧", n: "Novákovci", t: "Majú 8 000 fotiek v počítači v obývačke. Doma majú rýchly internet.", o: ["💽 externý disk", "🌥️ cloud (OneDrive)", "📁 druhý priečinok na tom istom disku", "🖥️ kópia na pracovnej ploche toho istého počítača"], a: [0, 1], why: "Externý disk je <b>iné médium</b> a cloud je kópia <b>mimo domu</b>. Druhý priečinok ani plocha nie sú skutočné zálohy, pri poruche disku zmiznú spolu s originálom." },
+  { id: "b", e: "👵", n: "Babka Anna", t: "Má fotky v notebooku, ale <b>nemá internet</b>. Syn ju navštevuje raz za mesiac a býva v inom meste.", o: ["💽 externý disk, ktorý ostane pri notebooku", "💽 druhý externý disk, ktorý si syn odnesie k sebe domov", "🌥️ cloud (Google Disk)", "📁 druhý priečinok v tom istom notebooku"], a: [0, 1], why: "Bez internetu cloud nefunguje. Kópiu <b>mimo domu</b> zabezpečí druhý disk, ktorý si syn odnesie k sebe." }
+];
+/* Úloha 12: nehody */
+const KAT = [
+  { id: "1", e: "🔥", t: "<b>Novákovci</b> majú fotky v počítači a zálohu na externom disku na poličke hneď vedľa. V byte vypukne <b>požiar</b>.", a: "s", why: "Disk bol v tom istom byte ako počítač, oheň zničil oboje." },
+  { id: "2", e: "💥", t: "<b>Kováčovci</b> majú fotky v počítači a automatickú zálohu v cloude. <b>Disk v počítači sa pokazí</b>.", a: "z", why: "Kópia v cloude ostala celá, fotky si stiahnu späť." },
+  { id: "3", e: "💧", t: "<b>Mária</b> má fotky iba v mobile. Mobil jej <b>spadne do jazera</b>.", a: "s", why: "Iná kópia neexistovala." },
+  { id: "4", e: "🕵️", t: "<b>Tomáš</b> má v mobile zapnutú automatickú zálohu do Google Fotiek. Mobil mu <b>ukradnú</b>.", a: "z", why: "Fotky sú v cloude, v novom mobile sa po prihlásení objavia." },
+  { id: "5", e: "⚡", t: "<b>Horváthovci</b> majú fotky v počítači a na USB kľúči, ktorý je stále zastrčený v počítači. <b>Blesk</b> spôsobí prepätie a zničí počítač aj kľúč.", a: "s", why: "Záloha bola stále pripojená k počítaču, preto ju prepätie zničilo spolu s ním." },
+  { id: "6", e: "🌊", t: "<b>Lucia</b> má fotky v notebooku, na externom disku u babky v inom meste a v cloude. Dom jej zaplaví <b>povodeň</b>.", a: "z", why: "Lucia dodržala pravidlo 3-2-1: kópia u babky aj v cloude ostali v bezpečí." }
+];
+/* M6: scény pre editor */
+const SCN = {
+  prof: { w: 300, h: 400, init: 90, body: `<defs><linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7DB9EE"/><stop offset="1" stop-color="#DDEEFF"/></linearGradient></defs><rect width="300" height="400" fill="url(#sky1)"/><circle cx="246" cy="58" r="26" fill="#FFE27A"/>
+    <rect x="0" y="250" width="300" height="150" fill="#D9C3A0"/>${[0, 1, 2, 3, 4].map(i => `<rect x="${14 + i * 58}" y="270" width="36" height="44" fill="#9CCBF0" stroke="#fff" stroke-width="3"/>`).join("")}<rect x="0" y="236" width="300" height="16" fill="#B23A2E"/>
+    <path d="M90 400 Q92 262 150 256 Q208 262 210 400Z" fill="#2F5BEA"/><path d="M128 258 L150 292 L172 258" fill="#fff"/>
+    <circle cx="150" cy="196" r="52" fill="#F6C9A0"/><path d="M98 190 Q96 134 150 132 Q206 134 202 192 Q186 160 150 162 Q112 162 98 190Z" fill="#6B3E1F"/>
+    <circle cx="132" cy="200" r="6" fill="#16213A"/><circle cx="168" cy="200" r="6" fill="#16213A"/><path d="M130 222 Q150 238 170 222" fill="none" stroke="#C0392B" stroke-width="5" stroke-linecap="round"/>` },
+  tma: { w: 400, h: 300, init: 0, body: `<defs><linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F49D62"/><stop offset="1" stop-color="#FFD9A8"/></linearGradient></defs><rect width="400" height="300" fill="url(#sky2)"/>
+    <path d="M0 190 Q100 150 200 176 T400 168 V300 H0Z" fill="#5E8F48"/><polygon points="290,206 340,130 390,206" fill="#E8C14A" stroke="#9A7A10" stroke-width="3"/><polygon points="330,206 340,170 350,206" fill="#7A5A10"/>
+    ${[[90, "#2F5BEA", "#6B3E1F"], [170, "#C0392B", "#16213A"], [250, "#12805A", "#E0A800"]].map(([x, sh, hr]) => `<path d="M${x - 34} 300 Q${x - 32} 232 ${x} 228 Q${x + 32} 232 ${x + 34} 300Z" fill="${sh}"/><circle cx="${x}" cy="196" r="30" fill="#F6C9A0"/><path d="M${x - 30} 192 Q${x - 30} 160 ${x} 162 Q${x + 30} 160 ${x + 30} 192 Q${x + 18} 176 ${x} 178 Q${x - 18} 176 ${x - 30} 192Z" fill="${hr}"/><circle cx="${x - 10}" cy="198" r="3.6" fill="#16213A"/><circle cx="${x + 10}" cy="198" r="3.6" fill="#16213A"/><path d="M${x - 11} 210 Q${x} 220 ${x + 11} 210" fill="none" stroke="#C0392B" stroke-width="3" stroke-linecap="round"/>`).join("")}` }
+};
+const RATIOS = [["orig", "pôvodný"], ["1:1", "1:1 štvorec"], ["16:9", "16:9"]];
+
+/* ===== ÚLOHY ===== */
+const TASKS = {
+  apps: { id: "apps", type: "sort", max: 3, bins: [{ id: "p", t: "👀 prehliadač a správa fotiek", bg: C.inS, c: C.in }, { id: "u", t: "🎨 editor", bg: C.purS, c: C.pur }, { id: "z", t: "🌥️ záloha a zdieľanie", bg: C.okS, c: C.ok }], items: [
+    { id: "1", t: "Rýchlo prelistovať 300 fotiek z výletu a otočiť tie, ktoré sú naležato", a: "p" },
+    { id: "2", t: "Nájsť všetky fotky, na ktorých je babka", a: "p" },
+    { id: "3", t: "Vložiť do fotky nápis a z pozadia vymazať smetný kôš", a: "u" },
+    { id: "4", t: "Poskladať z troch fotiek koláž na plagát, každú fotku na inú vrstvu", a: "u" },
+    { id: "5", t: "Fotky z mobilu sa majú samé ukladať aj mimo mobilu", a: "z" },
+    { id: "6", t: "Poslať starkej odkaz na celý album z Vianoc", a: "z" }] },
+  srch: { id: "srch", type: "srch", max: 2 },
+  gal: { id: "gal", type: "gal", max: 3 },
+  fold: { id: "fold", type: "fold", max: 2 },
+  zor: { id: "zor", type: "zor", max: 2 },
+  ren: { id: "ren", type: "ren", max: 2 },
+  zq: { id: "zq", type: "mc", qs: [
+    { id: "1", q: "Prečo programy na hromadné premenovanie dávajú do počítadla nuly na začiatok (001, 002, …)?", opts: ["Aby sa súbory zoradili podľa čísla správne aj v programoch, ktoré triedia znak po znaku", "Aby mali súbory menšiu veľkosť", "Lebo prípona .jpg vyžaduje v mene presne tri číslice", "Aby sa súbory už nedali znova premenovať"], a: 0, why: "Pri triedení znak po znaku sa porovná prvý znak: „1“ v čísle 10 je pred „2“, preto by bol Jasna_10 pred Jasna_2. S nulami majú všetky čísla <b>rovnaký počet číslic</b> a poradie sedí." }] },
+  kto: { id: "kto", type: "kto", max: 3 },
+  kop: { id: "kop", type: "kop", max: 1 },
+  pic: { id: "pic", type: "mc", pics: 1, qs: [
+    { id: "1", q: "Z týchto fotiek si odstránil všetky metaúdaje. Ktorá z nich môže aj tak prezradiť, kde bývaš?", opts: [picOpt(0), picOpt(1), picOpt(2), picOpt(3)], a: 0, why: "Na fotke je tabuľa s <b>názvom ulice</b> a <b>číslom domu</b>. Miesto prezradí aj samotný obraz: nápisy, tabule, výhľad z okna či uniforma školy." }] },
+  plan: { id: "plan", type: "plan", max: 2 },
+  kat: { id: "kat", type: "kat", max: 3 },
+  prof: { id: "prof", type: "ed", max: 2 },
+  tma: { id: "tma", type: "ed", max: 2 },
+  fin: { id: "fin", type: "mc", qs: [
+    { id: "1", q: "Kamarát orezal fotku celej triedy tak, aby na nej ostal iba on, a dal Uložiť. Inú kópiu nemá. Dostane z tohto súboru ostatných spolužiakov späť?", opts: ["Nie, orezaná časť sa pri uložení zahodila a vrátila by ju iba záloha pôvodnej fotky", "Áno, stačí fotku v editore znova zväčšiť", "Áno, orezaná časť ostala skrytá v metaúdajoch EXIF", "Áno, stačí súbor premenovať späť na pôvodné meno"], a: 0, why: "Pri uložení orezanej fotky sa do súboru zapíšu iba ponechané pixely. Odrezanú časť nevráti zväčšenie ani premenovanie, iba <b>záloha originálu</b>." }] }
+};
+const THEORY = {
+  m1: ["<b>Prehliadač</b> (správca fotiek) slúži na prezeranie, triedenie, vyhľadávanie a jednoduché úpravy.", "<b>Editor</b> má nástroje, <b>vrstvy</b> a filtre na poriadnu úpravu obrázka.", "<b>Záloha a zdieľanie</b>: kópia mimo zariadenia (cloud, disk) a poslanie odkazu.", "Moderné aplikácie hľadajú aj podľa <b>obsahu</b> fotky a podľa <b>tvárí</b>.", "<b>Časová os</b> radí fotky podľa dátumu vzniku, <b>album</b> je vlastný výber fotiek."],
+  m2: ["Fotky ukladaj do <b>priečinkov podľa udalostí</b>.", "Do názvu priečinka patrí <b>dátum</b> v tvare rok-mesiac a <b>názov udalosti</b>.", "Dátum a miesto vzniku fotky ukazujú <b>metaúdaje</b> (Informácie o fotke).", "Názvy ako IMG_5521.jpg alebo Nový priečinok nič nehovoria."],
+  m3: ["Mnohé programy, cloud aj web triedia mená <b>znak po znaku</b> zľava.", "Dátum v tvare <b>rok-mesiac-deň</b> sa zoradí aj podľa času.", "<b>Hromadné premenovanie</b> zmení mená mnohých súborov naraz podľa <b>vzoru</b>.", "Vzor sa skladá z častí: text, dátum, počítadlo, pôvodné meno.", "Prípona (.jpg) sa pri premenovaní nemení."],
+  m4: ["<b>EXIF</b> sú metaúdaje vo fotke: kedy, čím a kde vznikla.", "Metaúdaje pomôžu overiť, či je tvrdenie o fotke pravdivé.", "Vo Windows ich odstrániš cez Vlastnosti → Podrobnosti → <b>Odstrániť vlastnosti a osobné údaje</b>.", "V mobile môžeš ukladanie polohy vypnúť v nastaveniach fotoaparátu.", "Metaúdaje sa dajú aj zmeniť, preto nie sú stopercentný dôkaz."],
+  m5: ["<b>Archivácia</b> = dlhodobé uloženie fotiek, aby sa dali nájsť a nestratili sa.", "<b>Pravidlo 3-2-1</b>: 3 kópie, 2 rôzne médiá, 1 kópia mimo domu.", "Zálohuj <b>pravidelne</b>, najlepšie <b>automaticky</b>.", "Médiá: USB kľúč, externý disk, cloud – každé má výhody aj nevýhody.", "Zálohy občas skontroluj, či sa dajú otvoriť."],
+  m6: ["<b>Otočenie</b> narovná fotku odfotenú naležato.", "<b>Orezanie</b> odstráni okraje, <b>pomer strán</b> určuje tvar (4:3, 16:9, 1:1).", "<b>Jas</b> zosvetlí alebo stmaví celú fotku, <b>kontrast</b> zväčší rozdiel medzi svetlým a tmavým.", "<b>Uložiť</b> prepíše pôvodný súbor, <b>Uložiť ako kópiu</b> vytvorí nový súbor."]
+};
+
+/* ===== ENGINE ===== */
+/* ===== ENGINE ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max || (T.qs ? T.qs.length : T.items ? T.items.length : T.panels ? T.panels.filter(p => p.q).length : 0); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return { v: 1, attempt: 1, early: false, confirmEarly: false, name: "", cls: CLASS_DEFAULT, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, sel: {}, zz: {}, kdlg: false, ksel: null }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
+const NSTOP = STEPS.length - 2;
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
+const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
+const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 2.4 Správa obrázkov</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
+function checkBar(TK, ready, hint, label) {
+  const r = S.t[TK.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${TK.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+}
+const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
+
+/* výber odpovede (aj s obrázkami) */
+function mcHTML(TK) {
+  const done = S.t[TK.id], d = S.d[TK.id] || {}, Q = TK.qs;
+  const qs = TK.keep ? Q : ord(TK.id + ":q", Q.map(q => q.id)).map(id => Q.find(q => q.id === id));
+  return qs.map((q, qi) => { const o = ord(TK.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts${TK.pics ? " pics" : ""}">${o.map(i => `<button class="${optCls(done, d[q.id], i, q.a)}" data-mc="${TK.id}|${q.id}|${i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`).join("")}</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`; }).join("") + checkBar(TK, Q.every(q => d[q.id] !== undefined), Q.length > 1 ? "Odpovedz na všetky otázky." : "Vyber odpoveď.");
+}
+/* triedenie do stĺpcov */
+function sortHTML(TK) {
+  const done = S.t[TK.id], d = S.d[TK.id] || {}, io = ord(TK.id + ":i", TK.items.map(x => x.id)), sel = S.sel[TK.id];
+  const items = io.map(id => TK.items.find(x => x.id === id));
+  const chip = x => { let c = "chip"; if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad"; return `<button class="${c}" data-sti="${TK.id}|${x.id}" ${done ? "disabled" : ""}>${x.t}</button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? TK.items.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na kartičku a potom na nadpis stĺpca, kam patrí. Kartičku presunieš, keď na ňu klikneš a potom na iný stĺpec. Za každé 2 správne zatriedené kartičky získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(chip).join("") : `<span class="muted" style="font-size:14.5px">Všetky kartičky sú zatriedené.</span>`}</div>
+    <div class="bins${TK.bins.length === 3 ? " b3" : ""}">${TK.bins.map(g => `<div class="bin"><button class="bh" style="background:${g.bg};color:${g.c}" data-stb="${TK.id}|${g.id}" ${done ? "disabled" : ""}>${g.t}</button>${items.filter(x => d[x.id] === g.id).map(chip).join("")}</div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === TK.items.length ? "good" : "miss"}">Správne zatriedených: <b>${nOk} z ${TK.items.length}</b>. ${TK.items.filter(x => d[x.id] !== x.a).map(x => `„${x.t}“ → <b>${TK.bins.find(b => b.id === x.a).t}</b>`).join(" · ")}</p>` : ""}` +
+    checkBar(TK, TK.items.every(x => d[x.id]), "Zatrieď všetky kartičky.");
+}
+
+/* U2 – vyhľadávanie podľa obsahu */
+function srchHTML() {
+  const TK = TASKS.srch, done = S.t.srch, d = S.d.srch || {}, io = ord("srch", SRCH.map(x => x.id));
+  return `<p class="ins">Do vyhľadávania v aplikácii na fotky napíšeš slovo <b>pes</b>. Aplikácia hľadá <b>iba podľa toho, čo je na obrázku</b>, mená súborov ju nezaujímajú. Klikni na všetky fotky, ktoré aplikácia nájde. Za každé 4 správne rozhodnutia získaš 1 ⭐.</p>
+    <div class="win" style="max-width:760px"><div class="wt"><span class="tt">🖼️ Fotky</span><span class="dots">— ▢ ✕</span></div><div style="padding:12px"><div class="sbar">🔍 <b>pes</b></div>
+    <div class="pgrid">${io.map(id => { const x = SRCH.find(s => s.id === id), on = !!d[id]; let c = "pbtn"; if (on) c += " on"; if (done) c += (on ? 1 : 0) === x.a ? " ok" : " bad";
+      return `<button class="${c}" data-sr="${id}" ${done ? "disabled" : ""} aria-pressed="${on}">${PHOTO(x.e, x.bg)}<span class="fnm">${x.n}</span>${on ? '<span class="tick">✓</span>' : ""}</button>`; }).join("")}</div></div></div>
+    ${done ? `<p class="why ${scoreOf("srch") === 2 ? "good" : "miss"}">Aplikácia nájde 4 fotky so psami: aj tie, ktoré majú nič nehovoriace meno (IMG_3301.jpg). Mačka s menom pes_Rexo.jpg, ovce ani párok v rožku medzi výsledkami nebudú.</p>` : ""}` +
+    checkBar(TK, SRCH.some(x => d[x.id]), "Označ aspoň jednu fotku.");
+}
+/* U3 – upratovanie galérie */
+function galHTML() {
+  const TK = TASKS.gal, done = S.t.gal, d = S.d.gal || {}, io = ord("gal", GPH.map(x => x.id)), sel = S.sel.gal, items = io.map(id => GPH.find(x => x.id === id));
+  const card = x => { let c = "gph"; if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad";
+    return `<button class="${c}" data-sti="gal|${x.id}" ${done ? "disabled" : ""}>${PHOTO(x.e, x.bg, 96, 64, 32)}<span class="gi">📅 ${x.d}<br>📍 ${x.p}</span></button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? GPH.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na fotku a potom na nadpis priečinka, kam patrí. Pri každej fotke vidíš jej <b>informácie</b> (dátum a miesto vzniku). Fotku presunieš, keď na ňu klikneš a potom na iný priečinok. Za každé 4 správne uložené fotky získaš 1 ⭐.</p>
+    <div class="pool gpool">${pool.length ? pool.map(card).join("") : `<span class="muted" style="font-size:14.5px">Všetky fotky sú v priečinkoch.</span>`}</div>
+    <div class="bins">${GBINS.map(g => `<div class="bin"><button class="bh" style="background:${C.okS};color:${C.ok}" data-stb="gal|${g.id}" ${done ? "disabled" : ""}>${g.t}</button><div class="gin">${items.filter(x => d[x.id] === g.id).map(card).join("")}</div></div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === GPH.length ? "good" : "miss"}">Správne uložených: <b>${nOk} z ${GPH.length}</b>. O priečinku rozhoduje <b>dátum a miesto</b>, nie to, čo je na obrázku: snehuliak je z Vianoc doma, stromček z hotela v Jasnej a torta z Viedne.</p>` : ""}` +
+    checkBar(TK, GPH.every(x => d[x.id]), "Ulož všetkých 12 fotiek do priečinkov.");
+}
+/* U4 – názov priečinka */
+function foldHTML() {
+  const TK = TASKS.fold, done = S.t.fold, d = S.d.fold || {};
+  const nm = ev => d[ev.id + "D"] !== undefined && d[ev.id + "N"] !== undefined ? ev.D[d[ev.id + "D"]] + " " + ev.N[d[ev.id + "N"]] : null;
+  const part = (ev, k, L, lab) => { const o = ord("fold:" + ev.id + k, L.map((_, i) => i)); return `<div style="margin-top:6px"><span class="muted" style="font-size:14px">${lab}</span><div class="chips" style="margin-top:4px">${o.map(i => `<button class="${optCls(done, d[ev.id + k], i, 0)}" data-fd="${ev.id}|${k}|${i}" ${done ? "disabled" : ""}>${L[i]}</button>`).join("")}</div></div>`; };
+  const list = FOLD_OLD.map(n => [n, 0]).concat(FEV.map(ev => [nm(ev), 1]).filter(x => x[0])).sort((a, b) => cmp(a[0], b[0]));
+  return `<p class="ins">Nahral si fotky z dvoch udalostí. Každému priečinku poskladaj meno z dvoch častí. V okne vpravo hneď uvidíš, kam sa nový priečinok v cloude zaradí. Za každý dobre pomenovaný priečinok získaš 1 ⭐.</p>
+    <div class="exg" style="grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)"><div>${FEV.map((ev, i) => { const good = done && d[ev.id + "D"] === 0 && d[ev.id + "N"] === 0;
+      return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}" style="margin-bottom:10px"><div class="hd"><span class="e">${ev.e}</span><span>${ev.t}</span></div>${part(ev, "D", ev.D, "1. časť: dátum")}${part(ev, "N", ev.N, "2. časť: čo je v priečinku")}${done && !good ? `<p class="why miss">Správne: <b>${ev.D[0]} ${ev.N[0]}</b></p>` : ""}</div>`; }).join("")}</div>
+    <div class="win"><div class="wt"><span class="tt">🌥️ Moje fotky · zoradené podľa mena</span></div>${list.map(([n, nw]) => `<div class="frow ${nw ? "new" : ""}" style="grid-template-columns:26px minmax(0,1fr)"><span>📁</span><span class="nm">${esc(n)}</span></div>`).join("")}</div></div>
+    ${done ? `<p class="why good">Dátum v tvare <b>rok-mesiac</b> na začiatku zoradí priečinky podľa času a názov udalosti hneď povie, čo v priečinku je.</p>` : ""}` +
+    checkBar(TK, FEV.every(ev => nm(ev)), "Poskladaj meno oboch priečinkov.");
+}
+/* U5 – zoradenie */
+function zorHTML() {
+  const TK = TASKS.zor, done = S.t.zor, seq = S.d.zor || [], io = ord("zor", ZOR.map((_, i) => String(i))), pool = io.filter(i => !seq.includes(i));
+  return `<p class="ins">Galéria v cloude zoradí priečinky podľa mena <b>znak po znaku</b> (A → Z, číslice pred písmenami). Klikaj na priečinky v takom poradí, v akom ich zoradí. Priečinok vrátiš späť kliknutím naň. Za každé 2 priečinky na správnom mieste získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(i => `<button class="chip" data-zo="${i}">📁 <span class="mono">${ZOR[+i]}</span></button>`).join("") : `<span class="muted" style="font-size:14.5px">Všetky priečinky sú zoradené.</span>`}</div>
+    <div class="win" style="max-width:520px"><div class="wt"><span class="tt">🌥️ Galéria · Meno A → Z</span></div>${[0, 1, 2, 3, 4].map(k => { const i = seq[k]; if (i === undefined) return `<div class="frow" style="grid-template-columns:26px minmax(0,1fr)"><span class="muted">${k + 1}.</span><span class="muted">…</span></div>`;
+      const ok = done && +i === k; return `<div class="frow" style="grid-template-columns:26px minmax(0,1fr) auto;${done ? `background:${ok ? "#DDF3EA" : "#FBE3E0"}` : ""}"><span>${k + 1}.</span><span class="nm">📁 ${ZOR[+i]}</span>${done ? `<span>${ok ? "✅" : "❌"}</span>` : `<button class="ghost sm" data-zu="${i}">↩</button>`}</div>`; }).join("")}</div>
+    ${done ? `<p class="why ${scoreOf("zor") === 2 ? "good" : "miss"}">Správne poradie: ${ZOR.map(z => `<b>${z}</b>`).join(" → ")}. Program porovná najprv prvú číslicu dňa (2, 2, 2, 3, 5), potom druhú. Výsledok vôbec nezodpovedá času, preto je lepší tvar <b>rok-mesiac-deň</b>.</p>` : ""}` +
+    checkBar(TK, seq.length === 5, "Zoraď všetkých 5 priečinkov.");
+}
+/* U6 – hromadné premenovanie */
+function renHTML() {
+  const TK = TASKS.ren, done = S.t.ren, d = S.d.ren || {}, p = d.p || [], ap = d.ap;
+  const names = pat => RF.map((f, i) => [f[0] + ".jpg", pat.length ? renName(pat, f, i) : f[0] + ".jpg"]);
+  const cur = names(ap || p), cnt = {}; cur.forEach(([, n]) => cnt[n] = (cnt[n] || 0) + 1);
+  const sorted = cur.slice().sort((a, b) => cmp(a[1], b[1]));
+  return `<p class="ins">Šesť fotiek z lyžiarskeho výcviku v Jasnej chceš premenovať naraz. Nové mená musia: <b>zoradiť sa podľa času</b>, <b>prezradiť miesto</b> a <b>žiadne dve nesmú byť rovnaké</b>. Nič zbytočné do mena nedávaj. Poskladaj vzor z častí, pozri si ukážku a klikni na Premenovať. Za každú splnenú dvojicu požiadaviek (poradie podľa času · miesto a jedinečné mená) získaš 1 ⭐.</p>
+    <div class="win" style="max-width:720px"><div class="wt"><span class="tt">✏️ Hromadné premenovanie – 6 súborov</span><span class="dots">— ▢ ✕</span></div><div style="padding:12px 14px">
+      <div class="row" style="margin-top:0">${Object.entries(RTOK).map(([k, [e, t]]) => `<button class="ghost sm" data-rt="${k}" ${done || p.includes(k) || p.length >= 4 ? "disabled" : ""}>${e} ${t}</button>`).join("")}<button class="ghost sm" data-rbk ${done || !p.length ? "disabled" : ""}>↶ Späť</button><button class="ghost sm" data-rcl ${done || !p.length ? "disabled" : ""}>🧹 Vymazať</button></div>
+      <p style="margin:10px 0 4px;font-size:15px">Vzor: ${p.length ? p.map(k => `<span class="tok">${RTOK[k][0]} ${RTOK[k][1]}</span>`).join('<b class="mono">_</b>') + '<b class="mono">.jpg</b>' : '<span class="muted">zatiaľ prázdny – klikni na časti hore</span>'}</p>
+      <p class="muted" style="margin:0 0 8px;font-size:14px">Ukážka prvého súboru: <code>${p.length ? renName(p, RF[0], 0) : RF[0][0] + ".jpg"}</code></p>
+      <button class="primary" data-rap ${done || !p.length ? "disabled" : ""} style="padding:8px 16px;font-size:15px">✏️ Premenovať</button>
+    </div>
+    <div style="border-top:1px solid #D5DCE6"><div class="frow" style="background:#F5F7FA;font-weight:600;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)"><span>pôvodné meno</span><span>${ap ? "nové meno (zoradené podľa mena)" : "zatiaľ nepremenované"}</span></div>
+    ${(ap ? sorted : cur).map(([o, n]) => `<div class="frow" style="grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);${ap && cnt[n] > 1 ? "background:#FBE3E0" : ""}"><span class="nm">${o}</span><span class="nm">${ap ? n : "—"}${ap && cnt[n] > 1 ? ' <b style="color:#C0392B;font-family:var(--font)">⚠️ rovnaké meno</b>' : ""}</span></div>`).join("")}</div></div>
+    ${ap ? `<p class="muted" style="margin:8px 0 0;font-size:14.5px">Premenované podľa vzoru: <b>${ap.map(k => RTOK[k][1]).join(" _ ")}</b>. Kým úlohu neskontroluješ, môžeš vzor zmeniť a premenovať znova.</p>` : ""}
+    ${done ? `<p class="why ${scoreOf("ren") === 2 ? "good" : "miss"}">Dobrý vzor je <b>dátum _ miesto _ počítadlo</b> (napr. 2026-01-20_Jasna_001.jpg). Dátum na začiatku zoradí fotky podľa času, miesto povie, kde vznikli, a počítadlo zabezpečí, že žiadne dve mená nie sú rovnaké. Pôvodné meno IMG_… je zbytočné.</p>` : ""}` +
+    checkBar(TK, !!ap, "Poskladaj vzor a klikni na Premenovať.");
+}
+/* U7 – pokus s nulami */
+function zeroHTML() {
+  const d = S.d.zp || {}, m = d.m, list = m ? [...Array(12)].map((_, i) => `Jasna_${m === "001" ? String(i + 1).padStart(3, "0") : i + 1}.jpg`).sort(cmp) : [];
+  return `<p class="ins">🧪 <b>Pokus:</b> 12 fotiek premenuješ s počítadlom raz <b>bez núl</b> a raz <b>s nulami</b>. Pozri sa, ako ich cloud zoradí znak po znaku. Vyskúšaj oba spôsoby, potom sa odomkne otázka.</p>
+    <div class="row" style="margin-top:0"><button class="ghost ${m === "1" ? "on" : ""}" data-zp="1">🔢 1, 2, 3 …</button><button class="ghost ${m === "001" ? "on" : ""}" data-zp="001">🔢 001, 002, 003 …</button></div>
+    ${m ? `<div class="win" style="max-width:460px;margin-top:12px"><div class="wt"><span class="tt">🌥️ Cloud · Meno A → Z</span></div><div class="zcols">${list.map((n, i) => `<div class="frow" style="grid-template-columns:30px minmax(0,1fr)"><span class="muted">${i + 1}.</span><span class="nm">${n}</span></div>`).join("")}</div></div>` : ""}
+    <div style="margin-top:14px">${d.s1 && d.s2 ? mcHTML(TASKS.zq) : `<p class="muted" style="font-size:15px">🔒 Otázka sa odomkne, keď vyskúšaš oba spôsoby.</p>`}</div>`;
+}
+/* U8 – kto hovorí pravdu */
+function ktoHTML() {
+  const TK = TASKS.kto, done = S.t.kto, d = S.d.kto || {};
+  return `<p class="ins">Traja kamaráti poslali do triednej skupiny fotku a niečo o nej tvrdia. Otvor metaúdaje každej fotky a rozhodni, či hovorí pravdu. Za každé správne rozhodnutie získaš 1 ⭐.</p>
+    <div class="fgrid">${CL.map(c => { const open = S.zz["k" + c.id] || done, good = done && d[c.id] === c.a;
+      return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd"><span class="e">💬</span><span>${c.who}</span></div>${PHOTO(c.e, c.bg, 240, 120, 54)}<p class="fnm" style="margin:2px 0 6px">${c.f}</p>
+        <div class="cbub">„${c.claim}“</div>
+        <button class="ghost sm" data-ko="${c.id}" style="margin-top:8px" ${done ? "disabled" : ""}>ℹ️ ${open ? "Skryť" : "Zobraziť"} metaúdaje</button>
+        ${open ? `<div class="win" style="margin-top:8px">${c.ex.map(([k, v]) => `<div class="xr" style="cursor:default"><span class="k">${k}</span><span>${v}</span></div>`).join("")}</div>` : ""}
+        <div class="chips" style="margin-top:10px">${[["p", "✅ hovorí pravdu"], ["k", "❌ nehovorí pravdu"]].map(([k, t]) => `<button class="${optCls(done, d[c.id], k, c.a)}" data-kt="${c.id}|${k}" ${done ? "disabled" : ""}>${t}</button>`).join("")}</div>
+        ${done ? `<p class="why ${good ? "good" : "miss"}">${c.why}</p>` : ""}</div>`; }).join("")}</div>` + checkBar(TK, CL.every(c => d[c.id]), "Rozhodni pri všetkých troch kamarátoch.");
+}
+/* U9 – kópia bez metaúdajov */
+function kopHTML() {
+  const TK = TASKS.kop, done = S.t.kop, d = S.d.kop || {}, c = d.c;
+  const rows = c === "copy" ? [["pes_doma.jpg", "3,2 MB · 📍 s polohou", 0], ["pes_doma - Kópia.jpg", "3,1 MB · bez metaúdajov", 1]] : c === "strip" ? [["pes_doma.jpg", "3,1 MB · metaúdaje odstránené", 1]] : [["pes_doma.jpg", "3,2 MB · 📍 s polohou", 0]];
+  const opt = (k, t) => `<button class="opt ${S.ksel === k ? "sel" : ""}" data-ksel="${k}" style="display:flex;gap:10px;align-items:flex-start"><span>${S.ksel === k ? "🔘" : "⚪"}</span><span>${t}</span></button>`;
+  const dlg = S.kdlg && !done ? `<div class="dlgbox"><h5>Odstrániť vlastnosti</h5><div style="display:grid;gap:8px">${opt("copy", "Vytvoriť kópiu s odstránenými všetkými možnými vlastnosťami")}${opt("strip", "Odstrániť z tohto súboru nasledujúce vlastnosti: ☑ GPS ☑ dátum ☑ zariadenie ☑ autor")}</div><div class="row" style="justify-content:flex-end"><button class="ghost" data-kok ${S.ksel ? "" : "disabled"}>OK</button><button class="ghost" data-kcl>Zrušiť</button></div></div>` : "";
+  return `<p class="ins">Fotku svojho psa chceš poslať do verejnej skupiny bez polohy. <b>Pôvodnú fotku s polohou si však chceš nechať</b> vo svojom albume, aby si vedel, kde vznikla. Otvor okno na odstránenie vlastností a vyber správnu možnosť. Kým úlohu neskontroluješ, môžeš to skúsiť znova. Za správny postup získaš 1 ⭐.</p>
+    <div class="win fwin"><div class="wt"><span class="tt">📁 Obrázky › Moje fotky</span><span class="dots">— ▢ ✕</span></div>${rows.map(([n, s, nw]) => `<div class="frow ${nw ? "new" : ""}" style="grid-template-columns:26px minmax(0,1fr) auto"><span>🐶</span><span class="nm">${n}</span><span class="ds">${s}</span></div>`).join("")}
+    <div style="padding:8px 12px;background:#F5F7FA;font-size:13.5px">Vlastnosti › Podrobnosti › <button class="ghost sm" data-kopen ${done ? "disabled" : ""}>🧹 Odstrániť vlastnosti a osobné údaje</button></div></div>${dlg}
+    ${done ? `<p class="why ${c === "copy" ? "good" : "miss"}">Správne je <b>Vytvoriť kópiu</b>: kópiu bez metaúdajov pošleš do skupiny a originál s polohou ti ostane. Druhá možnosť by polohu vymazala natrvalo aj z tvojho originálu.</p>` : ""}` +
+    checkBar(TK, !!c, "Odstráň vlastnosti fotky jedným zo spôsobov.");
+}
+/* U11 – plán záloh */
+function planHTML() {
+  const TK = TASKS.plan, done = S.t.plan, d = S.d.plan || {};
+  return `<p class="ins">Navrhni zálohy pre dve rodiny. Originál fotiek je v počítači, ty vyber <b>2 ďalšie miesta</b> tak, aby platilo pravidlo 3-2-1. Výber zrušíš opätovným kliknutím. Za každý dobrý plán získaš 1 ⭐.</p>
+    <div class="fgrid">${PL.map(f => { const s = d[f.id] || [], o = ord("plan:" + f.id, f.o.map((_, i) => i)), good = done && s.length === 2 && f.a.every(x => s.includes(x));
+      return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd"><span class="e">${f.e}</span><span>${f.n}</span></div><p style="margin:0 0 8px;font-size:15.5px">${f.t}</p>
+        <div class="slots3"><div class="sl3 on">🖼️ <b>1.</b> originál</div>${[0, 1].map(k => `<div class="sl3 ${s[k] !== undefined ? "on" : ""}">${s[k] !== undefined ? `<b>${k + 2}.</b> ${f.o[s[k]]}` : `<b>${k + 2}.</b> <span class="muted">vyber…</span>`}</div>`).join("")}</div>
+        <div class="opts" style="grid-template-columns:1fr;margin-top:8px">${o.map(i => { let c = "opt"; if (s.includes(i)) c += " sel"; if (done) { if (f.a.includes(i)) c += s.includes(i) ? " ok" : ""; else if (s.includes(i)) c += " bad"; }
+          return `<button class="${c}" data-pl="${f.id}|${i}" ${done ? "disabled" : ""}>${f.o[i]}</button>`; }).join("")}</div>
+        ${done ? `<p class="why ${good ? "good" : "miss"}">${f.why}</p>` : ""}</div>`; }).join("")}</div>` + checkBar(TK, PL.every(f => (d[f.id] || []).length === 2), "Pri každej rodine vyber 2 miesta.");
+}
+/* U12 – nehody */
+function katHTML() {
+  const TK = TASKS.kat, done = S.t.kat, d = S.d.kat || {};
+  return `<p class="ins">Šesť ľudí, šesť nehôd. Pri každom rozhodni, či jeho fotky prežijú, alebo sa stratia. Za každé 2 správne rozhodnutia získaš 1 ⭐.</p>
+    <div class="fgrid">${KAT.map(k => { const good = done && d[k.id] === k.a;
+      return `<div class="fc ${done ? (good ? "okc" : "badc") : ""}"><div class="hd"><span class="e">${k.e}</span><span>Nehoda ${k.id}</span></div><p style="margin:0 0 8px;font-size:15.5px">${k.t}</p>
+        <div class="chips">${[["z", "😊 fotky prežijú"], ["s", "😢 fotky sa stratia"]].map(([v, t]) => `<button class="${optCls(done, d[k.id], v, k.a)}" data-kd="${k.id}|${v}" ${done ? "disabled" : ""}>${t}</button>`).join("")}</div>
+        ${done ? `<p class="why ${good ? "good" : "miss"}">${k.why}</p>` : ""}</div>`; }).join("")}</div>` + checkBar(TK, KAT.every(k => d[k.id]), "Rozhodni pri všetkých šiestich nehodách.");
+}
+/* M6 – mini editor */
+function edView(id) { const sc = SCN[id], d = S.d[id] || {}, r = ((sc.init + (d.r || 0)) % 360 + 360) % 360, land = r === 90 || r === 270;
+  const W = land ? sc.h : sc.w, H = land ? sc.w : sc.h, c = d.c || "orig"; let x = 0, y = 0, w = W, h = H;
+  if (c === "1:1") { w = h = Math.min(W, H); x = (W - w) / 2; y = (H - h) / 2; }
+  if (c === "16:9") { if (W / H > 16 / 9) { h = H; w = H * 16 / 9; } else { w = W; h = W * 9 / 16; } x = (W - w) / 2; y = (H - h) / 2; }
+  const k = Math.min(300 / w, 280 / h), br = id === "tma" ? Math.max(.05, .5 + (d.v || 0) / 80) : 1;
+  return `<svg viewBox="${x} ${y} ${w} ${h}" width="${Math.round(w * k)}" height="${Math.round(h * k)}" style="max-width:100%;height:auto;filter:brightness(${br.toFixed(3)})" role="img" aria-label="Upravovaná fotka" ${FF}><g transform="translate(${W / 2},${H / 2}) rotate(${r}) translate(${-sc.w / 2},${-sc.h / 2})">${sc.body}</g></svg>`; }
+function edBright(id) { const d = S.d[id] || {}, v = d.v || 0, dis = S.t[id] ? "disabled" : "";
+  return `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><b>☀️ Jas</b><input type="range" min="-50" max="50" step="5" value="${v}" data-ebr="${id}" aria-label="Jas" style="flex:1;min-width:140px;accent-color:var(--acc)" ${dis}><b class="mono" id="ebv-${id}" style="min-width:42px">${v > 0 ? "+" : ""}${v}</b></div>`; }
+function edHTML(id) {
+  const TK = TASKS[id], done = S.t[id], d = S.d[id] || {}, isP = id === "prof";
+  const tools = isP ? `<div class="etool"><b>↻ Otočiť</b><div class="row" style="margin-top:4px"><button class="ghost sm" data-er="${id}|-90" ${done ? "disabled" : ""}>↺ doľava</button><button class="ghost sm" data-er="${id}|90" ${done ? "disabled" : ""}>↻ doprava</button></div></div>
+      <div class="etool"><b>✂️ Orezať</b><div class="chips" style="margin-top:4px">${RATIOS.map(([k, t]) => `<button class="opt ${(d.c || "orig") === k ? "sel" : ""}" data-ec="${id}|${k}" ${done ? "disabled" : ""}>${t}</button>`).join("")}</div></div>`
+    : `<div class="etool" id="ebr-${id}">${edBright(id)}</div>
+      <div class="etool"><b>💾 Uložiť</b><div class="chips" style="margin-top:4px">${[["save", "💾 Uložiť (prepíše originál)"], ["copy", "📄 Uložiť ako kópiu"]].map(([k, t]) => `<button class="${optCls(done, d.s, k, "copy")}" data-es="${id}|${k}" ${done ? "disabled" : ""}>${t}</button>`).join("")}</div></div>`;
+  const ins = isP ? `Spolužiak ti poslal fotku na <b>profilovku do EduPage</b>. Odfotil ju naležato. Profilová fotka musí byť <b>štvorcová</b> a postava na nej musí <b>stáť rovno</b>. Uprav ju nástrojmi v editore. Za každú splnenú požiadavku získaš 1 ⭐.`
+    : `Fotka z večera pri stane je <b>pritmavá</b>. Zosvetli ju tak, aby boli dobre vidieť tváre, ale aby nebola prepálená do biela. Potom ju ulož tak, aby ti <b>ostal aj pôvodný súbor</b>. Za každú splnenú požiadavku získaš 1 ⭐.`;
+  const why = isP ? `Postava stojí rovno po otočení o 90° <b>doľava</b> (alebo 3× doprava) a štvorec dostaneš orezaním na pomer <b>1:1</b>.`
+    : `Dobrý jas je približne <b>+25 až +50</b>: tváre sú dobre vidieť a farby nie sú vyblednuté. <b>Uložiť ako kópiu</b> zachová aj pôvodnú fotku.`;
+  return `<p class="ins">${ins}</p>
+    <div class="ed"><div class="edv" id="edv-${id}">${edView(id)}</div><div class="edt"><div class="fnm" style="margin-bottom:6px">${isP ? "profilovka_Adam.jpg" : "IMG_20260912_194015.jpg"}</div>${tools}</div></div>
+    ${done ? `<p class="why ${scoreOf(id) === 2 ? "good" : "miss"}">${why}</p>` : ""}` + checkBar(TK, isP ? !!d.t : !!(d.vt && d.s), isP ? "Fotku najprv uprav." : "Nastav jas a vyber spôsob uloženia.");
+}
+
+function memo() { const L = THEORY[STEPS[S.cur].id]; return L ? `<section class="memo"><h3>📌 Zapamätaj si</h3><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "🏆 Zobraziť výsledok" : "Ďalšia misia: " + n.title + " ▶"}</button></div>` : ""); }
+
+const VIEWS = {
+  start() {
+    return `<div class="hero"><div><p class="kicker">Informatika · 1. ročník · domáca úloha k hodine 2.4</p><h1>Domáca úloha: Aplikácie na fotky, triedenie a archivácia</h1>
+      <p style="font-size:18.5px">Ahoj! Som slon <b>Pamäťko</b>. O slonoch sa hovorí, že nikdy nezabudnú, a ja nezabudnem ani na jednu fotku. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: vyberieš správnu aplikáciu, upraceš galériu, preskúmaš, ako triedi počítač, odhalíš klamárov podľa metaúdajov, zachrániš fotky pred nehodami a upravíš fotky v mini editore. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
+      <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
+      <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
+      <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Pri známke 1 alebo 2 je domáca úloha hotová, pri známke 3, 4 alebo 5 máš ešte <b>jednu opravu</b>.</div></div>`;
+  },
+  m1() {
+    return banner(1, "Na každú prácu s fotkami sa hodí iná aplikácia. Vyber tú správnu a vyskúšaj vyhľadávanie podľa obsahu.") +
+    say(`Ahoj, som slon <b>Pamäťko</b>! 🐘 V mobile mám tisíce fotiek. Bez dobrých aplikácií by som v nich nič nenašiel. Poďme zistiť, ktorá aplikácia na čo slúži.`) +
+    `<div class="theory tsplit"><div>
+      <p>Aplikácie na prácu s obrázkami delíme do troch skupín:</p>
+      <table class="rtab"><thead><tr><th>Skupina</th><th>Na čo slúži</th><th>Príklady</th></tr></thead><tbody>
+        <tr><td><b>prehliadač</b> a správa</td><td>prezeranie, triedenie, vyhľadávanie, jednoduché úpravy, hromadné operácie</td><td>Fotografie (Windows), Google Fotky, IrfanView, XnView</td></tr>
+        <tr><td><b>editor</b></td><td>poriadna úprava: nástroje, štetce, <b>vrstvy</b>, filtre</td><td>GIMP, Paint.NET, Photopea, Photoshop, Canva</td></tr>
+        <tr><td><b>záloha</b> a zdieľanie</td><td>kópia mimo zariadenia, synchronizácia, poslanie odkazu</td><td>OneDrive, Google Disk, iCloud</td></tr></tbody></table>
+      <p><b>Vrstvy</b> sú ako priehľadné fólie položené na sebe: na každej môže byť iná časť obrázka a upravuješ ich zvlášť.</p>
+      <p>Moderné prehliadače hľadajú fotky aj podľa <b>obsahu</b> (more, auto, hory) a podľa <b>tvárí</b>. Fotky radia na <b>časovej osi</b> podľa dátumu vzniku a vlastné výbery fotiek ukladajú do <b>albumov</b>.</p>
+      ${VEDEL("Program Photoshop začal v roku 1987 písať študent Thomas Knoll so svojím bratom Johnom. Predávať sa začal v roku <b>1990</b> a dnes sa podľa neho úprave fotiek hovorí aj „fotošopovanie“.")}
+    </div><div class="tfigs">${FIG_KINDS}${FIG_SEARCH}</div></div>
+    ${H3(1, "🧰", "ktorá aplikácia na čo?", "apps")}<div class="task">${sortHTML(TASKS.apps)}</div>
+    ${H3(2, "🔍", "hľadaj psa", "srch")}<div class="task">${srchHTML()}</div>` + nextBar();
+  },
+  m2() {
+    return banner(2, "Galéria plná fotiek s menami IMG_… Uprac ju do priečinkov a priečinky dobre pomenuj.") +
+    say(`Fotky z mobilu majú mená, z ktorých nič nevyčítaš. 🗂️ Upraceme ich do priečinkov podľa udalostí. Pozor: rozhoduj podľa <b>informácií o fotke</b>, obrázok môže pomýliť!`) +
+    `<div class="theory tsplit"><div>
+      <p>Mobil dáva fotkám mená ako <code>IMG_5521.jpg</code>. Keď ich máš tisíce, potrebuješ <b>poriadok</b>.</p>
+      <p>Najlepšie je triediť fotky do <b>priečinkov podľa udalostí</b>: jeden výlet, jedny Vianoce, jeden tábor. Do mena priečinka patrí:</p>
+      <table class="rtab"><thead><tr><th>Časť mena</th><th>Prečo</th></tr></thead><tbody>
+        <tr><td><b>dátum</b> (rok-mesiac)</td><td>priečinky sa samy zoradia podľa času</td></tr>
+        <tr><td><b>udalosť</b></td><td>hneď vidno, čo je v priečinku</td></tr></tbody></table>
+      <p>Kedy a kde fotka vznikla, ukazujú <b>metaúdaje</b>. V aplikácii Fotky ich nájdeš v <b>Informáciách</b> o fotke. Samotný obrázok môže pomýliť: sneh je aj na Vianoce doma, aj na horách.</p>
+      ${VEDEL("Priečinok <b>DCIM</b> (Digital Camera Images) nájdeš takmer v každom mobile aj fotoaparáte. Určuje ho norma DCF, vďaka ktorej každý počítač vie, kde fotky hľadať.")}
+    </div><div class="tfigs">${FIG_TREE}${FIG_INFO}</div></div>
+    ${H3(3, "🗂️", "uprac galériu", "gal")}<div class="task">${galHTML()}</div>
+    ${H3(4, "🏷️", "pomenuj priečinky", "fold")}<div class="task">${foldHTML()}</div>` + nextBar();
+  },
+  m3() {
+    return banner(3, "Počítač triedi mená po svojom. Zisti ako a premenuj veľa fotiek naraz.") +
+    say(`Počítač nečíta mená tak ako ty. 🔤 Porovnáva ich <b>znak po znaku</b>. Vyskúšaj si, čo z toho vyjde, a potom premenuj celý výlet jedným kliknutím.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>Mnohé programy, cloudové úložiská aj web triedia mená <b>znak po znaku</b> zľava. Porovnajú prvý znak. Ak je rovnaký, porovnajú druhý, potom tretí… Číslice sú pred písmenami.</p>
+      <p>Preto záleží na tom, <b>ako zapíšeš dátum</b>. Tvar <b>rok-mesiac-deň</b> (napríklad 2025-02-12) sa podľa mena zoradí rovnako ako podľa času.</p>
+      <p><b>Hromadné premenovanie</b> zmení mená mnohých súborov naraz podľa <b>vzoru</b>. Vzor poskladáš z častí:</p>
+      <table class="rtab"><thead><tr><th>Časť</th><th>Čo do mena doplní</th></tr></thead><tbody>
+        <tr><td>📅 dátum</td><td>dátum vzniku z metaúdajov</td></tr><tr><td>✏️ text</td><td>slovo, ktoré napíšeš (napr. miesto)</td></tr>
+        <tr><td>🔢 počítadlo</td><td>poradové číslo súboru</td></tr><tr><td>🏷️ pôvodné meno</td><td>doterajšie meno súboru</td></tr></tbody></table>
+      <p>Vie to aplikácia Fotografie, IrfanView, XnView aj Prieskumník vo Windows.</p>
+          </div><div class="tfigs">${FIG_ABC}${FIG_REN}${VEDEL("Mnohé mobily s Androidom dávajú fotkám mená ako <code>IMG_20260120_143512.jpg</code>. V mene je dátum a čas v poradí rok, mesiac, deň, hodina, minúta, sekunda.")}</div></div>
+    ${H3(5, "🔤", "ako zoradí cloud?", "zor")}<div class="task">${zorHTML()}</div>
+    ${H3(6, "✏️", "hromadné premenovanie", "ren")}<div class="task">${renHTML()}</div>
+    ${H3(7, "🧪", "pokus s nulami", "zq")}<div class="task">${zeroHTML()}</div>` + nextBar();
+  },
+  m4() {
+    return banner(4, "Metaúdaje prezradia, kedy, čím a kde fotka vznikla. Použi ich ako detektív a chráň svoje súkromie.") +
+    say(`Pst! 🕵️ Fotky v sebe nosia ukryté stopy. Pomôžu ti odhaliť, kto si vymýšľa. Ale pozor, rovnaké stopy môžu prezradiť aj niečo o tebe.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p><b>Metaúdaje EXIF</b> zapíše mobil alebo fotoaparát do súboru spolu s obrazom. Na samotnej fotke ich nevidno.</p>
+      <table class="rtab"><thead><tr><th>Údaj</th><th>Čo prezradí</th></tr></thead><tbody>
+        <tr><td>📅 dátum a čas</td><td><b>kedy</b> fotka vznikla</td></tr>
+        <tr><td>📱 zariadenie</td><td><b>čím</b> ju odfotili (značka a model)</td></tr>
+        <tr><td>📍 GPS poloha</td><td><b>kde</b> vznikla, ak bola zapnutá poloha</td></tr>
+        <tr><td>⚙️ nastavenia</td><td>clona, čas, ISO, rozlíšenie</td></tr></tbody></table>
+      <p>Metaúdaje môžeš <b>odstrániť</b>: vo Windows cez Vlastnosti → Podrobnosti → <b>Odstrániť vlastnosti a osobné údaje</b>. V mobile vieš ukladanie polohy vypnúť v nastaveniach fotoaparátu.</p>
+      <p>Pozor, metaúdaje sa dajú aj <b>zmeniť</b>. Sú dobrá stopa, ale nie stopercentný dôkaz.</p>
+      ${VEDEL("Keď fotku pošleš cez WhatsApp ako obrázok, metaúdaje sa zvyčajne odstránia. Ak ju však pošleš ako <b>dokument</b> (súbor), prídu aj s polohou.")}
+    </div><div class="tfigs">${FIG_CAM}${FIG_EXIF}</div></div>
+    ${H3(8, "🕵️", "kto hovorí pravdu?", "kto")}<div class="task">${ktoHTML()}</div>
+    ${H3(9, "🧹", "kópia bez polohy", "kop")}<div class="task">${kopHTML()}</div>
+    ${H3(10, "🏠", "čo prezradí obraz?", "pic")}<div class="task">${mcHTML(TASKS.pic)}</div>` + nextBar();
+  },
+  m5() {
+    return banner(5, "Mobil sa môže stratiť, disk pokaziť a dom vyhorieť. Fotky prežijú iba so správnymi zálohami.") +
+    say(`Slon nezabudne, ale disk áno! 🛟 Navrhni zálohy podľa pravidla <b>3-2-1</b> a potom zisti, komu sa fotky po nehode stratia.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Archivácia</b> je dlhodobé uloženie fotiek tak, aby sa dali nájsť a nestratili sa. Základom je <b>záloha</b>, teda ďalšia kópia na inom mieste.</p>
+      <table class="rtab"><thead><tr><th>Pravidlo</th><th>Význam</th></tr></thead><tbody>
+        <tr><td class="c"><b>3</b></td><td>kópie fotiek (originál + 2 zálohy)</td></tr>
+        <tr><td class="c"><b>2</b></td><td>rôzne médiá (napr. počítač a externý disk)</td></tr>
+        <tr><td class="c"><b>1</b></td><td>kópia mimo domu (napr. cloud)</td></tr></tbody></table>
+      <table class="rtab"><thead><tr><th>Médium</th><th>+</th><th>−</th></tr></thead><tbody>
+        <tr><td>USB kľúč</td><td>malý, lacný</td><td>ľahko sa stratí</td></tr>
+        <tr><td>externý disk</td><td>veľa miesta</td><td>býva doma</td></tr>
+        <tr><td>cloud</td><td>mimo domu, automaticky</td><td>treba internet</td></tr></tbody></table>
+      <p>Zálohuj <b>pravidelne</b>, najlepšie <b>automaticky</b>, a zálohy občas skontroluj.</p>
+    </div><div class="tfigs">${FIG_RULE}${FIG_THREAT}</div></div>
+    ${VEDEL("Cloudové služby ukladajú každý tvoj súbor naraz na <b>viacero diskov</b>, často v rôznych dátových centrách. Porucha jedného disku tak súbor nezničí.")}
+    ${H3(11, "📝", "plán záloh", "plan")}<div class="task">${planHTML()}</div>
+    ${H3(12, "🧯", "prežijú fotky?", "kat")}<div class="task">${katHTML()}</div>` + nextBar();
+  },
+  m6() {
+    return banner(6, "Otoč, orež, zosvetli a ulož. Vyskúšaj si základné úpravy fotky v mini editore.") +
+    say(`Posledná misia! 🎨 Otvoril som pre teba mini editor. Uprav v ňom dve fotky podľa zadania a nezabudni, ako ich uložiť.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>Základné úpravy vie každý editor aj aplikácia Fotky v počítači či v mobile:</p>
+      <table class="rtab"><thead><tr><th>Úprava</th><th>Čo urobí</th></tr></thead><tbody>
+        <tr><td>↻ <b>otočenie</b></td><td>otočí fotku o 90° doľava alebo doprava</td></tr>
+        <tr><td>✂️ <b>orezanie</b></td><td>odstráni okraje, <b>pomer strán</b> určí tvar výsledku</td></tr>
+        <tr><td>☀️ <b>jas</b></td><td>zosvetlí alebo stmaví celú fotku</td></tr>
+        <tr><td>🌗 <b>kontrast</b></td><td>zväčší rozdiel medzi svetlými a tmavými miestami</td></tr>
+        <tr><td>🎨 <b>filter</b></td><td>zmení farby celej fotky naraz (napr. čiernobiela)</td></tr></tbody></table>
+      <p>Pozor pri ukladaní: <b>Uložiť</b> prepíše pôvodný súbor, <b>Uložiť ako kópiu</b> (alebo Uložiť ako) vytvorí nový súbor a originál ostane.</p>
+      <p>Pri prílišnom zosvetlení sa svetlé miesta „prepália“ do bielej a detaily v nich zmiznú.</p>
+          </div><div class="tfigs">${FIG_RATIO}${FIG_TOOLS}${VEDEL("Pomer strán <b>16:9</b> majú takmer všetky dnešné televízory a monitory. Fotky z mobilu mávajú najčastejšie pomer <b>4:3</b>.")}</div></div>
+    ${H3(13, "🖼️", "profilovka do EduPage", "prof")}<div class="task">${edHTML("prof")}</div>
+    ${H3(14, "☀️", "tmavá fotka", "tma")}<div class="task">${edHTML("tma")}</div>
+    ${H3(15, "✂️", "záverečná otázka", "fin")}<div class="task">${mcHTML(TASKS.fin)}</div>` + nextBar();
+  },
+  vysledok() {
+    if (!S.finished && !allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i)).map(([s, i]) => [s, i, STEP_TASKS[s.id].filter(t => !S.t[t]).length]);
+      const left = Object.keys(TASKS).filter(k => !S.t[k]).length;
+      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú tieto misie (kliknutím sa do nich vrátiš):</p><div class="row" style="margin-top:0">${miss.map(([s, i, n]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} <span class="muted">· ${n} ${n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh"}</span></button>`).join("")}</div>
+        ${S.confirmEarly ? `<div class="vedel" style="margin-top:18px"><b>⚠️ Naozaj chceš domácu úlohu ukončiť?</b> Nedokončených úloh: <b>${left}</b>. Rozpracované úlohy sa vyhodnotia podľa toho, čo si v nich vybral, nedotknuté dostanú 0 ⭐. Potom sa už nič nedá zmeniť.<div class="row"><button class="primary" data-earlyyes style="background:#C0392B">Áno, odoslať</button><button class="ghost" data-earlyno>Späť k úlohám</button></div></div>`
+        : `<div class="row" style="margin-top:18px"><button class="primary" data-early>🏁 Ukončiť a odoslať výsledok</button><span class="muted" style="font-size:14.5px">Ak už nechceš pokračovať, môžeš domácu úlohu ukončiť aj teraz.</span></div>`}</div>`; }
+    if (!S.finished) { S.finished = Date.now(); save(); }
+    const gr = gradeOf(total(), MAX);
+    try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: S.name, cls: S.cls, score: total(), max: MAX, at: S.finished, grade: gr, attempts: S.attempt || 1 })); } catch (e) {}
+    const pct = Math.round(total() / MAX * 100), g = gr;
+    return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Výborne! Vieš vybrať aplikáciu, upratať fotky, ustrážiť metaúdaje aj zálohovať podľa pravidla 3-2-1. 🐘📸" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil, a doma si uprac aspoň jeden priečinok s fotkami. 🐘", "wow")}
+      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + (S.t[t] ? S.t[t].score : 0), 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <div class="row">${sendResults()}</div>
+      ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
+      ${(S.attempt || 1) === 1 && g >= 3 ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš ešte jednu opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu vypracovať ešte raz. Najprv si pozri vysvetlenia pri úlohách, kde si sa pomýlil. Oprava je posledný pokus.<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>` : ""}
+      ${(S.attempt || 1) === 2 ? `<p class="muted" style="margin-top:12px">Toto bola oprava, ďalší pokus už nie je možný.</p>` : ""}</div>`;
+  }
+};
+
+/* čas vypracovania (DOMACA): pripíše sa k bodom */
+function durTxt() { if (!S.started || !S.finished) return ""; let t = Math.max(0, Math.round((S.finished - S.started) / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+  return " · " + (h ? h + " h " + m + " min" : m ? m + " min " + s + " s" : s + " s"); }
+function sendResults() {
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.early ? " (nedokončené)" : "") + ((S.attempt || 1) === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)` + durTxt()); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished, S.attempt].join("|");
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Pripoj sa na internet a obnov stránku, výsledok sa odošle znova.", "#B3261E"); }); }
+  return `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
+}
+/* záznam o odovzdaní */
+function doneRec() { try { let r = localStorage.getItem(DONE_KEY); if (r) return JSON.parse(r);
+    for (const k of OLD_DONE_KEYS) { r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); o.grade = o.grade || gradeOf(o.score, o.max || MAX); o.attempts = Math.min(o.attempts || 1, 1); o.old = true; return o; } } } catch (e) {} return null; }
+function lockedDone() { if (S.finished) return null; const r = doneRec(); if (!r) return null; if ((S.attempt || 1) === 2 && (r.attempts || 1) < 2) return null; return r; }
+function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const can = (L.grade || gradeOf(L.score, L.max || MAX)) >= 3 && (L.attempts || 1) < 2;
+    document.getElementById("main").innerHTML = can ? `<div class="result"><h2>🔁 Oprava domácej úlohy</h2>${say(`${esc(L.name)} (${esc(L.cls)}), v prvom pokuse si získal/a <b>${L.score} z ${L.max || MAX} ⭐</b> (známka ${L.grade}). Máš ešte <b>jednu opravu</b>. Je to posledný pokus.`)}<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>`
+      : `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${L.score} z ${L.max || MAX} ⭐</b>. Opakovať ju nie je možné.`)}</div>`; return; }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); typo(m); typo(document.getElementById("top"));
+  window.scrollTo({ top: scroll ? 0 : y }); }
+
+function scoreOf(id) {
+  const TK = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (TK.type === "mc") sc = TK.qs.filter(q => d[q.id] === q.a).length;
+  if (TK.type === "sort") sc = Math.floor(TK.items.filter(x => d[x.id] === x.a).length / 2);
+  if (TK.type === "srch") sc = Math.floor(SRCH.filter(x => (d[x.id] ? 1 : 0) === x.a).length / 4);
+  if (TK.type === "gal") sc = Math.floor(GPH.filter(x => d[x.id] === x.a).length / 4);
+  if (TK.type === "fold") sc = FEV.filter(ev => d[ev.id + "D"] === 0 && d[ev.id + "N"] === 0).length;
+  if (TK.type === "zor") { const s = S.d.zor || []; sc = Math.floor(s.filter((i, k) => +i === k).length / 2); }
+  if (TK.type === "ren") { const ap = d.ap || []; sc = (ap[0] === "dat" ? 1 : 0) + (ap.includes("mie") && ap.includes("poc") && !ap.includes("org") ? 1 : 0); }
+  if (TK.type === "kto") sc = CL.filter(c => d[c.id] === c.a).length;
+  if (TK.type === "kop") sc = d.c === "copy" ? 1 : 0;
+  if (TK.type === "plan") sc = PL.filter(f => { const s = d[f.id] || []; return s.length === 2 && f.a.every(x => s.includes(x)); }).length;
+  if (TK.type === "kat") sc = Math.floor(KAT.filter(k => d[k.id] === k.a).length / 2);
+  if (TK.type === "ed" && id === "prof") { const r = ((SCN.prof.init + (d.r || 0)) % 360 + 360) % 360; sc = (d.t && r === 0 ? 1 : 0) + (d.c === "1:1" ? 1 : 0); }
+  if (TK.type === "ed" && id === "tma") { const v = d.v || 0; sc = (d.vt && v >= 25 && v <= 50 ? 1 : 0) + (d.s === "copy" ? 1 : 0); }
+  return Math.min(sc, maxOf(TK));
+}
+function check(id) { if (id === "kop") { S.kdlg = false; S.ksel = null; } award(id, scoreOf(id)); save(); render(false); }
+
+/* predčasné ukončenie: rozpracované úlohy sa vyhodnotia podľa výberu, nedotknuté = 0 */
+function finishEarly() { Object.keys(TASKS).forEach(id => { if (!S.t[id]) award(id, scoreOf(id)); }); S.cvd = null; S.early = true; S.confirmEarly = false; S.finished = Date.now(); }
+const gradeOf = (sc, mx) => { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; };
+function startRetry(rec) { const n = (rec && rec.name) || S.name, c = (rec && rec.cls) || S.cls; S = fresh(); S.name = n; S.cls = c; S.attempt = 2; save(); render(true); }
+const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
+const upd = () => { save(); render(false); };
+document.addEventListener("click", e => {
+  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
+  if (ds.cls) { S.cls = ds.cls; return upd(); }
+  if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
+  if (ds.check) { check(ds.check); return; }
+  if (ds.early !== undefined) { S.confirmEarly = true; return upd(); }
+  if (ds.earlyno !== undefined) { S.confirmEarly = false; return upd(); }
+  if (ds.earlyyes !== undefined) { finishEarly(); save(); render(true); return; }
+  if (ds.retry !== undefined) { const r = S.finished ? { name: S.name, cls: S.cls } : doneRec(); startRetry(r); return; }
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; setD(t, q, +i); return upd(); }
+  if (ds.sti) { const [t, id] = ds.sti.split("|"); if (S.t[t]) return; S.sel[t] = S.sel[t] === id ? null : id; return upd(); }
+  if (ds.stb) { const [t, b] = ds.stb.split("|"); if (S.t[t] || !S.sel[t]) return; setD(t, S.sel[t], b); S.sel[t] = null; return upd(); }
+  if (ds.sr) { if (S.t.srch) return; const d = S.d.srch = S.d.srch || {}; d[ds.sr] = !d[ds.sr]; return upd(); }
+  if (ds.fd) { const [ev, k, i] = ds.fd.split("|"); if (S.t.fold) return; setD("fold", ev + k, +i); return upd(); }
+  if (ds.zo !== undefined) { if (S.t.zor) return; const s = S.d.zor = S.d.zor || []; if (!s.includes(ds.zo) && s.length < 5) s.push(ds.zo); return upd(); }
+  if (ds.zu !== undefined) { if (S.t.zor) return; S.d.zor = (S.d.zor || []).filter(x => x !== ds.zu); return upd(); }
+  if (ds.rt) { if (S.t.ren) return; const d = S.d.ren = S.d.ren || {}; d.p = d.p || []; if (!d.p.includes(ds.rt) && d.p.length < 4) d.p.push(ds.rt); return upd(); }
+  if (ds.rbk !== undefined) { if (S.t.ren) return; const d = S.d.ren = S.d.ren || {}; d.p = (d.p || []).slice(0, -1); return upd(); }
+  if (ds.rcl !== undefined) { if (S.t.ren) return; const d = S.d.ren = S.d.ren || {}; d.p = []; return upd(); }
+  if (ds.rap !== undefined) { if (S.t.ren) return; const d = S.d.ren = S.d.ren || {}; if (d.p && d.p.length) d.ap = d.p.slice(); return upd(); }
+  if (ds.zp) { const d = S.d.zp = S.d.zp || {}; d.m = ds.zp; if (ds.zp === "1") d.s1 = 1; else d.s2 = 1; return upd(); }
+  if (ds.ko) { if (S.t.kto) return; S.zz["k" + ds.ko] = !S.zz["k" + ds.ko]; return upd(); }
+  if (ds.kt) { const [c, v] = ds.kt.split("|"); if (S.t.kto) return; setD("kto", c, v); return upd(); }
+  if (ds.kopen !== undefined) { if (S.t.kop) return; S.kdlg = true; S.ksel = (S.d.kop || {}).c || null; return upd(); }
+  if (ds.ksel) { if (S.t.kop) return; S.ksel = ds.ksel; return upd(); }
+  if (ds.kok !== undefined) { if (S.t.kop || !S.ksel) return; setD("kop", "c", S.ksel); S.kdlg = false; S.ksel = null; return upd(); }
+  if (ds.kcl !== undefined) { S.kdlg = false; S.ksel = null; return upd(); }
+  if (ds.pl) { const [f, i] = ds.pl.split("|"); if (S.t.plan) return; const d = S.d.plan = S.d.plan || {}, s = d[f] = d[f] || [], k = s.indexOf(+i); if (k >= 0) s.splice(k, 1); else if (s.length < 2) s.push(+i); return upd(); }
+  if (ds.kd) { const [k, v] = ds.kd.split("|"); if (S.t.kat) return; setD("kat", k, v); return upd(); }
+  if (ds.er) { const [id, a] = ds.er.split("|"); if (S.t[id]) return; const d = S.d[id] = S.d[id] || {}; d.r = ((d.r || 0) + +a + 360) % 360; d.t = 1; return upd(); }
+  if (ds.ec) { const [id, c] = ds.ec.split("|"); if (S.t[id]) return; const d = S.d[id] = S.d[id] || {}; d.c = c; d.t = 1; return upd(); }
+  if (ds.es) { const [id, s] = ds.es.split("|"); if (S.t[id]) return; setD(id, "s", s); return upd(); }
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.ebr) { const id = t.dataset.ebr; if (S.t[id]) return; const d = S.d[id] = S.d[id] || {}; d.v = +t.value; d.vt = 1; save();
+    const v = document.getElementById("edv-" + id); if (v) v.innerHTML = edView(id); const b = document.getElementById("ebv-" + id); if (b) b.textContent = (d.v > 0 ? "+" : "") + d.v; return; }
+  const f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
+});
+document.addEventListener("change", e => { if (e.target.dataset && e.target.dataset.ebr) render(false); });
+render(false);
+
+</script></body></html>
