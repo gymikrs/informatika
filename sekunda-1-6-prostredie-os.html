@@ -706,7 +706,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&a
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
 const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
-function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, testLocked: false, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
 function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
@@ -730,7 +730,7 @@ function renderTop() {
   <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
     <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
     <button class="reset" data-reset>↺ Začať odznova</button></div>
-  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => { const testI = STEPS.findIndex(x => x.id === "test"), lockedBack = S.testLocked && i < testI; return `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${(!S.started && i > 0) || lockedBack ? "disabled" : ""} ${lockedBack ? 'title="Po vstupe do záverečného testu sú predchádzajúce zastávky uzamknuté."' : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`; }).join("")}</nav>`;
 }
 function checkBar(T, ready, hint) {
   const r = S.t[T.id];
@@ -822,9 +822,7 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
-  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
-  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+  <div class="row">${formBtn}</div>`;
 };
 
 const main = document.getElementById("main");
@@ -838,7 +836,13 @@ function render(toTop) {
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
-function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function go(i) {
+  if (!S.started && i > 0) return;
+  const testI = STEPS.findIndex(x => x.id === "test");
+  if (S.testLocked && i < testI) return;
+  if (i >= testI) S.testLocked = true;
+  S.cur = i; SEL = null; save(); render(true);
+}
 function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
 
 let resetArmed = null;
