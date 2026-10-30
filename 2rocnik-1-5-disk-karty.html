@@ -221,6 +221,11 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
 .tfig svg{width:100%;height:auto;display:block}
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
+
+/* LENKA: minimum prazdneho miesta a kontrola mobilu 390 px */
+.theory>:first-child{margin-top:0}.theory>:last-child{margin-bottom:0}.theory,.task,.fig,.lab,.cpu{max-width:100%;overflow:hidden}
+@media (min-width:861px){.tsplit{align-items:stretch}.tsplit>div{min-width:0;display:flex;flex-direction:column}.tsplit>div:last-child{justify-content:center}.tsplit>div:last-child>.tfig,.tsplit>div:last-child>figure{margin:0;flex:1;display:flex;flex-direction:column;justify-content:center}.tsplit>div:last-child svg{width:100%;height:auto;max-height:100%}}
+@media (max-width:390px){body{font-size:16px}.topbar,.line,main{padding-left:12px;padding-right:12px}main{padding-top:18px}.task,.theory,.fig,.side,.result,.memo{padding:14px}.opts,.buckets,.cards,.two,.lab,.cpu,.demo,.gal,.tfigs{grid-template-columns:1fr!important}.iqa{padding-left:0}.next{margin-top:24px}.next .primary{width:100%}.grade{margin-left:0}.tbl-wrap,.cmp,.frag,.uefi,.boardwrap,.portwrap{max-width:100%;overflow-x:auto}.boardwrap svg,.portwrap svg{min-width:620px}.uefi{font-size:12px}.ubody{grid-template-columns:1fr}.uhelp{border-left:0;border-top:2px solid #0B1D4E}.stage{flex-wrap:wrap}.stage span{min-width:100px}.regs{gap:5px}.reg{min-width:56px;padding:6px 8px}.gal .gi.w2{grid-column:span 1}.row button{max-width:100%}.big .n{font-size:44px}.side{position:static}.slot{align-items:flex-start}.slot .n{flex-basis:30px}}
 </style>
 </head>
 <body>
@@ -639,7 +644,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&a
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
 const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
-function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, testLocked: false, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
 function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
@@ -663,7 +668,7 @@ function renderTop() {
   <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
     <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
     <button class="reset" data-reset>↺ Začať odznova</button></div>
-  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+  <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => { const testI = STEPS.findIndex(x => x.id === "test"), lockedBack = S.testLocked && i < testI; return `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${(!S.started && i > 0) || lockedBack ? "disabled" : ""} ${lockedBack ? 'title="Po vstupe do záverečného testu sú predchádzajúce zastávky uzamknuté."' : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`; }).join("")}</nav>`;
 }
 function checkBar(T, ready, hint) {
   const r = S.t[T.id];
@@ -755,9 +760,7 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
-  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
-  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+  <div class="row">${formBtn}</div>`;
 };
 
 const main = document.getElementById("main");
@@ -771,7 +774,13 @@ function render(toTop) {
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
-function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function go(i) {
+  if (!S.started && i > 0) return;
+  const testI = STEPS.findIndex(x => x.id === "test");
+  if (S.testLocked && i < testI) return;
+  if (i >= testI) S.testLocked = true;
+  S.cur = i; SEL = null; save(); render(true);
+}
 function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
 
 let resetArmed = null;
