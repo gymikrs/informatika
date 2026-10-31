@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DU_5.1 Tabuľkový kalkulátor, bunka, hárok, vzorce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;
+  --acc:#2F5BEA;--accSoft:#D5DFFB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#C9D1DF;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D6DCE6;
+  --font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}}
+:root[data-theme="dark"]{--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .du{background:#F2A516;color:#3A2600;border-radius:7px;padding:1px 8px;font-size:14px;font-weight:800}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:35px;height:35px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:16px;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff;font-size:14px;font-weight:700}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.18);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:21px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+.ban{position:relative;overflow:hidden;border-radius:22px;padding:20px 22px 18px;color:#fff;margin:0 0 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;box-shadow:0 14px 30px -18px rgba(10,20,60,.6)}
+.ban .pill{display:inline-block;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 12px;font-size:13.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ban h2{color:#fff;margin:8px 0 4px}
+.ban p{margin:0;font-size:16px;opacity:.95}
+.ban .big{font-size:64px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.ban::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+@media (max-width:560px){.ban .big{font-size:44px}}
+.say{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:end;margin:6px 0 18px}
+.say svg{width:92px;height:92px}
+.bubble{position:relative;background:var(--surface);border:2px solid var(--acc);border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:16.5px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:0 0 12px}
+.tsplit>div{min-width:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.tfigs{display:grid;gap:12px}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E4A66;text-align:center;padding:0 4px}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab td.c{text-align:center}
+.rtab td:first-child{overflow-wrap:normal;white-space:nowrap}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.93em}
+code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.ghost.sm{padding:4px 10px;font-size:14px;border-radius:9px}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:30px;padding-top:20px;border-top:1px dashed var(--track);display:flex;justify-content:flex-end}
+.q{border:0;padding:0;margin:0 0 22px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opts.pics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.pics .opt{padding:8px}
+.opt svg{width:100%;height:auto;display:block;background:#fff;border-radius:8px;border:1px solid #E3E8EF}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px}
+.why.good{background:var(--okSoft)}.why.miss{background:var(--badSoft)}
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px}
+@media (max-width:800px){.hero{grid-template-columns:1fr}}
+.hero svg{width:100%;height:auto;display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.mcard{border-radius:14px;padding:10px 12px;color:#fff;font-weight:600;font-size:15px}
+.mcard small{display:block;font-weight:400;opacity:.9}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{width:100%;max-width:380px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px}
+.bign{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.bign .n{font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.bign .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
+table.res{border-collapse:collapse;width:100%;font-size:15.5px}
+table.res td,table.res th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+table.res td:last-child,table.res th:last-child{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.muted{color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .opt{padding:6px 12px;font-size:14.5px;border-radius:999px}
+.tnum{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;margin-right:6px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.fc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px 14px;position:relative;min-width:0}
+.fc.okc{border-color:var(--ok);background:var(--okSoft)}.fc.badc{border-color:var(--bad);background:var(--badSoft)}
+.fc .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}
+.fc .hd .e{font-size:28px;line-height:1}
+/* triedenie */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px;text-align:left}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.chip.ok{border-color:var(--ok);background:var(--okSoft)}.chip.bad{border-color:var(--bad);background:var(--badSoft)}
+.chip:disabled{cursor:default;color:var(--ink)}
+.bins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.bins{grid-template-columns:1fr}}
+.bin{border:2px solid var(--border);border-radius:16px;padding:10px;min-height:120px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bin .bh{width:100%;text-align:center;font-weight:700;border-radius:10px;padding:6px;cursor:pointer;border:0;font-size:15px}
+.bin .bh:disabled{cursor:default}
+/* komiks */
+.comic{display:grid;grid-template-columns:1fr;gap:14px}
+.panel:not(.choice){max-width:560px}.panel.c{justify-self:center}
+.panel{background:#FFFDF5;border:3px solid #16213A;border-radius:6px;padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;color:#16213A;box-shadow:4px 4px 0 #16213A;min-width:0}
+.panel svg{width:76px;height:76px}
+.panel .bub{background:#fff;border:2px solid #16213A;border-radius:14px;padding:8px 12px;font-size:15.5px;position:relative;min-width:0}
+.panel .nm{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#566381;margin-bottom:2px}
+.panel.choice{grid-column:1/-1;background:#EEF4FF}
+.panel .opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel .opt{background:#fff;color:#16213A}
+.panel .opt.sel{background:#E6EDFD}
+.panel .opt.ok{background:#DDF3EA}.panel .opt.bad{background:#FBE3E0}
+.panel .why{color:#16213A}
+@media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
+/* okná */
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14.5px;min-width:0}
+.wt{background:#E9EDF3;padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:13.5px;border-bottom:1px solid #D5DCE6;color:#1B1B1F;min-width:0}
+.wt .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .dots{margin-left:auto;color:#666;letter-spacing:6px;flex:0 0 auto}
+.fwin{max-width:640px}
+.frow{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #EEF1F5;font-size:14.5px;color:#1B1B1F}
+.frow.new{background:#F1FAF5}
+.frow .nm{font-family:var(--mono);overflow-wrap:anywhere}
+.frow .ds{color:#566381;font-size:13px;text-align:right;white-space:nowrap}
+.frow .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA}
+.dlgbox{background:#fff;color:#1B1B1F;border:1px solid #9FB0C8;border-radius:10px;box-shadow:0 14px 30px rgba(0,0,0,.25);padding:14px 16px;margin:12px 0;max-width:520px}
+.dlgbox h5{margin:0 0 8px;font-size:15px}
+.dlgbox .opt{color:#1B1B1F;background:#F5F7FA;border-color:#C9D0DA}
+.dlgbox .opt.sel{background:#D5DFFB;border-color:#2F5BEA}
+.dlgbox .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA;padding:6px 14px}
+/* lupa */
+.zgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.zview{position:relative;width:150px;height:150px;overflow:hidden;border:1px solid #C9D1DF;border-radius:10px;background:#fff;margin:0 auto}
+.zview img,.zview svg{display:block}
+.zb{justify-content:center;margin-top:8px;gap:6px}
+.zb .ghost{padding:4px 10px;font-size:14px}
+/* RLE */
+.pxrow{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.px{width:34px;height:34px;border:2px solid #9AA6B8;border-radius:6px;cursor:pointer;padding:0;font-weight:700;color:#566381}
+.px:disabled{cursor:default}
+.px.okc{box-shadow:0 0 0 3px var(--ok)}.px.badc{box-shadow:0 0 0 3px var(--bad)}
+.sw{display:inline-block;width:16px;height:16px;border:1.5px solid #9AA6B8;border-radius:3px;vertical-align:-3px;margin:0 4px 0 2px}
+.runs{font-family:var(--mono);font-size:16px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:10px;padding:8px 12px;min-height:44px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.lpart{border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;margin:12px 0;background:var(--surface)}
+.lh{font-weight:600;margin-bottom:8px}
+.ldet{overflow:hidden;height:180px;max-width:480px;border:1px solid var(--border);border-radius:10px;margin:10px 0 6px;position:relative;background:#fff}
+.ldet img{position:absolute;width:960px;height:600px;max-width:none;left:-200px;top:-120px;image-rendering:crisp-edges;image-rendering:pixelated}
+.imgs{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:640px){.imgs{grid-template-columns:1fr}}
+.imgs img{width:100%;max-width:320px;border-radius:8px;display:block;border:1px solid var(--border)}
+/* plagát a animácia */
+.scene svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--border)}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.75)}}
+.blink{animation:blink 1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.fslots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:520px}
+@media (max-width:520px){.fslots{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fslot{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fslot .n{font-weight:700;color:var(--acc);font-size:14px}
+.frm{padding:4px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;width:100%;max-width:110px;aspect-ratio:1}
+.frm svg{width:100%;height:100%;display:block}
+.frm.empty{border-style:dashed;cursor:default;display:grid;place-items:center;color:var(--muted);font-size:13px;background:var(--surface2)}
+.frm.ok{border-color:var(--ok);box-shadow:0 0 0 3px var(--okSoft)}.frm.bad{border-color:var(--bad);box-shadow:0 0 0 3px var(--badSoft)}
+.frm:disabled{cursor:default}
+.anim{position:relative;width:140px;height:140px;border:3px solid var(--acc);border-radius:14px;background:#fff;overflow:hidden;flex:0 0 auto}
+.anim svg{position:absolute;inset:0;width:100%;height:100%;opacity:0;animation:fr 2s step-end infinite}
+@keyframes fr{0%,24.9%{opacity:1}25%,100%{opacity:0}}
+/* EXIF */
+.exg{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:14px;align-items:start}
+@media (max-width:760px){.exg{grid-template-columns:1fr}}
+.xr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #EEF1F5;background:#fff;padding:8px 12px;cursor:pointer;font-size:14.5px;color:#1B1B1F}
+.xr .k{color:#566381}
+.xr:hover:not(:disabled){background:#FFF6DB}
+.xr.on{background:#FDE3A7}.xr.ok{background:#DDF3EA}.xr.bad{background:#FBE3E0}.xr.miss{box-shadow:inset 5px 0 0 #C0392B;background:#FFF0EE}
+.xr:disabled{cursor:default}
+/* DU 2.4 – doplnky */
+.bins.b3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:860px){.bins.b3{grid-template-columns:1fr}}
+.fnm{font-family:var(--mono);font-size:12.5px;color:#566381;overflow-wrap:anywhere}
+.sbar{background:#fff;border:1.5px solid #C9C9C9;border-radius:999px;padding:6px 16px;margin-bottom:12px;max-width:320px;color:#1B1B1F}
+.pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pbtn{position:relative;background:#fff;border:2.5px solid #D6DCE6;border-radius:12px;padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:center;color:#1B1B1F;min-width:0}
+.pbtn svg{width:100%;height:auto;display:block}
+.pbtn:hover:not(:disabled){border-color:var(--acc)}
+.pbtn.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--accSoft)}
+.pbtn.ok{border-color:var(--ok);background:#DDF3EA}.pbtn.bad{border-color:var(--bad);background:#FBE3E0}
+.pbtn:disabled{cursor:default}
+.pbtn .tick{position:absolute;top:8px;right:8px;background:var(--acc);color:#fff;border-radius:50%;width:24px;height:24px;display:grid;place-items:center;font-weight:700;font-size:14px}
+.gpool{gap:10px}
+.gph{display:flex;gap:8px;align-items:center;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:5px 8px 5px 5px;cursor:pointer;text-align:left;min-width:0}
+.gph svg{width:72px;height:48px;flex:0 0 auto;display:block}
+.gph .gi{font-size:12.5px;line-height:1.35;color:var(--ink)}
+.gph:hover:not(:disabled){border-color:var(--acc)}
+.gph.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.gph.ok{border-color:var(--ok);background:var(--okSoft)}.gph.bad{border-color:var(--bad);background:var(--badSoft)}
+.gph:disabled{cursor:default;color:var(--ink)}
+.gin{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.tok{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:8px;padding:2px 8px;font-weight:600;font-size:14.5px;margin:2px}
+.zcols{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(6,auto);grid-auto-flow:column}
+.cbub{background:#fff;border:2px solid #16213A;border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:15px;color:#16213A}
+.fc svg{max-width:100%}
+.fc>svg{width:100%;height:auto;display:block;border-radius:10px}
+.slots3{display:grid;gap:6px}
+.sl3{border:1.5px dashed var(--track);border-radius:10px;padding:6px 10px;font-size:14.5px;background:var(--surface)}
+.sl3.on{border-style:solid;border-color:var(--acc);background:var(--accSoft)}
+.ed{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;background:#2A3142;border-radius:16px;padding:14px}
+@media (max-width:720px){.ed{grid-template-columns:1fr}}
+.edv{display:grid;place-items:center;min-height:300px;background:repeating-conic-gradient(#3A4256 0% 25%,#323A4D 0% 50%) 50%/20px 20px;border-radius:10px;padding:10px;overflow:hidden}
+.edv svg{display:block;border-radius:2px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.edt{background:#fff;border-radius:12px;padding:12px 14px;color:#1B1B1F;min-width:0}
+.etool{border-top:1px solid #E3E8EF;padding:10px 0}
+.etool:first-of-type{border-top:0}
+.edt .opt{color:#1B1B1F;background:#F5F7FA}
+.edt .opt.sel{background:#D5DFFB}.edt .opt.ok{background:#DDF3EA}.edt .opt.bad{background:#FBE3E0}
+.edt .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA}
+/* DU 5.1 – mini Excel */
+.xwin{background:#fff;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;color:#1B1B1F;box-shadow:0 10px 26px -16px rgba(10,20,60,.45)}
+.xt{background:#1D6F42;color:#fff;font-size:13.5px;padding:6px 12px;font-weight:600}
+.xf{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #D5DCE6;background:#F7F9FB;font-size:14px}
+.xf .nb{min-width:70px;border:1px solid #C9D0DA;background:#fff;padding:1px 6px;font-family:var(--mono);font-size:13px;min-height:24px;line-height:22px}
+.xf .fxi{color:#566381;font-style:italic;font-weight:700}
+.xf .fx{flex:1;min-width:0;border:1px solid #C9D0DA;background:#fff;padding:1px 8px;min-height:24px;line-height:22px;font-size:13.5px;overflow-wrap:anywhere}
+.xg{display:grid;font-size:14.5px;user-select:none;-webkit-user-select:none}
+.xdrag{touch-action:none}
+.xh{background:#EEF1F5;border-right:1px solid #D5DCE6;border-bottom:1px solid #D5DCE6;text-align:center;font-size:12.5px;color:#566381;padding:2px 0;font-weight:600}
+.xc{position:relative;border-right:1px solid #E3E8EF;border-bottom:1px solid #E3E8EF;padding:3px 6px;min-height:30px;line-height:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:cell;min-width:0}
+.xc.r{text-align:right}.xc.c{text-align:center}.xc.err{color:#C0392B;font-weight:700}.xc.hd{font-weight:700;background:#F7FAF8}
+.xc.xin{background:#D8EEDF}.xc.clk:hover{background:#FFF6DB}
+.xc.act{box-shadow:inset 0 0 0 2.5px #1D6F42;z-index:1}
+.xc.on{background:#FDE3A7}.xc.ok{background:#DDF3EA}.xc.bad{background:#FBE3E0}
+.xc.miss{box-shadow:inset 0 0 0 3px #12805A}
+.xc.flash{background:#FFF8E1;font-weight:700}
+.xc.fillp{box-shadow:inset 0 0 0 2px #1D6F42;background:#EEF8F1}
+.xc.hasfh{overflow:visible}
+.fh{position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;background:#1D6F42;border:2px solid #fff;cursor:ns-resize;z-index:3;touch-action:none}
+.fh::after{content:"";position:absolute;inset:-12px}
+.xtabs{display:flex;gap:2px;padding:4px 8px;background:#F0F2F5;font-size:13px;border-top:1px solid #D5DCE6;color:#1D6F42;font-weight:600}
+.okg{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:860px){.okg{grid-template-columns:1fr}}
+.okq{display:grid;gap:8px}
+.okp{display:flex;gap:10px;text-align:left;align-items:flex-start;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:9px 12px;cursor:pointer;color:var(--ink);font-size:15.5px}
+.okp small{font-size:13px;color:var(--muted)}
+.okp.on{border-color:var(--acc);background:var(--accSoft)}.okp.ok{border-color:var(--ok);background:var(--okSoft)}.okp.bad{border-color:var(--bad);background:var(--badSoft)}
+.okp:disabled{cursor:default}
+.oz:hover{fill-opacity:.12}
+.cv{background:#fff;border:1px solid var(--border);border-radius:14px;padding:8px;min-width:0}
+.cv svg{width:100%;height:auto;display:block}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+.pcs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 6px}
+.pc{font-family:var(--mono);font-size:15px;background:var(--surface);border:2px solid var(--border);border-radius:9px;padding:4px 12px;cursor:pointer;color:var(--ink)}
+.pc:hover:not(:disabled){border-color:var(--acc)}.pc:disabled{opacity:.4;cursor:default}
+.fqrow{display:grid;gap:6px;padding:8px 0;border-bottom:1px dashed var(--border);font-size:15.5px}
+.fqrow .opt{padding:4px 10px;font-size:13.5px;border-radius:999px}
+.ribbon{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:14.5px}
+.ghost.okb{border-color:var(--ok);background:var(--okSoft)}.ghost.badb{border-color:var(--bad);background:var(--badSoft)}
+.opts.pics .opt{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.opts.pics .opt svg{max-height:170px}
+.pcap{display:block;text-align:center;font-size:13.5px;font-weight:600;color:var(--muted)}
+.opts.mono .opt,.opt.mono{font-family:var(--mono)}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.anim svg:first-child{opacity:1}}
+</style></head><body>
+<header class="top" id="top"></header><main id="main" tabindex="-1"></main>
+<script>
+/* ===== DU 5.1 – Tercia: Tabuľkový kalkulátor, bunka, hárok, vzorce ===== */
+const KEY = "du-t51-v1";
+const LESSON = "Tercia – DU_5.1 Tabuľkový kalkulátor, bunka, hárok, vzorce";
+const CLASS_DEFAULT = "";
+const CLASSES = ["TERCIA_1", "TERCIA_2"];
+const DONE_KEY = "du-t51-done-v1"; /* zámok: pokusy (1 pokus, pri známke 3 – 5 jedna oprava) */
+const OLD_DONE_KEYS = [];
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+
+const STEPS = [
+  { id: "start", title: "Štart", ic: "🚀", min: 1 },
+  { id: "m1", title: "Okno Excelu", ic: "🪟", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+  { id: "m2", title: "Adresy a oblasti", ic: "🎯", min: 3, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
+  { id: "m3", title: "Údaje v bunke", ic: "🔢", min: 3, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
+  { id: "m4", title: "Vzorce", ic: "➗", min: 4, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
+  { id: "m5", title: "Funkcie a kopírovanie", ic: "🧮", min: 3, col: "linear-gradient(120deg,#A0640A,#E2A23B)" },
+  { id: "m6", title: "Grafy", ic: "📊", min: 3, col: "linear-gradient(120deg,#0B6F8A,#2BB3D6)" },
+  { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
+];
+const STEP_TASKS = { m1: ["okno", "zhb"], m2: ["med", "obl", "zap"], m3: ["typ", "det"], m4: ["skl", "por", "pok"], m5: ["fun", "maxf", "kurz"], m6: ["druh", "graf"] };
+
+/* ===== LENKA: typografia ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,textarea,.fnm") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐×])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ").replace(/(×) (?=\d)/g, "$1 ").replace(/(\d\.) (?=\d)/g, "$1 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+/* ===== OBRÁZKY: pomôcky ===== */
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 13}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,Courier New,monospace" xml:space="preserve"` : ""}>${s}</text>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.6"` : ""}/>`;
+const EM = (x, y, e, fs = 24) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}">${e}</text>`;
+const ARR = (x1, y1, x2, y2, c = "#566381", w = 2.5) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return `<line x1="${x1}" y1="${y1}" x2="${x2 - Math.cos(a) * 4}" y2="${y2 - Math.sin(a) * 4}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2} L${x2 - h * Math.cos(a - .45)} ${y2 - h * Math.sin(a - .45)} L${x2 - h * Math.cos(a + .45)} ${y2 - h * Math.sin(a + .45)}z" fill="${c}"/>`; };
+const C = { ink: "#16213A", mut: "#566381", acc: "#2F5BEA", accS: "#D5DFFB", ok: "#12805A", okS: "#DDF3EA", bad: "#C0392B", badS: "#FBE3E0", amb: "#8A5A00", ambS: "#FDF1D6", bg: "#F5F7FA", line: "#D6DCE6", in: "#1E6FD9", inS: "#E3EEFC", pur: "#6A3FD0", purS: "#ECE5FC", tea: "#0B6F8A", teaS: "#DDF1F7" };
+
+/* ===== MINI EXCEL: hodnoty, vzorce, mriežka ===== */
+const COLS = "ABCDEFGHIJ";
+const cIx = c => COLS.indexOf(c);
+const isNum = v => /^-?\d+(,\d+)?$/.test(v);
+const isDate = v => /^\d{1,2}\. ?\d{1,2}\. ?\d{4}$/.test(v);
+const fmt = n => typeof n === "number" ? String(Math.round(n * 100) / 100).replace(".", ",") : n;
+function xEval(src, get) {
+  let i = 0; const s = src.replace(/\s+/g, "");
+  const err = e => { throw { x: e }; };
+  const num = v => { if (typeof v === "number") return v; if (v === "" || v == null) return 0; return err("#HODNOTA!"); };
+  function expr() { let a = term(); while (s[i] === "+" || s[i] === "-") { const o = s[i++], b = term(); a = o === "+" ? num(a) + num(b) : num(a) - num(b); } return a; }
+  function term() { let a = pw(); while (s[i] === "*" || s[i] === "/") { const o = s[i++], b = pw(); if (o === "*") a = num(a) * num(b); else { if (num(b) === 0) err("#DELENIENULOU!"); a = num(a) / num(b); } } return a; }
+  function pw() { let a = un(); while (s[i] === "^") { i++; a = Math.pow(num(a), num(un())); } return a; }
+  function un() { if (s[i] === "-") { i++; return -num(un()); } return prim(); }
+  function prim() { const r = s.slice(i); let m;
+    if (s[i] === "(") { i++; const v = expr(); if (s[i] !== ")") err("#SYNTAX"); i++; return v; }
+    if ((m = /^\d+(,\d+)?/.exec(r))) { i += m[0].length; return parseFloat(m[0].replace(",", ".")); }
+    if ((m = /^([A-ZÁ-Ža-zá-ž]{2,})\(/.exec(r))) { i += m[0].length; const n = m[1].toUpperCase(), args = [];
+      if (s[i] !== ")") { args.push(arg()); while (s[i] === ";") { i++; args.push(arg()); } }
+      if (s[i] !== ")") err("#SYNTAX"); i++; return fn(n, args); }
+    if ((m = /^\$?([A-J])\$?(\d+)/.exec(r))) { i += m[0].length; return get(m[1] + m[2]); }
+    return err("#SYNTAX"); }
+  function arg() { const m = /^\$?([A-J])\$?(\d+):\$?([A-J])\$?(\d+)/.exec(s.slice(i)); if (m) { i += m[0].length; return { rng: [cIx(m[1]), +m[2], cIx(m[3]), +m[4]] }; } return expr(); }
+  function fn(n, args) { const v = []; args.forEach(a => { if (a && a.rng) { const [c1, r1, c2, r2] = a.rng; for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++) v.push(get(COLS[c] + r)); } else v.push(a); });
+    const N = v.filter(x => typeof x === "number"), sum = N.reduce((a, b) => a + b, 0);
+    if (n === "SUM") return sum; if (n === "PRIEMER" || n === "AVERAGE") { if (!N.length) err("#DELENIENULOU!"); return sum / N.length; }
+    if (n === "MIN") return N.length ? Math.min(...N) : 0; if (n === "MAX") return N.length ? Math.max(...N) : 0; if (n === "POČET" || n === "COUNT") return N.length;
+    return err("#NÁZOV?"); }
+  const v = expr(); if (i < s.length) err("#SYNTAX"); return v;
+}
+function getter(cells, dep = 0) { return ref => { const raw = cells[ref]; if (raw === undefined || raw === "") return ""; if (raw[0] === "=") { if (dep > 30) throw { x: "#ODKAZ!" }; return xEval(raw.slice(1), getter(cells, dep + 1)); } return isNum(raw) ? parseFloat(raw.replace(",", ".")) : raw; }; }
+function xVal(cells, ref) { try { return getter(cells)(ref); } catch (e) { return e && e.x ? e.x : "#SYNTAX"; } }
+function shown(cells, ref) { const raw = cells[ref]; if (raw === undefined || raw === "") return ["", "l"];
+  if (raw[0] === "=") { const v = xVal(cells, ref); if (typeof v === "number") return [fmt(v), "r"]; if (/^#/.test(v)) return [v === "#SYNTAX" ? "⚠️" : v, "c err"]; return [v, "l"]; }
+  return isNum(raw) || isDate(raw) ? [raw, "r"] : [raw, "l"]; }
+function xGrid(o) { const nc = o.nc, nr = o.nr, cw = o.w || Array(nc).fill("minmax(0,1fr)");
+  let h = `<div class="xg${o.drag ? " xdrag" : ""}" style="grid-template-columns:28px ${cw.join(" ")}"${o.drag ? ` data-xd="${o.id}"` : ""}><div class="xh"></div>`;
+  for (let c = 0; c < nc; c++) h += `<div class="xh">${COLS[c]}</div>`;
+  for (let r = 1; r <= nr; r++) { h += `<div class="xh">${r}</div>`;
+    for (let c = 0; c < nc; c++) { const ref = COLS[c] + r, [t, al] = o.cells ? shown(o.cells, ref) : ["", "l"]; let k = "xc " + al;
+      if (o.rng && c >= o.rng[0] && c <= o.rng[2] && r >= o.rng[1] && r <= o.rng[3]) k += " xin";
+      if (o.act === ref) k += " act"; if (o.mark && o.mark[ref]) k += " " + o.mark[ref]; if (o.fh === ref) k += " hasfh"; if (o.click) k += " clk"; if (o.hd && r === 1) k += " hd";
+      h += `<div class="${k}" data-xc="${o.id}|${ref}">${o.ex && o.ex[ref] !== undefined ? o.ex[ref] : esc(t)}${o.fh === ref ? `<span class="fh" data-fh="${o.id}" title="ovládač výplne"></span>` : ""}</div>`; } }
+  return h + `</div>`; }
+function xWin(o, inner) { return `<div class="xwin"${o.mw ? ` style="max-width:${o.mw}px"` : ""}>${o.title ? `<div class="xt">📗 ${o.title}</div>` : ""}<div class="xf"><span class="nb" id="${o.id ? "nb-" + o.id : ""}">${esc(o.nb || "")}</span><span class="fxi">fx</span><span class="fx mono">${esc(o.fx || "")}</span></div>${inner}${o.tabs ? `<div class="xtabs">${o.tabs}</div>` : ""}</div>`; }
+const rngStr = R => R ? (R[0] === R[2] && R[1] === R[3] ? COLS[R[0]] + R[1] : `${COLS[R[0]]}${R[1]}:${COLS[R[2]]}${R[3]}`) : "";
+const rngOf = (a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])];
+const refXY = ref => [cIx(ref[0]), +ref.slice(1)];
+
+/* SVG mriežka pre obrázky v teórii */
+function sgrid(x, y, nc, nr, cw, rh, cells = {}, o = {}) { let s = "";
+  s += `<rect x="${x}" y="${y}" width="${24 + nc * cw}" height="${rh * (nr + 1)}" fill="#fff" stroke="#BCC6D3"/>`;
+  s += `<rect x="${x}" y="${y}" width="${24 + nc * cw}" height="${rh}" fill="#EEF1F5"/><rect x="${x}" y="${y}" width="24" height="${rh * (nr + 1)}" fill="#EEF1F5"/>`;
+  for (let c = 0; c < nc; c++) { const on = o.hc === c; if (on) s += `<rect x="${x + 24 + c * cw}" y="${y}" width="${cw}" height="${rh}" fill="#C9E7D3"/>`; s += T(x + 24 + c * cw + cw / 2, y + rh / 2 + 4, COLS[c], { a: "middle", fs: 11, b: 1, c: on ? "#1D6F42" : C.mut }); }
+  for (let r = 1; r <= nr; r++) { const on = o.hr === r; if (on) s += `<rect x="${x}" y="${y + r * rh}" width="24" height="${rh}" fill="#C9E7D3"/>`; s += T(x + 12, y + r * rh + rh / 2 + 4, r, { a: "middle", fs: 11, b: 1, c: on ? "#1D6F42" : C.mut }); }
+  if (o.rng) { const [c1, r1, c2, r2] = o.rng; s += `<rect x="${x + 24 + c1 * cw}" y="${y + r1 * rh}" width="${(c2 - c1 + 1) * cw}" height="${(r2 - r1 + 1) * rh}" fill="#D8EEDF"/>`; }
+  for (let c = 0; c <= nc; c++) s += `<line x1="${x + 24 + c * cw}" y1="${y}" x2="${x + 24 + c * cw}" y2="${y + rh * (nr + 1)}" stroke="#D5DCE6"/>`;
+  for (let r = 1; r <= nr; r++) s += `<line x1="${x}" y1="${y + r * rh}" x2="${x + 24 + nc * cw}" y2="${y + r * rh}" stroke="#D5DCE6"/>`;
+  Object.entries(cells).forEach(([ref, v]) => { const [c, r] = refXY(ref), [t, al, col] = Array.isArray(v) ? v : [v, isNum(v) ? "r" : "l"]; const tx = al === "r" ? x + 24 + (c + 1) * cw - 5 : al === "c" ? x + 24 + c * cw + cw / 2 : x + 24 + c * cw + 5;
+    s += T(tx, y + r * rh + rh / 2 + 4, esc(t), { fs: 11.5, a: al === "r" ? "end" : al === "c" ? "middle" : null, c: col || C.ink }); });
+  if (o.rng) { const [c1, r1, c2, r2] = o.rng; s += `<rect x="${x + 24 + c1 * cw}" y="${y + r1 * rh}" width="${(c2 - c1 + 1) * cw}" height="${(r2 - r1 + 1) * rh}" fill="none" stroke="#1D6F42" stroke-width="2.5"/>`; }
+  if (o.act) { const [c, r] = refXY(o.act); s += `<rect x="${x + 24 + c * cw}" y="${y + r * rh}" width="${cw}" height="${rh}" fill="none" stroke="#1D6F42" stroke-width="2.5"/>`; }
+  return s; }
+const fbar = (x, y, w, nb, f) => `${box(x, y, 56, 22, "#fff", "#C9D0DA", 3)}${T(x + 28, y + 15.5, nb, { a: "middle", fs: 11.5, b: 1 })}${T(x + 64, y + 15.5, "fx", { fs: 11.5, b: 1, c: C.mut })}${box(x + 82, y, w - 82, 22, "#fff", "#C9D0DA", 3)}${T(x + 90, y + 15.5, esc(f), { fs: 11.5, mono: 1 })}`;
+
+/* ===== GRAFY ===== */
+const PAL = ["#2F5BEA", "#E2A23B", "#12805A", "#C0392B", "#6A3FD0", "#0B6F8A"];
+function chartSVG(type, cats, vals, title, w = 420, h = 250, mini) { const n = vals.length; let s = `<rect width="${w}" height="${h}" fill="#fff"/>`;
+  if (title) s += T(w / 2, mini ? 16 : 22, esc(title), { a: "middle", fs: mini ? 12 : 13.5, b: 1 });
+  const V = vals.map(v => typeof v === "number" ? v : 0), mx = Math.max(1, ...V);
+  if (type === "pie") { const tot = V.reduce((a, b) => a + b, 0) || 1, cx = mini ? w / 2 : w * .36, cy = h / 2 + (mini ? 8 : 12), R = Math.min(w, h) * (mini ? .33 : .32); let a0 = -Math.PI / 2;
+    V.forEach((v, i) => { const a1 = a0 + v / tot * Math.PI * 2, L = a1 - a0 > Math.PI ? 1 : 0; if (v > 0) s += v === tot ? `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${PAL[i % 6]}"/>` : `<path d="M${cx} ${cy} L${(cx + R * Math.cos(a0)).toFixed(1)} ${(cy + R * Math.sin(a0)).toFixed(1)} A${R} ${R} 0 ${L} 1 ${(cx + R * Math.cos(a1)).toFixed(1)} ${(cy + R * Math.sin(a1)).toFixed(1)} Z" fill="${PAL[i % 6]}" stroke="#fff" stroke-width="2"/>`; a0 = a1; });
+    if (!mini) cats.forEach((c, i) => { const y = 54 + i * 24; s += `<rect x="${w * .7}" y="${y - 11}" width="14" height="14" rx="3" fill="${PAL[i % 6]}"/>${T(w * .7 + 20, y, esc(c), { fs: 12 })}`; });
+    return s; }
+  const L = mini ? 14 : 40, B = h - (mini ? 14 : 34), Tp = mini ? 26 : 38, W = w - L - (mini ? 10 : 16), step = W / n;
+  if (!mini) for (let k = 0; k <= 4; k++) { const y = B - (B - Tp) * k / 4; s += `<line x1="${L}" y1="${y}" x2="${w - 16}" y2="${y}" stroke="#E6EBF2"/>${T(L - 6, y + 4, fmt(Math.round(mx * k / 4 * 10) / 10), { a: "end", fs: 10.5, c: C.mut })}`; }
+  s += `<line x1="${L}" y1="${B}" x2="${w - (mini ? 10 : 16)}" y2="${B}" stroke="#9AA6B8" stroke-width="1.5"/><line x1="${L}" y1="${Tp - 6}" x2="${L}" y2="${B}" stroke="#9AA6B8" stroke-width="1.5"/>`;
+  const Y = v => B - (B - Tp) * v / mx;
+  if (type === "col") V.forEach((v, i) => { const bw = step * .6; s += `<rect x="${(L + i * step + step * .2).toFixed(1)}" y="${Y(v).toFixed(1)}" width="${bw.toFixed(1)}" height="${(B - Y(v)).toFixed(1)}" rx="2" fill="${PAL[0]}"/>`; });
+  if (type === "line") { const P = V.map((v, i) => [L + i * step + step / 2, Y(v)]); s += `<polyline points="${P.map(p => p.map(q => q.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="${PAL[0]}" stroke-width="${mini ? 2.5 : 3}"/>${P.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${mini ? 2.5 : 4}" fill="${PAL[0]}"/>`).join("")}`; }
+  if (!mini) cats.forEach((c, i) => { s += T(L + i * step + step / 2, B + 18, esc(String(c)).slice(0, 10), { a: "middle", fs: 11 }); });
+  return s; }
+
+/* včela Bunka – sprievodkyňa */
+let BEEN = 0;
+function bee(x, y, s, mood) { const id = "bcl" + (++BEEN);
+  const eye = mood === "wow" ? `<circle cx="80" cy="47" r="5" fill="#fff" stroke="#16213A" stroke-width="1.3"/><circle cx="81" cy="47" r="2.8" fill="#16213A"/><circle cx="82" cy="46" r="1" fill="#fff"/>` : `<circle cx="80" cy="47" r="3.2" fill="#16213A"/><circle cx="81" cy="46" r="1" fill="#fff"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})"><ellipse cx="50" cy="95" rx="36" ry="4" fill="#000" opacity=".12"/>
+    <ellipse cx="36" cy="30" rx="15" ry="22" fill="#E3F3FF" stroke="#7FB2D9" stroke-width="2" opacity=".95" transform="rotate(-28 36 30)"/><ellipse cx="56" cy="28" rx="13" ry="20" fill="#E3F3FF" stroke="#7FB2D9" stroke-width="2" opacity=".95" transform="rotate(18 56 28)"/>
+    <path d="M14 66 L3 70 L14 74 Z" fill="#16213A"/>
+    <defs><clipPath id="${id}"><ellipse cx="42" cy="66" rx="30" ry="22"/></clipPath></defs>
+    <ellipse cx="42" cy="66" rx="30" ry="22" fill="#FFC93C"/><g clip-path="url(#${id})" fill="#16213A"><rect x="26" y="40" width="8" height="54" transform="rotate(10 30 66)"/><rect x="44" y="40" width="8" height="54" transform="rotate(10 48 66)"/></g>
+    <ellipse cx="42" cy="66" rx="30" ry="22" fill="none" stroke="#7A5200" stroke-width="2"/>
+    <path d="M30 86 l-3 8 M44 88 l-1 8 M56 86 l2 8" stroke="#16213A" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M73 36 Q68 20 58 15" stroke="#16213A" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="58" cy="15" r="3.2" fill="#16213A"/>
+    <path d="M83 35 Q89 19 98 15" stroke="#16213A" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="98" cy="15" r="3.2" fill="#16213A"/>
+    <circle cx="78" cy="52" r="19" fill="#FFC93C" stroke="#7A5200" stroke-width="2"/>${eye}<ellipse cx="88" cy="57" rx="4" ry="2.4" fill="#F5A3B5" opacity=".8"/><path d="M78 59 Q84 64 90 59" stroke="#7A5200" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <g transform="translate(66 72)"><rect width="30" height="22" rx="3" fill="#fff" stroke="#1D6F42" stroke-width="2"/><path d="M0 8 H30 M0 15 H30 M10 0 V22 M20 0 V22" stroke="#1D6F42" stroke-width="1.2"/><rect x="10" y="8" width="10" height="7" fill="#C9E7D3"/></g>
+  </g>`; }
+const KRI = mood => SV(110, 100, bee(0, 2, 1, mood), "Včela Bunka");
+const say = (html, mood) => `<div class="say">${KRI(mood)}<div class="bubble">${html}</div></div>`;
+
+/* ===== ÚVODNÝ OBRÁZOK ===== */
+const hex = (cx, cy, r, f, st) => `<path d="M${[0, 1, 2, 3, 4, 5].map(k => { const a = Math.PI / 3 * k + Math.PI / 6; return (cx + r * Math.cos(a)).toFixed(1) + " " + (cy + r * Math.sin(a)).toFixed(1); }).join(" L")} Z" fill="${f}" stroke="${st}" stroke-width="2.5"/>`;
+const HERO = SV(420, 300, `<defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4D1"/><stop offset="1" stop-color="#FFE7A6"/></linearGradient></defs>
+  <rect width="420" height="300" rx="18" fill="url(#hg)"/>
+  ${[[170, 80, "A1"], [216, 80, "B1"], [262, 80, "=SUM"], [308, 80, "📊"], [193, 120, "42"], [239, 120, "$C$1"], [285, 120, "C3"], [331, 120, "7,25"], [216, 160, "Σ"], [262, 160, "=B2*2"], [308, 160, "MAX"], [354, 160, "🍯"], [239, 200, "4"], [285, 200, "D5"], [331, 200, "%"]].map(([x, y, t], i) =>
+    hex(x, y, 25, i % 4 === 2 ? "#FFC93C" : "#FFF8E1", "#D9A21B") + T(x, y + 5, t, { a: "middle", fs: t.length > 4 ? 10.5 : 13, b: 1, c: "#7A5200" })).join("")}
+  ${bee(18, 150, 1.45, "wow")}
+  ${T(210, 30, "Včela Bunka a 6 misií v tabuľke", { a: "middle", fs: 15, b: 1, c: "#1D6F42" })}`, "Včela Bunka pri plástoch, ktoré vyzerajú ako bunky tabuľky");
+
+/* ===== TEÓRIA: OBRÁZKY ===== */
+const FIG_BOOK = fig(SV(440, 200, `${box(10, 30, 120, 140, "#E6F4EC", "#1D6F42", 12)}${EM(70, 100, "📗", 46)}${T(70, 150, "zošit", { a: "middle", fs: 13, b: 1, c: "#1D6F42" })}${T(70, 20, "súbor .xlsx", { a: "middle", fs: 11.5, c: C.mut })}
+  ${ARR(136, 100, 160, 100, C.mut, 2)}
+  ${[0, 1, 2].map(k => `<rect x="${176 + k * 10}" y="${44 + k * 10}" width="96" height="100" rx="6" fill="#fff" stroke="#9AA6B8" stroke-width="1.5"/>`).join("")}${sgrid(196, 64, 2, 3, 30, 18, {})}${T(234, 176, "hárky", { a: "middle", fs: 13, b: 1, c: "#1D6F42" })}${T(234, 20, "Január, Február…", { a: "middle", fs: 11.5, c: C.mut })}
+  ${ARR(302, 100, 326, 100, C.mut, 2)}
+  ${box(336, 70, 96, 60, "#fff", "#1D6F42", 4)}<rect x="336" y="70" width="96" height="60" fill="none" stroke="#1D6F42" stroke-width="3"/>${T(384, 106, "42", { a: "middle", fs: 18, b: 1 })}${T(384, 150, "bunka", { a: "middle", fs: 13, b: 1, c: "#1D6F42" })}${T(384, 20, "1 údaj", { a: "middle", fs: 11.5, c: C.mut })}`, "Zošit, hárok a bunka"),
+  "<b>Zošit</b> (súbor) má hárky, každý <b>hárok</b> sa skladá z buniek.");
+const FIG_USES = fig(SV(440, 176, `${[["🧮", "počíta", "aj s tisíckami čísel"], ["↕️", "triedi a filtruje", "napr. podľa abecedy"], ["📈", "kreslí grafy", "z údajov v tabuľke"]].map(([e, a, b], i) => { const x = 10 + i * 144;
+    return `${box(x, 10, 132, 112, i === 1 ? "#FFF8E1" : "#E6F4EC", null, 12)}${EM(x + 66, 54, e, 30)}${T(x + 66, 86, a, { a: "middle", fs: 13, b: 1 })}${T(x + 66, 106, b, { a: "middle", fs: 11, c: C.mut })}`; }).join("")}
+  ${box(10, 132, 420, 36, C.bg, C.line, 8)}${T(220, 155, "Programy: Microsoft Excel · Google Tabuľky · LibreOffice Calc", { a: "middle", fs: 12, b: 1 })}`, "Na čo slúži tabuľkový kalkulátor"),
+  "Tabuľkový kalkulátor <b>počíta</b>, triedi údaje a kreslí <b>grafy</b>.");
+
+const FIG_ADDR = fig(SV(440, 210, `${sgrid(14, 10, 6, 6, 48, 26, { D4: ["🐝", "c"] }, { act: "D4", hc: 3, hr: 4 })}
+  ${ARR(368, 127, 332, 127, "#1D6F42", 2.5)}${T(374, 124, "D4", { fs: 18, b: 1, c: "#1D6F42" })}${T(374, 142, "stĺpec D", { fs: 11, c: C.mut })}${T(374, 157, "riadok 4", { fs: 11, c: C.mut })}`, "Adresa bunky D4"),
+  "Adresa = <b>písmeno stĺpca</b> + <b>číslo riadka</b>, napríklad D4.");
+const FIG_RANGE = fig(SV(440, 210, `${sgrid(14, 10, 6, 6, 52, 26, {}, { rng: [1, 2, 2, 5] })}
+  <circle cx="${14 + 24 + 52 + 6}" cy="${10 + 2 * 26 + 6}" r="5" fill="${C.bad}"/><circle cx="${14 + 24 + 3 * 52 - 6}" cy="${10 + 6 * 26 - 6}" r="5" fill="${C.bad}"/>
+  ${T(372, 70, "B2:C5", { fs: 18, b: 1, c: "#1D6F42" })}${T(372, 92, "ľavý horný", { fs: 11, c: C.mut })}${T(372, 106, "roh : pravý", { fs: 11, c: C.mut })}${T(372, 120, "dolný roh", { fs: 11, c: C.mut })}`, "Oblasť B2:C5"),
+  "<b>Oblasť</b> zapíšeš s <b>dvojbodkou</b>: ľavý horný roh, potom pravý dolný.");
+
+const FIG_ALIGN = fig(SV(440, 214, `${T(20, 20, "napíšeš", { fs: 12, b: 1, c: C.mut })}${T(250, 20, "bunka ukáže", { fs: 12, b: 1, c: C.mut })}
+  ${[["Hrušky", "Hrušky", "l", "text → doľava"], ["42", "42", "r", "číslo → doprava"], ["5. 3. 2026", "5. 3. 2026", "r", "dátum → doprava"], ["=A3*2", "84", "r", "vzorec → výsledok"]].map(([a, b, al, d], i) => { const y = 32 + i * 44;
+    return `${box(14, y, 150, 32, C.bg, C.line, 6)}${T(24, y + 21, esc(a), { fs: 13, mono: 1 })}${ARR(172, y + 16, 206, y + 16, C.mut, 2)}<rect x="214" y="${y}" width="110" height="32" fill="#fff" stroke="#9AA6B8"/>${T(al === "r" ? 318 : 220, y + 21, esc(b), { fs: 13, a: al === "r" ? "end" : null })}${T(334, y + 21, d, { fs: 11, c: C.mut })}`; }).join("")}`, "Zarovnanie rôznych údajov"),
+  "Čísla a dátumy sa zarovnajú <b>doprava</b>, text <b>doľava</b>.");
+const FIG_COMMA = fig(SV(440, 150, `${box(14, 10, 200, 104, C.okS, C.ok, 10)}${T(114, 34, "✓ desatinná čiarka", { a: "middle", fs: 12.5, b: 1, c: C.ok })}<rect x="54" y="52" width="120" height="30" fill="#fff" stroke="#9AA6B8"/>${T(168, 72, "3,8", { a: "end", fs: 14 })}${T(114, 104, "číslo, dá sa s ním počítať", { a: "middle", fs: 11 })}
+  ${box(226, 10, 200, 104, C.badS, C.bad, 10)}${T(326, 34, "✗ desatinná bodka", { a: "middle", fs: 12.5, b: 1, c: C.bad })}<rect x="266" y="52" width="120" height="30" fill="#fff" stroke="#9AA6B8"/>${T(272, 72, "3.8", { fs: 14 })}${T(326, 104, "slovenský Excel: iba text", { a: "middle", fs: 11 })}
+  ${T(220, 140, "Zarovnanie prezradí, či Excel údaj pochopil ako číslo.", { a: "middle", fs: 11.5, c: C.mut })}`, "Desatinná čiarka a bodka"),
+  "V slovenskom nastavení píš desatinnú <b>čiarku</b>.");
+
+const FIG_FBAR = fig(SV(440, 196, `${fbar(14, 10, 412, "D2", "=B2+C2")}
+  ${sgrid(14, 44, 4, 2, 92, 26, { A1: "Hráč", B1: "1. kolo", C1: "2. kolo", D1: "Spolu", A2: "Ema", B2: "4", C2: "6", D2: ["10", "r"] }, { act: "D2" })}
+  ${ARR(400, 34, 400, 96, "#1D6F42", 2)}
+  ${box(14, 132, 412, 54, "#E6F4EC", null, 8)}${T(220, 154, "riadok vzorcov ukazuje vzorec =B2+C2", { a: "middle", fs: 12, b: 1, c: "#1D6F42" })}${T(220, 174, "bunka D2 ukazuje výsledok 10", { a: "middle", fs: 12 })}`, "Vzorec a výsledok"),
+  "Vzorec začína znakom <b>=</b>. V bunke vidíš <b>výsledok</b>, v riadku vzorcov vzorec.");
+const FIG_ORDER = fig(SV(440, 176, `${T(220, 20, "Poradie operácií ako v matematike", { a: "middle", fs: 12.5, b: 1 })}
+  ${[["=2+3*4", "najprv 3*4, potom 2+…", "14"], ["=(2+3)*4", "najprv zátvorka", "20"], ["=2*3^2", "najprv mocnina ^", "18"]].map(([f, d, v], i) => { const y = 32 + i * 46;
+    return `${box(14, y, 412, 38, i === 1 ? "#FFF8E1" : C.bg, C.line, 8)}${T(28, y + 25, f, { fs: 14, b: 1, mono: 1 })}${T(150, y + 24, d, { fs: 12 })}${T(410, y + 25, "= " + v, { a: "end", fs: 14, b: 1, c: "#1D6F42" })}`; }).join("")}`, "Poradie operácií"),
+  "Najprv <b>^</b>, potom <b>*</b> a <b>/</b>, nakoniec <b>+</b> a <b>−</b>. Zátvorky majú prednosť.");
+
+const FIG_FUNC = fig(SV(440, 220, `${sgrid(14, 10, 1, 3, 46, 24, { A1: "3", A2: "9", A3: "6" }, { rng: [0, 1, 0, 3] })}
+  ${[["=SUM(A1:A3)", "súčet", "18"], ["=PRIEMER(A1:A3)", "priemer", "6"], ["=MIN(A1:A3)", "najmenšie", "3"], ["=MAX(A1:A3)", "najväčšie", "9"], ["=POČET(A1:A3)", "koľko je čísel", "3"]].map(([f, d, v], i) => { const y = 10 + i * 41;
+    return `${box(104, y, 326, 34, i % 2 ? "#fff" : C.bg, C.line, 6)}${T(116, y + 22, f, { fs: 12, b: 1, mono: 1 })}${T(270, y + 22, d, { fs: 11.5, c: C.mut })}${T(418, y + 22, v, { a: "end", fs: 13, b: 1, c: "#1D6F42" })}`; }).join("")}`, "Päť základných funkcií"),
+  "<b>Funkcia</b> je hotový výpočet. Do zátvorky píšeš <b>oblasť</b> buniek.");
+const FIG_COPY = fig(SV(440, 214, `${T(110, 18, "relatívna adresa", { a: "middle", fs: 12.5, b: 1, c: C.in })}${T(330, 18, "absolútna adresa $", { a: "middle", fs: 12.5, b: 1, c: C.amb })}
+  ${[["=A2*B2", "=A3*B3", "=A4*B4"], ["=A2*$E$1", "=A3*$E$1", "=A4*$E$1"]].map((L, k) => { const x = 14 + k * 220; return L.map((f, i) => `${box(x, 32 + i * 40, 192, 30, i ? "#fff" : (k ? C.ambS : C.inS), C.line, 6)}${T(x + 12, 52 + i * 40, (2 + i) + ". riadok:", { fs: 11, c: C.mut })}${T(x + 84, 52 + i * 40, f, { fs: 13, b: 1, mono: 1 })}`).join("") + ARR(x + 196, 47, x + 196, 128, C.mut, 1.6); }).join("")}
+  ${box(14, 162, 412, 44, C.bg, null, 8)}${T(220, 181, "Pri kopírovaní nadol sa adresy bez $ posúvajú o riadok.", { a: "middle", fs: 11.5 })}${T(220, 198, "Adresa so znakom $ (F4) ostane na mieste.", { a: "middle", fs: 11.5 })}`, "Kopírovanie vzorca"),
+  "Ťahaním <b>ovládača výplne</b> sa vzorec skopíruje, adresy s <b>$</b> sa nemenia.");
+
+const chartThumb = (t, lab) => `<svg viewBox="0 0 160 110" role="img" aria-label="${lab}" ${FF}>${chartSVG(t, ["a", "b", "c", "d", "e"], t === "pie" ? [5, 3, 2, 4, 1] : t === "line" ? [3, 5, 4, 7, 6] : [4, 7, 3, 6, 5], "", 160, 110, 1)}</svg>`;
+const FIG_CHARTS = fig(SV(440, 200, `${[["col", "stĺpcový", "porovná veľkosti"], ["line", "čiarový", "ukáže vývoj v čase"], ["pie", "koláčový", "ukáže časti celku"]].map(([t, n, d], i) => { const x = 10 + i * 144;
+    return `${box(x, 8, 132, 184, "#fff", C.line, 10)}<g transform="translate(${x + 6} 14) scale(.75)">${chartSVG(t, ["a", "b", "c", "d"], t === "pie" ? [6, 3, 2, 1] : t === "line" ? [2, 4, 3, 6] : [3, 6, 2, 5], "", 160, 160, 1)}</g>${T(x + 66, 152, n, { a: "middle", fs: 13, b: 1 })}${T(x + 66, 172, d, { a: "middle", fs: 11, c: C.mut })}`; }).join("")}`, "Tri druhy grafov"),
+  "Každý druh grafu sa hodí na inú otázku.");
+const FIG_CPARTS = fig(SV(440, 230, `<g transform="translate(10 4)">${chartSVG("col", ["Ján", "Eva", "Ivo", "Lea"], [12, 20, 8, 15], "Prečítané knihy", 300, 220)}</g>
+  ${[[92, 26], [16, 130], [298, 210]].map(([x, y], i) => `<circle cx="${x}" cy="${y}" r="10" fill="${C.bad}"/>${T(x, y + 4, i + 1, { a: "middle", fs: 11.5, b: 1, c: "#fff" })}`).join("")}
+  ${[["názov grafu", ""], ["zvislá os", "hodnoty (čísla)"], ["vodorovná os", "kategórie (mená)"]].map(([a, b], i) => `<circle cx="${334}" cy="${70 + i * 52}" r="10" fill="${C.bad}"/>${T(334, 74 + i * 52, i + 1, { a: "middle", fs: 11.5, b: 1, c: "#fff" })}${T(350, 74 + i * 52, a, { fs: 12, b: 1 })}${b ? T(350, 90 + i * 52, b, { fs: 11, c: C.mut }) : ""}`).join("")}`, "Časti grafu"),
+  "Graf má <b>názov</b>, <b>osi</b> s popismi a niekedy aj legendu.");
+
+/* ===== DÁTA ÚLOH ===== */
+/* Úloha 1: okno Excelu */
+const OZ = { rib: [0, 24, 440, 62], nb: [4, 92, 66, 22], fx: [92, 92, 344, 22], ch: [30, 120, 406, 18], fh: [282, 189, 22, 22], tabs: [4, 262, 200, 20], st: [0, 284, 440, 16] };
+const OZN = { rib: "pás s nástrojmi", nb: "pole názvov", fx: "riadok vzorcov", ch: "záhlavie stĺpcov", fh: "ovládač výplne", tabs: "karty hárkov", st: "stavový riadok" };
+const OKP = [
+  { id: "p1", t: "Kde vidíš <b>vzorec</b>, ktorý je v aktívnej bunke?", a: "fx" },
+  { id: "p2", t: "Kde sa prepneš na <b>iný hárok</b>?", a: "tabs" },
+  { id: "p3", t: "Čo potiahneš myšou, keď chceš vzorec <b>skopírovať</b> do buniek pod ním?", a: "fh" },
+  { id: "p4", t: "Kde vidíš <b>adresu</b> aktívnej bunky?", a: "nb" }
+];
+function oknoSVG(done, d) { const cw = 67, gx = 30, gy = 138, rh = 20;
+  const data = { A1: "Položka", B1: "Cena (€)", C1: "Spolu", A2: "Lístok", B2: "4", C2: "8", A3: "Obed", B3: "6", C3: "12", A4: "Múzeum", B4: "3", C4: "6", A5: "Spolu", C5: "26" };
+  let g = `<rect width="440" height="300" fill="#fff"/><rect width="440" height="24" fill="#1D6F42"/>${T(12, 16, "📗 Výlet.xlsx – Excel", { fs: 12, b: 1, c: "#fff" })}${T(428, 16, "─  ☐  ✕", { a: "end", fs: 11, c: "#fff" })}
+    <rect y="24" width="440" height="62" fill="#F3F5F8"/>${["Súbor", "Domov", "Vložiť", "Vzorce", "Údaje", "Zobraziť"].map((t, i) => T(12 + i * 62, 40, t, { fs: 11.5, b: i === 1 ? 1 : 0, c: i === 1 ? "#1D6F42" : C.mut })).join("")}
+    ${["📋", "✂️", "𝐁", "𝘐", "≡", "%", "Σ", "↕️", "📊"].map((e, i) => `${box(12 + i * 46, 50, 38, 30, "#fff", "#DDE3EA", 5)}${T(31 + i * 46, 70, e, { a: "middle", fs: 13 })}`).join("")}
+    <rect y="86" width="440" height="34" fill="#fff"/>${box(4, 92, 66, 22, "#fff", "#C9D0DA", 3)}${T(37, 107, "C3", { a: "middle", fs: 12, b: 1 })}${T(76, 107, "fx", { fs: 12, b: 1, c: C.mut })}${box(92, 92, 344, 22, "#fff", "#C9D0DA", 3)}${T(100, 107, "=B3*2", { fs: 12, mono: 1 })}
+    <rect x="0" y="120" width="440" height="18" fill="#EEF1F5"/><rect x="0" y="120" width="30" height="140" fill="#EEF1F5"/>`;
+  for (let c = 0; c < 6; c++) g += T(gx + c * cw + cw / 2, 133, COLS[c], { a: "middle", fs: 11, b: 1, c: C.mut });
+  for (let r = 1; r <= 6; r++) g += T(15, gy + (r - 1) * rh + 14, r, { a: "middle", fs: 11, b: 1, c: C.mut });
+  for (let c = 0; c <= 6; c++) g += `<line x1="${gx + c * cw}" y1="120" x2="${gx + c * cw}" y2="${gy + 6 * rh}" stroke="#D5DCE6"/>`;
+  for (let r = 0; r <= 6; r++) g += `<line x1="0" y1="${gy + r * rh}" x2="440" y2="${gy + r * rh}" stroke="#D5DCE6"/>`;
+  Object.entries(data).forEach(([ref, v]) => { const [c, r] = refXY(ref), y = gy + (r - 1) * rh + 14; g += isNum(v) ? T(gx + (c + 1) * cw - 5, y, v, { a: "end", fs: 11.5 }) : T(gx + c * cw + 5, y, v, { fs: 11.5, b: r === 1 ? 1 : 0 }); });
+  g += `<rect x="${gx + 2 * cw}" y="${gy + 2 * rh}" width="${cw}" height="${rh}" fill="none" stroke="#1D6F42" stroke-width="2.5"/><rect x="${gx + 3 * cw - 4}" y="${gy + 3 * rh - 4}" width="8" height="8" fill="#1D6F42" stroke="#fff" stroke-width="1.5"/>
+    <rect y="260" width="440" height="24" fill="#F0F2F5"/>${box(8, 263, 64, 18, "#fff", "#C9D0DA", 3)}${T(40, 276, "Január", { a: "middle", fs: 11, b: 1, c: "#1D6F42" })}${T(102, 276, "Február", { a: "middle", fs: 11, c: C.mut })}${T(150, 276, "Marec", { a: "middle", fs: 11, c: C.mut })}${T(186, 276, "⊕", { a: "middle", fs: 13, c: C.mut })}
+    <rect y="284" width="440" height="16" fill="#1D6F42" opacity=".12"/>${T(12, 296, "Pripravené", { fs: 10.5, c: C.mut })}${T(428, 296, "Priemer: 12    Počet: 1    Súčet: 12", { a: "end", fs: 10.5, c: C.mut })}`;
+  Object.entries(OZ).forEach(([k, [x, y, w, h]]) => { const used = Object.values(d).includes(k); let st = used ? `fill="#F2A516" fill-opacity=".25" stroke="#F2A516" stroke-width="2"` : `fill="#2F5BEA" fill-opacity="0"`;
+    if (done) { const ok = OKP.some(p => p.a === k); if (ok) st = `fill="#12805A" fill-opacity=".15" stroke="#12805A" stroke-width="2.5"`; else if (used) st = `fill="#C0392B" fill-opacity=".15" stroke="#C0392B" stroke-width="2"`; }
+    g += `<rect class="oz" x="${x}" y="${y}" width="${w}" height="${h}" rx="3" ${st} data-oz="${k}" style="cursor:${done ? "default" : "pointer"}"/>`; });
+  if (done) OKP.forEach((p, i) => { const [x, y, w, h] = OZ[p.a]; g += `<circle cx="${Math.min(x + w + 10, 428)}" cy="${y + h / 2}" r="9" fill="#12805A"/>${T(Math.min(x + w + 10, 428), y + h / 2 + 4, i + 1, { a: "middle", fs: 11, b: 1, c: "#fff" })}`; });
+  return `<svg viewBox="0 0 440 300" role="img" aria-label="Okno Excelu" ${FF}>${g}</svg>`; }
+/* Úloha 3: med */
+const MED = { A: { e: "🍯", n: "med", t: "C7" }, B: { e: "🌼", n: "kvet", t: "G2" }, C: { e: "💧", n: "kvapka", t: "E5" } };
+/* Úloha 4: oblasti */
+const OBL = { a: { t: "B2:D5", e: "🟩" }, b: { t: "E1:E6", e: "🟨" } };
+/* Úloha 6: druhy údajov */
+/* Úloha 7: nákupný zoznam */
+const DET = { A1: "Položka", B1: "Počet", C1: "Cena (€)", D1: "Spolu (€)", A2: "Rožky", B2: "10", C2: "0,15", D2: "=B2*C2", A3: "Mlieko", B3: "2", C3: "1.09", D3: "=B3*C3", A4: "Jablká", B4: "3 ks", C4: "0,40", D4: "=B4*C4", A5: "Syr", B5: "1", C5: "2,50", D5: "B5*C5" };
+const DET_ERR = ["C3", "B4", "D5"], DET_CL = ["B2", "C2", "D2", "B3", "C3", "D3", "B4", "C4", "D4", "B5", "C5", "D5"];
+/* Úloha 8: vzorec z dielikov */
+const SKL = { A1: "Vstupenka", B1: "Počet", C1: "Cena (€)", D1: "Spolu (€)", A2: "Kino", B2: "3", C2: "6,50" };
+const SKLP = ["=", "B2", "C2", "*", "+", "3", "6,50", "B1"];
+/* Úloha 10: pokus */
+const POK = { A1: "Meno", B1: "Lístky", C1: "Cena (€)", D1: "Spolu (€)", A2: "Tomáš", C2: "6,50", D2: "=B2*C2", A3: "Eva", C3: "6,50", D3: "=3*6,5" };
+const POKQ = { opts: ["=B3*C3", "=B3*6,5", "=3*C3", "=D2"], a: 0 };
+/* Úloha 11: funkcie */
+const FUN = { A1: "Deň", B1: "Predané koláče", A2: "Pondelok", B2: "24", A3: "Utorok", B3: "31", A4: "Streda", B4: "zatvorené", A5: "Štvrtok", B5: "18", A6: "Piatok", B6: "27" };
+const FNS = ["SUM", "PRIEMER", "MIN", "MAX", "POČET"];
+const FQ = [{ id: "a", t: "Koľko koláčov predali za celý týždeň spolu?", a: "SUM" }, { id: "b", t: "Koľko koláčov predali v priemere za jeden deň?", a: "PRIEMER" }, { id: "c", t: "Koľko koláčov predali v najslabší deň?", a: "MIN" }, { id: "d", t: "V koľkých dňoch sa predávalo (koľko čísel je v stĺpci B)?", a: "POČET" }];
+/* Úloha 12: funkcia z dielikov */
+const TMP = { A1: "Deň", B1: "Teplota (°C)", A2: "Po", B2: "14", A3: "Ut", B3: "17", A4: "St", B4: "12", A5: "Št", B5: "19", A6: "Pi", B6: "16", A7: "So", B7: "11", A8: "Ne", B8: "15", A10: "Najvyššia:" };
+const MXP = ["=", "MAX(", "MIN(", "SUM(", "B1", "B2", "B8", ":", ";", ")"];
+/* Úloha 13: kurz */
+const KUR = { A1: "Kurz (Kč za 1 €)", B1: "25,2", A2: "Suvenír", B2: "Cena (€)", C2: "Cena (Kč)", A3: "Magnetka", B3: "3", A4: "Pohľadnica", B4: "1,5", A5: "Hrnček", B5: "8", A6: "Tričko", B6: "15", A7: "Kľúčenka", B7: "4" };
+const KF = ["=B3*$B$1", "=B3*B1", "=$B$3*B1", "=B3*B$3"];
+function shiftF(f, dr) { return f.replace(/(\$?)([A-J])(\$?)(\d+)/g, (m, a, c, b, r) => a + c + b + (b ? r : String(+r + dr))); }
+function kurCells(d) { const c = Object.assign({}, KUR); if (d.f !== undefined) { c.C3 = KF[d.f]; for (let r = 4; r <= (d.to || 3); r++) c["C" + r] = shiftF(KF[d.f], r - 3); } return c; }
+/* Úloha 14 a 15: grafy */
+const GRAF = { A1: "Druh", B1: "Predané", A2: "Bábovka", B2: "12", A3: "Muffin", B3: "18", A4: "Štrúdľa", B4: "7", A5: "Makovník", B5: "10", A6: "Šišky", B6: "15" };
+const GT = { col: "📊 Stĺpcový", line: "📈 Čiarový", pie: "🥧 Koláčový" };
+
+/* ===== ÚLOHY ===== */
+const TASKS = {
+  okno: { id: "okno", type: "okno", max: 2 },
+  zhb: { id: "zhb", type: "sort", max: 3, bins: [{ id: "z", t: "📗 zošit", bg: "#E6F4EC", c: "#1D6F42" }, { id: "h", t: "🗂️ hárok", bg: C.ambS, c: C.amb }, { id: "b", t: "▫️ bunka", bg: C.inS, c: C.in }], items: [
+    { id: "1", t: "súbor, ktorý pošleš e-mailom", a: "z" },
+    { id: "2", t: "priesečník stĺpca D a riadka 9", a: "b" },
+    { id: "3", t: "karta dole s menom „Október“", a: "h" },
+    { id: "4", t: "jeden údaj, napríklad cena 4,50", a: "b" },
+    { id: "5", t: "Turnaj.ods uložený na OneDrive", a: "z" },
+    { id: "6", t: "jedna tabuľka vnútri súboru, má vyše milióna riadkov", a: "h" }] },
+  med: { id: "med", type: "med", max: 2 },
+  obl: { id: "obl", type: "obl", max: 2 },
+  zap: { id: "zap", type: "mc", qs: [{ id: "q", q: "Ako zapíšeš oblasť vyznačenú na obrázku?", opts: ["C2:F4", "C2;F4", "C2-F4", "2C:4F"], a: 0, why: "Oblasť zapíšeš <b>dvojbodkou</b>: ľavý horný roh C2, pravý dolný roh F4. Bodkočiarka oddeľuje argumenty funkcie." }] },
+  typ: { id: "typ", type: "sort", max: 3, bins: [{ id: "n", t: "🔢 číslo alebo dátum (doprava)", bg: C.inS, c: C.in }, { id: "t", t: "🔤 text (doľava)", bg: C.ambS, c: C.amb }, { id: "f", t: "🧮 vzorec (ukáže výsledok)", bg: "#E6F4EC", c: "#1D6F42" }], items: [
+    { id: "1", t: "<code>7,25</code>", a: "n" }, { id: "2", t: "<code>7.25</code>", a: "t" }, { id: "3", t: "<code>31. 10. 2026</code>", a: "n" },
+    { id: "4", t: "<code>B2+B3</code>", a: "t" }, { id: "5", t: "<code>=B2*2</code>", a: "f" }, { id: "6", t: "<code>=PRIEMER(C2:C9)</code>", a: "f" }] },
+  det: { id: "det", type: "det", max: 2 },
+  skl: { id: "skl", type: "skl", max: 2 },
+  por: { id: "por", type: "mc", qs: [
+    { id: "a", q: "V B2 a C2 sú dve známky. Ktorý vzorec vypočíta ich <b>priemer</b>?", opts: ["=(B2+C2)/2", "=B2+C2/2", "=B2+(C2/2)", "=(B2+C2)*2"], a: 0, why: "Delenie má prednosť pred sčítaním, preto súčet musí byť v <b>zátvorke</b>. Inak by sa vydelila iba druhá známka." },
+    { id: "b", q: "B2 = počet lístkov, C2 = cena lístka, B3 = počet popcornov, C3 = cena popcornu. Ktorý vzorec vypočíta, koľko zaplatíš <b>spolu</b>?", opts: ["=B2*C2+B3*C3", "=(B2+B3)*(C2+C3)", "=B2*(C2+B3)*C3", "=B2+C2*B3+C3"], a: 0, why: "Najprv sa vynásobí počet a cena lístkov, potom počet a cena popcornov a nakoniec sa obe sumy sčítajú. Násobenie má prednosť, zátvorky netreba." }] },
+  pok: { id: "pok", type: "pok", max: 1 },
+  fun: { id: "fun", type: "fun", max: 2 },
+  maxf: { id: "maxf", type: "maxf", max: 2 },
+  kurz: { id: "kurz", type: "kurz", max: 2 },
+  druh: { id: "druh", type: "mc", pics: 1, qs: [
+    { id: "a", q: "Graf, ako sa počas týždňa menila <b>teplota</b> vonku:", opts: ["col", "line", "pie"].map(t => chartThumb(t, GT[t])), a: 1, why: "Zmenu v čase najlepšie ukáže <b>čiarový</b> graf: čiara stúpa a klesá ako teplota." },
+    { id: "b", q: "Graf, akú <b>časť hlasov</b> dostal každý kandidát v triednych voľbách:", opts: ["col", "line", "pie"].map(t => chartThumb(t, GT[t])), a: 2, why: "Časti jedného celku (všetky hlasy = 100 %) ukáže <b>koláčový</b> graf." }] },
+  graf: { id: "graf", type: "graf", max: 2 }
+};
+
+const THEORY = {
+  m1: ["Tabuľkový kalkulátor: Excel, Google Tabuľky, LibreOffice Calc.", "<b>Zošit</b> = súbor (.xlsx), má jeden alebo viac <b>hárkov</b>.", "Hárok tvoria <b>stĺpce</b> (A, B, C…) a <b>riadky</b> (1, 2, 3…), ich priesečník je <b>bunka</b>.", "Časti okna: pole názvov, riadok vzorcov, karty hárkov, ovládač výplne, stavový riadok."],
+  m2: ["<b>Adresa</b> bunky = písmeno stĺpca + číslo riadka.", "Adresu aktívnej bunky ukazuje <b>pole názvov</b>.", "<b>Oblasť</b> zapíšeš dvojbodkou: ľavý horný roh : pravý dolný roh.", "Oblasť označíš ťahaním myšou, jej adresu ukáže pole názvov."],
+  m3: ["Do bunky píšeš čísla, text, dátumy a vzorce.", "Čísla a dátumy sa zarovnajú doprava, text doľava.", "Desatinné číslo píš s <b>čiarkou</b>.", "Úprava obsahu bunky: <b>F2</b> alebo riadok vzorcov."],
+  m4: ["Vzorec začína znakom <b>=</b>.", "Bunka ukáže <b>výsledok</b>, riadok vzorcov samotný vzorec.", "Do vzorcov píš <b>adresy</b> buniek, nie čísla, aby sa výsledok sám prepočítal.", "Poradie: ^, potom * a /, nakoniec + a −; zátvorky majú prednosť."],
+  m5: ["Funkcie: <b>SUM</b>, <b>PRIEMER</b>, <b>MIN</b>, <b>MAX</b>, <b>POČET</b>.", "Oblasť v zátvorke s dvojbodkou, argumenty oddeľuje bodkočiarka.", "Vzorec kopíruješ ťahaním <b>ovládača výplne</b>.", "Relatívna adresa sa pri kopírovaní posúva, <b>absolútna</b> ($) nie. Prepínaš ju klávesom <b>F4</b>."],
+  m6: ["Graf vložíš z <b>označených údajov</b> cez kartu Vložiť.", "Druhy: <b>stĺpcový</b>, <b>čiarový</b>, <b>koláčový</b>.", "Najprv si povedz, čo má graf ukázať, a podľa toho vyber druh.", "Graf má názov, osi a popisy, aby mu každý rozumel."]
+};
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max || (T.qs ? T.qs.length : T.items ? T.items.length : T.panels ? T.panels.filter(p => p.q).length : 0); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return { v: 1, attempt: 1, early: false, confirmEarly: false, name: "", cls: CLASS_DEFAULT, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, sel: {}, zz: {}, kdlg: false, ksel: null }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
+const NSTOP = STEPS.length - 2;
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
+const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
+const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
+function checkBar(TK, ready, hint, label) {
+  const r = S.t[TK.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${TK.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+}
+const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
+/* triedenie do stĺpcov */
+function sortHTML(TK) {
+  const done = S.t[TK.id], d = S.d[TK.id] || {}, io = ord(TK.id + ":i", TK.items.map(x => x.id)), sel = S.sel[TK.id];
+  const items = io.map(id => TK.items.find(x => x.id === id));
+  const chip = x => { let c = "chip"; if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad"; return `<button class="${c}" data-sti="${TK.id}|${x.id}" ${done ? "disabled" : ""}>${x.t}</button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? TK.items.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na kartičku a potom na nadpis stĺpca, kam patrí. Kartičku presunieš, keď na ňu klikneš a potom na iný stĺpec. Za každé 2 správne zatriedené kartičky získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(chip).join("") : `<span class="muted" style="font-size:14.5px">Všetky kartičky sú zatriedené.</span>`}</div>
+    <div class="bins${TK.bins.length === 3 ? " b3" : ""}">${TK.bins.map(g => `<div class="bin"><button class="bh" style="background:${g.bg};color:${g.c}" data-stb="${TK.id}|${g.id}" ${done ? "disabled" : ""}>${g.t}</button>${items.filter(x => d[x.id] === g.id).map(chip).join("")}</div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === TK.items.length ? "good" : "miss"}">Správne zatriedených: <b>${nOk} z ${TK.items.length}</b>. ${TK.items.filter(x => d[x.id] !== x.a).map(x => `„${x.t}“ → <b>${TK.bins.find(b => b.id === x.a).t}</b>`).join(" · ")}</p>` : ""}` +
+    checkBar(TK, TK.items.every(x => d[x.id]), "Zatrieď všetky kartičky.");
+}
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 5.1 Tabuľkový kalkulátor</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function mcHTML(TK) {
+  const done = S.t[TK.id], d = S.d[TK.id] || {}, Q = TK.qs;
+  const qs = TK.keep ? Q : ord(TK.id + ":q", Q.map(q => q.id)).map(id => Q.find(q => q.id === id));
+  return qs.map((q, qi) => { const o = ord(TK.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts${TK.pics ? " pics" : ""}${TK.mono ? " mono" : ""}">${o.map(i => `<button class="${optCls(done, d[q.id], i, q.a)}" data-mc="${TK.id}|${q.id}|${i}" ${done ? "disabled" : ""}>${q.opts[i]}${TK.pics ? `<span class="pcap">${["Stĺpcový", "Čiarový", "Koláčový"][i] || ""}</span>` : ""}</button>`).join("")}</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`; }).join("") + checkBar(TK, Q.every(q => d[q.id] !== undefined), Q.length > 1 ? "Odpovedz na všetky otázky." : "Vyber odpoveď.");
+}
+/* skladanie z dielikov – spoločné */
+function pcsHTML(id, P, seq, done) { const io = ord(id + ":p", P.map((_, i) => i));
+  return `<div class="pcs">${io.map(i => `<button class="pc" data-pp="${id}|${i}" ${done ? "disabled" : ""}>${esc(P[i])}</button>`).join("")}</div>
+    <div class="row" style="margin-top:4px"><button class="ghost sm" data-ppb="${id}" ${done || !seq.length ? "disabled" : ""}>⌫ Späť</button><button class="ghost sm" data-ppc="${id}" ${done || !seq.length ? "disabled" : ""}>🗑️ Vymazať</button></div>`; }
+
+/* U1 – okno Excelu */
+function oknoHTML() { const TK = TASKS.okno, done = S.t.okno, d = S.d.okno || {}, act = S.oka || 0;
+  return `<p class="ins">Vyber otázku a klikni na miesto v okne Excelu, kde je odpoveď. Po kliknutí sa vyberie ďalšia otázka. Za každé 2 správne miesta 1 ⭐.</p>
+    <div class="okg"><div class="cv">${oknoSVG(done, d)}</div><div class="okq">${OKP.map((p, i) => { let c = "okp"; if (i === act && !done) c += " on"; if (done) c += d[p.id] === p.a ? " ok" : " bad";
+      return `<button class="${c}" data-okp="${i}" ${done ? "disabled" : ""}><span class="qn">${i + 1}</span><span>${p.t}<br><small>${d[p.id] ? (done ? (d[p.id] === p.a ? "✅ " : "❌ ") + OZN[d[p.id]] + (d[p.id] !== p.a ? ` → správne: <b>${OZN[p.a]}</b>` : "") : "📍 miesto vybraté") : "▫️ ešte nevybraté"}</small></span></button>`; }).join("")}</div></div>` +
+    checkBar(TK, OKP.every(p => d[p.id]), "Vyber miesto pre všetky 4 otázky.");
+}
+/* U3 – med v bunkách */
+function medHTML() { const TK = TASKS.med, done = S.t.med, d = S.d.med || {}, act = S.meda || "A", ex = {}, mark = {};
+  Object.keys(MED).forEach(k => { if (d[k]) ex[d[k]] = (ex[d[k]] || "") + MED[k].e; if (done) { mark[MED[k].t] = "miss"; if (d[k]) mark[d[k]] = d[k] === MED[k].t ? "ok" : "bad"; } });
+  return `<p class="ins">Včela Bunka uloží zásoby do správnych buniek. Vyber zásobu a klikni na bunku s jej adresou. Za všetky 3 správne 2 ⭐, za 2 správne 1 ⭐.</p>
+    <div class="row" style="margin-top:0;margin-bottom:10px">${Object.keys(MED).map(k => `<button class="ghost ${act === k ? "on" : ""}" data-meda="${k}" ${done ? "disabled" : ""}>${MED[k].e} ${MED[k].n} → <b>${MED[k].t}</b></button>`).join("")}</div>
+    ${xWin({ nb: d[act] || "", mw: 560 }, xGrid({ id: "med", nc: 8, nr: 8, ex, mark, click: !done, cls: "honey" }))}
+    ${done ? `<p class="why ${scoreOf("med") === 2 ? "good" : "miss"}">Správne bunky majú zelený rámik. Najprv nájdi <b>stĺpec</b> (písmeno), potom <b>riadok</b> (číslo).</p>` : ""}` +
+    checkBar(TK, Object.keys(MED).every(k => d[k]), "Ulož všetky 3 zásoby.");
+}
+/* U4 – označ oblasť */
+function oblHTML() { const TK = TASKS.obl, done = S.t.obl, d = S.d.obl || {}, act = S.obla || "a", R = d[act] ? parseR(d[act]) : null, mark = {};
+  if (done) Object.keys(OBL).forEach(k => { const T = parseR(OBL[k].t); for (let c = T[0]; c <= T[2]; c++) for (let r = T[1]; r <= T[3]; r++) mark[COLS[c] + r] = (mark[COLS[c] + r] || "") + " miss"; });
+  return `<p class="ins">Označ oblasť <b>ťahaním</b> myšou (alebo prstom) od jedného rohu po druhý. Vyber úlohu tlačidlom. Za každú presne označenú oblasť 1 ⭐.</p>
+    <div class="row" style="margin-top:0;margin-bottom:10px">${Object.keys(OBL).map(k => `<button class="ghost ${act === k ? "on" : ""}" data-obla="${k}" ${done ? "disabled" : ""}>${OBL[k].e} označ <b>${OBL[k].t}</b> ${d[k] ? `<span class="muted">(máš ${d[k]})</span>` : ""}</button>`).join("")}</div>
+    ${xWin({ id: "obl", nb: d[act] || "", mw: 520 }, xGrid({ id: "obl", nc: 6, nr: 7, rng: done ? null : R, mark, drag: !done }))}
+    ${done ? `<p class="why ${scoreOf("obl") === 2 ? "good" : "miss"}">Správne oblasti sú orámované zelenou. ${Object.keys(OBL).map(k => `${OBL[k].t}: ${d[k] === OBL[k].t ? "✅" : `❌ (označil si ${d[k] || "nič"})`}`).join(" · ")}</p>` : ""}` +
+    checkBar(TK, Object.keys(OBL).every(k => d[k]), "Označ obe oblasti.");
+}
+const parseR = s => { const m = /^([A-J])(\d+)(?::([A-J])(\d+))?$/.exec(s); if (!m) return null; const a = [cIx(m[1]), +m[2]], b = m[3] ? [cIx(m[3]), +m[4]] : a; return rngOf(a, b); };
+/* U7 – detektív chýb */
+function detHTML() { const TK = TASKS.det, done = S.t.det, d = S.d.det || {}, mark = {};
+  DET_CL.forEach(r => { if (d[r]) mark[r] = done ? (DET_ERR.includes(r) ? "ok" : "bad") : "on"; else if (done && DET_ERR.includes(r)) mark[r] = "miss"; });
+  return `<p class="ins">Peťo si spravil nákupný zoznam, ale pri písaní urobil <b>3 chyby</b>. Klikni na bunky, v ktorých je <b>chybne zapísaný údaj</b>. Bunky s chybovým hlásením (#…) sú iba následok chyby, tie neoznačuj. Za 3 nájdené chyby 2 ⭐, za 2 chyby 1 ⭐ (zle označená bunka 1 nájdenú chybu zruší).</p>
+    ${xWin({ nb: S.detc || "", fx: S.detc ? DET[S.detc] || "" : "", mw: 560 }, xGrid({ id: "det", nc: 4, nr: 5, cells: DET, mark, click: !done, hd: 1, w: ["minmax(0,1.2fr)", "minmax(0,1fr)", "minmax(0,1fr)", "minmax(0,1.1fr)"] }))}
+    ${done ? `<p class="why ${scoreOf("det") === 2 ? "good" : "miss"}">Chyby: <b>C3</b> 1.09 má bodku, Excel ho berie ako text (je zarovnaný doľava). <b>B4</b> „3 ks“ je text, s ním sa nedá násobiť. <b>D5</b> chýba znak <b>=</b>, preto bunka ukazuje vzorec ako text.</p>` : ""}` +
+    checkBar(TK, DET_CL.some(r => d[r]), "Označ aspoň jednu bunku.");
+}
+/* U8 – vzorec z dielikov */
+function sklHTML() { const TK = TASKS.skl, done = S.t.skl, seq = (S.d.skl || {}).s || [], f = seq.map(i => SKLP[i]).join(""), c = Object.assign({}, SKL); if (f) c.D2 = f;
+  return `<p class="ins">Do bunky <b>D2</b> poskladaj vzorec, ktorý vypočíta, koľko stoja všetky vstupenky. Klikaj na dieliky, Excel hneď ukáže výsledok. Za vzorec, ktorý sa sám prepočíta pri zmene údajov, 2 ⭐.</p>
+    ${xWin({ nb: "D2", fx: f, mw: 560 }, xGrid({ id: "skl", nc: 4, nr: 3, cells: c, act: "D2", hd: 1, w: ["minmax(0,1.1fr)", "minmax(0,.8fr)", "minmax(0,1fr)", "minmax(0,1.1fr)"] }))}
+    ${pcsHTML("skl", SKLP, seq, done)}
+    ${done ? `<p class="why ${scoreOf("skl") === 2 ? "good" : "miss"}">Správne: <code>=B2*C2</code>. Vzorec s <b>adresami</b> sa po zmene počtu alebo ceny sám prepočíta. Vzorec <code>=3*6,50</code> dá tiež 19,5, ale po zmene údajov ostane starý výsledok.</p>` : ""}` +
+    checkBar(TK, f.length > 1 && f[0] === "=", "Poskladaj vzorec, ktorý začína znakom =.");
+}
+/* U10 – pokus s prepočítaním */
+function pokHTML() { const TK = TASKS.pok, done = S.t.pok, d = S.d.pok || {}, c = Object.assign({}, POK, { B2: String(3 + (d.b2 || 0)), B3: String(3 + (d.b3 || 0)) }), ready = d.b2 && d.b3, o = ord("pok", POKQ.opts.map((_, i) => i));
+  return `<p class="ins">🧪 <b>Pokus:</b> Tomáš a Eva si vypočítali cenu lístkov. Tomáš má v D2 vzorec <code>=B2*C2</code>, Eva v D3 <code>=3*6,5</code>. Obaja si dokúpia lístok. Klikni na obe tlačidlá a sleduj stĺpec D.</p>
+    ${xWin({ nb: "D2", fx: "=B2*C2", mw: 560 }, xGrid({ id: "pok", nc: 4, nr: 3, cells: c, hd: 1, mark: { D2: "flash", D3: "flash" } }))}
+    <div class="row"><button class="ghost" data-pk="b2" ${done ? "disabled" : ""}>🎟️ Tomáš kúpil lístok navyše</button><button class="ghost" data-pk="b3" ${done ? "disabled" : ""}>🎟️ Eva kúpila lístok navyše</button></div>
+    ${ready ? `<fieldset class="q" style="margin-top:16px"><legend><span class="qn">?</span><span>Evina suma sa nezmenila. Ktorý vzorec má Eva napísať do D3, aby sa jej suma vždy prepočítala?</span></legend><div class="opts mono">${o.map(i => `<button class="${optCls(done, d.q, i, POKQ.a)}" data-pq="${i}" ${done ? "disabled" : ""}>${POKQ.opts[i]}</button>`).join("")}</div>${done ? `<p class="why ${d.q === POKQ.a ? "good" : "miss"}">Vzorec <code>=3*6,5</code> pozná iba čísla, ktoré do neho Eva napísala. <code>=B3*C3</code> si berie počet aj cenu z buniek, preto sa prepočíta pri zmene počtu aj ceny. <code>=D2</code> by ukázal Tomášovu sumu.</p>` : ""}</fieldset>` + checkBar(TK, d.q !== undefined, "Vyber odpoveď.") : `<p class="muted" style="font-size:14.5px">Otázka sa ukáže po pokuse s oboma tlačidlami.</p>`}`;
+}
+/* U11 – ktorá funkcia */
+function funHTML() { const TK = TASKS.fun, done = S.t.fun, d = S.d.fun || {};
+  return `<p class="ins">V stĺpci B sú predané koláče zo školského bufetu. Ku každej otázke vyber funkciu, ktorou ju Excel zodpovie. Za každé 2 správne 1 ⭐.</p>
+    <div class="pair" style="align-items:start">${xWin({ nb: "B2:B6", mw: 360 }, xGrid({ id: "fun", nc: 2, nr: 6, cells: FUN, rng: [1, 2, 1, 6], hd: 1, w: ["minmax(0,1fr)", "minmax(0,1.3fr)"] }))}
+    <div>${FQ.map(q => `<div class="fqrow"><div>${q.t}</div><div class="chips">${FNS.map(f => { let c = "opt mono"; if (d[q.id] === f) c += " sel"; if (done) { if (f === q.a) c += " ok"; else if (d[q.id] === f) c += " bad"; } return `<button class="${c}" data-fn="${q.id}|${f}" ${done ? "disabled" : ""}>${f}</button>`; }).join("")}</div></div>`).join("")}</div></div>
+    ${done ? `<p class="why ${scoreOf("fun") === 2 ? "good" : "miss"}">SUM = spolu, PRIEMER = v priemere, MIN = najmenej, POČET = koľko je <b>čísel</b>. Text „zatvorené“ POČET ani PRIEMER nezapočítajú.</p>` : ""}` +
+    checkBar(TK, FQ.every(q => d[q.id]), "Vyber funkciu ku každej otázke.");
+}
+/* U12 – funkcia z dielikov */
+function maxfHTML() { const TK = TASKS.maxf, done = S.t.maxf, seq = (S.d.maxf || {}).s || [], f = seq.map(i => MXP[i]).join(""), c = Object.assign({}, TMP); if (f) c.B10 = f;
+  return `<p class="ins">Do bunky <b>B10</b> poskladaj funkciu, ktorá nájde <b>najvyššiu teplotu</b> týždňa. Použi celú oblasť s teplotami. Za správnu funkciu 1 ⭐, za správnu oblasť 1 ⭐.</p>
+    ${xWin({ nb: "B10", fx: f, mw: 400 }, xGrid({ id: "maxf", nc: 2, nr: 10, cells: c, act: "B10", hd: 1, w: ["minmax(0,1fr)", "minmax(0,1.2fr)"] }))}
+    ${pcsHTML("maxf", MXP, seq, done)}
+    ${done ? `<p class="why ${scoreOf("maxf") === 2 ? "good" : "miss"}">Správne: <code>=MAX(B2:B8)</code>. Bunka B1 je nadpis, B2:B8 sú teploty od pondelka po nedeľu. <code>=MAX(B2;B8)</code> by porovnala iba 2 bunky.</p>` : ""}` +
+    checkBar(TK, f.length > 1 && f[0] === "=", "Poskladaj vzorec, ktorý začína znakom =.");
+}
+/* U13 – kurz a ovládač výplne */
+function kurzHTML() { const TK = TASKS.kurz, done = S.t.kurz, d = S.d.kurz || {}, c = kurCells(d), to = d.to || 3, o = ord("kurz", KF.map((_, i) => i));
+  return `<p class="ins">Na výlete v Česku chceš prepočítať ceny suvenírov na koruny. Kurz je v bunke <b>B1</b>. 1) Vyber vzorec do <b>C3</b>, ktorý sa dá skopírovať nadol (1 ⭐). 2) Potiahni <b>ovládač výplne</b> (zelený štvorček v rohu C3) nadol až po C7 (1 ⭐).</p>
+    <div class="row" style="margin-top:0;margin-bottom:10px"><b>C3 =</b>${o.map(i => { let k = "opt mono"; if (d.f === i) k += " sel"; if (done) { if (i === 0) k += " ok"; else if (d.f === i) k += " bad"; } return `<button class="${k}" data-kf="${i}" ${done ? "disabled" : ""} style="padding:6px 12px">${KF[i]}</button>`; }).join("")}</div>
+    ${xWin({ nb: "C" + to, fx: d.f !== undefined ? shiftF(KF[d.f], to - 3) : "", mw: 520 }, xGrid({ id: "kurz", nc: 3, nr: 7, cells: c, act: d.f !== undefined ? "C" + to : null, fh: d.f !== undefined && !done ? "C" + to : null, rng: to > 3 ? [2, 3, 2, to] : null, w: ["minmax(0,1.3fr)", "minmax(0,1fr)", "minmax(0,1fr)"] }))}
+    ${d.f !== undefined && !done ? `<p class="muted" style="font-size:14px;margin:6px 0 0">Ťahaj zelený štvorček nadol. Kliknutím na bunku v stĺpci C uvidíš jej vzorec v riadku vzorcov.</p>` : ""}
+    ${done ? `<p class="why ${scoreOf("kurz") === 2 ? "good" : "miss"}">Správne: <code>=B3*$B$1</code>. Kurz je iba v jednej bunke, preto ju <b>zamkneš</b> znakom $. Pri kopírovaní sa B3 mení na B4, B5…, ale $B$1 ostane. Bez $ by sa B1 posunulo na B2 (nadpis) a vznikla by chyba.</p>` : ""}` +
+    checkBar(TK, d.f !== undefined && d.to > 3, "Vyber vzorec a skopíruj ho ťahaním.");
+}
+/* U15 – vlož graf */
+function grafHTML() { const TK = TASKS.graf, done = S.t.graf, d = S.d.graf || {}, R = d.r ? parseR(d.r) : null;
+  let ch = `<p class="muted" style="text-align:center;padding:40px 10px;font-size:14.5px">Sem sa vloží graf.</p>`;
+  if (R && d.t) { const cats = [], vals = [], g = getter(GRAF); let head = "";
+    for (let r = R[1]; r <= R[3]; r++) { const a = R[0] === 0 ? g("A" + r) : "", b = R[2] >= 1 ? g("B" + r) : g(COLS[R[0]] + r); if (typeof b === "number") { cats.push(a || String(cats.length + 1)); vals.push(b); } else if (typeof b === "string" && b) head = b; }
+    ch = vals.length ? `<svg viewBox="0 0 420 250" role="img" aria-label="Vložený graf" ${FF}>${chartSVG(d.t, cats, vals, head ? head + " koláče" : "Graf", 420, 250)}</svg>` : `<p class="muted" style="text-align:center;padding:40px 10px">V označenej oblasti nie sú čísla, graf je prázdny.</p>`; }
+  return `<p class="ins">Pani kuchárka chce na nástenke vidieť, ktorý koláč sa predal <b>najviac</b>. 1) Ťahaním označ údaje aj s nadpismi. 2) Na karte Vložiť vyber druh grafu. Za správne označené údaje 1 ⭐, za vhodný druh grafu 1 ⭐.</p>
+    <div class="pair" style="align-items:start"><div>${xWin({ id: "graf", nb: d.r || "", mw: 400, tabs: "Koláče" }, xGrid({ id: "graf", nc: 3, nr: 7, cells: GRAF, rng: R, drag: !done, hd: 1, w: ["minmax(0,1.3fr)", "minmax(0,1fr)", "minmax(0,.6fr)"] }))}
+      <div class="ribbon"><b>Vložiť → Graf:</b> ${Object.keys(GT).map(t => { let k = "ghost sm"; if (d.t === t) k += " on"; if (done) k += t === "col" ? " okb" : d.t === t ? " badb" : ""; return `<button class="${k}" data-gt="${t}" ${done ? "disabled" : ""}>${GT[t]}</button>`; }).join("")}</div></div>
+      <div class="cv">${ch}</div></div>
+    ${done ? `<p class="why ${scoreOf("graf") === 2 ? "good" : "miss"}">Označiť treba <b>A1:B6</b> (druhy aj čísla s nadpismi), aby graf mal popisy. Na porovnanie veľkostí je najlepší <b>stĺpcový</b> graf, najvyšší stĺpec hneď ukáže víťaza.</p>` : ""}` +
+    checkBar(TK, R && d.t, "Označ údaje a vyber druh grafu.");
+}
+
+function memo() { const L = THEORY[STEPS[S.cur].id]; return L ? `<section class="memo"><h3>📌 Zapamätaj si</h3><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "🏆 Zobraziť výsledok" : "Ďalšia misia: " + n.title + " ▶"}</button></div>` : ""); }
+
+const VIEWS = {
+  start() {
+    return `<div class="hero"><div><p class="kicker">Informatika · Tercia · domáca úloha k hodine 5.1</p><h1>Domáca úloha: Tabuľkový kalkulátor, bunka, hárok, vzorce</h1>
+      <p style="font-size:18.5px">Bzzz! Som včela <b>Bunka</b>. Celý život staviam plásty z buniek, takže tabuľky sú môj domov. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: preskúmaš okno Excelu, uložíš med do správnych buniek, odhalíš chyby v nákupnom zozname, poskladáš vzorce a funkcie, skopíruješ vzorec so znakom $ a nakoniec vložíš graf. Nič nebudeš počítať, všetko vypočíta Excel. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
+      <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
+      <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
+      <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Pri známke 1 alebo 2 je domáca úloha hotová, pri známke 3, 4 alebo 5 máš ešte <b>jednu opravu</b>.</div></div>`;
+  },
+  m1() {
+    return banner(1, "Spoznaj okno tabuľkového kalkulátora a zisti, z čoho sa skladá zošit.") +
+    say(`Bzzz, som včela <b>Bunka</b>! 🐝 Každý plást je plný buniek, presne ako tabuľka. Najprv sa poobzeráme po okne Excelu.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Tabuľkový kalkulátor</b> je program na prácu s tabuľkami. Najznámejšie sú <b>Microsoft Excel</b>, <b>Google Tabuľky</b> a <b>LibreOffice Calc</b>.</p>
+      <p>Súbor sa volá <b>zošit</b> (v Exceli s príponou .xlsx). Zošit má jeden alebo viac <b>hárkov</b>. Hárok tvoria <b>stĺpce</b> označené písmenami (A, B, C … XFD) a <b>riadky</b> označené číslami. Priesečník stĺpca a riadka je <b>bunka</b>.</p>
+      <table class="rtab"><thead><tr><th>Časť okna</th><th>Na čo slúži</th></tr></thead><tbody>
+        <tr><td><b>pole názvov</b></td><td>ukazuje adresu aktívnej (označenej) bunky</td></tr>
+        <tr><td><b>riadok vzorcov</b></td><td>ukazuje, čo je naozaj v bunke, aj celý vzorec</td></tr>
+        <tr><td><b>karty hárkov</b></td><td>prepínanie medzi hárkami zošita</td></tr>
+        <tr><td><b>ovládač výplne</b></td><td>malý štvorček v rohu označenej bunky, ťahaním kopíruje</td></tr>
+        <tr><td><b>stavový riadok</b></td><td>rýchly súčet a priemer označených buniek</td></tr></tbody></table>
+    </div><div class="tfigs">${FIG_BOOK}${FIG_USES}${VEDEL("Prvý tabuľkový kalkulátor <b>VisiCalc</b> vznikol v roku 1979. Bol taký užitočný, že si kvôli nemu ľudia kupovali počítače Apple II.")}</div></div>
+    ${H3(1, "🪟", "kde to je?", "okno")}<div class="task">${oknoHTML()}</div>
+    ${H3(2, "🗂️", "zošit, hárok, či bunka?", "zhb")}<div class="task">${sortHTML(TASKS.zhb)}</div>` + nextBar();
+  },
+  m2() {
+    return banner(2, "Každá bunka má svoju adresu. Viac buniek naraz tvorí oblasť.") +
+    say(`V pláste nájdem každú bunku podľa adresy. 🎯 Ty to zvládneš tiež: najprv písmeno stĺpca, potom číslo riadka.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>Každá bunka má <b>adresu</b>: najprv <b>písmeno stĺpca</b>, potom <b>číslo riadka</b>. Bunka v stĺpci D a riadku 4 má adresu <b>D4</b>.</p>
+      <p>Adresu označenej bunky vidíš v <b>poli názvov</b> vľavo nad tabuľkou. Záhlavie jej stĺpca a riadka sa zvýrazní.</p>
+      <p><b>Oblasť</b> je obdĺžnik zo susedných buniek. Zapíšeš ju adresou <b>ľavého horného</b> rohu, <b>dvojbodkou</b> a adresou <b>pravého dolného</b> rohu, napríklad B2:C5.</p>
+      <p>Oblasť označíš <b>ťahaním</b> myšou od jedného rohu po druhý. Počas ťahania ukazuje pole názvov, koľko riadkov a stĺpcov máš označených.</p>
+      <p>Celý stĺpec označíš kliknutím na jeho písmeno, celý riadok kliknutím na jeho číslo.</p>
+      ${VEDEL("Hárok v Exceli má <b>16 384</b> stĺpcov (posledný je XFD) a <b>1 048 576</b> riadkov. To je vyše 17 miliárd buniek.")}
+    </div><div class="tfigs">${FIG_ADDR}${FIG_RANGE}</div></div>
+    ${H3(3, "🍯", "zásoby v bunkách", "med")}<div class="task">${medHTML()}</div>
+    ${H3(4, "🟩", "označ oblasť", "obl")}<div class="task">${oblHTML()}</div>
+    ${H3(5, "✏️", "zápis oblasti", "zap")}<div class="task"><div class="cv" style="max-width:380px;margin-bottom:12px">${SV(440, 214, sgrid(14, 10, 7, 6, 56, 28, {}, { rng: [2, 2, 5, 4] }), "Vyznačená oblasť")}</div>${mcHTML(TASKS.zap)}</div>` + nextBar();
+  },
+  m3() {
+    return banner(3, "Do bunky píšeš čísla, text, dátumy aj vzorce. Excel ich pozná podľa tvaru.") +
+    say(`Pozor na drobnosti! 🔢 Jedna bodka namiesto čiarky a z čísla je text, s ktorým Excel nepočíta.`) +
+    `<div class="theory tsplit"><div>
+      <p>Do bunky môžeš napísať <b>číslo</b>, <b>text</b>, <b>dátum</b> alebo <b>vzorec</b>. Obsah potvrdíš klávesom <b>Enter</b>, upravíš ho klávesom <b>F2</b> alebo v riadku vzorcov.</p>
+      <table class="rtab"><thead><tr><th>Údaj</th><th>Ako ho Excel zobrazí</th></tr></thead><tbody>
+        <tr><td>číslo, dátum</td><td>zarovnané <b>doprava</b></td></tr>
+        <tr><td>text</td><td>zarovnaný <b>doľava</b></td></tr>
+        <tr><td>vzorec (začína =)</td><td>v bunke <b>výsledok</b>, vzorec v riadku vzorcov</td></tr></tbody></table>
+      <p>V slovenskom nastavení sa desatinné číslo píše s <b>čiarkou</b>. Keď do čísla pridáš písmená alebo jednotku, Excel ho berie ako text a nepočíta s ním.</p>
+      <p>Zarovnanie je dobrá kontrola: ak je „číslo“ vľavo, Excel ho nepochopil ako číslo.</p>
+      ${VEDEL("Excel si dátum pamätá ako <b>číslo</b>, počet dní od 1. 1. 1900. Dátum 1. 1. 2026 je pre Excel číslo 46 023, preto sa dá s dátumami aj počítať.")}
+    </div><div class="tfigs">${FIG_ALIGN}${FIG_COMMA}</div></div>
+    ${H3(6, "🔢", "čo je v bunke?", "typ")}<div class="task">${sortHTML(TASKS.typ)}</div>
+    ${H3(7, "🕵️", "chyby v nákupnom zozname", "det")}<div class="task">${detHTML()}</div>` + nextBar();
+  },
+  m4() {
+    return banner(4, "Vzorce počítajú za teba. Stačí ich správne poskladať.") +
+    say(`Teraz bude Excel počítať! ➗ Ty iba skladáš vzorce z dielikov a vyberáš, výsledky vypočíta Excel.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p><b>Vzorec</b> začína znakom <b>=</b>. Obsahuje čísla, adresy buniek a operátory <b>+ − * / ^</b> (^ je mocnina).</p>
+      <p>Bunka zobrazí <b>výsledok</b>, samotný vzorec vidíš v <b>riadku vzorcov</b>, keď bunku označíš.</p>
+      <p>Keď zmeníš údaj, na ktorý vzorec odkazuje, výsledok sa <b>automaticky prepočíta</b>. Preto do vzorcov píšeme <b>adresy buniek</b>, nie čísla odpísané z tabuľky.</p>
+      <p>Excel počíta v rovnakom poradí ako matematika: najprv <b>mocnina</b>, potom <b>násobenie a delenie</b>, nakoniec <b>sčítanie a odčítanie</b>. Čo je v <b>zátvorke</b>, má prednosť.</p>
+      ${VEDEL("Excel prepočítava vzorce sám pri každej zmene. Ak máš obrovský súbor a prepočet si vypneš, zapneš ho klávesom <b>F9</b>.")}
+    </div><div class="tfigs">${FIG_FBAR}${FIG_ORDER}</div></div>
+    ${H3(8, "🧱", "vzorec z dielikov", "skl")}<div class="task">${sklHTML()}</div>
+    ${H3(9, "🧭", "ktorý vzorec?", "por")}<div class="task">${mcHTML(TASKS.por)}</div>
+    ${H3(10, "🧪", "pokus s prepočítaním", "pok")}<div class="task">${pokHTML()}</div>` + nextBar();
+  },
+  m5() {
+    return banner(5, "Funkcie sú hotové výpočty. Ovládač výplne skopíruje vzorec do ďalších riadkov.") +
+    say(`Mám v pláste tisíc buniek s medom a spočítam ich jedinou funkciou! 🧮 A keď treba vzorec do ďalších riadkov, iba potiahnem štvorček.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Funkcia</b> je hotový výpočet s menom. Za meno píšeš do zátvorky <b>oblasť</b> buniek (s dvojbodkou). Viac argumentov oddeľuje <b>bodkočiarka</b>.</p>
+      <table class="rtab"><thead><tr><th>Funkcia</th><th>Čo zistí</th></tr></thead><tbody>
+        <tr><td><b>SUM</b></td><td>súčet čísel</td></tr><tr><td><b>PRIEMER</b></td><td>priemer čísel</td></tr>
+        <tr><td><b>MIN</b>, <b>MAX</b></td><td>najmenšie, najväčšie číslo</td></tr><tr><td><b>POČET</b></td><td>koľko buniek obsahuje číslo</td></tr></tbody></table>
+      <p>Vzorec skopíruješ ťahaním <b>ovládača výplne</b>. <b>Relatívna</b> adresa (A2) sa pri kopírovaní o riadok nižšie posunie na A3.</p>
+      <p><b>Absolútna</b> adresa so znakom <b>$</b> (napríklad $E$1) sa pri kopírovaní nemení. Použiješ ju, keď všetky riadky počítajú s jednou bunkou. Pri písaní ju prepneš klávesom <b>F4</b>.</p>
+      ${VEDEL("V anglickom Exceli sa PRIEMER volá <b>AVERAGE</b> a POČET <b>COUNT</b>. Keď otvoríš anglický súbor v slovenskom Exceli, názvy funkcií sa preložia samy.")}
+    </div><div class="tfigs">${FIG_FUNC}${FIG_COPY}</div></div>
+    ${H3(11, "🍰", "ktorá funkcia?", "fun")}<div class="task">${funHTML()}</div>
+    ${H3(12, "🌡️", "najteplejší deň", "maxf")}<div class="task">${maxfHTML()}</div>
+    ${H3(13, "💶", "suveníry v korunách", "kurz")}<div class="task">${kurzHTML()}</div>` + nextBar();
+  },
+  m6() {
+    return banner(6, "Navyše: z čísel v tabuľke vytvoríš graf, ktorému porozumie každý na prvý pohľad.") +
+    say(`Posledná misia! 📊 Stĺpec čísel nikoho nezaujme, ale pekný graf áno. Vyberieme ten správny.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p><b>Graf</b> zobrazí čísla z tabuľky ako obrázok. Najprv <b>označíš údaje</b> (aj s nadpismi), potom na karte <b>Vložiť</b> vyberieš druh grafu.</p>
+      <table class="rtab"><thead><tr><th>Druh</th><th>Na čo sa hodí</th></tr></thead><tbody>
+        <tr><td><b>stĺpcový</b></td><td>porovnanie veľkostí niekoľkých položiek</td></tr>
+        <tr><td><b>čiarový</b></td><td>ako sa niečo mení v čase</td></tr>
+        <tr><td><b>koláčový</b></td><td>aký diel z celku tvoria jednotlivé časti</td></tr></tbody></table>
+      <p>Pred vložením grafu si polož otázku: <b>Čo má graf ukázať?</b> Podľa odpovede vyber druh.</p>
+      <p>Dobrý graf má <b>názov</b> a popísané <b>osi</b>. Keď v tabuľke zmeníš číslo, graf sa zmení s ním.</p>
+      ${VEDEL("Koláčový aj stĺpcový graf vymyslel škótsky inžinier <b>William Playfair</b>. Prvé grafy kreslil ručne už na konci 18. storočia.")}
+    </div><div class="tfigs">${FIG_CHARTS}${FIG_CPARTS}</div></div>
+    ${H3(14, "🤔", "aký graf?", "druh")}<div class="task">${mcHTML(TASKS.druh)}</div>
+    ${H3(15, "📊", "graf na nástenku", "graf")}<div class="task">${grafHTML()}</div>` + nextBar();
+  },
+  vysledok() {
+    if (!S.finished && !allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i)).map(([s, i]) => [s, i, STEP_TASKS[s.id].filter(t => !S.t[t]).length]);
+      const left = Object.keys(TASKS).filter(k => !S.t[k]).length;
+      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú tieto misie (kliknutím sa do nich vrátiš):</p><div class="row" style="margin-top:0">${miss.map(([s, i, n]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} <span class="muted">· ${n} ${n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh"}</span></button>`).join("")}</div>
+        ${S.confirmEarly ? `<div class="vedel" style="margin-top:18px"><b>⚠️ Naozaj chceš domácu úlohu ukončiť?</b> Nedokončených úloh: <b>${left}</b>. Rozpracované úlohy sa vyhodnotia podľa toho, čo si v nich vybral, nedotknuté dostanú 0 ⭐. Potom sa už nič nedá zmeniť.<div class="row"><button class="primary" data-earlyyes style="background:#C0392B">Áno, odoslať</button><button class="ghost" data-earlyno>Späť k úlohám</button></div></div>`
+        : `<div class="row" style="margin-top:18px"><button class="primary" data-early>🏁 Ukončiť a odoslať výsledok</button><span class="muted" style="font-size:14.5px">Ak už nechceš pokračovať, môžeš domácu úlohu ukončiť aj teraz.</span></div>`}</div>`; }
+    if (!S.finished) { S.finished = Date.now(); save(); }
+    const gr = gradeOf(total(), MAX);
+    try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: S.name, cls: S.cls, score: total(), max: MAX, at: S.finished, grade: gr, attempts: S.attempt || 1 })); } catch (e) {}
+    const pct = Math.round(total() / MAX * 100), g = gr;
+    return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Výborne! Vyznáš sa v okne Excelu, v adresách, vo vzorcoch, funkciách aj v grafoch. Si pravá tabuľková včela! 🐝📊" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil, a skús si vzorce vyskúšať aj v naozajstnom Exceli. 🐝", "wow")}
+      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + (S.t[t] ? S.t[t].score : 0), 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <div class="row">${sendResults()}</div>
+      ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
+      ${(S.attempt || 1) === 1 && g >= 3 ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš ešte jednu opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu vypracovať ešte raz. Najprv si pozri vysvetlenia pri úlohách, kde si sa pomýlil. Oprava je posledný pokus.<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>` : ""}
+      ${(S.attempt || 1) === 2 ? `<p class="muted" style="margin-top:12px">Toto bola oprava, ďalší pokus už nie je možný.</p>` : ""}</div>`;
+  }
+};
+
+/* čas vypracovania (DOMACA): pripíše sa k bodom */
+function durTxt() { if (!S.started || !S.finished) return ""; let t = Math.max(0, Math.round((S.finished - S.started) / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+  return " · " + (h ? h + " h " + m + " min" : m ? m + " min " + s + " s" : s + " s"); }
+function sendResults() {
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.early ? " (nedokončené)" : "") + ((S.attempt || 1) === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)` + durTxt()); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished, S.attempt].join("|");
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Pripoj sa na internet a obnov stránku, výsledok sa odošle znova.", "#B3261E"); }); }
+  return `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
+}
+/* záznam o odovzdaní */
+function doneRec() { try { let r = localStorage.getItem(DONE_KEY); if (r) return JSON.parse(r);
+    for (const k of OLD_DONE_KEYS) { r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); o.grade = o.grade || gradeOf(o.score, o.max || MAX); o.attempts = Math.min(o.attempts || 1, 1); o.old = true; return o; } } } catch (e) {} return null; }
+function lockedDone() { if (S.finished) return null; const r = doneRec(); if (!r) return null; if ((S.attempt || 1) === 2 && (r.attempts || 1) < 2) return null; return r; }
+function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const can = (L.grade || gradeOf(L.score, L.max || MAX)) >= 3 && (L.attempts || 1) < 2;
+    document.getElementById("main").innerHTML = can ? `<div class="result"><h2>🔁 Oprava domácej úlohy</h2>${say(`${esc(L.name)} (${esc(L.cls)}), v prvom pokuse si získal/a <b>${L.score} z ${L.max || MAX} ⭐</b> (známka ${L.grade}). Máš ešte <b>jednu opravu</b>. Je to posledný pokus.`)}<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>`
+      : `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${L.score} z ${L.max || MAX} ⭐</b>. Opakovať ju nie je možné.`)}</div>`; return; }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); typo(m); typo(document.getElementById("top"));
+  window.scrollTo({ top: scroll ? 0 : y }); }
+
+function scoreOf(id) {
+  const TK = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (TK.type === "mc") sc = TK.qs.filter(q => d[q.id] === q.a).length;
+  if (TK.type === "sort") sc = Math.floor(TK.items.filter(x => d[x.id] === x.a).length / 2);
+  if (TK.type === "okno") sc = Math.floor(OKP.filter(p => d[p.id] === p.a).length / 2);
+  if (TK.type === "med") { const c = Object.keys(MED).filter(k => d[k] === MED[k].t).length; sc = c === 3 ? 2 : c === 2 ? 1 : 0; }
+  if (TK.type === "obl") sc = Object.keys(OBL).filter(k => d[k] === OBL[k].t).length;
+  if (TK.type === "det") { const sel = DET_CL.filter(r => d[r]), n = sel.filter(r => DET_ERR.includes(r)).length - sel.filter(r => !DET_ERR.includes(r)).length; sc = n >= 3 ? 2 : n === 2 ? 1 : 0; }
+  if (TK.type === "skl") { const f = (d.s || []).map(i => SKLP[i]).join(""); if (f[0] === "=") { const v = xVal(Object.assign({}, SKL, { D2: f }), "D2"); if (typeof v === "number" && Math.abs(v - 19.5) < 1e-9) sc = /B2/.test(f) && /C2/.test(f) && !/(^|[=*+])(3|6,50)($|[*+])/.test(f) ? 2 : 1; } }
+  if (TK.type === "pok") sc = d.q === POKQ.a ? 1 : 0;
+  if (TK.type === "fun") sc = Math.floor(FQ.filter(q => d[q.id] === q.a).length / 2);
+  if (TK.type === "maxf") { const f = (d.s || []).map(i => MXP[i]).join(""); if (f[0] === "=") { const v = xVal(Object.assign({}, TMP, { B10: f }), "B10"); if (typeof v === "number") sc = (/^=MAX\(/.test(f) ? 1 : 0) + (/\(B2:B8\)$/.test(f) ? 1 : 0); } }
+  if (TK.type === "kurz") sc = (d.f === 0 ? 1 : 0) + (d.to === 7 ? 1 : 0);
+  if (TK.type === "graf") sc = (d.r === "A1:B6" || d.r === "A2:B6" ? 1 : 0) + (d.t === "col" && d.r ? 1 : 0);
+  return Math.min(sc, maxOf(TK));
+}
+function check(id) { award(id, scoreOf(id)); save(); render(false); }
+
+/* predčasné ukončenie: rozpracované úlohy sa vyhodnotia podľa výberu, nedotknuté = 0 */
+function finishEarly() { Object.keys(TASKS).forEach(id => { if (!S.t[id]) award(id, scoreOf(id)); }); S.cvd = null; S.early = true; S.confirmEarly = false; S.finished = Date.now(); }
+const gradeOf = (sc, mx) => { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; };
+function startRetry(rec) { const n = (rec && rec.name) || S.name, c = (rec && rec.cls) || S.cls; S = fresh(); S.name = n; S.cls = c; S.attempt = 2; save(); render(true); }
+const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
+const upd = () => { save(); render(false); };
+
+/* ===== UDALOSTI ===== */
+document.addEventListener("click", e => {
+  const oz = e.target.closest("[data-oz]");
+  if (oz) { if (S.t.okno) return; const d = S.d.okno = S.d.okno || {}, a = S.oka || 0; d[OKP[a].id] = oz.dataset.oz; const nx = OKP.findIndex((p, i) => i > a && !d[p.id]); S.oka = nx >= 0 ? nx : OKP.findIndex(p => !d[p.id]) >= 0 ? OKP.findIndex(p => !d[p.id]) : a; return upd(); }
+  const xc = e.target.closest("[data-xc]");
+  if (xc && !e.target.closest("[data-fh]")) { const [g, ref] = xc.dataset.xc.split("|");
+    if (g === "med") { if (S.t.med) return; setD("med", S.meda || "A", ref); return upd(); }
+    if (g === "det") { if (S.t.det) return; S.detc = ref; if (DET_CL.includes(ref)) { const d = S.d.det = S.d.det || {}; d[ref] = !d[ref]; } return upd(); }
+    if (g === "kurz") { const d = S.d.kurz || {}; if (ref[0] === "C" && +ref.slice(1) >= 3 && d.f !== undefined) { const nb = document.querySelector(".xwin .nb"), fx = document.querySelector(".xwin .fx"); const r = +ref.slice(1); if (r <= (d.to || 3)) { if (nb) nb.textContent = ref; if (fx) fx.textContent = shiftF(KF[d.f], r - 3); } } return; }
+  }
+  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
+  if (ds.cls) { S.cls = ds.cls; return upd(); }
+  if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
+  if (ds.check) { check(ds.check); return; }
+  if (ds.early !== undefined) { S.confirmEarly = true; return upd(); }
+  if (ds.earlyno !== undefined) { S.confirmEarly = false; return upd(); }
+  if (ds.earlyyes !== undefined) { finishEarly(); save(); render(true); return; }
+  if (ds.retry !== undefined) { const r = S.finished ? { name: S.name, cls: S.cls } : doneRec(); startRetry(r); return; }
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; setD(t, q, +i); return upd(); }
+  if (ds.sti) { const [t, id] = ds.sti.split("|"); if (S.t[t]) return; S.sel[t] = S.sel[t] === id ? null : id; return upd(); }
+  if (ds.stb) { const [t, b] = ds.stb.split("|"); if (S.t[t] || !S.sel[t]) return; setD(t, S.sel[t], b); S.sel[t] = null; return upd(); }
+  if (ds.okp !== undefined) { S.oka = +ds.okp; return upd(); }
+  if (ds.meda) { S.meda = ds.meda; return upd(); }
+  if (ds.obla) { S.obla = ds.obla; return upd(); }
+  if (ds.pp) { const [t, i] = ds.pp.split("|"); if (S.t[t]) return; const d = S.d[t] = S.d[t] || {}; (d.s = d.s || []).push(+i); return upd(); }
+  if (ds.ppb) { if (S.t[ds.ppb]) return; const d = S.d[ds.ppb] || {}; d.s = (d.s || []).slice(0, -1); S.d[ds.ppb] = d; return upd(); }
+  if (ds.ppc) { if (S.t[ds.ppc]) return; S.d[ds.ppc] = { s: [] }; return upd(); }
+  if (ds.pk) { if (S.t.pok) return; const d = S.d.pok = S.d.pok || {}; d[ds.pk] = (d[ds.pk] || 0) + 1; return upd(); }
+  if (ds.pq !== undefined) { if (S.t.pok) return; setD("pok", "q", +ds.pq); return upd(); }
+  if (ds.fn) { const [q, f] = ds.fn.split("|"); if (S.t.fun) return; setD("fun", q, f); return upd(); }
+  if (ds.kf !== undefined) { if (S.t.kurz) return; const d = S.d.kurz = S.d.kurz || {}; d.f = +ds.kf; return upd(); }
+  if (ds.gt) { if (S.t.graf) return; setD("graf", "t", ds.gt); return upd(); }
+});
+document.addEventListener("input", e => {
+  const t = e.target, f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
+});
+/* ťahanie: označenie oblasti a ovládač výplne */
+let DRG = null;
+const cellAt = e => { const el = document.elementFromPoint(e.clientX, e.clientY); return el && el.closest ? el.closest("[data-xc]") : null; };
+function paintRange(g, R) { document.querySelectorAll(`[data-xd="${g}"] .xc`).forEach(el => { const [c, r] = refXY(el.dataset.xc.split("|")[1]); el.classList.toggle("xin", c >= R[0] && c <= R[2] && r >= R[1] && r <= R[3]); });
+  const nb = document.getElementById("nb-" + g); if (nb) nb.textContent = R[0] === R[2] && R[1] === R[3] ? rngStr(R) : `${R[3] - R[1] + 1}R × ${R[2] - R[0] + 1}S`; }
+document.addEventListener("pointerdown", e => {
+  const fh = e.target.closest("[data-fh]");
+  if (fh) { if (S.t.kurz) return; e.preventDefault(); DRG = { kind: "fh", to: (S.d.kurz || {}).to || 3 }; try { fh.setPointerCapture(e.pointerId); } catch (_) {} return; }
+  const xc = e.target.closest("[data-xd] [data-xc]"); if (!xc) return; const g = xc.closest("[data-xd]").dataset.xd; if (S.t[g]) return;
+  e.preventDefault(); const a = refXY(xc.dataset.xc.split("|")[1]); DRG = { kind: "rng", g, a, R: rngOf(a, a) }; paintRange(g, DRG.R);
+  try { xc.releasePointerCapture && xc.releasePointerCapture(e.pointerId); } catch (_) {} });
+document.addEventListener("pointermove", e => { if (!DRG) return; e.preventDefault(); const c = cellAt(e);
+  if (DRG.kind === "rng") { if (!c || !c.dataset.xc.startsWith(DRG.g + "|")) return; const b = refXY(c.dataset.xc.split("|")[1]); DRG.R = rngOf(DRG.a, b); paintRange(DRG.g, DRG.R); return; }
+  if (DRG.kind === "fh") { if (!c || !c.dataset.xc.startsWith("kurz|")) return; const r = Math.max(3, Math.min(7, +c.dataset.xc.split("|")[1].slice(1))); DRG.to = r;
+    document.querySelectorAll(`[data-xc^="kurz|C"]`).forEach(el => { const rr = +el.dataset.xc.split("|")[1].slice(1); el.classList.toggle("fillp", rr > 3 && rr <= r); }); } }, { passive: false });
+const endDrg = () => { if (!DRG) return; const D = DRG; DRG = null;
+  if (D.kind === "rng") { const k = D.g === "obl" ? (S.obla || "a") : "r"; setD(D.g, k, rngStr(D.R)); }
+  if (D.kind === "fh") { const d = S.d.kurz = S.d.kurz || {}; d.to = D.to; }
+  save(); render(false); };
+document.addEventListener("pointerup", endDrg); document.addEventListener("pointercancel", endDrg);
+render(false);
+
+</script></body></html>
