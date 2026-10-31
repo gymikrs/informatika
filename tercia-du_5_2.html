@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DU_5.2 Tvorba tabuľky (meranie na fyzike)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;
+  --acc:#2F5BEA;--accSoft:#D5DFFB;--amber:#F2A516;--amberSoft:#FDF1D6;--track:#C9D1DF;
+  --ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--border:#D6DCE6;
+  --font:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  box-sizing:border-box
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}}
+:root[data-theme="dark"]{--bg:#10172A;--surface:#18223A;--surface2:#1E2A46;--ink:#E8EDF7;--muted:#9AA7C4;--acc:#6E91FF;--accSoft:#26386A;--amberSoft:#3A2F17;--track:#34425F;--okSoft:#163A30;--ok:#3CCB8E;--badSoft:#46221F;--bad:#FF7A6B;--border:#2E3B58}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17.5px;line-height:1.6}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 20px 4px;max-width:1140px;margin:0 auto;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand .du{background:#F2A516;color:#3A2600;border-radius:7px;padding:1px 8px;font-size:14px;font-weight:800}
+.pts{background:var(--amberSoft);border-radius:999px;padding:6px 14px;font-weight:600;white-space:nowrap}
+.pts b{font-size:19px}
+.line{display:flex;overflow-x:auto;padding:10px 20px 14px;max-width:1140px;margin:0 auto;scrollbar-width:thin}
+.stn{flex:1 0 96px;position:relative;text-align:center;background:none;border:0;padding:0 4px;cursor:pointer}
+.stn:disabled{cursor:not-allowed;opacity:.5}
+.stn::before{content:"";position:absolute;top:15px;left:-50%;width:100%;height:5px;border-radius:3px;background:var(--track);z-index:0}
+.stn:first-child::before{display:none}
+.stn.reached::before{background:var(--acc)}
+.stn .c{position:relative;z-index:1;display:grid;place-items:center;width:35px;height:35px;margin:0 auto;border-radius:50%;background:var(--surface);border:4px solid var(--track);font-size:16px;transition:transform .15s}
+.stn.done .c{background:var(--acc);border-color:var(--acc);color:#fff;font-size:14px;font-weight:700}
+.stn.cur .c{border-color:var(--acc);transform:scale(1.18);box-shadow:0 0 0 5px var(--accSoft)}
+.stn .l{display:block;font-size:13px;font-weight:600;margin-top:6px;line-height:1.2}
+.stn .m{display:block;font-size:12px;color:var(--muted)}
+.stn.cur .l{color:var(--acc)}
+main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:clamp(26px,4vw,34px);line-height:1.12;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:21px;margin:30px 0 8px}
+p{margin:0 0 14px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 4px}
+.ban{position:relative;overflow:hidden;border-radius:22px;padding:20px 22px 18px;color:#fff;margin:0 0 18px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;box-shadow:0 14px 30px -18px rgba(10,20,60,.6)}
+.ban .pill{display:inline-block;background:rgba(255,255,255,.25);border-radius:999px;padding:3px 12px;font-size:13.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.ban h2{color:#fff;margin:8px 0 4px}
+.ban p{margin:0;font-size:16px;opacity:.95}
+.ban .big{font-size:64px;line-height:1;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25))}
+.ban::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.12)}
+@media (max-width:560px){.ban .big{font-size:44px}}
+.say{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:end;margin:6px 0 18px}
+.say svg{width:92px;height:92px}
+.bubble{position:relative;background:var(--surface);border:2px solid var(--acc);border-radius:18px 18px 18px 4px;padding:12px 16px;font-size:16.5px}
+.task{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:12px 0 8px}
+.ins{color:var(--muted);font-size:15.5px;margin-bottom:12px}
+.theory p{max-width:none}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:22px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:18px 20px;margin:0 0 12px}
+.tsplit>div{min-width:0}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr}}
+.tfigs{display:grid;gap:12px}
+.tfig{margin:0;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 10px 8px;display:flex;flex-direction:column;gap:6px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:14px;line-height:1.45;color:#3E4A66;text-align:center;padding:0 4px}
+.rtab{border-collapse:collapse;margin:10px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab td.c{text-align:center}
+.rtab td:first-child{overflow-wrap:normal;white-space:nowrap}
+.vedel{background:#FFF8E1;color:#3A2E00;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:14px 0;font-size:15.5px;line-height:1.55}
+.memo{margin:26px 0 8px;background:var(--surface);border:2px solid var(--acc);border-radius:16px;padding:14px 18px 10px}
+.memo h3{margin:0 0 6px;font-size:18px;color:var(--acc)}
+.memo ul{margin:0;padding-left:20px}.memo li{margin:5px 0;font-size:16px;line-height:1.5}
+code,.mono{font-family:var(--mono);font-size:.93em}
+code{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:0 5px}
+.primary{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer;font-size:17px}
+.primary:disabled{background:var(--track);color:var(--muted);cursor:not-allowed}
+.ghost{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:9px 16px;font-weight:600;cursor:pointer}
+.ghost:hover:not(:disabled){border-color:var(--acc)}
+.ghost.on{border-color:var(--acc);background:var(--accSoft)}
+.ghost:disabled{opacity:.45;cursor:not-allowed}
+.ghost.sm{padding:4px 10px;font-size:14px;border-radius:9px}
+.checkbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.checkbar .hint{color:var(--muted);font-size:14.5px}
+.score{font-weight:600;padding:8px 14px;border-radius:10px;background:var(--okSoft);color:var(--ok)}
+.score.part{background:var(--amberSoft);color:var(--ink)}
+.next{margin-top:30px;padding-top:20px;border-top:1px dashed var(--track);display:flex;justify-content:flex-end}
+.q{border:0;padding:0;margin:0 0 22px}
+.q legend{font-weight:600;padding:0;margin-bottom:10px;display:flex;gap:10px}
+.qn{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--accSoft);color:var(--acc);font-size:14px;font-weight:700;margin-top:1px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opts.pics{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.opts.pics .opt{padding:8px}
+.opt svg{width:100%;height:auto;display:block;background:#fff;border-radius:8px;border:1px solid #E3E8EF}
+.opt{text-align:left;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.sel{border-color:var(--acc);background:var(--accSoft)}
+.opt.ok{border-color:var(--ok);background:var(--okSoft)}
+.opt.bad{border-color:var(--bad);background:var(--badSoft)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:15px;margin:8px 0 0;padding:8px 12px;border-radius:8px}
+.why.good{background:var(--okSoft)}.why.miss{background:var(--badSoft)}
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:20px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:22px}
+@media (max-width:800px){.hero{grid-template-columns:1fr}}
+.hero svg{width:100%;height:auto;display:block}
+.mlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.mcard{border-radius:14px;padding:10px 12px;color:#fff;font-weight:600;font-size:15px}
+.mcard small{display:block;font-weight:400;opacity:.9}
+label.f{display:block;font-weight:600;margin:12px 0 4px}
+.in{width:100%;max-width:380px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);color:var(--ink)}
+.result{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px}
+.bign{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:6px 0 16px}
+.bign .n{font-size:56px;font-weight:700;line-height:1;color:var(--acc)}
+.bign .of{font-size:20px;color:var(--muted)}
+.grade{margin-left:auto;text-align:center;border:2px solid var(--acc);border-radius:12px;padding:6px 14px}
+.grade b{display:block;font-size:30px;line-height:1.1}.grade span{font-size:12.5px;color:var(--muted)}
+table.res{border-collapse:collapse;width:100%;font-size:15.5px}
+table.res td,table.res th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+table.res td:last-child,table.res th:last-child{text-align:right}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.muted{color:var(--muted)}
+.okm{color:var(--ok);font-weight:600}.badm{color:var(--bad);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips .opt{padding:6px 12px;font-size:14.5px;border-radius:999px}
+.tnum{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;margin-right:6px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:14px}
+.fc{background:var(--surface2);border:2px solid var(--border);border-radius:16px;padding:12px 14px;position:relative;min-width:0}
+.fc.okc{border-color:var(--ok);background:var(--okSoft)}.fc.badc{border-color:var(--bad);background:var(--badSoft)}
+.fc .hd{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-weight:600}
+.fc .hd .e{font-size:28px;line-height:1}
+/* triedenie */
+.pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:14px;padding:10px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:2px solid var(--border);border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:14.5px;text-align:left}
+.chip:hover:not(:disabled){border-color:var(--acc)}
+.chip.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.chip.ok{border-color:var(--ok);background:var(--okSoft)}.chip.bad{border-color:var(--bad);background:var(--badSoft)}
+.chip:disabled{cursor:default;color:var(--ink)}
+.bins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.bins{grid-template-columns:1fr}}
+.bin{border:2px solid var(--border);border-radius:16px;padding:10px;min-height:120px;background:var(--surface);display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.bin .bh{width:100%;text-align:center;font-weight:700;border-radius:10px;padding:6px;cursor:pointer;border:0;font-size:15px}
+.bin .bh:disabled{cursor:default}
+/* komiks */
+.comic{display:grid;grid-template-columns:1fr;gap:14px}
+.panel:not(.choice){max-width:560px}.panel.c{justify-self:center}
+.panel{background:#FFFDF5;border:3px solid #16213A;border-radius:6px;padding:10px;display:grid;grid-template-columns:76px 1fr;gap:10px;align-items:start;color:#16213A;box-shadow:4px 4px 0 #16213A;min-width:0}
+.panel svg{width:76px;height:76px}
+.panel .bub{background:#fff;border:2px solid #16213A;border-radius:14px;padding:8px 12px;font-size:15.5px;position:relative;min-width:0}
+.panel .nm{font-size:12.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#566381;margin-bottom:2px}
+.panel.choice{grid-column:1/-1;background:#EEF4FF}
+.panel .opts{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel .opt{background:#fff;color:#16213A}
+.panel .opt.sel{background:#E6EDFD}
+.panel .opt.ok{background:#DDF3EA}.panel .opt.bad{background:#FBE3E0}
+.panel .why{color:#16213A}
+@media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
+/* okná */
+.win{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14.5px;min-width:0}
+.wt{background:#E9EDF3;padding:7px 12px;display:flex;align-items:center;gap:8px;font-size:13.5px;border-bottom:1px solid #D5DCE6;color:#1B1B1F;min-width:0}
+.wt .tt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt .dots{margin-left:auto;color:#666;letter-spacing:6px;flex:0 0 auto}
+.fwin{max-width:640px}
+.frow{display:grid;grid-template-columns:26px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #EEF1F5;font-size:14.5px;color:#1B1B1F}
+.frow.new{background:#F1FAF5}
+.frow .nm{font-family:var(--mono);overflow-wrap:anywhere}
+.frow .ds{color:#566381;font-size:13px;text-align:right;white-space:nowrap}
+.frow .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA}
+.dlgbox{background:#fff;color:#1B1B1F;border:1px solid #9FB0C8;border-radius:10px;box-shadow:0 14px 30px rgba(0,0,0,.25);padding:14px 16px;margin:12px 0;max-width:520px}
+.dlgbox h5{margin:0 0 8px;font-size:15px}
+.dlgbox .opt{color:#1B1B1F;background:#F5F7FA;border-color:#C9D0DA}
+.dlgbox .opt.sel{background:#D5DFFB;border-color:#2F5BEA}
+.dlgbox .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA;padding:6px 14px}
+/* lupa */
+.zgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.zview{position:relative;width:150px;height:150px;overflow:hidden;border:1px solid #C9D1DF;border-radius:10px;background:#fff;margin:0 auto}
+.zview img,.zview svg{display:block}
+.zb{justify-content:center;margin-top:8px;gap:6px}
+.zb .ghost{padding:4px 10px;font-size:14px}
+/* RLE */
+.pxrow{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.px{width:34px;height:34px;border:2px solid #9AA6B8;border-radius:6px;cursor:pointer;padding:0;font-weight:700;color:#566381}
+.px:disabled{cursor:default}
+.px.okc{box-shadow:0 0 0 3px var(--ok)}.px.badc{box-shadow:0 0 0 3px var(--bad)}
+.sw{display:inline-block;width:16px;height:16px;border:1.5px solid #9AA6B8;border-radius:3px;vertical-align:-3px;margin:0 4px 0 2px}
+.runs{font-family:var(--mono);font-size:16px;background:var(--surface2);border:1.5px dashed var(--track);border-radius:10px;padding:8px 12px;min-height:44px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.lpart{border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;margin:12px 0;background:var(--surface)}
+.lh{font-weight:600;margin-bottom:8px}
+.ldet{overflow:hidden;height:180px;max-width:480px;border:1px solid var(--border);border-radius:10px;margin:10px 0 6px;position:relative;background:#fff}
+.ldet img{position:absolute;width:960px;height:600px;max-width:none;left:-200px;top:-120px;image-rendering:crisp-edges;image-rendering:pixelated}
+.imgs{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:640px){.imgs{grid-template-columns:1fr}}
+.imgs img{width:100%;max-width:320px;border-radius:8px;display:block;border:1px solid var(--border)}
+/* plagát a animácia */
+.scene svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--border)}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.75)}}
+.blink{animation:blink 1s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.fslots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:520px}
+@media (max-width:520px){.fslots{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fslot{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fslot .n{font-weight:700;color:var(--acc);font-size:14px}
+.frm{padding:4px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;width:100%;max-width:110px;aspect-ratio:1}
+.frm svg{width:100%;height:100%;display:block}
+.frm.empty{border-style:dashed;cursor:default;display:grid;place-items:center;color:var(--muted);font-size:13px;background:var(--surface2)}
+.frm.ok{border-color:var(--ok);box-shadow:0 0 0 3px var(--okSoft)}.frm.bad{border-color:var(--bad);box-shadow:0 0 0 3px var(--badSoft)}
+.frm:disabled{cursor:default}
+.anim{position:relative;width:140px;height:140px;border:3px solid var(--acc);border-radius:14px;background:#fff;overflow:hidden;flex:0 0 auto}
+.anim svg{position:absolute;inset:0;width:100%;height:100%;opacity:0;animation:fr 2s step-end infinite}
+@keyframes fr{0%,24.9%{opacity:1}25%,100%{opacity:0}}
+/* EXIF */
+.exg{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:14px;align-items:start}
+@media (max-width:760px){.exg{grid-template-columns:1fr}}
+.xr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid #EEF1F5;background:#fff;padding:8px 12px;cursor:pointer;font-size:14.5px;color:#1B1B1F}
+.xr .k{color:#566381}
+.xr:hover:not(:disabled){background:#FFF6DB}
+.xr.on{background:#FDE3A7}.xr.ok{background:#DDF3EA}.xr.bad{background:#FBE3E0}.xr.miss{box-shadow:inset 5px 0 0 #C0392B;background:#FFF0EE}
+.xr:disabled{cursor:default}
+/* DU 2.4 – doplnky */
+.bins.b3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:860px){.bins.b3{grid-template-columns:1fr}}
+.fnm{font-family:var(--mono);font-size:12.5px;color:#566381;overflow-wrap:anywhere}
+.sbar{background:#fff;border:1.5px solid #C9C9C9;border-radius:999px;padding:6px 16px;margin-bottom:12px;max-width:320px;color:#1B1B1F}
+.pgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pbtn{position:relative;background:#fff;border:2.5px solid #D6DCE6;border-radius:12px;padding:6px;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:center;color:#1B1B1F;min-width:0}
+.pbtn svg{width:100%;height:auto;display:block}
+.pbtn:hover:not(:disabled){border-color:var(--acc)}
+.pbtn.on{border-color:var(--acc);box-shadow:0 0 0 3px var(--accSoft)}
+.pbtn.ok{border-color:var(--ok);background:#DDF3EA}.pbtn.bad{border-color:var(--bad);background:#FBE3E0}
+.pbtn:disabled{cursor:default}
+.pbtn .tick{position:absolute;top:8px;right:8px;background:var(--acc);color:#fff;border-radius:50%;width:24px;height:24px;display:grid;place-items:center;font-weight:700;font-size:14px}
+.gpool{gap:10px}
+.gph{display:flex;gap:8px;align-items:center;background:var(--surface);border:2px solid var(--border);border-radius:12px;padding:5px 8px 5px 5px;cursor:pointer;text-align:left;min-width:0}
+.gph svg{width:72px;height:48px;flex:0 0 auto;display:block}
+.gph .gi{font-size:12.5px;line-height:1.35;color:var(--ink)}
+.gph:hover:not(:disabled){border-color:var(--acc)}
+.gph.sel{border-color:var(--amber);box-shadow:0 0 0 3px var(--amberSoft)}
+.gph.ok{border-color:var(--ok);background:var(--okSoft)}.gph.bad{border-color:var(--bad);background:var(--badSoft)}
+.gph:disabled{cursor:default;color:var(--ink)}
+.gin{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.tok{display:inline-block;background:var(--accSoft);color:var(--acc);border-radius:8px;padding:2px 8px;font-weight:600;font-size:14.5px;margin:2px}
+.zcols{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(6,auto);grid-auto-flow:column}
+.cbub{background:#fff;border:2px solid #16213A;border-radius:14px 14px 14px 4px;padding:8px 12px;font-size:15px;color:#16213A}
+.fc svg{max-width:100%}
+.fc>svg{width:100%;height:auto;display:block;border-radius:10px}
+.slots3{display:grid;gap:6px}
+.sl3{border:1.5px dashed var(--track);border-radius:10px;padding:6px 10px;font-size:14.5px;background:var(--surface)}
+.sl3.on{border-style:solid;border-color:var(--acc);background:var(--accSoft)}
+.ed{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;background:#2A3142;border-radius:16px;padding:14px}
+@media (max-width:720px){.ed{grid-template-columns:1fr}}
+.edv{display:grid;place-items:center;min-height:300px;background:repeating-conic-gradient(#3A4256 0% 25%,#323A4D 0% 50%) 50%/20px 20px;border-radius:10px;padding:10px;overflow:hidden}
+.edv svg{display:block;border-radius:2px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.edt{background:#fff;border-radius:12px;padding:12px 14px;color:#1B1B1F;min-width:0}
+.etool{border-top:1px solid #E3E8EF;padding:10px 0}
+.etool:first-of-type{border-top:0}
+.edt .opt{color:#1B1B1F;background:#F5F7FA}
+.edt .opt.sel{background:#D5DFFB}.edt .opt.ok{background:#DDF3EA}.edt .opt.bad{background:#FBE3E0}
+.edt .ghost{color:#1B1B1F;background:#fff;border-color:#C9D0DA}
+/* DU 5.1 – mini Excel */
+.xwin{background:#fff;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;color:#1B1B1F;box-shadow:0 10px 26px -16px rgba(10,20,60,.45)}
+.xt{background:#1D6F42;color:#fff;font-size:13.5px;padding:6px 12px;font-weight:600}
+.xf{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #D5DCE6;background:#F7F9FB;font-size:14px}
+.xf .nb{min-width:70px;border:1px solid #C9D0DA;background:#fff;padding:1px 6px;font-family:var(--mono);font-size:13px;min-height:24px;line-height:22px}
+.xf .fxi{color:#566381;font-style:italic;font-weight:700}
+.xf .fx{flex:1;min-width:0;border:1px solid #C9D0DA;background:#fff;padding:1px 8px;min-height:24px;line-height:22px;font-size:13.5px;overflow-wrap:anywhere}
+.xg{display:grid;font-size:14.5px;user-select:none;-webkit-user-select:none}
+.xdrag{touch-action:none}
+.xh{background:#EEF1F5;border-right:1px solid #D5DCE6;border-bottom:1px solid #D5DCE6;text-align:center;font-size:12.5px;color:#566381;padding:2px 0;font-weight:600}
+.xc{position:relative;border-right:1px solid #E3E8EF;border-bottom:1px solid #E3E8EF;padding:3px 6px;min-height:30px;line-height:23px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:cell;min-width:0}
+.xc.r{text-align:right}.xc.c{text-align:center}.xc.err{color:#C0392B;font-weight:700}.xc.hd{font-weight:700;background:#F7FAF8}
+.xc.xin{background:#D8EEDF}.xc.clk:hover{background:#FFF6DB}
+.xc.act{box-shadow:inset 0 0 0 2.5px #1D6F42;z-index:1}
+.xc.on{background:#FDE3A7}.xc.ok{background:#DDF3EA}.xc.bad{background:#FBE3E0}
+.xc.miss{box-shadow:inset 0 0 0 3px #12805A}
+.xc.flash{background:#FFF8E1;font-weight:700}
+.xc.fillp{box-shadow:inset 0 0 0 2px #1D6F42;background:#EEF8F1}
+.xc.hasfh{overflow:visible}
+.fh{position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;background:#1D6F42;border:2px solid #fff;cursor:ns-resize;z-index:3;touch-action:none}
+.fh::after{content:"";position:absolute;inset:-12px}
+.xtabs{display:flex;gap:2px;padding:4px 8px;background:#F0F2F5;font-size:13px;border-top:1px solid #D5DCE6;color:#1D6F42;font-weight:600}
+.okg{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:860px){.okg{grid-template-columns:1fr}}
+.okq{display:grid;gap:8px}
+.okp{display:flex;gap:10px;text-align:left;align-items:flex-start;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:9px 12px;cursor:pointer;color:var(--ink);font-size:15.5px}
+.okp small{font-size:13px;color:var(--muted)}
+.okp.on{border-color:var(--acc);background:var(--accSoft)}.okp.ok{border-color:var(--ok);background:var(--okSoft)}.okp.bad{border-color:var(--bad);background:var(--badSoft)}
+.okp:disabled{cursor:default}
+.oz:hover{fill-opacity:.12}
+.cv{background:#fff;border:1px solid var(--border);border-radius:14px;padding:8px;min-width:0}
+.cv svg{width:100%;height:auto;display:block}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+.pcs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 6px}
+.pc{font-family:var(--mono);font-size:15px;background:var(--surface);border:2px solid var(--border);border-radius:9px;padding:4px 12px;cursor:pointer;color:var(--ink)}
+.pc:hover:not(:disabled){border-color:var(--acc)}.pc:disabled{opacity:.4;cursor:default}
+.fqrow{display:grid;gap:6px;padding:8px 0;border-bottom:1px dashed var(--border);font-size:15.5px}
+.fqrow .opt{padding:4px 10px;font-size:13.5px;border-radius:999px}
+.ribbon{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:14.5px}
+.ghost.okb{border-color:var(--ok);background:var(--okSoft)}.ghost.badb{border-color:var(--bad);background:var(--badSoft)}
+.opts.pics .opt{display:flex;flex-direction:column;gap:4px;align-items:stretch}
+.opts.pics .opt svg{max-height:170px}
+.pcap{display:block;text-align:center;font-size:13.5px;font-weight:600;color:var(--muted)}
+.opts.mono .opt,.opt.mono{font-family:var(--mono)}
+/* DU 5.2 – doplnky */
+.xc.fb{font-weight:700}
+.xc.fbrd{box-shadow:inset 0 0 0 1px #16213A}
+.xc.fbrd.act{box-shadow:inset 0 0 0 2.5px #1D6F42}
+.labg{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:820px){.labg{grid-template-columns:1fr}}
+.wts{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.wt{display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--surface2);border:2px solid var(--border);border-radius:12px;padding:8px 10px;cursor:grab;touch-action:none;color:var(--ink)}
+.wt .wbox{display:grid;place-items:center;width:58px;background:#566381;color:#fff;border-radius:6px;font-weight:700;font-size:14px}
+.wt small{font-size:12.5px;color:var(--muted)}
+.wt.on{border-color:var(--acc);background:var(--accSoft)}
+.wt:disabled{cursor:default}
+.ghostw{position:fixed;z-index:99;transform:translate(-50%,-50%);background:#566381;color:#fff;font-weight:700;border-radius:8px;padding:8px 12px;pointer-events:none;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+.cits{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.cits .opt{padding:6px 10px}
+.cits .fc:first-child{grid-column:1/-1}
+.cits .fc:first-child .cv{max-width:560px}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.anim svg:first-child{opacity:1}}
+</style></head><body>
+<header class="top" id="top"></header><main id="main" tabindex="-1"></main>
+<script>
+/* ===== DU 5.2 – Tercia: Tvorba tabuľky (meranie na fyzike) ===== */
+const KEY = "du-t52-v1";
+const LESSON = "Tercia – DU_5.2 Tvorba tabuľky (meranie na fyzike)";
+const CLASS_DEFAULT = "";
+const CLASSES = ["TERCIA_1", "TERCIA_2"];
+const DONE_KEY = "du-t52-done-v1"; /* zámok: pokusy (1 pokus, pri známke 3 – 5 jedna oprava) */
+const OLD_DONE_KEYS = [];
+const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
+
+const STEPS = [
+  { id: "start", title: "Štart", ic: "🚀", min: 1 },
+  { id: "m1", title: "Návrh tabuľky", ic: "📐", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+  { id: "m2", title: "Pokus s pružinou", ic: "🧪", min: 4, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
+  { id: "m3", title: "Vzorce a konštanta", ic: "🧮", min: 4, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
+  { id: "m4", title: "Formátovanie", ic: "🎨", min: 3, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
+  { id: "m5", title: "Kyvadlo a chyby", ic: "⏱️", min: 3, col: "linear-gradient(120deg,#A0640A,#E2A23B)" },
+  { id: "m6", title: "Presnosť meradiel", ic: "📏", min: 2, col: "linear-gradient(120deg,#0B6F8A,#2BB3D6)" },
+  { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
+];
+const STEP_TASKS = { m1: ["stl", "zly"], m2: ["lab", "vel"], m3: ["kg", "sila", "tuh"], m4: ["fmt", "zaok"], m5: ["kmit", "hrub", "spr"], m6: ["cit", "des", "dps"] };
+
+/* ===== LENKA: typografia ===== */
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,textarea,.fnm") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const L = []; while (W.nextNode()) L.push(W.currentNode);
+  L.forEach(n => { let t = n.nodeValue, o = t;
+    t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐×])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ").replace(/(×) (?=\d)/g, "$1 ").replace(/(\d\.) (?=\d)/g, "$1 ");
+    for (let i = 0; i < 2; i++) t = t.replace(/(^|[\s („])([vkszaiouVKSZAIOU]) /g, "$1$2 ");
+    if (t !== o) n.nodeValue = t; }); }
+
+/* ===== OBRÁZKY: pomôcky ===== */
+const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`;
+const T = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 13}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` font-family="Consolas,Courier New,monospace" xml:space="preserve"` : ""}>${s}</text>`;
+const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+const fig = (svg, cap) => `<figure class="tfig">${svg}<figcaption>${cap}</figcaption></figure>`;
+const box = (x, y, w, h, f, s, r = 10) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${f}"${s ? ` stroke="${s}" stroke-width="1.6"` : ""}/>`;
+const EM = (x, y, e, fs = 24) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs}">${e}</text>`;
+const ARR = (x1, y1, x2, y2, c = "#566381", w = 2.5) => { const a = Math.atan2(y2 - y1, x2 - x1), h = 9; return `<line x1="${x1}" y1="${y1}" x2="${x2 - Math.cos(a) * 4}" y2="${y2 - Math.sin(a) * 4}" stroke="${c}" stroke-width="${w}"/><path d="M${x2} ${y2} L${x2 - h * Math.cos(a - .45)} ${y2 - h * Math.sin(a - .45)} L${x2 - h * Math.cos(a + .45)} ${y2 - h * Math.sin(a + .45)}z" fill="${c}"/>`; };
+const C = { ink: "#16213A", mut: "#566381", acc: "#2F5BEA", accS: "#D5DFFB", ok: "#12805A", okS: "#DDF3EA", bad: "#C0392B", badS: "#FBE3E0", amb: "#8A5A00", ambS: "#FDF1D6", bg: "#F5F7FA", line: "#D6DCE6", in: "#1E6FD9", inS: "#E3EEFC", pur: "#6A3FD0", purS: "#ECE5FC", tea: "#0B6F8A", teaS: "#DDF1F7" };
+
+/* ===== MINI EXCEL: hodnoty, vzorce, mriežka ===== */
+const COLS = "ABCDEFGHIJ";
+const cIx = c => COLS.indexOf(c);
+const isNum = v => /^-?\d+(,\d+)?$/.test(v);
+const isDate = v => /^\d{1,2}\. ?\d{1,2}\. ?\d{4}$/.test(v);
+const fmt = n => typeof n === "number" ? String(Math.round(n * 10000) / 10000).replace(".", ",") : n;
+function xEval(src, get) {
+  let i = 0; const s = src.replace(/\s+/g, "");
+  const err = e => { throw { x: e }; };
+  const num = v => { if (typeof v === "number") return v; if (v === "" || v == null) return 0; return err("#HODNOTA!"); };
+  function expr() { let a = term(); while (s[i] === "+" || s[i] === "-") { const o = s[i++], b = term(); a = o === "+" ? num(a) + num(b) : num(a) - num(b); } return a; }
+  function term() { let a = pw(); while (s[i] === "*" || s[i] === "/") { const o = s[i++], b = pw(); if (o === "*") a = num(a) * num(b); else { if (num(b) === 0) err("#DELENIENULOU!"); a = num(a) / num(b); } } return a; }
+  function pw() { let a = un(); while (s[i] === "^") { i++; a = Math.pow(num(a), num(un())); } return a; }
+  function un() { if (s[i] === "-") { i++; return -num(un()); } return prim(); }
+  function prim() { const r = s.slice(i); let m;
+    if (s[i] === "(") { i++; const v = expr(); if (s[i] !== ")") err("#SYNTAX"); i++; return v; }
+    if ((m = /^\d+(,\d+)?/.exec(r))) { i += m[0].length; return parseFloat(m[0].replace(",", ".")); }
+    if ((m = /^([A-ZÁ-Ža-zá-ž]{2,})\(/.exec(r))) { i += m[0].length; const n = m[1].toUpperCase(), args = [];
+      if (s[i] !== ")") { args.push(arg()); while (s[i] === ";") { i++; args.push(arg()); } }
+      if (s[i] !== ")") err("#SYNTAX"); i++; return fn(n, args); }
+    if ((m = /^\$?([A-J])\$?(\d+)/.exec(r))) { i += m[0].length; return get(m[1] + m[2]); }
+    return err("#SYNTAX"); }
+  function arg() { const m = /^\$?([A-J])\$?(\d+):\$?([A-J])\$?(\d+)/.exec(s.slice(i)); if (m) { i += m[0].length; return { rng: [cIx(m[1]), +m[2], cIx(m[3]), +m[4]] }; } return expr(); }
+  function fn(n, args) { const v = []; args.forEach(a => { if (a && a.rng) { const [c1, r1, c2, r2] = a.rng; for (let c = Math.min(c1, c2); c <= Math.max(c1, c2); c++) for (let r = Math.min(r1, r2); r <= Math.max(r1, r2); r++) v.push(get(COLS[c] + r)); } else v.push(a); });
+    const N = v.filter(x => typeof x === "number"), sum = N.reduce((a, b) => a + b, 0);
+    if (n === "SUM") return sum; if (n === "PRIEMER" || n === "AVERAGE") { if (!N.length) err("#DELENIENULOU!"); return sum / N.length; }
+    if (n === "MIN") return N.length ? Math.min(...N) : 0; if (n === "MAX") return N.length ? Math.max(...N) : 0; if (n === "POČET" || n === "COUNT") return N.length;
+    if (n === "ZAOKRÚHLIŤ" || n === "ROUND") { const p = Math.pow(10, v[1] || 0); return Math.round(v[0] * p) / p; }
+    return err("#NÁZOV?"); }
+  const v = expr(); if (i < s.length) err("#SYNTAX"); return v;
+}
+function getter(cells, dep = 0) { return ref => { const raw = cells[ref]; if (raw === undefined || raw === "") return ""; if (raw[0] === "=") { if (dep > 30) throw { x: "#ODKAZ!" }; return xEval(raw.slice(1), getter(cells, dep + 1)); } return isNum(raw) ? parseFloat(raw.replace(",", ".")) : raw; }; }
+function xVal(cells, ref) { try { return getter(cells)(ref); } catch (e) { return e && e.x ? e.x : "#SYNTAX"; } }
+function shown(cells, ref) { const raw = cells[ref]; if (raw === undefined || raw === "") return ["", "l"];
+  if (raw[0] === "=") { const v = xVal(cells, ref); if (typeof v === "number") return [fmt(v), "r"]; if (/^#/.test(v)) return [v === "#SYNTAX" ? "⚠️" : v, "c err"]; return [v, "l"]; }
+  return isNum(raw) || isDate(raw) ? [raw, "r"] : [raw, "l"]; }
+function xGrid(o) { const nc = o.nc, nr = o.nr, cw = o.w || Array(nc).fill("minmax(0,1fr)");
+  let h = `<div class="xg${o.drag ? " xdrag" : ""}" style="grid-template-columns:28px ${cw.join(" ")}"${o.drag ? ` data-xd="${o.id}"` : ""}><div class="xh"></div>`;
+  for (let c = 0; c < nc; c++) h += `<div class="xh">${COLS[c]}</div>`;
+  for (let r = 1; r <= nr; r++) { h += `<div class="xh">${r}</div>`;
+    for (let c = 0; c < nc; c++) { const ref = COLS[c] + r; let [t, al] = o.cells ? shown(o.cells, ref) : ["", "l"]; let k = "xc " + al;
+      const FM = o.fm && o.fm[ref]; if (FM) { if (FM.dp !== undefined) { const v = xVal(o.cells, ref); if (typeof v === "number") t = v.toFixed(FM.dp).replace(".", ","); } if (FM.b) k += " fb"; if (FM.brd) k += " fbrd"; }
+      if (o.rng && c >= o.rng[0] && c <= o.rng[2] && r >= o.rng[1] && r <= o.rng[3]) k += " xin";
+      if (o.act === ref) k += " act"; if (o.mark && o.mark[ref]) k += " " + o.mark[ref]; if (o.fh === ref) k += " hasfh"; if (o.click) k += " clk"; if (o.hd && r === 1) k += " hd";
+      h += `<div class="${k}" data-xc="${o.id}|${ref}">${o.ex && o.ex[ref] !== undefined ? o.ex[ref] : esc(t)}${o.fh === ref ? `<span class="fh" data-fh="${o.id}" title="ovládač výplne"></span>` : ""}</div>`; } }
+  return h + `</div>`; }
+function xWin(o, inner) { return `<div class="xwin"${o.mw ? ` style="max-width:${o.mw}px"` : ""}>${o.title ? `<div class="xt">📗 ${o.title}</div>` : ""}<div class="xf"><span class="nb" id="${o.id ? "nb-" + o.id : ""}">${esc(o.nb || "")}</span><span class="fxi">fx</span><span class="fx mono">${esc(o.fx || "")}</span></div>${inner}${o.tabs ? `<div class="xtabs">${o.tabs}</div>` : ""}</div>`; }
+const rngStr = R => R ? (R[0] === R[2] && R[1] === R[3] ? COLS[R[0]] + R[1] : `${COLS[R[0]]}${R[1]}:${COLS[R[2]]}${R[3]}`) : "";
+const rngOf = (a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])];
+const refXY = ref => [cIx(ref[0]), +ref.slice(1)];
+
+/* SVG mriežka pre obrázky v teórii */
+function sgrid(x, y, nc, nr, cw, rh, cells = {}, o = {}) { let s = "";
+  s += `<rect x="${x}" y="${y}" width="${24 + nc * cw}" height="${rh * (nr + 1)}" fill="#fff" stroke="#BCC6D3"/>`;
+  s += `<rect x="${x}" y="${y}" width="${24 + nc * cw}" height="${rh}" fill="#EEF1F5"/><rect x="${x}" y="${y}" width="24" height="${rh * (nr + 1)}" fill="#EEF1F5"/>`;
+  for (let c = 0; c < nc; c++) { const on = o.hc === c; if (on) s += `<rect x="${x + 24 + c * cw}" y="${y}" width="${cw}" height="${rh}" fill="#C9E7D3"/>`; s += T(x + 24 + c * cw + cw / 2, y + rh / 2 + 4, COLS[c], { a: "middle", fs: 11, b: 1, c: on ? "#1D6F42" : C.mut }); }
+  for (let r = 1; r <= nr; r++) { const on = o.hr === r; if (on) s += `<rect x="${x}" y="${y + r * rh}" width="24" height="${rh}" fill="#C9E7D3"/>`; s += T(x + 12, y + r * rh + rh / 2 + 4, r, { a: "middle", fs: 11, b: 1, c: on ? "#1D6F42" : C.mut }); }
+  if (o.rng) { const [c1, r1, c2, r2] = o.rng; s += `<rect x="${x + 24 + c1 * cw}" y="${y + r1 * rh}" width="${(c2 - c1 + 1) * cw}" height="${(r2 - r1 + 1) * rh}" fill="#D8EEDF"/>`; }
+  for (let c = 0; c <= nc; c++) s += `<line x1="${x + 24 + c * cw}" y1="${y}" x2="${x + 24 + c * cw}" y2="${y + rh * (nr + 1)}" stroke="#D5DCE6"/>`;
+  for (let r = 1; r <= nr; r++) s += `<line x1="${x}" y1="${y + r * rh}" x2="${x + 24 + nc * cw}" y2="${y + r * rh}" stroke="#D5DCE6"/>`;
+  Object.entries(cells).forEach(([ref, v]) => { const [c, r] = refXY(ref), [t, al, col] = Array.isArray(v) ? v : [v, isNum(v) ? "r" : "l"]; const tx = al === "r" ? x + 24 + (c + 1) * cw - 5 : al === "c" ? x + 24 + c * cw + cw / 2 : x + 24 + c * cw + 5;
+    s += T(tx, y + r * rh + rh / 2 + 4, esc(t), { fs: 11.5, a: al === "r" ? "end" : al === "c" ? "middle" : null, c: col || C.ink }); });
+  if (o.rng) { const [c1, r1, c2, r2] = o.rng; s += `<rect x="${x + 24 + c1 * cw}" y="${y + r1 * rh}" width="${(c2 - c1 + 1) * cw}" height="${(r2 - r1 + 1) * rh}" fill="none" stroke="#1D6F42" stroke-width="2.5"/>`; }
+  if (o.act) { const [c, r] = refXY(o.act); s += `<rect x="${x + 24 + c * cw}" y="${y + r * rh}" width="${cw}" height="${rh}" fill="none" stroke="#1D6F42" stroke-width="2.5"/>`; }
+  return s; }
+const fbar = (x, y, w, nb, f) => `${box(x, y, 56, 22, "#fff", "#C9D0DA", 3)}${T(x + 28, y + 15.5, nb, { a: "middle", fs: 11.5, b: 1 })}${T(x + 64, y + 15.5, "fx", { fs: 11.5, b: 1, c: C.mut })}${box(x + 82, y, w - 82, 22, "#fff", "#C9D0DA", 3)}${T(x + 90, y + 15.5, esc(f), { fs: 11.5, mono: 1 })}`;
+
+
+
+/* žaba Pružinka – sprievodkyňa */
+function frog(x, y, s, mood) {
+  const eye = (cx, cy) => mood === "wow" ? `<circle cx="${cx}" cy="${cy}" r="9" fill="#fff" stroke="#2E6B2E" stroke-width="2"/><circle cx="${cx + 1}" cy="${cy}" r="5" fill="#16213A"/><circle cx="${cx + 2.5}" cy="${cy - 2}" r="1.6" fill="#fff"/>` : `<circle cx="${cx}" cy="${cy}" r="8" fill="#fff" stroke="#2E6B2E" stroke-width="2"/><circle cx="${cx + 1}" cy="${cy + 1}" r="3.8" fill="#16213A"/><circle cx="${cx + 2}" cy="${cy}" r="1.2" fill="#fff"/>`;
+  return `<g transform="translate(${x},${y}) scale(${s})"><ellipse cx="54" cy="95" rx="36" ry="4" fill="#000" opacity=".12"/>
+    <path d="M40 92 l4 -6 l6 6 l6 -6 l6 6 l6 -6 l6 6" stroke="#8A97A8" stroke-width="3.2" fill="none" stroke-linejoin="round"/>
+    <ellipse cx="54" cy="64" rx="32" ry="24" fill="#6CC04A" stroke="#2E6B2E" stroke-width="2"/>
+    <ellipse cx="54" cy="72" rx="20" ry="13" fill="#D7F2C3"/>
+    <path d="M24 74 Q14 84 28 88 L40 86" fill="#6CC04A" stroke="#2E6B2E" stroke-width="2" stroke-linejoin="round"/><path d="M84 74 Q94 84 80 88 L68 86" fill="#6CC04A" stroke="#2E6B2E" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="38" cy="38" r="12" fill="#6CC04A" stroke="#2E6B2E" stroke-width="2"/><circle cx="70" cy="38" r="12" fill="#6CC04A" stroke="#2E6B2E" stroke-width="2"/>
+    ${eye(38, 37)}${eye(70, 37)}
+    <path d="M40 60 Q54 70 68 60" stroke="#2E6B2E" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="32" cy="58" rx="4" ry="2.4" fill="#F5A3B5" opacity=".8"/><ellipse cx="76" cy="58" rx="4" ry="2.4" fill="#F5A3B5" opacity=".8"/>
+    <g transform="translate(86 46) rotate(12)"><rect width="8" height="34" rx="1.5" fill="#FFD45C" stroke="#A0640A" stroke-width="1.4"/>${[5, 10, 15, 20, 25, 30].map(y => `<line x1="0" y1="${y}" x2="${y % 10 ? 3 : 5}" y2="${y}" stroke="#A0640A" stroke-width="1"/>`).join("")}</g>
+  </g>`;
+}
+const KRI = mood => SV(110, 100, frog(0, 2, 1, mood), "Žaba Pružinka");
+const say = (html, mood) => `<div class="say">${KRI(mood)}<div class="bubble">${html}</div></div>`;
+
+/* pružina ako cikcak */
+function spring(x, y1, y2, w = 16, n = 12, col = "#566381") { const h = (y2 - y1) / n; let d = `M${x} ${y1}`; for (let i = 0; i < n; i++) d += ` L${x + (i % 2 ? -w / 2 : w / 2)} ${(y1 + h * (i + .5)).toFixed(1)}`; d += ` L${x} ${y2}`; return `<path d="${d}" stroke="${col}" stroke-width="2.6" fill="none" stroke-linejoin="round"/>`; }
+
+/* ===== ÚVODNÝ OBRÁZOK ===== */
+const HERO = SV(420, 300, `<defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E3F6D8"/><stop offset="1" stop-color="#C9EBB4"/></linearGradient></defs>
+  <rect width="420" height="300" rx="18" fill="url(#hg)"/>
+  <rect x="236" y="40" width="150" height="10" rx="3" fill="#8A97A8"/><rect x="306" y="50" width="8" height="200" fill="#A9B4C4"/>
+  ${spring(268, 50, 150)}<rect x="248" y="150" width="40" height="34" rx="4" fill="#566381"/>${T(268, 172, "100 g", { a: "middle", fs: 11, b: 1, c: "#fff" })}
+  <rect x="330" y="60" width="26" height="190" rx="3" fill="#FFD45C" stroke="#A0640A" stroke-width="1.5"/>${[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => `<line x1="330" y1="${70 + i * 18}" x2="342" y2="${70 + i * 18}" stroke="#A0640A" stroke-width="1.5"/>${T(350, 74 + i * 18, i, { a: "middle", fs: 9.5, c: "#7A4A00" })}`).join("")}
+  ${box(30, 200, 200, 84, "#fff", "#1D6F42", 8)}<rect x="30" y="200" width="200" height="20" rx="8" fill="#1D6F42"/>${T(130, 214, "m (g) │ Δl (cm) │ F (N)", { a: "middle", fs: 11, b: 1, c: "#fff" })}
+  ${[["50", "2,4", "0,5"], ["100", "4,8", "1"], ["150", "7,2", "1,5"]].map((r, i) => r.map((v, k) => T(70 + k * 62, 240 + i * 18, v, { a: "middle", fs: 11.5 })).join("")).join("")}
+  ${frog(36, 70, 1.3, "wow")}
+  ${T(210, 28, "Žaba Pružinka a 6 misií s meraním", { a: "middle", fs: 15, b: 1, c: "#2E6B2E" })}`, "Žaba Pružinka pri pružine s pravítkom a tabuľke merania");
+
+/* ===== TEÓRIA: OBRÁZKY ===== */
+const FIG_COLS = fig(SV(440, 214, `${T(220, 18, "Pokus: ohrev vody v rýchlovarnej kanvici", { a: "middle", fs: 12.5, b: 1 })}
+  ${[["čas t (s)", "meníme my", C.inS, C.in], ["teplota T (°C)", "nameriame", C.ambS, C.amb], ["zmena ΔT (°C)", "vypočítame", "#E6F4EC", "#1D6F42"]].map(([h, d, bg, c], i) => { const x = 14 + i * 140;
+    return `${box(x, 30, 132, 50, bg, c, 8)}${T(x + 66, 51, h, { a: "middle", fs: 12, b: 1, c })}${T(x + 66, 70, d, { a: "middle", fs: 11, c: C.mut })}${[["0", "18", "0"], ["30", "35", "17"], ["60", "52", "34"], ["90", "68", "50"]].map((r, k) => `<rect x="${x}" y="${88 + k * 28}" width="132" height="28" fill="#fff" stroke="#D5DCE6"/>${T(x + 120, 107 + k * 28, r[i], { a: "end", fs: 12 })}`).join("")}`; }).join("")}
+  ${T(14, 206, "→ jeden riadok = jedno meranie", { fs: 11.5, b: 1, c: C.mut })}`, "Stĺpce tabuľky merania"),
+  "Vľavo veličina, ktorú <b>meníme</b>, potom <b>namerané</b> a nakoniec <b>vypočítané</b> hodnoty.");
+const FIG_HEAD = fig(SV(440, 150, `${box(14, 10, 200, 104, C.okS, C.ok, 10)}${T(114, 32, "✓ jednotka v záhlaví", { a: "middle", fs: 12.5, b: 1, c: C.ok })}<rect x="40" y="44" width="148" height="26" fill="#F7FAF8" stroke="#9AA6B8"/>${T(114, 62, "teplota T (°C)", { a: "middle", fs: 12, b: 1 })}<rect x="40" y="70" width="148" height="26" fill="#fff" stroke="#9AA6B8"/>${T(182, 88, "35", { a: "end", fs: 12.5 })}
+  ${box(226, 10, 200, 104, C.badS, C.bad, 10)}${T(326, 32, "✗ jednotka v bunke", { a: "middle", fs: 12.5, b: 1, c: C.bad })}<rect x="252" y="44" width="148" height="26" fill="#F7FAF8" stroke="#9AA6B8"/>${T(326, 62, "teplota", { a: "middle", fs: 12, b: 1 })}<rect x="252" y="70" width="148" height="26" fill="#fff" stroke="#9AA6B8"/>${T(258, 88, "35 °C", { fs: 12.5 })}
+  ${T(220, 138, "„35 °C“ je pre Excel text, s ním sa nedá počítať.", { a: "middle", fs: 11.5, c: C.mut })}`, "Jednotka v záhlaví"),
+  "Jednotku napíš do <b>záhlavia</b>, do bunky iba <b>číslo</b>.");
+
+const FIG_SPRING = fig(SV(440, 230, `<rect x="20" y="18" width="150" height="8" rx="3" fill="#8A97A8"/>
+  ${spring(60, 26, 100)}<line x1="40" y1="100" x2="80" y2="100" stroke="#C0392B" stroke-width="1.6" stroke-dasharray="4 3"/>${T(60, 118, "bez závažia", { a: "middle", fs: 11, c: C.mut })}
+  ${spring(130, 26, 160)}<rect x="112" y="160" width="36" height="30" rx="4" fill="#566381"/>${T(130, 180, "m", { a: "middle", fs: 13, b: 1, c: "#fff" })}<line x1="100" y1="100" x2="160" y2="100" stroke="#C0392B" stroke-width="1.6" stroke-dasharray="4 3"/>
+  ${ARR(170, 100, 170, 158, C.bad, 2)}${ARR(170, 158, 170, 100, C.bad, 2)}${T(178, 134, "Δl", { fs: 14, b: 1, c: C.bad })}
+  ${ARR(130, 194, 130, 222, C.in, 2.5)}${T(142, 218, "F = m · g", { fs: 12.5, b: 1, c: C.in })}
+  ${box(226, 26, 204, 176, "#fff", C.line, 10)}
+  ${[["m (kg)", "hmotnosť v kg = g ÷ 1000"], ["g", "10 N/kg (konštanta)"], ["F (N)", "sila: F = m · g"], ["k (N/cm)", "tuhosť: k = F ÷ Δl"]].map(([a, b], i) => `${T(240, 56 + i * 40, a, { fs: 13, b: 1, c: C.pur })}${T(240, 74 + i * 40, b, { fs: 11.5 })}`).join("")}`, "Pružina a veličiny"),
+  "Závažie natiahne pružinu o <b>Δl</b>. Sila <b>F = m · g</b>, tuhosť <b>k = F ÷ Δl</b>.");
+const FIG_HOOKE = fig(SV(440, 170, `${T(220, 18, "Hookov zákon: 2× väčšia sila = 2× väčšie predĺženie", { a: "middle", fs: 12, b: 1 })}
+  ${[1, 2, 3].map(i => { const x = 70 + (i - 1) * 140; return `<rect x="${x - 40}" y="30" width="80" height="6" fill="#8A97A8"/>${spring(x, 36, 36 + 26 * i, 14, 8 + 2 * i)}${box(x - 18, 36 + 26 * i, 36, 22 + i * 4, "#566381", null, 3)}${T(x, 52 + 26 * i + i * 2, i + "×", { a: "middle", fs: 11, b: 1, c: "#fff" })}${T(x + 44, 40 + 13 * i, "Δl · " + i, { fs: 11.5, b: 1, c: C.bad })}`; }).join("")}
+  ${T(220, 162, "pre túto pružinu vychádza k stále rovnaké", { a: "middle", fs: 11.5, c: C.mut })}`, "Hookov zákon"),
+  "Pri pružine je predĺženie <b>priamo úmerné</b> sile (Hookov zákon).");
+
+const FIG_ABS = fig(SV(440, 214, `${fbar(14, 10, 412, "C3", "=B3*$E$1")}
+  ${sgrid(14, 44, 5, 4, 76, 26, { A1: "Látka", B1: "V (dm³)", C1: "m (kg)", D1: "", E1: "1", A2: "voda", B2: "2", C2: ["2", "r"], A3: "voda", B3: "5", C3: ["5", "r"], A4: "voda", B4: "8", C4: ["8", "r"] }, { act: "C3" })}
+  <rect x="${14 + 24 + 4 * 76}" y="${44 + 26}" width="76" height="26" fill="none" stroke="${C.amb}" stroke-width="2.5"/>${T(14 + 24 + 4.5 * 76, 44 + 26 * 5 + 18, "hustota vody", { a: "middle", fs: 11, b: 1, c: C.amb })}
+  ${box(14, 186, 412, 24, C.ambS, null, 6)}${T(220, 203, "konštanta v jednej bunke, vo vzorci zamknutá ako $E$1", { a: "middle", fs: 11.5, b: 1, c: C.amb })}`, "Konštanta v samostatnej bunke"),
+  "Konštantu daj do <b>samostatnej bunky</b> a vo vzorci ju zamkni znakom <b>$</b>.");
+const FIG_FILL = fig(SV(440, 150, `${sgrid(14, 10, 2, 4, 120, 26, { A1: "vzorec", A2: "=B2*$E$1", A3: "=B3*$E$1", A4: "=B4*$E$1" }, { act: "A2" })}
+  <rect x="${14 + 24 + 120 - 5}" y="${10 + 52 - 5}" width="9" height="9" fill="#1D6F42" stroke="#fff" stroke-width="1.5"/>${ARR(14 + 24 + 126, 66, 14 + 24 + 126, 120, "#1D6F42", 2)}
+  ${T(310, 50, "ťahaj štvorček nadol", { fs: 12, b: 1, c: "#1D6F42" })}${T(310, 70, "= Vyplniť nadol", { fs: 11.5, c: C.mut })}${T(310, 98, "B2 → B3 → B4", { fs: 11.5 })}${T(310, 116, "$E$1 ostáva", { fs: 11.5 })}`, "Vyplnenie nadol"),
+  "Vzorec napíšeš <b>raz</b> a ťahaním ovládača výplne ho skopíruješ nadol.");
+
+const FIG_FMT = fig(SV(440, 200, `${T(110, 18, "pred", { a: "middle", fs: 12.5, b: 1, c: C.bad })}${T(330, 18, "po", { a: "middle", fs: 12.5, b: 1, c: C.ok })}
+  ${[0, 1].map(k => { const x = 14 + k * 220, rows = [["t (s)", "T (°C)"], ["0", k ? "18,0" : "18"], ["30", k ? "35,5" : "35,5"], ["60", k ? "52,0" : "52"], ["90", k ? "68,5" : "68,5"]];
+    return rows.map((r, i) => r.map((v, c) => `<rect x="${x + c * 96}" y="${28 + i * 30}" width="96" height="30" fill="${k && !i ? "#E6F4EC" : "#fff"}" stroke="${k ? "#16213A" : "#E3E8EF"}" stroke-width="${k ? 1.2 : 1}"/>${T(i ? x + c * 96 + 88 : x + c * 96 + 8, 48 + i * 30, v, { a: i ? "end" : null, fs: 12, b: k && !i ? 1 : 0 })}`).join("")).join(""); }).join("")}`, "Tabuľka pred a po formátovaní"),
+  "Tučné <b>záhlavie</b>, <b>orámovanie</b> a rovnaký počet <b>desatinných miest</b> v stĺpci.");
+const FIG_DP = fig(SV(440, 160, `${box(14, 10, 412, 30, C.bg, C.line, 6)}${T(26, 30, "v bunke je uložené: 3,14159", { fs: 12.5, b: 1, mono: 1 })}
+  ${[["0 des. miest", "3"], ["1 des. miesto", "3,1"], ["2 des. miesta", "3,14"], ["4 des. miesta", "3,1416"]].map(([a, b], i) => { const x = 14 + i * 104; return `${box(x, 52, 96, 62, "#fff", C.line, 8)}${T(x + 48, 74, a, { a: "middle", fs: 10.5, c: C.mut })}${T(x + 48, 102, b, { a: "middle", fs: 16, b: 1 })}`; }).join("")}
+  ${T(220, 140, "Mení sa iba zobrazenie, Excel stále počíta s 3,14159.", { a: "middle", fs: 11.5, b: 1, c: C.amb })}`, "Desatinné miesta a zobrazenie"),
+  "Tlačidlá <b>,0</b> menia iba to, čo <b>vidíš</b>. Skutočne zaokrúhli funkcia ZAOKRÚHLIŤ.");
+
+const FIG_PEND = fig(SV(440, 210, `<rect x="140" y="14" width="160" height="8" rx="3" fill="#8A97A8"/>
+  <line x1="220" y1="22" x2="160" y2="150" stroke="#9AA6B8" stroke-width="2" stroke-dasharray="5 4"/><line x1="220" y1="22" x2="280" y2="150" stroke="#9AA6B8" stroke-width="2" stroke-dasharray="5 4"/><line x1="220" y1="22" x2="220" y2="164" stroke="#566381" stroke-width="2.4"/><circle cx="220" cy="170" r="13" fill="#C0392B"/>
+  <circle cx="160" cy="156" r="10" fill="#C0392B" opacity=".35"/><circle cx="280" cy="156" r="10" fill="#C0392B" opacity=".35"/>
+  <path d="M168 188 Q220 206 272 188" stroke="${C.in}" stroke-width="2.4" fill="none"/>${ARR(262, 191, 274, 186, C.in, 2.4)}<path d="M272 196 Q220 214 168 196" stroke="${C.in}" stroke-width="2.4" fill="none" opacity="0"/>
+  ${T(220, 202, "1 kmit = tam aj späť", { a: "middle", fs: 11.5, b: 1, c: C.in })}
+  ${box(310, 40, 120, 96, "#fff", C.line, 10)}${T(370, 64, "⏱️ 10 kmitov", { a: "middle", fs: 12, b: 1 })}${T(370, 88, "t₁₀ = 15,0 s", { a: "middle", fs: 12.5 })}${T(370, 114, "T = 1,5 s", { a: "middle", fs: 13, b: 1, c: C.ok })}
+  ${box(10, 40, 120, 96, "#fff", C.line, 10)}${T(70, 64, "perióda T", { a: "middle", fs: 12, b: 1 })}${T(70, 88, "čas 1 kmitu", { a: "middle", fs: 11.5 })}${T(70, 112, "T = t₁₀ ÷ 10", { a: "middle", fs: 12.5, b: 1, c: C.pur })}`, "Kyvadlo a perióda"),
+  "<b>Perióda T</b> je čas jedného kmitu. Meriame čas 10 kmitov a delíme ho 10.");
+const FIG_SPREAD = fig(SV(440, 170, `${T(220, 18, "Opakované meranie dĺžky lavice (cm)", { a: "middle", fs: 12.5, b: 1 })}
+  <line x1="30" y1="90" x2="410" y2="90" stroke="#9AA6B8" stroke-width="2"/>${[118, 119, 120, 121, 122].map((v, i) => `<line x1="${50 + i * 85}" y1="84" x2="${50 + i * 85}" y2="96" stroke="#9AA6B8" stroke-width="2"/>${T(50 + i * 85, 114, v, { a: "middle", fs: 11.5 })}`).join("")}
+  ${[119.2, 119.6, 120.1, 120.3, 120.8].map(v => `<circle cx="${(50 + (v - 118) * 85).toFixed(1)}" cy="72" r="7" fill="${C.acc}"/>`).join("")}
+  <line x1="${50 + 2 * 85}" y1="52" x2="${50 + 2 * 85}" y2="90" stroke="${C.ok}" stroke-width="3"/>${T(50 + 2 * 85, 46, "priemer 120,0", { a: "middle", fs: 11.5, b: 1, c: C.ok })}
+  ${ARR(50 + 1.2 * 85, 136, 50 + 2.8 * 85, 136, C.bad, 2)}${ARR(50 + 2.8 * 85, 136, 50 + 1.2 * 85, 136, C.bad, 2)}${T(220, 158, "rozptyl = MAX − MIN = 1,6 cm", { a: "middle", fs: 11.5, b: 1, c: C.bad })}`, "Priemer a rozptyl"),
+  "Výsledok je <b>priemer</b>, rozdiel najväčšej a najmenšej hodnoty je <b>rozptyl</b>.");
+
+function rulerSVG(val, lab, w = 440, from = 0, to = 6, pxcm = 64) { let s = `<rect width="${w}" height="120" fill="#fff"/><rect x="10" y="50" width="${(to - from) * pxcm + 20}" height="44" rx="4" fill="#FFE8A3" stroke="#A0640A" stroke-width="1.5"/>`;
+  for (let mm = from * 10; mm <= to * 10; mm++) { const x = 20 + (mm / 10 - from) * pxcm, L = mm % 10 === 0 ? 18 : mm % 5 === 0 ? 13 : 8; s += `<line x1="${x.toFixed(1)}" y1="50" x2="${x.toFixed(1)}" y2="${50 + L}" stroke="#7A4A00" stroke-width="${mm % 10 ? 1 : 1.6}"/>`; if (mm % 10 === 0) s += T(x, 84, mm / 10, { a: "middle", fs: 12, b: 1, c: "#7A4A00" }); }
+  const X = 20 + (val - from) * pxcm; s += `<rect x="20" y="18" width="${(X - 20).toFixed(1)}" height="26" rx="4" fill="#9CCBF0" stroke="#1E6FD9" stroke-width="1.5"/><line x1="${X.toFixed(1)}" y1="14" x2="${X.toFixed(1)}" y2="70" stroke="#C0392B" stroke-width="2"/>${lab ? T(X / 2 + 10, 36, lab, { a: "middle", fs: 11.5, b: 1, c: "#0B4A8A" }) : ""}`;
+  return s; }
+const FIG_RULER = fig(SV(440, 120, rulerSVG(3.6, "gumka", 440, 0, 6), "Odčítanie z pravítka"),
+  "Najmenší dielik 1 mm: gumka má <b>3,6 cm</b>. Zapíšeš 1 desatinné miesto.");
+const FIG_INSTR = fig(SV(440, 176, `${[["📏", "pravítko", "1 mm", "12,4 cm"], ["⚖️", "kuchynská váha", "5 g", "125 g"], ["⏱️", "digitálne stopky", "0,01 s", "9,87 s"], ["🌡️", "izbový teplomer", "1 °C", "22 °C"]].map(([e, n, d, z], i) => { const y = 8 + i * 41;
+    return `${box(10, y, 420, 36, i % 2 ? "#fff" : C.bg, C.line, 6)}${EM(30, y + 25, e, 18)}${T(50, y + 23, n, { fs: 12.5, b: 1 })}${T(220, y + 23, "dielik " + d, { fs: 12 })}${T(410, y + 23, "zápis: " + z, { a: "end", fs: 12, b: 1, c: C.ok })}`; }).join("")}`, "Meradlá a ich najmenší dielik"),
+  "Zápis má toľko desatinných miest, koľko dovolí <b>najmenší dielik</b> meradla.");
+
+/* ===== DÁTA ÚLOH ===== */
+/* Úloha 1: poradie stĺpcov */
+const STL = [{ id: "m", t: "m (g)", d: "hmotnosť závažia" }, { id: "d", t: "Δl (cm)", d: "predĺženie pružiny" }, { id: "f", t: "F (N)", d: "sila" }, { id: "k", t: "k (N/cm)", d: "tuhosť pružiny" }];
+const STL_OK = ["m", "d", "f", "k"];
+/* Úloha 2: zlý návrh */
+const ZLY = { A1: "m (g)", B1: "Δl (cm)", C1: "F (N)", D1: "g (N/kg)", A2: "50", B2: "2.4", C2: "=A2/1000*$D$2", D2: "10", A3: "100 g", B3: "4,8", C3: "=0,1*10", A4: "150", B4: "7,1 a 7,3", C4: "=A4/1000*$D$2" };
+const ZLY_ERR = ["B2", "A3", "C3", "B4"], ZLY_CL = ["A2", "B2", "C2", "A3", "B3", "C3", "A4", "B4", "C4"];
+/* Úloha 3: laboratórium */
+const LABO = { "50": { v: "2,4", o: ["2,4", "2,3", "2,5", "24"] }, "100": { v: "4,8", o: ["4,8", "4,7", "5,8", "48"] }, "150": { v: "7,2", o: ["7,2", "7,1", "6,2", "72"] } };
+const WTS = ["50", "100", "150"];
+/* Úloha 5: gramy na kilogramy */
+const KG = { A1: "m (g)", B1: "Δl (cm)", C1: "m (kg)", A2: "50", B2: "2,5" };
+const KGP = ["=", "A2", "B2", "/", "*", "1000", "100", "10"];
+/* Úloha 6: sila */
+const SIL = { A1: "m (g)", B1: "Δl (cm)", C1: "m (kg)", D1: "F (N)", F1: "g (N/kg)", F2: "10", A2: "50", A3: "100", A4: "150", A5: "200", B2: "2,5", B3: "5", B4: "7,5", B5: "10", C2: "=A2/1000", C3: "=A3/1000", C4: "=A4/1000", C5: "=A5/1000" };
+const SF = ["=C2*$F$2", "=C2*F2", "=C2*10", "=$C$2*F2"];
+function shiftF(f, dr) { return f.replace(/(\$?)([A-J])(\$?)(\d+)/g, (m, a, c, b, r) => a + c + b + (b ? r : String(+r + dr))); }
+function silCells(d) { const c = Object.assign({}, SIL); if (d.f !== undefined) { c.D2 = SF[d.f]; for (let r = 3; r <= (d.to || 2); r++) c["D" + r] = shiftF(SF[d.f], r - 2); } return c; }
+/* Úloha 7: tuhosť */
+const TUH = { A1: "F (N)", B1: "Δl (cm)", C1: "k (N/cm)", A2: "0,5", A3: "1", A4: "1,5", A5: "2", B2: "2,5", B3: "5", B4: "7,5", B5: "10" };
+const TUHP = ["=", "A2", "B2", "C2", "/", "*", "+"];
+/* Úloha 8: formátovanie */
+const FMT = { A1: "m (g)", B1: "Δl (cm)", C1: "m (kg)", D1: "F (N)", E1: "k (N/cm)", A2: "50", A3: "100", A4: "150", A5: "200", B2: "2,5", B3: "5", B4: "7,5", B5: "10",
+  C2: "=A2/1000", C3: "=A3/1000", C4: "=A4/1000", C5: "=A5/1000", D2: "=C2*10", D3: "=C3*10", D4: "=C4*10", D5: "=C5*10", E2: "=D2/B2", E3: "=D3/B3", E4: "=D4/B4", E5: "=D5/B5" };
+/* Úloha 11 a 12: kyvadlo */
+const HR = { A1: "Meranie", B1: "t₁₀ (s)", A2: "1.", A3: "2.", A4: "3.", A5: "4.", A6: "5.", A7: "6.", B2: "14,2", B3: "14,0", B4: "14,3", B5: "7,1", B6: "14,1", B7: "14,2" };
+const HRO = ["Meranie zopakujem a chybnú hodnotu nahradím novou.", "Nechám ju tam, priemer chybu vyrovná.", "Prepíšem ju na 14, aby zapadla medzi ostatné.", "Zmažem všetky merania a tabuľku vyhodím."];
+const SPR = { A1: "Meranie", B1: "t₁₀ (s)", A2: "1.", A3: "2.", A4: "3.", A5: "4.", A6: "5.", A7: "6.", B2: "14,2", B3: "14,0", B4: "14,3", B5: "14,4", B6: "14,1", B7: "14,2", A8: "Priemer:", A9: "Rozptyl:" };
+const SPA = ["=PRIEMER(B2:B7)", "=SUM(B2:B7)", "=PRIEMER(B2;B7)", "=PRIEMER(B1:B7)"], SPB = ["=MAX(B2:B7)-MIN(B2:B7)", "=MIN(B2:B7)-MAX(B2:B7)", "=MAX(B2:B7)", "=MAX(B2:B7)+MIN(B2:B7)"];
+/* Úloha 13: odčítanie z meradiel */
+function scaleSVG() { let s = `<rect width="240" height="200" fill="#fff"/><circle cx="120" cy="104" r="84" fill="#F7F9FC" stroke="#566381" stroke-width="3"/>`;
+  for (let g = 0; g <= 500; g += 10) { const a = (-210 + g / 500 * 240) * Math.PI / 180, L = g % 100 ? (g % 50 ? 7 : 11) : 15, r = 78; s += `<line x1="${(120 + r * Math.cos(a)).toFixed(1)}" y1="${(104 + r * Math.sin(a)).toFixed(1)}" x2="${(120 + (r - L) * Math.cos(a)).toFixed(1)}" y2="${(104 + (r - L) * Math.sin(a)).toFixed(1)}" stroke="#16213A" stroke-width="${g % 100 ? 1.2 : 2}"/>`; if (g % 100 === 0) s += T(120 + 50 * Math.cos(a), 108 + 50 * Math.sin(a), g, { a: "middle", fs: 12, b: 1 }); }
+  const a = (-210 + 340 / 500 * 240) * Math.PI / 180; s += `<line x1="120" y1="104" x2="${(120 + 70 * Math.cos(a)).toFixed(1)}" y2="${(104 + 70 * Math.sin(a)).toFixed(1)}" stroke="#C0392B" stroke-width="3" stroke-linecap="round"/><circle cx="120" cy="104" r="6" fill="#C0392B"/>${T(120, 160, "g", { a: "middle", fs: 13, b: 1, c: C.mut })}`;
+  return `<svg viewBox="0 0 240 200" role="img" aria-label="Ručičková kuchynská váha" ${FF}>${s}</svg>`; }
+const CIT = [
+  { id: "r", n: "📏 Pravítko (dielik 1 mm)", pic: () => `<svg viewBox="0 0 440 120" role="img" aria-label="Pravítko s ceruzkou" ${FF}>${rulerSVG(7.4, "ceruzka", 440, 0, 8, 50)}</svg>`, o: ["7,4 cm", "7 cm", "7,40 cm", "7,425 cm"] },
+  { id: "v", n: "⚖️ Kuchynská váha (dielik 10 g)", pic: scaleSVG, o: ["340 g", "340,0 g", "300 g", "342,5 g"] },
+  { id: "t", n: "🌡️ Digitálny teplomer (krok 0,1 °C)", pic: () => `<svg viewBox="0 0 240 200" role="img" aria-label="Digitálny teplomer" ${FF}><rect width="240" height="200" fill="#fff"/>${box(40, 30, 160, 140, "#E9EDF3", "#566381", 20)}${box(58, 52, 124, 60, "#C9E3C2", "#2E6B2E", 6)}${T(120, 94, "21,6 °C", { a: "middle", fs: 26, b: 1, mono: 1, c: "#16213A" })}<circle cx="96" cy="140" r="9" fill="#9AA6B8"/><circle cx="144" cy="140" r="9" fill="#9AA6B8"/></svg>`, o: ["21,6 °C", "22 °C", "21,60 °C", "21,628 °C"] }
+];
+/* Úloha 15: desatinné miesta podľa meradla */
+const DPS = { A1: "Dĺžka (cm)", B1: "Hmotnosť (g)", C1: "Čas (s)", A2: "12,3", A3: "9,8", A4: "15,1", B2: "125", B3: "240", B4: "85", C2: "9,87", C3: "10,02", C4: "9,95" };
+const DPS_OK = { A: 1, B: 0, C: 2 };
+
+/* ===== ÚLOHY ===== */
+const TASKS = {
+  stl: { id: "stl", type: "stl", max: 2 },
+  zly: { id: "zly", type: "zly", max: 2 },
+  lab: { id: "lab", type: "lab", max: 3 },
+  vel: { id: "vel", type: "mc", qs: [
+    { id: "a", q: "Ktorá veličina je v pokuse s pružinou <b>nezávislá</b>, teda tú meníme my?", opts: ["hmotnosť zaveseného závažia", "predĺženie pružiny", "tuhosť pružiny", "sila, ktorou závažie ťahá"], a: 0, why: "My <b>vyberáme</b>, aké závažie zavesíme. Predĺženie potom nameriame a silu aj tuhosť vypočítame." },
+    { id: "b", q: "Pri piatom meraní si pružinu natiahol dvakrát. Ako to zapíšeš do tabuľky?", opts: ["Každé meranie do vlastného riadka.", "Obe hodnoty do jednej bunky, napríklad „3,1 a 3,3“.", "Iba vyššiu hodnotu, nižšiu zahodím.", "Obe hodnoty do jednej bunky oddelené lomkou."], a: 0, why: "Jedno meranie = <b>jeden riadok</b>. V bunke s dvoma číslami je text a Excel s ním nevie počítať." }] },
+  kg: { id: "kg", type: "kg", max: 2 },
+  sila: { id: "sila", type: "sila", max: 2 },
+  tuh: { id: "tuh", type: "tuh", max: 1 },
+  fmt: { id: "fmt", type: "fmt", max: 3 },
+  zaok: { id: "zaok", type: "mc", mono: 1, qs: [
+    { id: "a", q: "V bunke je číslo 0,123456. Tlačidlom nastavíš zobrazenie na 2 desatinné miesta. S akou hodnotou bude Excel ďalej počítať?", opts: ["0,123456", "0,12", "0,13", "0,1"], a: 0, why: "Desatinné miesta menia iba <b>zobrazenie</b>. Vo vzorcoch sa stále použije presná hodnota 0,123456." },
+    { id: "b", q: "Ktorý vzorec <b>naozaj zaokrúhli</b> číslo v D2 na 1 desatinné miesto?", opts: ["=ZAOKRÚHLIŤ(D2;1)", "=ZAOKRÚHLIŤ(1;D2)", "=ZAOKRÚHLIŤ(D2:1)", "=D2;1"], a: 0, why: "Najprv číslo (D2), potom bodkočiarka a počet desatinných miest (1)." }] },
+  kmit: { id: "kmit", type: "mc", qs: [{ id: "a", q: "Prečo meriame čas <b>10 kmitov</b> a výsledok delíme 10?", opts: ["Chyba pri stláčaní stopiek sa rozdelí na 10 kmitov, perióda je presnejšia.", "Kyvadlo sa rozkýva správne až po desiatich kmitoch.", "Stopky nevedia odmerať čas kratší ako 10 sekúnd.", "Excel vie deliť iba číslom 10."], a: 0, why: "Oneskorenie prsta (asi 0,2 s) je pri jednom kmite veľká chyba. Pri 10 kmitoch sa vydelí desiatimi." }] },
+  hrub: { id: "hrub", type: "hrub", max: 2 },
+  spr: { id: "spr", type: "spr", max: 2 },
+  cit: { id: "cit", type: "cit", max: 2 },
+  des: { id: "des", type: "mc", qs: [
+    { id: "a", q: "Pravítko má najmenší dielik <b>1 mm</b>. Koľko desatinných miest bude mať dĺžka zapísaná v <b>centimetroch</b>?", opts: ["1", "0", "2", "3"], a: 0, why: "1 mm = 0,1 cm, preto zapíšeš <b>jedno</b> desatinné miesto, napríklad 7,4 cm." },
+    { id: "b", q: "Digitálne stopky ukazujú 14,27 s. Človek však stlačí tlačidlo s oneskorením asi 0,2 s. Čo z toho vyplýva?", opts: ["Stotiny sekundy sú neisté, meranie zopakujeme a spravíme priemer.", "Stotiny sú presné, lebo stopky sú digitálne.", "Stopky sú pokazené, treba kúpiť nové.", "Čas zaokrúhlime na celé minúty."], a: 0, why: "Displej ukáže stotiny, ale chyba ruky je väčšia. Pomôže <b>opakovanie</b> a <b>priemer</b>." }] },
+  dps: { id: "dps", type: "dps", max: 2 }
+};
+
+const THEORY = {
+  m1: ["Poradie stĺpcov: <b>nezávislá</b> veličina, potom <b>namerané</b> a <b>vypočítané</b> hodnoty.", "Jedno meranie = <b>jeden riadok</b>.", "V bunkách iba <b>čísla</b> s desatinnou čiarkou, jednotky patria do záhlavia.", "Konštanty patria do <b>samostatnej bunky</b>."],
+  m2: ["Hmotnosť v gramoch prevedieš na kg: <b>m ÷ 1000</b>.", "Sila: <b>F = m · g</b>, g = 10 N/kg, jednotka newton (N).", "Tuhosť pružiny: <b>k = F ÷ Δl</b> (N/cm).", "<b>Hookov zákon</b>: predĺženie je priamo úmerné sile."],
+  m3: ["Vypočítané hodnoty počítaj <b>vzorcami</b> s adresami buniek.", "Konštantu (g) zamkni vo vzorci <b>absolútnou adresou</b> ($).", "Vzorec napíš raz a skopíruj ho <b>vyplnením nadol</b>."],
+  m4: ["Záhlavie zvýrazni <b>tučným písmom</b>.", "Tabuľke pridaj <b>orámovanie</b> (Domov → Písmo → Orámovanie).", "V stĺpci rovnaký počet <b>desatinných miest</b> podľa presnosti meradla.", "Desatinné miesta menia iba <b>zobrazenie</b>, skutočne zaokrúhli <b>ZAOKRÚHLIŤ(číslo;počet)</b>."],
+  m5: ["<b>Perióda T</b> = čas jedného kmitu (tam aj späť).", "Meriame čas <b>10 kmitov</b> a delíme ho 10.", "Opakované meranie spracuje <b>PRIEMER</b>, rozptyl je <b>MAX − MIN</b>.", "Meranie s <b>hrubou chybou</b> zopakujeme."],
+  m6: ["Každé meradlo má <b>najmenší dielik</b>.", "Zapisuj toľko desatinných miest, koľko meradlo naozaj odmeria.", "Viac číslic, ako meradlo dovolí, je klamstvo, menej je strata informácie.", "Neistotu merania zmenší <b>opakovanie</b> a <b>priemer</b>."]
+};
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function maxOf(T) { return T.max || (T.qs ? T.qs.length : T.items ? T.items.length : T.panels ? T.panels.filter(p => p.q).length : 0); }
+const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
+function fresh() { return { v: 1, attempt: 1, early: false, confirmEarly: false, name: "", cls: CLASS_DEFAULT, cur: 0, started: null, finished: null, t: {}, d: {}, ord: {}, sel: {}, zz: {}, kdlg: false, ksel: null }; }
+function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+let S = load() || fresh();
+function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
+const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
+const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
+const NSTOP = STEPS.length - 2;
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
+const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
+const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
+function checkBar(TK, ready, hint, label) {
+  const r = S.t[TK.id];
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${TK.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+}
+const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
+/* triedenie do stĺpcov */
+function sortHTML(TK) {
+  const done = S.t[TK.id], d = S.d[TK.id] || {}, io = ord(TK.id + ":i", TK.items.map(x => x.id)), sel = S.sel[TK.id];
+  const items = io.map(id => TK.items.find(x => x.id === id));
+  const chip = x => { let c = "chip"; if (sel === x.id && !done) c += " sel"; if (done) c += d[x.id] === x.a ? " ok" : " bad"; return `<button class="${c}" data-sti="${TK.id}|${x.id}" ${done ? "disabled" : ""}>${x.t}</button>`; };
+  const pool = items.filter(x => !d[x.id]), nOk = done ? TK.items.filter(x => d[x.id] === x.a).length : 0;
+  return `<p class="ins">Klikni na kartičku a potom na nadpis stĺpca, kam patrí. Kartičku presunieš, keď na ňu klikneš a potom na iný stĺpec. Za každé 2 správne zatriedené kartičky získaš 1 ⭐.</p>
+    <div class="pool">${pool.length ? pool.map(chip).join("") : `<span class="muted" style="font-size:14.5px">Všetky kartičky sú zatriedené.</span>`}</div>
+    <div class="bins${TK.bins.length === 3 ? " b3" : ""}">${TK.bins.map(g => `<div class="bin"><button class="bh" style="background:${g.bg};color:${g.c}" data-stb="${TK.id}|${g.id}" ${done ? "disabled" : ""}>${g.t}</button>${items.filter(x => d[x.id] === g.id).map(chip).join("")}</div>`).join("")}</div>
+    ${done ? `<p class="why ${nOk === TK.items.length ? "good" : "miss"}">Správne zatriedených: <b>${nOk} z ${TK.items.length}</b>. ${TK.items.filter(x => d[x.id] !== x.a).map(x => `„${x.t}“ → <b>${TK.bins.find(b => b.id === x.a).t}</b>`).join(" · ")}</p>` : ""}` +
+    checkBar(TK, TK.items.every(x => d[x.id]), "Zatrieď všetky kartičky.");
+}
+
+function renderTop() {
+  document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 5.2 Tabuľka merania</div>
+    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
+}
+function mcHTML(TK) {
+  const done = S.t[TK.id], d = S.d[TK.id] || {}, Q = TK.qs;
+  const qs = TK.keep ? Q : ord(TK.id + ":q", Q.map(q => q.id)).map(id => Q.find(q => q.id === id));
+  return qs.map((q, qi) => { const o = ord(TK.id + ":" + q.id, q.opts.map((_, i) => i));
+    return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend><div class="opts${TK.mono ? " mono" : ""}">${o.map(i => `<button class="${optCls(done, d[q.id], i, q.a)}" data-mc="${TK.id}|${q.id}|${i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`).join("")}</div>${done && q.why ? `<p class="why ${d[q.id] === q.a ? "good" : "miss"}">${q.why}</p>` : ""}</fieldset>`; }).join("") + checkBar(TK, Q.every(q => d[q.id] !== undefined), Q.length > 1 ? "Odpovedz na všetky otázky." : "Vyber odpoveď.");
+}
+function pcsHTML(id, P, seq, done) { const io = ord(id + ":p", P.map((_, i) => i));
+  return `<div class="pcs">${io.map(i => `<button class="pc" data-pp="${id}|${i}" ${done ? "disabled" : ""}>${esc(P[i])}</button>`).join("")}</div>
+    <div class="row" style="margin-top:4px"><button class="ghost sm" data-ppb="${id}" ${done || !seq.length ? "disabled" : ""}>⌫ Späť</button><button class="ghost sm" data-ppc="${id}" ${done || !seq.length ? "disabled" : ""}>🗑️ Vymazať</button></div>`; }
+const optRow = (key, opts, sel, a, done, attr) => { const o = ord(key, opts.map((_, i) => i)); return o.map(i => { let k = "opt mono"; if (sel === i) k += " sel"; if (done) { if (i === a) k += " ok"; else if (sel === i) k += " bad"; } return `<button class="${k}" ${attr}="${i}" ${done ? "disabled" : ""} style="padding:6px 12px">${esc(opts[i])}</button>`; }).join(""); };
+
+/* U1 – poradie stĺpcov */
+function stlHTML() { const TK = TASKS.stl, done = S.t.stl, seq = (S.d.stl || {}).s || [], io = ord("stl", STL.map(x => x.id)), ex = {}, mark = {};
+  ["A", "B", "C", "D"].forEach((c, i) => { const x = STL.find(y => y.id === seq[i]); ex[c + "1"] = x ? esc(x.t) : `<span class="muted">?</span>`; if (done) mark[c + "1"] = seq[i] === STL_OK[i] ? "ok" : "bad"; });
+  return `<p class="ins">Žaba Pružinka meria, ako sa pružina natiahne, keď na ňu zavesí rôzne závažia. Klikaním na kartičky postav záhlavie tabuľky zľava doprava v správnom poradí. Za všetky 4 správne 2 ⭐, za aspoň 2 správne 1 ⭐.</p>
+    <div class="pcs">${io.map(id => { const x = STL.find(y => y.id === id); return `<button class="pc" data-sl="${id}" ${done || seq.includes(id) ? "disabled" : ""}>${esc(x.t)} <small style="font-family:var(--font);color:var(--muted)">· ${x.d}</small></button>`; }).join("")}</div>
+    <div class="row" style="margin-top:0;margin-bottom:10px"><button class="ghost sm" data-slb ${done || !seq.length ? "disabled" : ""}>⌫ Späť</button></div>
+    ${xWin({ nb: "A1", mw: 560 }, xGrid({ id: "stl", nc: 4, nr: 3, ex, mark, hd: 1 }))}
+    ${done ? `<p class="why ${scoreOf("stl") === 2 ? "good" : "miss"}">Správne: <b>m (g)</b> → <b>Δl (cm)</b> → <b>F (N)</b> → <b>k (N/cm)</b>. Hmotnosť meníme, predĺženie nameriame, silu vypočítame z hmotnosti a tuhosť zo sily a predĺženia.</p>` : ""}` +
+    checkBar(TK, seq.length === 4, "Ulož všetky 4 kartičky.");
+}
+/* U2 – zlý návrh */
+function zlyHTML() { const TK = TASKS.zly, done = S.t.zly, d = S.d.zly || {}, mark = {};
+  ZLY_CL.forEach(r => { if (d[r]) mark[r] = done ? (ZLY_ERR.includes(r) ? "ok" : "bad") : "on"; else if (done && ZLY_ERR.includes(r)) mark[r] = "miss"; });
+  return `<p class="ins">Spolužiak Ondro navrhol tabuľku pružiny a urobil v nej <b>4 chyby</b>. Klikni na chybné bunky. Kliknutím uvidíš aj obsah bunky v riadku vzorcov. Za 4 nájdené chyby 2 ⭐, za 2 alebo 3 chyby 1 ⭐ (zle označená bunka 1 nájdenú chybu zruší).</p>
+    ${xWin({ nb: S.zlyc || "", fx: S.zlyc ? ZLY[S.zlyc] || "" : "", mw: 560 }, xGrid({ id: "zly", nc: 4, nr: 4, cells: ZLY, mark, click: !done, hd: 1 }))}
+    ${done ? `<p class="why ${scoreOf("zly") === 2 ? "good" : "miss"}">Chyby: <b>B2</b> desatinná bodka (text), <b>A3</b> „100 g“ s jednotkou (text), <b>B4</b> dve merania v jednej bunke, <b>C3</b> vzorec s prepísanými číslami namiesto adries a konštanty g.</p>` : ""}` +
+    checkBar(TK, ZLY_CL.some(r => d[r]), "Označ aspoň jednu bunku.");
+}
+/* U3 – laboratórium s pružinou */
+function labSVG(h) { const dl = h ? parseFloat(LABO[h].v.replace(",", ".")) : 0, y0 = 110, px = 20, yb = y0 + dl * px;
+  let s = `<rect width="440" height="350" fill="#F7FAF8"/><rect x="40" y="20" width="230" height="10" rx="3" fill="#8A97A8"/><rect x="44" y="30" width="8" height="300" fill="#A9B4C4"/><rect x="20" y="330" width="250" height="10" rx="3" fill="#8A97A8"/>
+    ${spring(150, 30, yb, 18, 14)}<circle cx="150" cy="${yb + 4}" r="4" fill="none" stroke="#566381" stroke-width="2"/>`;
+  s += `<rect x="196" y="${y0 - 10}" width="34" height="${10 * px + 20}" rx="3" fill="#FFE8A3" stroke="#A0640A" stroke-width="1.5"/>`;
+  for (let mm = 0; mm <= 100; mm++) { const y = y0 + mm / 10 * px, L = mm % 10 === 0 ? 14 : mm % 5 === 0 ? 10 : 6; s += `<line x1="196" y1="${y.toFixed(1)}" x2="${196 + L}" y2="${y.toFixed(1)}" stroke="#7A4A00" stroke-width="${mm % 10 ? .8 : 1.4}"/>`; if (mm % 10 === 0) s += T(222, y + 4, mm / 10, { a: "middle", fs: 10.5, b: 1, c: "#7A4A00" }); }
+  s += T(213, y0 - 16, "cm", { a: "middle", fs: 10.5, b: 1, c: "#7A4A00" });
+  s += `<line x1="150" y1="${yb}" x2="200" y2="${yb}" stroke="#C0392B" stroke-width="2"/><polygon points="196,${yb} 188,${yb - 4} 188,${yb + 4}" fill="#C0392B"/>`;
+  if (h) s += `<rect x="128" y="${yb + 8}" width="44" height="${18 + (+h) / 10}" rx="4" fill="#566381"/>${T(150, yb + 22 + (+h) / 20, h + " g", { a: "middle", fs: 11, b: 1, c: "#fff" })}`;
+  else s += `<rect x="118" y="${yb + 10}" width="64" height="40" rx="8" fill="#fff" stroke="#9AA6B8" stroke-dasharray="5 4" data-hook="1"/>${T(150, yb + 34, "sem zaves", { a: "middle", fs: 10.5, c: C.mut })}`;
+  /* lupa */
+  const ix = 270, iy = 60, iw = 160, ih = 150, sc = 110, lo = dl - .7; s += `<defs><clipPath id="lupa"><rect x="${ix}" y="${iy}" width="${iw}" height="${ih}" rx="12"/></clipPath></defs><rect x="${ix}" y="${iy}" width="${iw}" height="${ih}" rx="12" fill="#fff" stroke="#2F5BEA" stroke-width="3"/><g clip-path="url(#lupa)"><rect x="${ix}" y="${iy}" width="70" height="${ih}" fill="#FFE8A3"/>`;
+  for (let mm = Math.max(0, Math.floor(lo * 10)); mm <= Math.min(100, Math.ceil((lo + 1.4) * 10)); mm++) { const y = iy + (mm / 10 - lo) * sc, L = mm % 10 === 0 ? 40 : mm % 5 === 0 ? 28 : 16; s += `<line x1="${ix}" y1="${y.toFixed(1)}" x2="${ix + L}" y2="${y.toFixed(1)}" stroke="#7A4A00" stroke-width="${mm % 10 ? 1.4 : 2.4}"/>`; if (mm % 10 === 0) s += T(ix + 56, y + 6, mm / 10, { a: "middle", fs: 16, b: 1, c: "#7A4A00" }); }
+  s += `<line x1="${ix + 70}" y1="${iy + .7 * sc}" x2="${ix + iw}" y2="${iy + .7 * sc}" stroke="#C0392B" stroke-width="3"/></g>${T(ix + iw / 2, iy - 10, "🔍 lupa (zväčšené)", { a: "middle", fs: 12, b: 1, c: C.acc })}`;
+  return `<svg viewBox="0 0 440 350" role="img" aria-label="Pružina s pravítkom" ${FF}>${s}</svg>`; }
+function labHTML() { const TK = TASKS.lab, done = S.t.lab, d = S.d.lab || {}, r = d.r || {}, h = d.h, c = { A1: "m (g)", B1: "Δl (cm)" };
+  WTS.forEach((w, i) => { c["A" + (i + 2)] = w; if (r[w] !== undefined) c["B" + (i + 2)] = LABO[w].o[r[w]]; });
+  const mark = {}; if (done) WTS.forEach((w, i) => { mark["B" + (i + 2)] = r[w] === 0 ? "ok" : "bad"; });
+  return `<p class="ins">🧪 <b>Virtuálne laboratórium:</b> potiahni závažie (alebo naň klikni) na háčik pružiny. Červená ryska ukáže koniec pružiny, presnú hodnotu odčítaš v <b>lupe</b>. Potom vyber predĺženie. Zapíše sa do tabuľky. Za každé správne odčítané predĺženie 1 ⭐.</p>
+    <div class="labg"><div class="cv" data-hookzone="1">${labSVG(h)}</div><div>
+      <div class="wts">${WTS.map(w => `<button class="wt ${h === w ? "on" : ""}" data-wt="${w}" ${done ? "disabled" : ""}><span class="wbox" style="height:${26 + (+w) / 10}px">${w} g</span><small>${r[w] !== undefined ? "✔ zapísané" : "nezmerané"}</small></button>`).join("")}</div>
+      ${h ? `<p style="margin:12px 0 6px;font-weight:600">Predĺženie pri ${h} g je:</p><div class="row" style="margin-top:0">${optRow("lab:" + h, LABO[h].o.map(x => x + " cm"), r[h], 0, done, "data-lr")}</div>` : `<p class="muted" style="font-size:14.5px;margin-top:12px">Najprv zaves závažie.</p>`}
+      <div style="margin-top:14px">${xWin({ nb: "B2:B4", mw: 300 }, xGrid({ id: "labt", nc: 2, nr: 4, cells: c, mark, hd: 1 }))}</div></div></div>
+    ${done ? `<p class="why ${scoreOf("lab") === 3 ? "good" : "miss"}">Správne: 50 g → <b>2,4 cm</b>, 100 g → <b>4,8 cm</b>, 150 g → <b>7,2 cm</b>. Dvakrát ťažšie závažie natiahne pružinu dvakrát viac (Hookov zákon).</p>` : ""}` +
+    checkBar(TK, WTS.every(w => r[w] !== undefined), "Odmeraj všetky 3 závažia.");
+}
+/* U5 – gramy na kg */
+function kgHTML() { const TK = TASKS.kg, done = S.t.kg, seq = (S.d.kg || {}).s || [], f = seq.map(i => KGP[i]).join(""), c = Object.assign({}, KG); if (f) c.C2 = f;
+  return `<p class="ins">Na výpočet sily potrebuješ hmotnosť v <b>kilogramoch</b>. Do bunky <b>C2</b> poskladaj vzorec, ktorý prevedie gramy z A2 na kilogramy. Excel hneď ukáže výsledok. Za správny vzorec 2 ⭐.</p>
+    ${xWin({ nb: "C2", fx: f, mw: 480 }, xGrid({ id: "kg", nc: 3, nr: 3, cells: c, act: "C2", hd: 1 }))}${pcsHTML("kg", KGP, seq, done)}
+    ${done ? `<p class="why ${scoreOf("kg") === 2 ? "good" : "miss"}">Správne: <code>=A2/1000</code>. 1 kg = 1000 g, preto gramy <b>delíme</b> tisícom: 50 g = 0,05 kg.</p>` : ""}` +
+    checkBar(TK, f.length > 1 && f[0] === "=", "Poskladaj vzorec, ktorý začína znakom =.");
+}
+/* U6 – sila s konštantou a vyplnenie nadol */
+function silaHTML() { const TK = TASKS.sila, done = S.t.sila, d = S.d.sila || {}, to = d.to || 2;
+  return `<p class="ins">Gravitačná konštanta g je v bunke <b>F2</b>. 1) Vyber vzorec sily do <b>D2</b>, ktorý sa dá skopírovať nadol (1 ⭐). 2) Potiahni <b>ovládač výplne</b> (zelený štvorček v rohu) až po D5 (1 ⭐). Kliknutím na bunku v stĺpci D uvidíš jej vzorec.</p>
+    <div class="row" style="margin-top:0;margin-bottom:10px"><b>D2 =</b>${optRow("sila", SF, d.f, 0, done, "data-sf")}</div>
+    ${xWin({ id: "sila", nb: "D" + to, fx: d.f !== undefined ? shiftF(SF[d.f], to - 2) : "", mw: 620 }, xGrid({ id: "sila", nc: 6, nr: 5, cells: silCells(d), act: d.f !== undefined ? "D" + to : null, fh: d.f !== undefined && !done ? "D" + to : null, rng: to > 2 ? [3, 2, 3, to] : null, hd: 1, w: ["minmax(0,1fr)", "minmax(0,1fr)", "minmax(0,1fr)", "minmax(0,1fr)", "minmax(0,.4fr)", "minmax(0,1.1fr)"] }))}
+    ${done ? `<p class="why ${scoreOf("sila") === 2 ? "good" : "miss"}">Správne: <code>=C2*$F$2</code>. Pri kopírovaní sa C2 mení na C3, C4, C5, ale konštanta <b>$F$2</b> ostane. Bez $ by sa posunula na prázdne F3 a sila by vyšla 0. Vo vzorci <code>=C2*10</code> je konštanta prepísaná číslom a nedá sa zmeniť na jednom mieste.</p>` : ""}` +
+    checkBar(TK, d.f !== undefined && d.to > 2, "Vyber vzorec a skopíruj ho ťahaním.");
+}
+/* U7 – tuhosť */
+function tuhHTML() { const TK = TASKS.tuh, done = S.t.tuh, seq = (S.d.tuh || {}).s || [], f = seq.map(i => TUHP[i]).join(""), c = Object.assign({}, TUH), ok = f[0] === "=" && typeof xVal(Object.assign({}, TUH, { C2: f }), "C2") === "number";
+  if (f) { c.C2 = f; if (ok && !/C2/.test(f)) for (let r = 3; r <= 5; r++) c["C" + r] = shiftF(f, r - 2); }
+  return `<p class="ins">Do <b>C2</b> poskladaj vzorec <b>tuhosti</b> pružiny k = F ÷ Δl. Keď bude vzorec správny, Excel ho sám vyplní nadol a uvidíš, či platí Hookov zákon. Za správny vzorec 1 ⭐.</p>
+    ${xWin({ nb: "C2", fx: f, mw: 480 }, xGrid({ id: "tuh", nc: 3, nr: 5, cells: c, act: "C2", hd: 1, rng: ok && f && !/C2/.test(f) ? [2, 3, 2, 5] : null }))}${pcsHTML("tuh", TUHP, seq, done)}
+    ${done ? `<p class="why ${scoreOf("tuh") === 1 ? "good" : "miss"}">Správne: <code>=A2/B2</code>. Vo všetkých riadkoch vyjde <b>k = 0,2 N/cm</b>, tuhosť je stále rovnaká, teda platí Hookov zákon.</p>` : ""}` +
+    checkBar(TK, f.length > 1 && f[0] === "=", "Poskladaj vzorec, ktorý začína znakom =.");
+}
+/* U8 – formátovanie */
+const decOf = v => { const s = String(v); const i = s.indexOf(","); return i < 0 ? 0 : s.length - i - 1; };
+function tbHTML(id, btns, done) { const B = { b: "𝐁 Tučné", brd: "▦ Orámovanie", dpp: "←,0 pridať des. miesto", dpm: ",00→ ubrať des. miesto" };
+  return `<div class="ribbon"><b>Domov:</b> ${btns.map(k => `<button class="ghost sm" data-fa="${id}|${k}" ${done ? "disabled" : ""}>${B[k]}</button>`).join("")}</div>`; }
+function fmtHTML() { const TK = TASKS.fmt, done = S.t.fmt, d = S.d.fmt || {}, R = d.r ? parseR(d.r) : null;
+  return `<p class="ins">Tabuľka pružiny je hotová, ale vyzerá nevýrazne. Označ bunky <b>ťahaním</b> a použi tlačidlá. Ciele: 1) <b>tučné záhlavie</b> (1 ⭐), 2) <b>orámovanie</b> celej tabuľky A1:E5 (1 ⭐), 3) predĺženie Δl merané pravítkom s milimetrami, teda <b>1 desatinné miesto</b> v B2:B5 (1 ⭐).</p>
+    ${tbHTML("fmt", ["b", "brd", "dpp", "dpm"], done)}
+    ${xWin({ id: "fmt", nb: d.r || "", mw: 620 }, xGrid({ id: "fmt", nc: 5, nr: 5, cells: FMT, fm: d.f || {}, rng: done ? null : R, drag: !done }))}
+    ${done ? `<p class="why ${scoreOf("fmt") === 3 ? "good" : "miss"}">${fmtGoals(d).map((g, i) => `${["Tučné záhlavie A1:E1", "Orámovanie A1:E5", "1 desatinné miesto v B2:B5"][i]}: ${g ? "✅" : "❌"}`).join(" · ")}</p>` : ""}` +
+    checkBar(TK, !!d.used, "Najprv niečo naformátuj.");
+}
+const cellsIn = R => { const o = []; for (let c = R[0]; c <= R[2]; c++) for (let r = R[1]; r <= R[3]; r++) o.push(COLS[c] + r); return o; };
+function fmtGoals(d) { const f = d.f || {}, g = r => f[r] || {};
+  return [cellsIn([0, 1, 4, 1]).every(r => g(r).b), cellsIn([0, 1, 4, 5]).every(r => g(r).brd), cellsIn([1, 2, 1, 5]).every(r => g(r).dp === 1)]; }
+/* U11 – hrubá chyba */
+function hrubHTML() { const TK = TASKS.hrub, done = S.t.hrub, d = S.d.hrub || {}, mark = {};
+  if (d.c) mark[d.c] = done ? (d.c === "B5" ? "ok" : "bad") : "on"; if (done && d.c !== "B5") mark.B5 = "miss";
+  return `<p class="ins">Pružinka meria čas 10 kmitov kyvadla šesťkrát po sebe. Jedno meranie má <b>hrubú chybu</b>. 1) Klikni na chybné meranie (1 ⭐). 2) Vyber, čo s ním urobíš (1 ⭐).</p>
+    <div class="pair" style="align-items:start">${xWin({ nb: d.c || "", mw: 320 }, xGrid({ id: "hrub", nc: 2, nr: 7, cells: HR, mark, click: !done, hd: 1 }))}
+    <div class="opts" style="grid-template-columns:1fr">${optRow("hrub", HRO, d.o, 0, done, "data-ho").replace(/ mono/g, "")}</div></div>
+    ${done ? `<p class="why ${scoreOf("hrub") === 2 ? "good" : "miss"}">Meranie <b>4. (7,1 s)</b> je asi polovica ostatných, Pružinka zrejme napočítala iba 5 kmitov. Takú hodnotu do priemeru nedáme, meranie <b>zopakujeme</b>.</p>` : ""}` +
+    checkBar(TK, d.c && d.o !== undefined, "Označ meranie a vyber, čo s ním urobíš.");
+}
+/* U12 – priemer a rozptyl */
+function sprHTML() { const TK = TASKS.spr, done = S.t.spr, d = S.d.spr || {}, c = Object.assign({}, SPR); if (d.a !== undefined) c.B8 = SPA[d.a]; if (d.b !== undefined) c.B9 = SPB[d.b];
+  const mark = {}; if (done) { mark.B8 = d.a === 0 ? "ok" : "bad"; mark.B9 = d.b === 0 ? "ok" : "bad"; }
+  return `<p class="ins">Chybné meranie Pružinka zopakovala. Teraz vyber vzorec do <b>B8</b> (výsledný čas, 1 ⭐) a do <b>B9</b> (rozptyl nameraných hodnôt, 1 ⭐). Excel ich hneď vypočíta.</p>
+    <div class="pair" style="align-items:start">${xWin({ nb: "B8", mw: 320 }, xGrid({ id: "spr", nc: 2, nr: 9, cells: c, mark, hd: 1 }))}
+    <div><p style="margin:0 0 6px;font-weight:600">B8 (priemer) =</p><div class="opts" style="grid-template-columns:1fr">${optRow("spr:a", SPA, d.a, 0, done, "data-sa")}</div>
+      <p style="margin:14px 0 6px;font-weight:600">B9 (rozptyl) =</p><div class="opts" style="grid-template-columns:1fr">${optRow("spr:b", SPB, d.b, 0, done, "data-sb")}</div></div></div>
+    ${done ? `<p class="why ${scoreOf("spr") === 2 ? "good" : "miss"}">Priemer: <code>=PRIEMER(B2:B7)</code> (bez nadpisu B1, s dvojbodkou). Rozptyl: <code>=MAX(B2:B7)-MIN(B2:B7)</code>, najväčšia mínus najmenšia hodnota.</p>` : ""}` +
+    checkBar(TK, d.a !== undefined && d.b !== undefined, "Vyber oba vzorce.");
+}
+/* U13 – odčítanie z meradiel */
+function citHTML() { const TK = TASKS.cit, done = S.t.cit, d = S.d.cit || {};
+  return `<p class="ins">Ku každému meradlu vyber, ako nameranú hodnotu <b>správne zapíšeš</b>: nie presnejšie, ani menej presne, ako meradlo dovolí. Za 3 správne 2 ⭐, za 2 správne 1 ⭐.</p>
+    <div class="cits">${CIT.map(m => `<div class="fc"><div class="hd">${m.n}</div><div class="cv" style="padding:4px">${m.pic()}</div><div class="opts" style="grid-template-columns:1fr 1fr;margin-top:8px">${optRow("cit:" + m.id, m.o, d[m.id], 0, done, `data-ci="${m.id}" data-cv`)}</div></div>`).join("")}</div>
+    ${done ? `<p class="why ${scoreOf("cit") === 2 ? "good" : "miss"}">Pravítko s mm: <b>7,4 cm</b>. Váha s dielikom 10 g: <b>340 g</b> (desatiny gramu nevidno). Teplomer ukazuje desatiny: <b>21,6 °C</b>.</p>` : ""}` +
+    checkBar(TK, CIT.every(m => d[m.id] !== undefined), "Vyber zápis pri všetkých meradlách.");
+}
+/* U15 – desatinné miesta podľa meradla */
+function dpsHTML() { const TK = TASKS.dps, done = S.t.dps, d = S.d.dps || {}, R = d.r ? parseR(d.r) : null, f = d.f || dpsInit();
+  return `<p class="ins">Excel zobrazil všetky čísla so 4 desatinnými miestami. Dĺžky sa merali <b>pravítkom s mm</b>, hmotnosti <b>digitálnou váhou s krokom 1 g</b> a čas <b>stopkami so stotinami</b>. Označ stĺpec ťahaním a tlačidlami nastav správny počet desatinných miest. Za 3 správne stĺpce 2 ⭐, za 2 stĺpce 1 ⭐.</p>
+    ${tbHTML("dps", ["dpp", "dpm"], done)}
+    ${xWin({ id: "dps", nb: d.r || "", mw: 520 }, xGrid({ id: "dps", nc: 3, nr: 4, cells: DPS, fm: f, rng: done ? null : R, drag: !done, hd: 1 }))}
+    ${done ? `<p class="why ${scoreOf("dps") === 2 ? "good" : "miss"}">Dĺžka: <b>1</b> desatinné miesto (mm = 0,1 cm), hmotnosť: <b>0</b> (celé gramy), čas: <b>2</b> (stotiny sekundy).</p>` : ""}` +
+    checkBar(TK, !!d.used, "Najprv uprav desatinné miesta.");
+}
+function dpsInit() { const f = {}; ["A", "B", "C"].forEach(c => { for (let r = 2; r <= 4; r++) f[c + r] = { dp: 4 }; }); return f; }
+const parseR = s => { const m = /^([A-J])(\d+)(?::([A-J])(\d+))?$/.exec(s); if (!m) return null; const a = [cIx(m[1]), +m[2]], b = m[3] ? [cIx(m[3]), +m[4]] : a; return rngOf(a, b); };
+
+function memo() { const L = THEORY[STEPS[S.cur].id]; return L ? `<section class="memo"><h3>📌 Zapamätaj si</h3><ul>${L.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
+function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "🏆 Zobraziť výsledok" : "Ďalšia misia: " + n.title + " ▶"}</button></div>` : ""); }
+
+const VIEWS = {
+  start() {
+    return `<div class="hero"><div><p class="kicker">Informatika · Tercia · domáca úloha k hodine 5.2</p><h1>Domáca úloha: Tvorba tabuľky (meranie na fyzike)</h1>
+      <p style="font-size:18.5px">Kvak! Som žaba <b>Pružinka</b>. Skáčem ako pružina a rada všetko meriam. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: navrhneš tabuľku merania, vo virtuálnom laboratóriu odmeriaš pružinu, poskladáš vzorce s konštantou g, tabuľku naformátuješ, odhalíš chybu pri kyvadle a zistíš, ako presne merajú meradlá. Nič nebudeš počítať, všetko vypočíta Excel. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
+      <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
+      <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
+      <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Pri známke 1 alebo 2 je domáca úloha hotová, pri známke 3, 4 alebo 5 máš ešte <b>jednu opravu</b>.</div></div>`;
+  },
+  m1() {
+    return banner(1, "Dobrá tabuľka merania má jasné poradie stĺpcov a v bunkách iba čísla.") +
+    say(`Kvak, som žaba <b>Pružinka</b>! 🐸 Než začnem merať, navrhnem si tabuľku. Zlá tabuľka pokazí aj to najlepšie meranie.`) +
+    `<div class="theory tsplit"><div>
+      <p>Pri pokuse <b>meníme</b> jednu veličinu, <b>meriame</b> inú a ďalšie z nich <b>vypočítame</b>. Podľa toho zoradíme stĺpce:</p>
+      <table class="rtab"><thead><tr><th>Stĺpce zľava</th><th>Čo v nich je</th></tr></thead><tbody>
+        <tr><td>1. nezávislá veličina</td><td>tú nastavujeme my</td></tr>
+        <tr><td>2. namerané hodnoty</td><td>čo ukáže meradlo</td></tr>
+        <tr><td>3. vypočítané hodnoty</td><td>počítame ich vzorcami</td></tr></tbody></table>
+      <p>Každé meranie má <b>vlastný riadok</b>. V bunkách sú iba <b>čísla</b> s desatinnou <b>čiarkou</b>. Jednotku napíšeme do záhlavia, napríklad <b>teplota T (°C)</b>.</p>
+      <p>Konštanty (napríklad g = 10 N/kg) dáme do <b>samostatnej bunky</b>. Vypočítané hodnoty nepočítame na kalkulačke, ale <b>vzorcami</b> s adresami buniek.</p>
+      <p>Meranie opakujeme a spracujeme priemerom. Rozdiely medzi meraniami ukazujú <b>chybu merania</b>.</p>
+    </div><div class="tfigs">${FIG_COLS}${FIG_HEAD}${VEDEL("Vedci v laboratóriách si vedú <b>laboratórny denník</b>. Zapisujú doň každé meranie aj s dátumom, aby ho mohol ktokoľvek zopakovať a overiť.")}</div></div>
+    ${H3(1, "📐", "záhlavie tabuľky", "stl")}<div class="task">${stlHTML()}</div>
+    ${H3(2, "🕵️", "chyby v návrhu", "zly")}<div class="task">${zlyHTML()}</div>` + nextBar();
+  },
+  m2() {
+    return banner(2, "Zaves závažie, odčítaj predĺženie a zapíš ho do tabuľky.") +
+    say(`Teraz poďme do laboratória! 🧪 Pružina sa natiahne podľa toho, aké ťažké závažie na ňu zavesíš.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>Na pružinu vešiame závažia rôznej hmotnosti <b>m</b>. Pružina sa natiahne o <b>predĺženie Δl</b> (delta l), ktoré odčítame na pravítku.</p>
+      <p>Závažie ťahá pružinu silou <b>F = m · g</b>. Hmotnosť musí byť v <b>kilogramoch</b> (gramy ÷ 1000), <b>g = 10 N/kg</b> a sila vyjde v newtonoch (N).</p>
+      <p><b>Tuhosť pružiny</b> k = F ÷ Δl hovorí, akou silou treba ťahať, aby sa pružina predĺžila o 1 cm. Jednotka je N/cm.</p>
+      <p><b>Hookov zákon:</b> predĺženie pružiny je <b>priamo úmerné</b> sile. Dvojnásobná sila = dvojnásobné predĺženie, preto vychádza k pri všetkých meraniach takmer rovnaké.</p>
+      <p>Pri odčítaní sa pozeraj na pravítko <b>kolmo</b>, inak odčítaš hodnotu posunutú.</p>
+      ${VEDEL("Zákon objavil anglický vedec <b>Robert Hooke</b> v roku 1660. Najprv ho zverejnil ako šifru „ceiiinosssttuv“, ktorá je poprehadzovaná latinská veta „aká sila, také predĺženie“.")}
+    </div><div class="tfigs">${FIG_SPRING}${FIG_HOOKE}</div></div>
+    ${H3(3, "⚖️", "virtuálne laboratórium", "lab")}<div class="task">${labHTML()}</div>
+    ${H3(4, "🤔", "čo meníme a čo meriame", "vel")}<div class="task">${mcHTML(TASKS.vel)}</div>` + nextBar();
+  },
+  m3() {
+    return banner(3, "Namerané hodnoty spracuje Excel. Stačí mu dať správne vzorce.") +
+    say(`Teraz za mňa počíta Excel! 🧮 Ty mu iba poskladáš vzorce a jeden skopíruješ nadol.`) +
+    `<div class="theory tsplit"><div>
+      <p>Vypočítané stĺpce vyplníme <b>vzorcami</b>. Vzorec začína znakom <b>=</b> a namiesto čísel obsahuje <b>adresy buniek</b>. Keď opravíš nameranú hodnotu, výsledok sa sám prepočíta.</p>
+      <p><b>Konštantu</b> zapíšeme do jednej bunky aj s popisom. Vo vzorci ju <b>zamkneme</b> absolútnou adresou so znakom $ (klávesom F4), aby sa pri kopírovaní neposúvala.</p>
+      <p>Vzorec napíšeme iba do prvého riadka. Do ďalších ho skopírujeme <b>ťahaním ovládača výplne</b> (alebo dvojklikom naň). Relatívne adresy sa posunú na ďalší riadok, absolútne ostanú.</p>
+      <p>Keď sa vo všetkých riadkoch objaví podobný výsledok, vzorec je asi v poriadku. Keď jeden riadok veľmi trčí, hľadaj chybu v meraní alebo vo vzorci.</p>
+      ${VEDEL("Hodnota g sa na Zemi mierne líši: na rovníku je asi 9,78 N/kg, na póloch 9,83 N/kg. Keď je g v jednej bunke, zmeníš ho pre celú tabuľku jediným prepísaním.")}
+    </div><div class="tfigs">${FIG_ABS}${FIG_FILL}</div></div>
+    ${H3(5, "⚖️", "gramy na kilogramy", "kg")}<div class="task">${kgHTML()}</div>
+    ${H3(6, "💪", "sila a konštanta g", "sila")}<div class="task">${silaHTML()}</div>
+    ${H3(7, "🌀", "tuhosť pružiny", "tuh")}<div class="task">${tuhHTML()}</div>` + nextBar();
+  },
+  m4() {
+    return banner(4, "Pekne naformátovaná tabuľka sa ľahko číta.") +
+    say(`Tabuľka už počíta, ale vyzerá ako hromada čísel. 🎨 Spravíme z nej pekný protokol.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p><b>Záhlavie</b> zvýrazníme <b>tučným písmom</b> (Ctrl + B), prípadne farebnou výplňou.</p>
+      <p>Tabuľke pridáme <b>orámovanie</b>: označíme ju a vyberieme Domov → Písmo → Orámovanie → Všetky orámovania.</p>
+      <p>V jednom stĺpci majú všetky čísla rovnaký <b>počet desatinných miest</b>, a to podľa presnosti meradla. Tlačidlá <b>Pridať / Ubrať desatinné miesto</b> nájdeš na karte Domov.</p>
+      <p>Pozor: počet desatinných miest mení iba to, čo <b>vidíš</b>. Excel ďalej počíta s presnou hodnotou. Ak chceš číslo naozaj zaokrúhliť, použi funkciu <b>ZAOKRÚHLIŤ(číslo;počet miest)</b>.</p>
+      ${VEDEL("Ak je stĺpec príliš úzky, Excel namiesto čísla zobrazí <b>#####</b>. Číslo tam je, stačí stĺpec rozšíriť dvojklikom na hranicu záhlavia.")}
+    </div><div class="tfigs">${FIG_FMT}${FIG_DP}</div></div>
+    ${H3(8, "🎨", "naformátuj tabuľku", "fmt")}<div class="task">${fmtHTML()}</div>
+    ${H3(9, "🔢", "zobrazenie a zaokrúhlenie", "zaok")}<div class="task">${mcHTML(TASKS.zaok)}</div>` + nextBar();
+  },
+  m5() {
+    return banner(5, "Kyvadlo kmitá pravidelne. Opakované meranie ukáže, ako presne meriame.") +
+    say(`Tik-tak! ⏱️ Meriam kyvadlo stopkami, ale moja žabia ruka nie je dokonalá. Preto meriam veľakrát.`) +
+    `<div class="theory tsplit"><div>
+      <p><b>Perióda T</b> je čas jedného kmitu, teda pohybu tam aj späť. Jeden kmit trvá krátko a chyba pri stláčaní stopiek by bola veľká. Preto meriame čas <b>10 kmitov</b> a delíme ho 10.</p>
+      <p>Meranie <b>opakujeme</b>. Výsledok je <b>priemer</b> (funkcia PRIEMER).</p>
+      <p><b>Rozptyl</b> = najväčšia mínus najmenšia hodnota (MAX − MIN). Malý rozptyl znamená, že meriame presne.</p>
+      <table class="rtab"><thead><tr><th>Druh chyby</th><th>Čo s ňou</th></tr></thead><tbody>
+        <tr><td><b>náhodná</b> (malé rozdiely)</td><td>zmenší ju priemer z viacerých meraní</td></tr>
+        <tr><td><b>hrubá</b> (omyl, zlé počítanie)</td><td>hodnota veľmi trčí, meranie zopakujeme</td></tr></tbody></table>
+      ${VEDEL("Kyvadlové hodiny vynašiel <b>Christiaan Huygens</b> v roku 1656. Boli vyše 250 rokov najpresnejšími hodinami na svete.")}
+    </div><div class="tfigs">${FIG_PEND}${FIG_SPREAD}</div></div>
+    ${H3(10, "⏱️", "prečo 10 kmitov?", "kmit")}<div class="task">${mcHTML(TASKS.kmit)}</div>
+    ${H3(11, "🚨", "hrubá chyba", "hrub")}<div class="task">${hrubHTML()}</div>
+    ${H3(12, "📊", "priemer a rozptyl", "spr")}<div class="task">${sprHTML()}</div>` + nextBar();
+  },
+  m6() {
+    return banner(6, "Navyše: každé meradlo má svoju presnosť. Zápis nesmie tváriť, že je presnejší.") +
+    say(`Posledná misia! 📏 Moje pravítko nevie odmerať tisíciny milimetra, tak ich ani nebudem zapisovať.`, "wow") +
+    `<div class="theory tsplit"><div>
+      <p>Každé meradlo má <b>najmenší dielik</b>, teda najmenší rozdiel, ktorý ešte rozlíši. Pravítko má zvyčajne 1 mm, digitálna kuchynská váha 1 g, stopky 0,01 s.</p>
+      <p>Nameranú hodnotu zapíšeme s takým počtom desatinných miest, aký dielik <b>dovolí</b>. Keď pripíšeš viac číslic, tváriš sa presnejšie, ako si meral. Keď ich zahodíš, strácaš informáciu.</p>
+      <p>Pri ručičkovom meradle odčítaš najbližší dielik. Pri digitálnom meradle opíšeš číslice z displeja.</p>
+      <p>Aj presné meradlo má <b>neistotu</b>: stopky ukážu stotiny, ale tvoja ruka sa oneskorí. Neistotu zmenší <b>opakovanie</b> merania a priemer.</p>
+      ${VEDEL("Najpresnejšie hodiny na svete, atómové, by sa za vek vesmíru pomýlili menej ako o 1 sekundu.")}
+    </div><div class="tfigs">${FIG_RULER}${FIG_INSTR}</div></div>
+    ${H3(13, "🔍", "ako to zapíšeš?", "cit")}<div class="task">${citHTML()}</div>
+    ${H3(14, "🤔", "dielik a neistota", "des")}<div class="task">${mcHTML(TASKS.des)}</div>
+    ${H3(15, "🔢", "desatinné miesta podľa meradla", "dps")}<div class="task">${dpsHTML()}</div>` + nextBar();
+  },
+  vysledok() {
+    if (!S.finished && !allDone()) { const miss = STEPS.slice(1, -1).map((s, i) => [s, i + 1]).filter(([s, i]) => !stepDone(i)).map(([s, i]) => [s, i, STEP_TASKS[s.id].filter(t => !S.t[t]).length]);
+      const left = Object.keys(TASKS).filter(k => !S.t[k]).length;
+      return `<div class="result"><h2>🏆 Výsledok</h2><p>Ešte ti chýbajú tieto misie (kliknutím sa do nich vrátiš):</p><div class="row" style="margin-top:0">${miss.map(([s, i, n]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} <span class="muted">· ${n} ${n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh"}</span></button>`).join("")}</div>
+        ${S.confirmEarly ? `<div class="vedel" style="margin-top:18px"><b>⚠️ Naozaj chceš domácu úlohu ukončiť?</b> Nedokončených úloh: <b>${left}</b>. Rozpracované úlohy sa vyhodnotia podľa toho, čo si v nich vybral, nedotknuté dostanú 0 ⭐. Potom sa už nič nedá zmeniť.<div class="row"><button class="primary" data-earlyyes style="background:#C0392B">Áno, odoslať</button><button class="ghost" data-earlyno>Späť k úlohám</button></div></div>`
+        : `<div class="row" style="margin-top:18px"><button class="primary" data-early>🏁 Ukončiť a odoslať výsledok</button><span class="muted" style="font-size:14.5px">Ak už nechceš pokračovať, môžeš domácu úlohu ukončiť aj teraz.</span></div>`}</div>`; }
+    if (!S.finished) { S.finished = Date.now(); save(); }
+    const gr = gradeOf(total(), MAX);
+    try { localStorage.setItem(DONE_KEY, JSON.stringify({ name: S.name, cls: S.cls, score: total(), max: MAX, at: S.finished, grade: gr, attempts: S.attempt || 1 })); } catch (e) {}
+    const pct = Math.round(total() / MAX * 100), g = gr;
+    return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Výborne! Navrhneš tabuľku, odmeriaš pružinu, spočítaš silu s konštantou g, naformátuješ protokol a vieš, ako presne meradlá merajú. 🐸📏" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil, a skús si tabuľku pružiny spraviť aj v naozajstnom Exceli. 🐸", "wow")}
+      <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + (S.t[t] ? S.t[t].score : 0), 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <div class="row">${sendResults()}</div>
+      ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
+      ${(S.attempt || 1) === 1 && g >= 3 ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš ešte jednu opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu vypracovať ešte raz. Najprv si pozri vysvetlenia pri úlohách, kde si sa pomýlil. Oprava je posledný pokus.<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>` : ""}
+      ${(S.attempt || 1) === 2 ? `<p class="muted" style="margin-top:12px">Toto bola oprava, ďalší pokus už nie je možný.</p>` : ""}</div>`;
+  }
+};
+
+/* čas vypracovania (DOMACA): pripíše sa k bodom */
+function durTxt() { if (!S.started || !S.finished) return ""; let t = Math.max(0, Math.round((S.finished - S.started) / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60;
+  return " · " + (h ? h + " h " + m + " min" : m ? m + " min " + s + " s" : s + " s"); }
+function sendResults() {
+  const E = RESULTS_FORM.entries, pct = Math.round(total() / MAX * 100);
+  const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.early ? " (nedokončené)" : "") + ((S.attempt || 1) === 2 ? " (oprava)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)` + durTxt()); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
+  const key = [S.name.trim(), S.cls.trim(), total(), S.finished, S.attempt].join("|");
+  const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey !== key && !S.sending) { S.sending = true;
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+      .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Pripoj sa na internet a obnov stránku, výsledok sa odošle znova.", "#B3261E"); }); }
+  return `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
+}
+/* záznam o odovzdaní */
+function doneRec() { try { let r = localStorage.getItem(DONE_KEY); if (r) return JSON.parse(r);
+    for (const k of OLD_DONE_KEYS) { r = localStorage.getItem(k); if (r) { const o = JSON.parse(r); o.grade = o.grade || gradeOf(o.score, o.max || MAX); o.attempts = Math.min(o.attempts || 1, 1); o.old = true; return o; } } } catch (e) {} return null; }
+function lockedDone() { if (S.finished) return null; const r = doneRec(); if (!r) return null; if ((S.attempt || 1) === 2 && (r.attempts || 1) < 2) return null; return r; }
+function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const can = (L.grade || gradeOf(L.score, L.max || MAX)) >= 3 && (L.attempts || 1) < 2;
+    document.getElementById("main").innerHTML = can ? `<div class="result"><h2>🔁 Oprava domácej úlohy</h2>${say(`${esc(L.name)} (${esc(L.cls)}), v prvom pokuse si získal/a <b>${L.score} z ${L.max || MAX} ⭐</b> (známka ${L.grade}). Máš ešte <b>jednu opravu</b>. Je to posledný pokus.`)}<div class="row"><button class="primary" data-retry>🔁 Začať opravu</button></div></div>`
+      : `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${L.score} z ${L.max || MAX} ⭐</b>. Opakovať ju nie je možné.`)}</div>`; return; }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); typo(m); typo(document.getElementById("top"));
+  window.scrollTo({ top: scroll ? 0 : y }); }
+
+function scoreOf(id) {
+  const TK = TASKS[id], d = S.d[id] || {}; let sc = 0;
+  if (TK.type === "mc") sc = TK.qs.filter(q => d[q.id] === q.a).length;
+  if (TK.type === "stl") { const s = d.s || [], c = STL_OK.filter((x, i) => s[i] === x).length; sc = c === 4 ? 2 : c >= 2 ? 1 : 0; }
+  if (TK.type === "zly") { const sel = ZLY_CL.filter(r => d[r]), n = sel.filter(r => ZLY_ERR.includes(r)).length - sel.filter(r => !ZLY_ERR.includes(r)).length; sc = n >= 4 ? 2 : n >= 2 ? 1 : 0; }
+  if (TK.type === "lab") sc = WTS.filter(w => (d.r || {})[w] === 0).length;
+  if (TK.type === "kg") { const f = (d.s || []).map(i => KGP[i]).join(""); if (f[0] === "=" && /A2/.test(f)) { const v = xVal(Object.assign({}, KG, { C2: f }), "C2"); sc = typeof v === "number" && Math.abs(v - 0.05) < 1e-9 ? 2 : 1; } }
+  if (TK.type === "sila") sc = (d.f === 0 ? 1 : 0) + (d.to === 5 ? 1 : 0);
+  if (TK.type === "tuh") { const f = (d.s || []).map(i => TUHP[i]).join(""); if (f[0] === "=" && /A2/.test(f) && /B2/.test(f)) { const v = xVal(Object.assign({}, TUH, { C2: f }), "C2"); sc = typeof v === "number" && Math.abs(v - 0.2) < 1e-9 ? 1 : 0; } }
+  if (TK.type === "fmt") sc = d.used ? fmtGoals(d).filter(Boolean).length : 0;
+  if (TK.type === "hrub") sc = (d.c === "B5" ? 1 : 0) + (d.o === 0 ? 1 : 0);
+  if (TK.type === "spr") sc = (d.a === 0 ? 1 : 0) + (d.b === 0 ? 1 : 0);
+  if (TK.type === "cit") { const c = CIT.filter(m => d[m.id] === 0).length; sc = c === 3 ? 2 : c === 2 ? 1 : 0; }
+  if (TK.type === "dps") { if (d.used) { const f = d.f || {}, c = Object.keys(DPS_OK).filter(k => [2, 3, 4].every(r => (f[k + r] || {}).dp === DPS_OK[k])).length; sc = c === 3 ? 2 : c === 2 ? 1 : 0; } }
+  return Math.min(sc, maxOf(TK));
+}
+function check(id) { award(id, scoreOf(id)); save(); render(false); }
+
+/* predčasné ukončenie: rozpracované úlohy sa vyhodnotia podľa výberu, nedotknuté = 0 */
+function finishEarly() { Object.keys(TASKS).forEach(id => { if (!S.t[id]) award(id, scoreOf(id)); }); S.cvd = null; S.early = true; S.confirmEarly = false; S.finished = Date.now(); }
+const gradeOf = (sc, mx) => { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; };
+function startRetry(rec) { const n = (rec && rec.name) || S.name, c = (rec && rec.cls) || S.cls; S = fresh(); S.name = n; S.cls = c; S.attempt = 2; save(); render(true); }
+const setD = (t, k, v) => { (S.d[t] = S.d[t] || {})[k] = v; };
+const upd = () => { save(); render(false); };
+
+/* ===== UDALOSTI ===== */
+const CELLS = { fmt: FMT, dps: DPS };
+function fmtAct(id, act) { const d = S.d[id] = S.d[id] || {}; if (!d.f) d.f = id === "dps" ? dpsInit() : {}; if (!d.r) return; const L = cellsIn(parseR(d.r)), f = d.f, g = r => f[r] = f[r] || {};
+  if (act === "b") { const all = L.every(r => g(r).b); L.forEach(r => g(r).b = !all); }
+  if (act === "brd") { const all = L.every(r => g(r).brd); L.forEach(r => g(r).brd = !all); }
+  if (act === "dpp" || act === "dpm") { const r0 = L.find(r => typeof xVal(CELLS[id], r) === "number") || L[0], cur = g(r0).dp !== undefined ? g(r0).dp : decOf(shown(CELLS[id], r0)[0]), nd = Math.max(0, Math.min(4, cur + (act === "dpp" ? 1 : -1))); L.forEach(r => g(r).dp = nd); }
+  d.used = 1; }
+let JUSTDRAG = false;
+document.addEventListener("click", e => {
+  const xc = e.target.closest("[data-xc]");
+  if (xc && !e.target.closest("[data-fh]")) { const [g, ref] = xc.dataset.xc.split("|");
+    if (g === "zly") { if (S.t.zly) return; S.zlyc = ref; if (ZLY_CL.includes(ref)) { const d = S.d.zly = S.d.zly || {}; d[ref] = !d[ref]; } return upd(); }
+    if (g === "hrub") { if (S.t.hrub || ref[0] !== "B" || +ref.slice(1) < 2 || +ref.slice(1) > 7) return; setD("hrub", "c", ref); return upd(); }
+    if (g === "sila") { const d = S.d.sila || {}; if (ref[0] === "D" && d.f !== undefined) { const r = +ref.slice(1); if (r >= 2 && r <= (d.to || 2)) { const nb = document.getElementById("nb-sila"), fx = nb && nb.parentElement.querySelector(".fx"); if (nb) nb.textContent = ref; if (fx) fx.textContent = shiftF(SF[d.f], r - 2); } } return; }
+  }
+  const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
+  if (ds.go !== undefined) { S.cur = +ds.go; save(); render(true); return; }
+  if (ds.cls) { S.cls = ds.cls; return upd(); }
+  if (ds.begin !== undefined) { S.started = S.started || Date.now(); S.cur = 1; save(); render(true); return; }
+  if (ds.check) { check(ds.check); return; }
+  if (ds.early !== undefined) { S.confirmEarly = true; return upd(); }
+  if (ds.earlyno !== undefined) { S.confirmEarly = false; return upd(); }
+  if (ds.earlyyes !== undefined) { finishEarly(); save(); render(true); return; }
+  if (ds.retry !== undefined) { const r = S.finished ? { name: S.name, cls: S.cls } : doneRec(); startRetry(r); return; }
+  if (ds.mc) { const [t, q, i] = ds.mc.split("|"); if (S.t[t]) return; setD(t, q, +i); return upd(); }
+  if (ds.sl) { if (S.t.stl) return; const d = S.d.stl = S.d.stl || {}, s = d.s = d.s || []; if (!s.includes(ds.sl) && s.length < 4) s.push(ds.sl); return upd(); }
+  if (ds.slb !== undefined) { if (S.t.stl) return; const d = S.d.stl || {}; d.s = (d.s || []).slice(0, -1); S.d.stl = d; return upd(); }
+  if (ds.wt) { if (S.t.lab) return; setD("lab", "h", ds.wt); return upd(); }
+  if (ds.lr !== undefined) { if (S.t.lab) return; const d = S.d.lab = S.d.lab || {}; if (!d.h) return; (d.r = d.r || {})[d.h] = +ds.lr; return upd(); }
+  if (ds.pp) { const [t, i] = ds.pp.split("|"); if (S.t[t]) return; const d = S.d[t] = S.d[t] || {}; (d.s = d.s || []).push(+i); return upd(); }
+  if (ds.ppb) { if (S.t[ds.ppb]) return; const d = S.d[ds.ppb] || {}; d.s = (d.s || []).slice(0, -1); S.d[ds.ppb] = d; return upd(); }
+  if (ds.ppc) { if (S.t[ds.ppc]) return; S.d[ds.ppc] = { s: [] }; return upd(); }
+  if (ds.sf !== undefined) { if (S.t.sila) return; setD("sila", "f", +ds.sf); return upd(); }
+  if (ds.fa) { const [id, a] = ds.fa.split("|"); if (S.t[id]) return; fmtAct(id, a); return upd(); }
+  if (ds.ho !== undefined) { if (S.t.hrub) return; setD("hrub", "o", +ds.ho); return upd(); }
+  if (ds.sa !== undefined) { if (S.t.spr) return; setD("spr", "a", +ds.sa); return upd(); }
+  if (ds.sb !== undefined) { if (S.t.spr) return; setD("spr", "b", +ds.sb); return upd(); }
+  if (ds.ci) { if (S.t.cit) return; setD("cit", ds.ci, +ds.cv); return upd(); }
+});
+document.addEventListener("input", e => {
+  const t = e.target, f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
+});
+/* ťahanie: oblasť, ovládač výplne, závažie */
+let DRG = null;
+const cellAt = e => { const el = document.elementFromPoint(e.clientX, e.clientY); return el && el.closest ? el.closest("[data-xc]") : null; };
+function paintRange(g, R) { document.querySelectorAll(`[data-xd="${g}"] .xc`).forEach(el => { const [c, r] = refXY(el.dataset.xc.split("|")[1]); el.classList.toggle("xin", c >= R[0] && c <= R[2] && r >= R[1] && r <= R[3]); });
+  const nb = document.getElementById("nb-" + g); if (nb) nb.textContent = R[0] === R[2] && R[1] === R[3] ? rngStr(R) : `${R[3] - R[1] + 1}R × ${R[2] - R[0] + 1}S`; }
+document.addEventListener("pointerdown", e => {
+  const wt = e.target.closest("[data-wt]");
+  if (wt && !S.t.lab) { const gh = document.createElement("div"); gh.className = "ghostw"; gh.textContent = "⚖️ " + wt.dataset.wt + " g"; gh.style.left = e.clientX + "px"; gh.style.top = e.clientY + "px"; document.body.appendChild(gh);
+    DRG = { kind: "wt", w: wt.dataset.wt, x0: e.clientX, y0: e.clientY, gh, moved: false }; try { wt.releasePointerCapture && wt.releasePointerCapture(e.pointerId); } catch (_) {} return; }
+  const fh = e.target.closest("[data-fh]");
+  if (fh) { if (S.t.sila) return; e.preventDefault(); DRG = { kind: "fh", to: (S.d.sila || {}).to || 2 }; try { fh.setPointerCapture(e.pointerId); } catch (_) {} return; }
+  const xc = e.target.closest("[data-xd] [data-xc]"); if (!xc) return; const g = xc.closest("[data-xd]").dataset.xd; if (S.t[g]) return;
+  e.preventDefault(); const a = refXY(xc.dataset.xc.split("|")[1]); DRG = { kind: "rng", g, a, R: rngOf(a, a) }; paintRange(g, DRG.R);
+  try { xc.releasePointerCapture && xc.releasePointerCapture(e.pointerId); } catch (_) {} });
+document.addEventListener("pointermove", e => { if (!DRG) return;
+  if (DRG.kind === "wt") { if (Math.hypot(e.clientX - DRG.x0, e.clientY - DRG.y0) > 6) DRG.moved = true; DRG.gh.style.left = e.clientX + "px"; DRG.gh.style.top = e.clientY + "px"; e.preventDefault(); return; }
+  e.preventDefault(); const c = cellAt(e);
+  if (DRG.kind === "rng") { if (!c || !c.dataset.xc.startsWith(DRG.g + "|")) return; const b = refXY(c.dataset.xc.split("|")[1]); DRG.R = rngOf(DRG.a, b); paintRange(DRG.g, DRG.R); return; }
+  if (DRG.kind === "fh") { if (!c || !c.dataset.xc.startsWith("sila|")) return; const r = Math.max(2, Math.min(5, +c.dataset.xc.split("|")[1].slice(1))); DRG.to = r;
+    document.querySelectorAll(`[data-xc^="sila|D"]`).forEach(el => { const rr = +el.dataset.xc.split("|")[1].slice(1); el.classList.toggle("fillp", rr > 2 && rr <= r); }); } }, { passive: false });
+const endDrg = e => { if (!DRG) return; const D = DRG; DRG = null;
+  if (D.kind === "wt") { D.gh.remove(); if (!D.moved) return; const el = e && document.elementFromPoint(e.clientX, e.clientY); if (el && el.closest && el.closest("[data-hookzone]")) { setD("lab", "h", D.w); save(); render(false); } return; }
+  if (D.kind === "rng") setD(D.g, "r", rngStr(D.R));
+  if (D.kind === "fh") { const d = S.d.sila = S.d.sila || {}; d.to = D.to; }
+  save(); render(false); };
+document.addEventListener("pointerup", endDrg); document.addEventListener("pointercancel", endDrg);
+render(false);
+
+</script></body></html>
