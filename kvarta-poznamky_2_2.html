@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poznámky_2.2 IDLE a korytnačia grafika: vytvorenie korytnačky, príkazy na pohyb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;--line:#2F5BEA;--lineSoft:#D5DFFB;--border:#C9D6E8;
+  --blue:#2563D9;--teal:#12917F;--red:#D64545;--orange:#E07B12;--green:#2E9E4F;--purple:#7C4DCC;
+  --font:"Lexend","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"IBM Plex Mono",Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55}
+main{max-width:1000px;margin:0 auto;padding:22px 20px 40px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 2px}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.1;margin:0;letter-spacing:-.01em}
+.pbtn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 18px;background:var(--line);color:#fff;cursor:pointer;white-space:nowrap}
+.pbtn:hover{background:#2049c9}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin:16px 0}
+.theory h2{margin:0 0 10px;font-size:22px;display:flex;align-items:center;gap:10px;line-height:1.2}
+.theory h2 .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:15px;background:var(--c)}
+.theory p{margin:8px 0}
+.theory ul{margin:6px 0;padding-left:22px}.theory li{margin:3px 0}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px;align-items:stretch}
+.tsplit>div{min-width:0;display:flex;flex-direction:column}
+.tfig{margin:0;flex:1;display:flex;flex-direction:column;justify-content:center;background:var(--surface2);border-radius:12px;padding:10px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:6px}
+.rtab{border-collapse:collapse;margin:8px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab td:first-child{white-space:nowrap;font-weight:700;color:var(--c,inherit)}
+.hl{color:var(--c);font-weight:700}
+.url{font-family:var(--mono);font-weight:600;font-size:clamp(14px,2.6vw,18px);background:var(--surface2);border-radius:8px;padding:6px 10px;display:inline-block;overflow-wrap:anywhere}
+.vedel{background:#FFF8E1;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:16px 0;font-size:15.5px}
+.memo{background:#FFF1DE;border:1px solid #F3C27E;border-left:6px solid var(--orange);border-radius:14px;padding:14px 20px;margin:16px 0}
+.memo h2{margin:0 0 6px;font-size:21px;color:#B9600A}
+.memo ul{margin:0;padding-left:22px}.memo li{margin:4px 0}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;color:var(--muted);font-size:13px;margin-top:20px}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr;gap:14px}.tfig{flex:none}}
+@media (max-width:420px){main{padding:14px 12px 30px}.theory{padding:14px 14px}.theory h2{font-size:19.5px}.rtab{font-size:14.5px}.rtab td,.rtab th{padding:4px 7px}}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff;font-size:12.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  main{padding:0;max-width:none}.pbtn{display:none}
+  h1{font-size:26px}
+  .theory{margin:8px 0;padding:10px 14px;break-inside:avoid}.theory h2{font-size:16px;margin-bottom:4px}.theory h2 .n{flex-basis:24px;height:24px;font-size:12px}
+  .theory p{margin:4px 0}
+  .tsplit{grid-template-columns:1.25fr .75fr;gap:14px}
+  .rtab{font-size:12px}.rtab td,.rtab th{padding:2px 7px}
+  .tfig{padding:4px}.tfig figcaption{font-size:10.5px}
+  .vedel,.memo{margin:8px 0;padding:8px 14px;font-size:12px;break-inside:avoid}.memo h2{font-size:16px}
+}
+.tfig svg text{font-family:Lexend,"Segoe UI",sans-serif}
+.kbd{display:inline-block;font-family:var(--mono);font-size:14px;background:#fff;border:1px solid #B9C4D6;border-bottom-width:3px;border-radius:6px;padding:0 7px;white-space:nowrap}
+@media (max-width:520px){.rtab{font-size:13.5px}.rtab td:first-child{white-space:normal}.rtab td,.rtab th{padding:4px 6px}.rtab.wide,.rtab.wide th{font-size:12px}.rtab.wide td,.rtab.wide th{padding:3px 4px}}
+.rtab.wrap td:first-child{white-space:normal;width:40%}
+.code{font-family:var(--mono);background:#1F2A44;color:#E8EDF7;border-radius:8px;padding:10px 14px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0;line-height:1.5}.code .c{color:#8FA3C7}.code .k{color:#F0B429}.code .s{color:#7BE0A8}
+.rtab.w3 td:first-child{white-space:normal;width:28%}
+.ok{color:#2E9E4F;font-weight:700}.no{color:#D64545;font-weight:700}
+</style>
+
+</head>
+<body>
+<main>
+<div class="top">
+  <div><p class="kicker">Informatika · Kvarta · 2.2 · Poznámky do zošita</p><h1>IDLE a korytnačia grafika: vytvorenie korytnačky, príkazy na pohyb</h1></div>
+  <button class="pbtn" onclick="window.print()">🖨️ Vytlačiť / uložiť ako PDF</button>
+</div>
+
+<section class="theory" style="--c:var(--green)"><h2><span class="n">1</span>Vytvoríme korytnačku</h2>
+<div class="tsplit"><div>
+  <p><b>Korytnačka</b> je náš vykonávateľ: chodí, otáča sa a pri pohybe za sebou kreslí čiaru. Aby ju Python poznal, napíšeme:</p>
+<div class="code"><span class="k">from</span> turtle <span class="k">import</span> *</div>
+  <p>Príkaz sprístupní modul <b>turtle</b> (korytnačka). Okno sa otvorí po prvom príkaze pre korytnačku, napr. <b>showturtle()</b> alebo <b>st()</b>.</p>
+  <p>Nová korytnačka stojí v <b>strede</b> okna a pozerá sa <b>doprava</b>.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 230" role="img" aria-label="Okno korytnačky: nová korytnačka v strede sa pozerá doprava">
+
+<rect x="20" y="14" width="400" height="200" rx="8" fill="#fff" stroke="#16213A" stroke-width="2"/><rect x="20" y="14" width="400" height="24" rx="8" fill="#2E9E4F"/><rect x="20" y="30" width="400" height="8" fill="#2E9E4F"/><text x="30" y="31" text-anchor="start" font-size="11.5" font-weight="700" fill="#fff" >Python Turtle Graphics</text>
+<path d="M40 128 H400 M220 48 V204" stroke="#E3E8F0" stroke-width="1.5" stroke-dasharray="4 4"/>
+<g transform="translate(220 128) rotate(0) scale(1.6)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#2E9E4F" stroke="#16213A" stroke-width="1.5"/></g><text x="220" y="166" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2E9E4F" >stred, pozerá sa doprava →</text>
+<rect x="40" y="52" width="170" height="26" rx="5" fill="#1F2A44"/><text x="48" y="70" text-anchor="start" font-size="11" font-weight="600" fill="#E8EDF7" font-family="IBM Plex Mono,monospace">&gt;&gt;&gt; from turtle import *</text>
+    </svg>
+    <figcaption>Nová korytnačka v strede okna</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--blue)"><h2><span class="n">2</span>Dopredu a dozadu</h2>
+<div class="tsplit"><div>
+  <table class="rtab w3">
+    <tr><th>Príkaz</th><th>Skratka</th><th>Čo urobí</th></tr>
+    <tr><td>forward(100)</td><td>fd(100)</td><td>dopredu o 100 krokov</td></tr>
+    <tr><td>back(50)</td><td>bk(50)</td><td>dozadu o 50 krokov</td></tr>
+    <tr><td>right(90)</td><td>rt(90)</td><td>otoč sa vpravo o 90°</td></tr>
+    <tr><td>left(90)</td><td>lt(90)</td><td>otoč sa vľavo o 90°</td></tr>
+    <tr><td>showturtle()</td><td>st()</td><td>ukáž korytnačku</td></tr>
+    <tr><td>reset()</td><td></td><td>zmaž plochu, korytnačku daj do stredu</td></tr>
+  </table>
+  <p>Počet krokov píšeme do <b>zátvoriek</b>; aj príkaz bez čísla potrebuje prázdne zátvorky, napr. <b>reset()</b>. Jeden krok = jeden bod (pixel).</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 220" role="img" aria-label="fd(100) nakreslí čiaru dopredu, bk(50) cúvne bez zmeny smeru">
+
+<text x="20" y="30" text-anchor="start" font-size="15" font-weight="700" fill="#2563D9" font-family="IBM Plex Mono,monospace">fd(100)</text><path d="M60 70 H260" stroke="#2563D9" stroke-width="4"/><g transform="translate(60 70) rotate(0) scale(1.2)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#C9D1DF" stroke="#16213A" stroke-width="1.5"/></g><g transform="translate(260 70) rotate(0) scale(1.4)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#2E9E4F" stroke="#16213A" stroke-width="1.5"/></g><text x="160" y="98" text-anchor="middle" font-size="12" font-weight="700" fill="#2563D9" >100 krokov</text>
+<text x="20" y="140" text-anchor="start" font-size="15" font-weight="700" fill="#E07B12" font-family="IBM Plex Mono,monospace">bk(50)</text><path d="M160 176 H260" stroke="#E07B12" stroke-width="4"/><g transform="translate(260 176) rotate(0) scale(1.2)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#C9D1DF" stroke="#16213A" stroke-width="1.5"/></g><g transform="translate(160 176) rotate(0) scale(1.4)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#2E9E4F" stroke="#16213A" stroke-width="1.5"/></g><text x="210" y="204" text-anchor="middle" font-size="12" font-weight="700" fill="#E07B12" >cúvne, smer sa nemení</text>
+    </svg>
+    <figcaption>fd kreslí dopredu, bk cúva</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--orange)"><h2><span class="n">3</span>Otáčanie</h2>
+<div class="tsplit"><div>
+  <p><b>right(90)</b>, skrátene <b>rt(90)</b>, otočí korytnačku <b>vpravo</b> o 90 stupňov. <b>left(90)</b>, skrátene <b>lt(90)</b>, ju otočí <b>vľavo</b>.</p>
+  <p>Pri otáčaní korytnačka <b>nekreslí</b>, iba sa otočí na mieste. Kreslí až pri pohybe.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 230" role="img" aria-label="Korytnačka pred otočením, po rt(90) a po lt(90)">
+
+<rect x="14" y="20" width="130" height="130" rx="12" fill="#F5F7FA" stroke="#5A6782" stroke-width="2"/><g transform="translate(79 85) rotate(0) scale(2.0)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#5A6782" stroke="#16213A" stroke-width="1.5"/></g><text x="79" y="172" text-anchor="middle" font-size="13" font-weight="700" fill="#5A6782" font-family="IBM Plex Mono,monospace">na začiatku</text><rect x="156" y="20" width="130" height="130" rx="12" fill="#F5F7FA" stroke="#2563D9" stroke-width="2"/><g transform="translate(221 85) rotate(90) scale(2.0)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#2563D9" stroke="#16213A" stroke-width="1.5"/></g><text x="221" y="172" text-anchor="middle" font-size="13" font-weight="700" fill="#2563D9" font-family="IBM Plex Mono,monospace">rt(90)</text><rect x="298" y="20" width="130" height="130" rx="12" fill="#F5F7FA" stroke="#E07B12" stroke-width="2"/><g transform="translate(363 85) rotate(-90) scale(2.0)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#E07B12" stroke="#16213A" stroke-width="1.5"/></g><text x="363" y="172" text-anchor="middle" font-size="13" font-weight="700" fill="#E07B12" font-family="IBM Plex Mono,monospace">lt(90)</text>
+<text x="220" y="206" text-anchor="middle" font-size="12" font-weight="700" fill="#16213A" >90° = pravý uhol · 180° = čelom vzad · 360° = celé kolo</text>
+    </svg>
+    <figcaption>Otočenie mení iba smer</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--purple)"><h2><span class="n">4</span>Trasovanie</h2>
+<div class="tsplit"><div>
+  <p>Programátor musí vedieť odhadnúť, čo program urobí, ešte pred spustením = <b>trasovanie</b>.</p>
+  <p>Prechádzaj príkazy jeden po druhom a po každom si zapamätaj: <b>kde</b> korytnačka stojí a <b>kam sa pozerá</b>.</p>
+  <p>Otočenie mení iba <b>smer</b>, pohyb mení <b>polohu</b> a kreslí čiaru.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 240" role="img" aria-label="Trasovanie: krok po kroku poloha a smer korytnačky">
+
+<rect x="14" y="14" width="150" height="190" rx="8" fill="#1F2A44"/><text x="26" y="44" text-anchor="start" font-size="14" font-weight="600" fill="#E8EDF7" font-family="IBM Plex Mono,monospace" xml:space="preserve">1 fd(100)</text><text x="26" y="78" text-anchor="start" font-size="14" font-weight="600" fill="#F0B429" font-family="IBM Plex Mono,monospace" xml:space="preserve">2 lt(90)</text><text x="26" y="112" text-anchor="start" font-size="14" font-weight="600" fill="#E8EDF7" font-family="IBM Plex Mono,monospace" xml:space="preserve">3 fd(50)</text><text x="26" y="146" text-anchor="start" font-size="14" font-weight="600" fill="#F0B429" font-family="IBM Plex Mono,monospace" xml:space="preserve">4 lt(90)</text><text x="26" y="180" text-anchor="start" font-size="14" font-weight="600" fill="#E8EDF7" font-family="IBM Plex Mono,monospace" xml:space="preserve">5 fd(100)</text>
+<path d="M200 180 H360 V100 H200" fill="none" stroke="#2563D9" stroke-width="3.5"/><circle cx="200" cy="180" r="6" fill="#2E9E4F"/><g transform="translate(200 100) rotate(-180) scale(1.3)"><path d="M14 0 L-8 -9 L-4 0 L-8 9z" fill="#E07B12" stroke="#16213A" stroke-width="1.5"/></g>
+<text x="280" y="198" text-anchor="middle" font-size="13" font-weight="700" fill="#2563D9" >1</text><text x="374" y="144" text-anchor="middle" font-size="13" font-weight="700" fill="#2563D9" >3</text><text x="280" y="92" text-anchor="middle" font-size="13" font-weight="700" fill="#2563D9" >5</text><text x="200" y="224" text-anchor="middle" font-size="11.5" font-weight="700" fill="#2E9E4F" >● začiatok</text><text x="340" y="224" text-anchor="middle" font-size="11.5" font-weight="700" fill="#E07B12" >➤ koniec a smer</text>
+    </svg>
+    <figcaption>Sleduj polohu aj smer</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--teal)"><h2><span class="n">5</span>Kreslíme útvary</h2>
+<div class="tsplit"><div>
+  <p>Útvar z rovných čiar kreslíme ako striedanie: <b>strana</b> (fd) a <b>otočenie v rohu</b> (rt alebo lt).</p>
+  <p>V rohu sa korytnačka otočí o <b>vonkajší uhol = 180° − vnútorný uhol</b>. Pri uzavretom útvare sa otočí spolu o <b>360°</b> a skončí tam, kde začala.</p>
+  <p>Pred každým novým útvarom napíš <b>reset()</b>. Zložitejší útvar si najprv načrtni na papier.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 250" role="img" aria-label="Rovnostranný trojuholník: vnútorný uhol 60, korytnačka sa otočí o 120">
+
+<path d="M80 200 L280 200 L180 27z" fill="#EAF6EE" stroke="#2E9E4F" stroke-width="4"/>
+<path d="M110 200 A30 30 0 0 0 95 174" fill="none" stroke="#2563D9" stroke-width="2.5"/><text x="122" y="190" text-anchor="middle" font-size="12.5" font-weight="700" fill="#2563D9" >60°</text>
+<path d="M280 200 L350 200" stroke="#566381" stroke-width="2" stroke-dasharray="5 4"/><path d="M320 200 A40 40 0 0 0 260 165" fill="none" stroke="#D64545" stroke-width="2.5"/><text x="330" y="174" text-anchor="start" font-size="13" font-weight="700" fill="#D64545" >120°</text>
+<text x="220" y="236" text-anchor="middle" font-size="13" font-weight="700" fill="#16213A" >otočenie v rohu = 180° − vnútorný uhol</text>
+<rect x="300" y="30" width="130" height="80" rx="8" fill="#1F2A44"/><text x="312" y="56" text-anchor="start" font-size="12" font-weight="600" fill="#E8EDF7" font-family="IBM Plex Mono,monospace" xml:space="preserve">fd(100)</text><text x="312" y="76" text-anchor="start" font-size="12" font-weight="600" fill="#F0B429" font-family="IBM Plex Mono,monospace" xml:space="preserve">lt(120)</text><text x="312" y="96" text-anchor="start" font-size="12" font-weight="600" fill="#8FA3C7" font-family="IBM Plex Mono,monospace" xml:space="preserve">… 3-krát</text>
+    </svg>
+    <figcaption>Korytnačka sa otáča o vonkajší uhol</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--red)"><h2><span class="n">6</span>Časté chyby</h2>
+<div class="tsplit"><div>
+  <table class="rtab">
+    <tr><th>Druh chyby</th><th>Ako ju spoznáš</th></tr>
+    <tr><td>chyba s hláškou</td><td>Python vypíše červený text a príkaz nevykoná</td></tr>
+    <tr><td>logická chyba</td><td>hláška nie je, ale kresba nie je taká, akú si chcel</td></tr>
+  </table>
+  <p>Zátvorku píš hneď za názov príkazu, napr. <b>lt(45)</b>. Pri logickej chybe prejdi príkazy krok po kroku ako pri trasovaní.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 220" role="img" aria-label="Chyba s hláškou a logická chyba bez hlášky">
+
+<rect x="14" y="20" width="200" height="150" rx="10" fill="#FBE3E0" stroke="#D64545" stroke-width="2"/><text x="114" y="46" text-anchor="middle" font-size="13" font-weight="700" fill="#D64545" >chyba s hláškou</text>
+<text x="26" y="82" text-anchor="start" font-size="13" font-weight="600" fill="#16213A" font-family="IBM Plex Mono,monospace">&gt;&gt;&gt; fd 100</text><text x="26" y="112" text-anchor="start" font-size="13" font-weight="700" fill="#D64545" font-family="IBM Plex Mono,monospace">SyntaxError</text><text x="114" y="152" text-anchor="middle" font-size="11.5" font-weight="700" fill="#D64545" >červený text, nevykoná</text>
+<rect x="226" y="20" width="200" height="150" rx="10" fill="#FFF6E9" stroke="#E07B12" stroke-width="2"/><text x="326" y="46" text-anchor="middle" font-size="13" font-weight="700" fill="#E07B12" >logická chyba</text>
+<path d="M270 130 H350 V80" fill="none" stroke="#2563D9" stroke-width="3"/><text x="380" y="108" text-anchor="middle" font-size="22" font-weight="700" fill="#E07B12" >?</text><text x="326" y="152" text-anchor="middle" font-size="11.5" font-weight="700" fill="#E07B12" >bez hlášky, zlá kresba</text>
+<text x="220" y="200" text-anchor="middle" font-size="12" font-weight="700" fill="#566381" >pri hláške čítaj posledný riadok · pri logickej chybe trasuj</text>
+    </svg>
+    <figcaption>Dva druhy chýb</figcaption>
+  </figure>
+</div></div>
+</section>
+
+<div class="vedel">💡 <b>Vedel si?</b> Korytnačia grafika pochádza z jazyka Logo z roku 1967. Pôvodná korytnačka bol skutočný robot, ktorý jazdil po papieri na podlahe a kreslil fixkou.</div>
+
+<div class="memo"><h2>📌 Zapamätaj si</h2><ul>
+  <li><b>from turtle import *</b> sprístupní korytnačku; nová stojí v strede a pozerá doprava.</li>
+  <li><b>fd(n)</b> dopredu, <b>bk(n)</b> dozadu, <b>rt(u)</b> vpravo, <b>lt(u)</b> vľavo, <b>reset()</b> zmaže plochu.</li>
+  <li>Otočenie mení <b>smer</b>, pohyb mení <b>polohu</b> a kreslí.</li>
+  <li>V rohu útvaru sa korytnačka otočí o <b>180° − vnútorný uhol</b>, spolu o 360°.</li>
+  <li><b>Trasovanie</b> = odhad, čo program urobí, krok po kroku.</li>
+</ul></div>
+
+<footer><span>Gymnázium Ivana Kraska, Rimavská Sobota · Ing. Miloš Ďurina</span><span>Poznámky do zošita · Informatika Kvarta</span></footer>
+</main>
+<script>
+(function(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){const p=n.parentNode;if(p.closest("script,style,svg,.url,.kbd,.code,code"))continue;n.nodeValue=n.nodeValue.replace(/(?<=^|[\s(„ ])([vkszaiouVKSZAIOU])\s+/g,"$1 ").replace(/(\d)\s+(?=[\p{L}%])/gu,"$1 ").replace(/\s–\s/g," – ");}})();
+</script>
+</body>
+</html>
