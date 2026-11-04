@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Poznámky_4.1 Komprimácia dát</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=IBM+Plex+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--surface2:#F5F7FA;--ink:#16213A;--muted:#566381;--line:#2F5BEA;--lineSoft:#D5DFFB;--border:#C9D6E8;
+  --blue:#2563D9;--teal:#12917F;--red:#D64545;--orange:#E07B12;--green:#2E9E4F;--purple:#7C4DCC;
+  --font:"Lexend","Segoe UI",system-ui,-apple-system,sans-serif;--mono:"IBM Plex Mono",Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.55}
+main{max-width:1000px;margin:0 auto;padding:22px 20px 40px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 2px}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.1;margin:0;letter-spacing:-.01em}
+.pbtn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 18px;background:var(--line);color:#fff;cursor:pointer;white-space:nowrap}
+.pbtn:hover{background:#2049c9}
+.theory{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin:16px 0}
+.theory h2{margin:0 0 10px;font-size:22px;display:flex;align-items:center;gap:10px;line-height:1.2}
+.theory h2 .n{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:15px;background:var(--c)}
+.theory p{margin:8px 0}
+.theory ul{margin:6px 0;padding-left:22px}.theory li{margin:3px 0}
+.tsplit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:24px;align-items:stretch}
+.tsplit>div{min-width:0;display:flex;flex-direction:column}
+.tfig{margin:0;flex:1;display:flex;flex-direction:column;justify-content:center;background:var(--surface2);border-radius:12px;padding:10px}
+.tfig svg{width:100%;height:auto;display:block}
+.tfig figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:6px}
+.rtab{border-collapse:collapse;margin:8px 0;font-size:15.5px;width:100%}
+.rtab th,.rtab td{border:1px solid var(--border);padding:5px 10px;text-align:left;vertical-align:top}
+.rtab th{background:var(--surface2);font-size:14px}
+.rtab td:first-child{white-space:nowrap;font-weight:700;color:var(--c,inherit)}
+.hl{color:var(--c);font-weight:700}
+.url{font-family:var(--mono);font-weight:600;font-size:clamp(14px,2.6vw,18px);background:var(--surface2);border-radius:8px;padding:6px 10px;display:inline-block;overflow-wrap:anywhere}
+.vedel{background:#FFF8E1;border:1px solid #F2D27A;border-left:5px solid #E0A800;border-radius:12px;padding:12px 16px;margin:16px 0;font-size:15.5px}
+.memo{background:#FFF1DE;border:1px solid #F3C27E;border-left:6px solid var(--orange);border-radius:14px;padding:14px 20px;margin:16px 0}
+.memo h2{margin:0 0 6px;font-size:21px;color:#B9600A}
+.memo ul{margin:0;padding-left:22px}.memo li{margin:4px 0}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;color:var(--muted);font-size:13px;margin-top:20px}
+@media (max-width:860px){.tsplit{grid-template-columns:1fr;gap:14px}.tfig{flex:none}}
+@media (max-width:420px){main{padding:14px 12px 30px}.theory{padding:14px 14px}.theory h2{font-size:19.5px}.rtab{font-size:14.5px}.rtab td,.rtab th{padding:4px 7px}}
+@media print{
+  @page{size:A4;margin:10mm}
+  body{background:#fff;font-size:12.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  main{padding:0;max-width:none}.pbtn{display:none}
+  h1{font-size:26px}
+  .theory{margin:8px 0;padding:10px 14px;break-inside:avoid}.theory h2{font-size:16px;margin-bottom:4px}.theory h2 .n{flex-basis:24px;height:24px;font-size:12px}
+  .theory p{margin:4px 0}
+  .tsplit{grid-template-columns:1.25fr .75fr;gap:14px}
+  .rtab{font-size:12px}.rtab td,.rtab th{padding:2px 7px}
+  .tfig{padding:4px}.tfig figcaption{font-size:10.5px}
+  .vedel,.memo{margin:8px 0;padding:8px 14px;font-size:12px;break-inside:avoid}.memo h2{font-size:16px}
+}
+.tfig svg text{font-family:Lexend,"Segoe UI",sans-serif}
+.kbd{display:inline-block;font-family:var(--mono);font-size:14px;background:#fff;border:1px solid #B9C4D6;border-bottom-width:3px;border-radius:6px;padding:0 7px;white-space:nowrap}
+@media (max-width:520px){.rtab{font-size:13.5px}.rtab td:first-child{white-space:normal}.rtab td,.rtab th{padding:4px 6px}.rtab.wide,.rtab.wide th{font-size:12px}.rtab.wide td,.rtab.wide th{padding:3px 4px}}
+.rtab.wrap td:first-child{white-space:normal;width:40%}
+.code{font-family:var(--mono);background:#1F2A44;color:#E8EDF7;border-radius:8px;padding:10px 14px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0;line-height:1.5}.code .c{color:#8FA3C7}.code .k{color:#F0B429}.code .s{color:#7BE0A8}
+.rtab.w3 td:first-child{white-space:normal;width:28%}
+.ok{color:#2E9E4F;font-weight:700}.no{color:#D64545;font-weight:700}
+</style>
+
+</head>
+<body>
+<main>
+<div class="top">
+  <div><p class="kicker">Informatika · 2. ročník · 4.1 · Poznámky do zošita</p><h1>Komprimácia dát</h1></div>
+  <button class="pbtn" onclick="window.print()">🖨️ Vytlačiť / uložiť ako PDF</button>
+</div>
+
+<section class="theory" style="--c:var(--blue)"><h2><span class="n">1</span>Prečo a ako komprimovať</h2>
+<div class="tsplit"><div>
+  <p><b>Kompresia</b> (komprimácia) je zápis údajov pomocou menšieho počtu bitov. Šetrí miesto na disku a čas pri prenose sieťou. Využíva <b>nadbytočnosť (redundanciu)</b>: opakovanie, vzory a to, že niektoré znaky sú častejšie.</p>
+  <table class="rtab w3">
+    <tr><th>Druh</th><th>Čo robí</th><th>Formáty</th></tr>
+    <tr><td>bezstratová</td><td>po rozbalení <b>presne</b> pôvodné dáta; nevyhnutná pri textoch, programoch a tabuľkách</td><td>ZIP, 7z, PNG, FLAC</td></tr>
+    <tr><td>stratová</td><td>vynechá detaily, ktoré človek nevníma; stratené údaje sa nevrátia</td><td>JPEG, MP3, AAC, H.264</td></tr>
+    </table>
+  <p><b>Kompresný pomer</b> = pôvodná veľkosť : skomprimovaná veľkosť. Napríklad 10 MB → 2 MB je pomer <b>5 : 1</b> a úspora <b>80 %</b>. Náhodné a už skomprimované dáta bezstratovo takmer nezmenšíš.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 250" role="img" aria-label="Bezstratová a stratová kompresia"><text x="220" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#16213A">Bezstratová a stratová kompresia</text><rect x="10" y="34" width="420" height="96" rx="12" fill="#EAF6EE" stroke="#2E9E4F" stroke-width="2"/><text x="30" y="56" text-anchor="start" font-size="12" font-weight="700" fill="#2E9E4F">bezstratová (ZIP, PNG)</text><text x="62" y="98" text-anchor="middle" font-size="30" font-weight="400" fill="#16213A">📄</text><text x="62" y="120" text-anchor="middle" font-size="11" font-weight="700" fill="#16213A">10 MB</text><line x1="92" y1="90" x2="145.0" y2="90.0" stroke="#2E9E4F" stroke-width="2.5"/><path d="M150 90 L141.9 93.9 L141.9 86.1z" fill="#2E9E4F"/><text x="195" y="98" text-anchor="middle" font-size="28" font-weight="400" fill="#16213A">🗜️</text><text x="195" y="120" text-anchor="middle" font-size="11" font-weight="700" fill="#16213A">2 MB</text><line x1="232" y1="90" x2="285.0" y2="90.0" stroke="#2E9E4F" stroke-width="2.5"/><path d="M290 90 L281.9 93.9 L281.9 86.1z" fill="#2E9E4F"/><text x="330" y="98" text-anchor="middle" font-size="30" font-weight="400" fill="#16213A">📄</text><text x="330" y="120" text-anchor="middle" font-size="11" font-weight="700" fill="#16213A">10 MB</text><text x="400" y="88" text-anchor="middle" font-size="22" font-weight="700" fill="#2E9E4F">✓</text><text x="400" y="106" text-anchor="middle" font-size="10" font-weight="700" fill="#2E9E4F">presne</text><text x="400" y="118" text-anchor="middle" font-size="10" font-weight="700" fill="#2E9E4F">rovnaké</text><rect x="10" y="140" width="420" height="96" rx="12" fill="#FFF1DE" stroke="#E07B12" stroke-width="2"/><text x="30" y="162" text-anchor="start" font-size="12" font-weight="700" fill="#E07B12">stratová (JPEG, MP3)</text><text x="62" y="204" text-anchor="middle" font-size="30" font-weight="400" fill="#16213A">🖼️</text><text x="62" y="226" text-anchor="middle" font-size="11" font-weight="700" fill="#16213A">10 MB</text><line x1="92" y1="196" x2="145.0" y2="196.0" stroke="#E07B12" stroke-width="2.5"/><path d="M150 196 L141.9 199.9 L141.9 192.1z" fill="#E07B12"/><text x="195" y="204" text-anchor="middle" font-size="28" font-weight="400" fill="#16213A">🗜️</text><text x="195" y="226" text-anchor="middle" font-size="11" font-weight="700" fill="#16213A">1 MB</text><line x1="232" y1="196" x2="285.0" y2="196.0" stroke="#E07B12" stroke-width="2.5"/><path d="M290 196 L281.9 199.9 L281.9 192.1z" fill="#E07B12"/><text x="330" y="204" text-anchor="middle" font-size="30" font-weight="400" fill="#16213A">🖼️</text><text x="330" y="226" text-anchor="middle" font-size="11" font-weight="700" fill="#16213A">≈ podobný</text><text x="400" y="196" text-anchor="middle" font-size="22" font-weight="700" fill="#E07B12">≈</text><text x="400" y="212" text-anchor="middle" font-size="10" font-weight="700" fill="#E07B12">detaily</text><text x="400" y="224" text-anchor="middle" font-size="10" font-weight="700" fill="#E07B12">preč</text></svg>
+    <figcaption>Bezstratová vráti presne pôvodné dáta, stratová vynechá detaily</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--teal)"><h2><span class="n">2</span>RLE – kódovanie opakovania</h2>
+<div class="tsplit"><div>
+  <p><b>RLE</b> (Run-Length Encoding) nahradí rad rovnakých znakov dvojicou <b>počet + znak</b>: <code>AAAABBB</code> → <code>4A3B</code>.</p>
+  <p>Funguje výborne pri obrázkoch s veľkými <b>jednofarebnými plochami</b> (faxy, ikony, BMP, staré formáty PCX).</p>
+  <p>Keď sa nič neopakuje, zápis sa <b>predĺži</b>: <code>ABCD</code> → <code>1A1B1C1D</code>.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 240" role="img" aria-label="Kódovanie RLE"><text x="220" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#16213A">Riadok obrázka: 10 pixelov</text><rect x="20" y="34" width="36" height="36" rx="4" fill="#2563D9" stroke="#16213A" stroke-width="1.5"/><text x="38" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">M</text><rect x="60" y="34" width="36" height="36" rx="4" fill="#2563D9" stroke="#16213A" stroke-width="1.5"/><text x="78" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">M</text><rect x="100" y="34" width="36" height="36" rx="4" fill="#2563D9" stroke="#16213A" stroke-width="1.5"/><text x="118" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">M</text><rect x="140" y="34" width="36" height="36" rx="4" fill="#2563D9" stroke="#16213A" stroke-width="1.5"/><text x="158" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">M</text><rect x="180" y="34" width="36" height="36" rx="4" fill="#2563D9" stroke="#16213A" stroke-width="1.5"/><text x="198" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">M</text><rect x="220" y="34" width="36" height="36" rx="4" fill="#2563D9" stroke="#16213A" stroke-width="1.5"/><text x="238" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">M</text><rect x="260" y="34" width="36" height="36" rx="4" fill="#FFFFFF" stroke="#16213A" stroke-width="1.5"/><text x="278" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#16213A">B</text><rect x="300" y="34" width="36" height="36" rx="4" fill="#FFFFFF" stroke="#16213A" stroke-width="1.5"/><text x="318" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#16213A">B</text><rect x="340" y="34" width="36" height="36" rx="4" fill="#FFFFFF" stroke="#16213A" stroke-width="1.5"/><text x="358" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#16213A">B</text><rect x="380" y="34" width="36" height="36" rx="4" fill="#2563D9" stroke="#16213A" stroke-width="1.5"/><text x="398" y="57" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">M</text><path d="M20 78 h236" stroke="#2563D9" stroke-width="3"/><text x="138" y="94" text-anchor="middle" font-size="11.5" font-weight="700" fill="#2563D9">6× M</text><path d="M260 78 h116" stroke="#566381" stroke-width="3"/><text x="318" y="94" text-anchor="middle" font-size="11.5" font-weight="700" fill="#566381">3× B</text><path d="M380 78 h36" stroke="#2563D9" stroke-width="3"/><text x="398" y="94" text-anchor="middle" font-size="11.5" font-weight="700" fill="#2563D9">1× M</text><text x="220" y="116" text-anchor="middle" font-size="13" font-weight="600" fill="#16213A">MMMMMMBBBM (10 znakov)</text><line x1="220" y1="124" x2="220.0" y2="141.0" stroke="#12917F" stroke-width="2.5"/><path d="M220 146 L216.1 137.9 L223.9 137.9z" fill="#12917F"/><rect x="130" y="150" width="180" height="36" rx="8" fill="#E3F4F1" stroke="#12917F" stroke-width="2"/><text x="220" y="174" text-anchor="middle" font-size="14" font-weight="700" fill="#12917F">6M 3B 1M (6 znakov)</text><text x="220" y="210" text-anchor="middle" font-size="11" font-weight="600" fill="#566381">bez opakovania sa zápis predĺži:</text><text x="220" y="228" text-anchor="middle" font-size="13" font-weight="700" fill="#D64545">PES → 1P1E1S</text></svg>
+    <figcaption>RLE zapíše počet a farbu namiesto každého pixela</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--purple)"><h2><span class="n">3</span>Huffmanovo kódovanie</h2>
+<div class="tsplit"><div>
+  <p>V ASCII má každý znak <b>8 bitov</b>. <b>Huffmanovo kódovanie</b> (David Huffman, 1952) dá <b>častým znakom krátke kódy</b> a zriedkavým dlhšie.</p>
+  <table class="rtab">
+    <tr><th>Krok</th><th>Čo urobíš</th></tr>
+    <tr><td>1. váhy</td><td>spočítaj, koľkokrát sa každý znak vyskytuje</td></tr>
+    <tr><td>2. strom</td><td>opakovane <b>spoj dva uzly s najmenšou váhou</b> do nového uzla so súčtom váh</td></tr>
+    <tr><td>3. kódy</td><td>prečítaj ich zo stromu: <b>vľavo 0, vpravo 1</b></td></tr>
+    </table>
+  <p>Žiadny kód nie je začiatkom iného, preto sa dá text jednoznačne prečítať.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 250" role="img" aria-label="Huffmanov strom"><text x="110" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#16213A">slovo KAKAO</text><rect x="20" y="32" width="180" height="102" rx="10" fill="#F5F7FA" stroke="#C9D6E8" stroke-width="2"/><text x="60" y="54" text-anchor="middle" font-size="11" font-weight="700" fill="#566381">znak</text><text x="110" y="54" text-anchor="middle" font-size="11" font-weight="700" fill="#566381">váha</text><text x="165" y="54" text-anchor="middle" font-size="11" font-weight="700" fill="#566381">kód</text><text x="60" y="76" text-anchor="middle" font-size="13" font-weight="600" fill="#16213A">A</text><text x="110" y="76" text-anchor="middle" font-size="13" font-weight="600" fill="#16213A">2</text><text x="165" y="76" text-anchor="middle" font-size="13" font-weight="700" fill="#7C4DCC">0</text><text x="60" y="98" text-anchor="middle" font-size="13" font-weight="600" fill="#16213A">K</text><text x="110" y="98" text-anchor="middle" font-size="13" font-weight="600" fill="#16213A">2</text><text x="165" y="98" text-anchor="middle" font-size="13" font-weight="700" fill="#7C4DCC">11</text><text x="60" y="120" text-anchor="middle" font-size="13" font-weight="600" fill="#16213A">O</text><text x="110" y="120" text-anchor="middle" font-size="13" font-weight="600" fill="#16213A">1</text><text x="165" y="120" text-anchor="middle" font-size="13" font-weight="700" fill="#7C4DCC">10</text><path d="M320 44 L265 104 M320 44 L375 104 M375 104 L335 170 M375 104 L415 170" stroke="#566381" stroke-width="2" fill="none"/><circle cx="320" cy="44" r="17" fill="#fff" stroke="#16213A" stroke-width="2"/><text x="320" y="48.5" text-anchor="middle" font-size="12" font-weight="700" fill="#16213A">5</text><circle cx="265" cy="104" r="17" fill="#F1EBFB" stroke="#7C4DCC" stroke-width="2"/><text x="265" y="108.5" text-anchor="middle" font-size="12" font-weight="700" fill="#7C4DCC">A</text><circle cx="375" cy="104" r="17" fill="#fff" stroke="#16213A" stroke-width="2"/><text x="375" y="108.5" text-anchor="middle" font-size="12" font-weight="700" fill="#16213A">3</text><circle cx="335" cy="170" r="17" fill="#F1EBFB" stroke="#7C4DCC" stroke-width="2"/><text x="335" y="174.5" text-anchor="middle" font-size="12" font-weight="700" fill="#7C4DCC">O</text><circle cx="415" cy="170" r="17" fill="#F1EBFB" stroke="#7C4DCC" stroke-width="2"/><text x="415" y="174.5" text-anchor="middle" font-size="12" font-weight="700" fill="#7C4DCC">K</text><text x="282" y="70" text-anchor="middle" font-size="13" font-weight="700" fill="#D64545">0</text><text x="358" y="70" text-anchor="middle" font-size="13" font-weight="700" fill="#D64545">1</text><text x="345" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#D64545">0</text><text x="405" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#D64545">1</text><text x="320" y="210" text-anchor="middle" font-size="11.5" font-weight="700" fill="#D64545">vľavo 0, vpravo 1</text><rect x="20" y="150" width="180" height="82" rx="10" fill="#F1EBFB" stroke="#7C4DCC" stroke-width="2"/><text x="110" y="172" text-anchor="middle" font-size="12" font-weight="700" fill="#7C4DCC">KAKAO = 11 0 11 0 10</text><text x="110" y="194" text-anchor="middle" font-size="12" font-weight="700" fill="#16213A">Huffman: 8 bitov</text><text x="110" y="216" text-anchor="middle" font-size="11" font-weight="600" fill="#566381">ASCII: 5 × 8 = 40 bitov</text></svg>
+    <figcaption>Častý znak A má kód s 1 bitom, zriedkavejšie O a K s 2 bitmi</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--orange)"><h2><span class="n">4</span>Slovníková kompresia</h2>
+<div class="tsplit"><div>
+  <p>Algoritmy <b>LZ77</b> a <b>LZW</b> (Lempel, Ziv, Welch) si pamätajú, čo už bolo napísané. Keď sa časť textu opakuje, zapíšu iba <b>odkaz</b>: o koľko znakov sa vrátiť a koľko ich skopírovať. Napríklad <code>JE TO TO</code> → <code>JE TO(3,3)</code>.</p>
+  <table class="rtab">
+    <tr><th>Formát</th><th>Metóda</th></tr>
+    <tr><td>ZIP, gzip, PNG</td><td><b>Deflate</b> = LZ77 + Huffmanovo kódovanie</td></tr>
+    <tr><td>7z</td><td>silnejšia metóda <b>LZMA</b></td></tr>
+    </table>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 230" role="img" aria-label="Slovníková kompresia LZ77"><text x="220" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#16213A">Slovníková kompresia (LZ77)</text><rect x="22" y="74" width="38" height="38" rx="6" fill="#E3EEFC" stroke="#2563D9" stroke-width="1.5"/><text x="41" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">P</text><rect x="66" y="74" width="38" height="38" rx="6" fill="#E3EEFC" stroke="#2563D9" stroke-width="1.5"/><text x="85" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">E</text><rect x="110" y="74" width="38" height="38" rx="6" fill="#E3EEFC" stroke="#2563D9" stroke-width="1.5"/><text x="129" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">S</text><rect x="154" y="74" width="38" height="38" rx="6" fill="#fff" stroke="#C9D6E8" stroke-width="1.5"/><text x="173" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">␣</text><rect x="198" y="74" width="38" height="38" rx="6" fill="#fff" stroke="#C9D6E8" stroke-width="1.5"/><text x="217" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">A</text><rect x="242" y="74" width="38" height="38" rx="6" fill="#fff" stroke="#C9D6E8" stroke-width="1.5"/><text x="261" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">␣</text><rect x="286" y="74" width="38" height="38" rx="6" fill="#FFF1DE" stroke="#E07B12" stroke-width="1.5"/><text x="305" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">P</text><rect x="330" y="74" width="38" height="38" rx="6" fill="#FFF1DE" stroke="#E07B12" stroke-width="1.5"/><text x="349" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">E</text><rect x="374" y="74" width="38" height="38" rx="6" fill="#FFF1DE" stroke="#E07B12" stroke-width="1.5"/><text x="393" y="99" text-anchor="middle" font-size="15" font-weight="700" fill="#16213A">S</text><path d="M327 70 C300 48 90 48 63 70" stroke="#E07B12" stroke-width="2.5" fill="none" stroke-dasharray="5 3"/><path d="M63 70 l-4 -11 l10 3z" fill="#E07B12"/><text x="195" y="42" text-anchor="middle" font-size="11" font-weight="700" fill="#E07B12">už tu bolo: 6 znakov späť, skopíruj 3</text><line x1="220" y1="120" x2="220.0" y2="137.0" stroke="#12917F" stroke-width="2.5"/><path d="M220 142 L216.1 133.9 L223.9 133.9z" fill="#12917F"/><rect x="110" y="148" width="220" height="38" rx="8" fill="#E3F4F1" stroke="#12917F" stroke-width="2"/><text x="220" y="173" text-anchor="middle" font-size="16" font-weight="700" fill="#12917F">PES A (6,3)</text><text x="220" y="212" text-anchor="middle" font-size="11" font-weight="600" fill="#566381">(vzdialenosť, dĺžka) = odkaz namiesto textu</text></svg>
+    <figcaption>Opakovaná časť sa nahradí odkazom (vzdialenosť, dĺžka)</figcaption>
+  </figure>
+</div></div>
+</section>
+<section class="theory" style="--c:var(--red)"><h2><span class="n">5</span>Stratová kompresia</h2>
+<div class="tsplit"><div>
+  <p>Stratová kompresia využíva <b>slabiny ľudských zmyslov</b>.</p>
+  <table class="rtab">
+    <tr><th>Formát</th><th>Čo vynechá</th></tr>
+    <tr><td>JPEG</td><td>rozdelí obraz na bloky <b>8 × 8</b>, zachová jas a hrubé zmeny, jemné detaily a farby zjednoduší</td></tr>
+    <tr><td>MP3, AAC</td><td>tóny, ktoré prekryje hlasnejší zvuk</td></tr>
+    <tr><td>video</td><td>ukladá iba <b>zmeny medzi snímkami</b></td></tr>
+    </table>
+  <p>Mieru straty určuje <b>kvalita</b> alebo <b>dátový tok</b>. Pri silnej kompresii vznikajú <b>artefakty</b>. Opakované ukladanie JPEG kvalitu stále zhoršuje.</p>
+</div><div>
+  <figure class="tfig">
+    <svg viewBox="0 0 440 250" role="img" aria-label="Stratová kompresia JPEG"><text x="220" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#16213A">Blok 8 × 8 pixelov v JPEG</text><rect x="30" y="40" width="18" height="18" rx="0" fill="hsl(19,70%,39%)"/><rect x="48" y="40" width="18" height="18" rx="0" fill="hsl(24,70%,47%)"/><rect x="66" y="40" width="18" height="18" rx="0" fill="hsl(22,70%,38%)"/><rect x="84" y="40" width="18" height="18" rx="0" fill="hsl(34,70%,38%)"/><rect x="102" y="40" width="18" height="18" rx="0" fill="hsl(35,70%,46%)"/><rect x="120" y="40" width="18" height="18" rx="0" fill="hsl(34,70%,45%)"/><rect x="138" y="40" width="18" height="18" rx="0" fill="hsl(41,70%,37%)"/><rect x="156" y="40" width="18" height="18" rx="0" fill="hsl(43,70%,43%)"/><rect x="30" y="58" width="18" height="18" rx="0" fill="hsl(20,70%,42%)"/><rect x="48" y="58" width="18" height="18" rx="0" fill="hsl(21,70%,42%)"/><rect x="66" y="58" width="18" height="18" rx="0" fill="hsl(30,70%,47%)"/><rect x="84" y="58" width="18" height="18" rx="0" fill="hsl(26,70%,50%)"/><rect x="102" y="58" width="18" height="18" rx="0" fill="hsl(31,70%,44%)"/><rect x="120" y="58" width="18" height="18" rx="0" fill="hsl(44,70%,51%)"/><rect x="138" y="58" width="18" height="18" rx="0" fill="hsl(47,70%,41%)"/><rect x="156" y="58" width="18" height="18" rx="0" fill="hsl(51,70%,50%)"/><rect x="30" y="76" width="18" height="18" rx="0" fill="hsl(20,70%,45%)"/><rect x="48" y="76" width="18" height="18" rx="0" fill="hsl(21,70%,45%)"/><rect x="66" y="76" width="18" height="18" rx="0" fill="hsl(30,70%,47%)"/><rect x="84" y="76" width="18" height="18" rx="0" fill="hsl(30,70%,51%)"/><rect x="102" y="76" width="18" height="18" rx="0" fill="hsl(32,70%,53%)"/><rect x="120" y="76" width="18" height="18" rx="0" fill="hsl(35,70%,54%)"/><rect x="138" y="76" width="18" height="18" rx="0" fill="hsl(42,70%,53%)"/><rect x="156" y="76" width="18" height="18" rx="0" fill="hsl(52,70%,47%)"/><rect x="30" y="94" width="18" height="18" rx="0" fill="hsl(15,70%,58%)"/><rect x="48" y="94" width="18" height="18" rx="0" fill="hsl(27,70%,59%)"/><rect x="66" y="94" width="18" height="18" rx="0" fill="hsl(25,70%,54%)"/><rect x="84" y="94" width="18" height="18" rx="0" fill="hsl(27,70%,57%)"/><rect x="102" y="94" width="18" height="18" rx="0" fill="hsl(41,70%,50%)"/><rect x="120" y="94" width="18" height="18" rx="0" fill="hsl(43,70%,49%)"/><rect x="138" y="94" width="18" height="18" rx="0" fill="hsl(47,70%,52%)"/><rect x="156" y="94" width="18" height="18" rx="0" fill="hsl(49,70%,59%)"/><rect x="30" y="112" width="18" height="18" rx="0" fill="hsl(22,70%,59%)"/><rect x="48" y="112" width="18" height="18" rx="0" fill="hsl(30,70%,58%)"/><rect x="66" y="112" width="18" height="18" rx="0" fill="hsl(29,70%,62%)"/><rect x="84" y="112" width="18" height="18" rx="0" fill="hsl(33,70%,58%)"/><rect x="102" y="112" width="18" height="18" rx="0" fill="hsl(34,70%,56%)"/><rect x="120" y="112" width="18" height="18" rx="0" fill="hsl(46,70%,55%)"/><rect x="138" y="112" width="18" height="18" rx="0" fill="hsl(49,70%,56%)"/><rect x="156" y="112" width="18" height="18" rx="0" fill="hsl(43,70%,62%)"/><rect x="30" y="130" width="18" height="18" rx="0" fill="hsl(18,70%,65%)"/><rect x="48" y="130" width="18" height="18" rx="0" fill="hsl(25,70%,62%)"/><rect x="66" y="130" width="18" height="18" rx="0" fill="hsl(33,70%,64%)"/><rect x="84" y="130" width="18" height="18" rx="0" fill="hsl(30,70%,66%)"/><rect x="102" y="130" width="18" height="18" rx="0" fill="hsl(31,70%,58%)"/><rect x="120" y="130" width="18" height="18" rx="0" fill="hsl(42,70%,63%)"/><rect x="138" y="130" width="18" height="18" rx="0" fill="hsl(40,70%,62%)"/><rect x="156" y="130" width="18" height="18" rx="0" fill="hsl(44,70%,64%)"/><rect x="30" y="148" width="18" height="18" rx="0" fill="hsl(20,70%,61%)"/><rect x="48" y="148" width="18" height="18" rx="0" fill="hsl(28,70%,62%)"/><rect x="66" y="148" width="18" height="18" rx="0" fill="hsl(34,70%,69%)"/><rect x="84" y="148" width="18" height="18" rx="0" fill="hsl(35,70%,66%)"/><rect x="102" y="148" width="18" height="18" rx="0" fill="hsl(35,70%,66%)"/><rect x="120" y="148" width="18" height="18" rx="0" fill="hsl(43,70%,68%)"/><rect x="138" y="148" width="18" height="18" rx="0" fill="hsl(47,70%,68%)"/><rect x="156" y="148" width="18" height="18" rx="0" fill="hsl(43,70%,62%)"/><rect x="30" y="166" width="18" height="18" rx="0" fill="hsl(18,70%,72%)"/><rect x="48" y="166" width="18" height="18" rx="0" fill="hsl(29,70%,75%)"/><rect x="66" y="166" width="18" height="18" rx="0" fill="hsl(23,70%,65%)"/><rect x="84" y="166" width="18" height="18" rx="0" fill="hsl(37,70%,69%)"/><rect x="102" y="166" width="18" height="18" rx="0" fill="hsl(40,70%,74%)"/><rect x="120" y="166" width="18" height="18" rx="0" fill="hsl(44,70%,72%)"/><rect x="138" y="166" width="18" height="18" rx="0" fill="hsl(42,70%,71%)"/><rect x="156" y="166" width="18" height="18" rx="0" fill="hsl(52,70%,70%)"/><rect x="30" y="40" width="144" height="144" fill="none" stroke="#16213A" stroke-width="2"/><line x1="186" y1="112" x2="251.0" y2="112.0" stroke="#E07B12" stroke-width="3"/><path d="M256 112 L247.9 115.9 L247.9 108.1z" fill="#E07B12"/><text x="221" y="102" text-anchor="middle" font-size="10.5" font-weight="700" fill="#E07B12">silná</text><text x="221" y="132" text-anchor="middle" font-size="10.5" font-weight="700" fill="#E07B12">kompresia</text><rect x="270" y="40" width="72" height="72" rx="0" fill="hsl(30,70%,48%)"/><rect x="342" y="40" width="72" height="72" rx="0" fill="hsl(40,70%,50%)"/><rect x="270" y="112" width="72" height="72" rx="0" fill="hsl(32,70%,62%)"/><rect x="342" y="112" width="72" height="72" rx="0" fill="hsl(44,70%,64%)"/><rect x="270" y="40" width="144" height="144" fill="none" stroke="#16213A" stroke-width="2"/><text x="102" y="204" text-anchor="middle" font-size="11.5" font-weight="700" fill="#16213A">originál: jemné detaily</text><text x="342" y="204" text-anchor="middle" font-size="11.5" font-weight="700" fill="#D64545">zjednodušené: „kocky“</text><text x="342" y="220" text-anchor="middle" font-size="11" font-weight="600" fill="#D64545">= artefakty</text><text x="220" y="242" text-anchor="middle" font-size="11" font-weight="600" fill="#566381">MP3 a AAC podobne vynechajú tóny, ktoré nepočuješ</text></svg>
+    <figcaption>Pri silnej kompresii JPEG zmiznú detaily a vzniknú „kocky“</figcaption>
+  </figure>
+</div></div>
+</section>
+
+<div class="vedel">💡 <b>Vedel si?</b> David Huffman vymyslel svoje kódovanie v roku 1952 ako študent na MIT. Profesor dal triede na výber: napísať seminárnu prácu, alebo robiť záverečnú skúšku. Huffman si vybral prácu a našiel lepšiu metódu, než akú poznal jeho profesor.</div>
+
+<div class="memo"><h2>📌 Zapamätaj si</h2><ul>
+  <li>Kompresia využíva <b>nadbytočnosť</b>. <b>Bezstratová</b> (ZIP, 7z, PNG, FLAC) vráti presne pôvodné dáta, <b>stratová</b> (JPEG, MP3, H.264) vynechá nepodstatné.</li>
+  <li><b>Kompresný pomer</b> = pôvodná : skomprimovaná veľkosť. Náhodné a skomprimované dáta sa nezmenšia.</li>
+  <li><b>RLE</b>: rad rovnakých znakov = počet + znak (AAAA → 4A). Bez opakovania zápis predĺži.</li>
+  <li><b>Huffman</b>: častým znakom krátke kódy; spájaj dva najmenšie uzly, vľavo 0, vpravo 1.</li>
+  <li><b>LZ77/LZW</b>: opakovanie nahradí odkaz (vzdialenosť, dĺžka). <b>Deflate</b> = LZ77 + Huffman (ZIP, PNG).</li>
+  <li><b>JPEG</b> zjednoduší detaily v blokoch 8 × 8, <b>MP3</b> vynechá neslyšné tóny; silná kompresia = <b>artefakty</b>.</li>
+  <li>Plochy = <b>RLE</b>, nerovnomerné znaky = <b>Huffman</b>, opakované slová = <b>LZ</b>, foto a hudba = <b>stratová</b>.</li>
+</ul></div>
+
+<footer><span>Gymnázium Ivana Kraska, Rimavská Sobota · Ing. Miloš Ďurina</span><span>Poznámky do zošita · Informatika 2. ročník</span></footer>
+</main>
+<script>
+(function(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode()){const p=n.parentNode;if(p.closest("script,style,svg,.url,.kbd,.code,code"))continue;n.nodeValue=n.nodeValue.replace(/(?<=^|[\s(„ ])([vkszaiouVKSZAIOU])\s+/g,"$1 ").replace(/(\d)\s+(?=[\p{L}%])/gu,"$1 ").replace(/\s–\s/g," – ");}})();
+</script>
+</body>
+</html>
