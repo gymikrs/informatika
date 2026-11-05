@@ -78,6 +78,20 @@ a.card:hover{border-color:var(--c,var(--line));border-top-width:5px}
 .card .foot{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted);margin-top:6px;gap:8px;flex-wrap:wrap}
 .card .open{color:var(--c,var(--line));font-weight:600}
 .badge{position:absolute;top:12px;right:14px;background:var(--sunSoft);border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:600}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 6px}
+.tab{display:flex;align-items:center;gap:10px;text-align:left;font:inherit;font-weight:700;font-size:16.5px;color:inherit;cursor:pointer;background:var(--surface);border:1px solid var(--border);border-left:7px solid var(--c);border-radius:12px;padding:14px 14px;min-width:0;transition:transform .12s,box-shadow .12s}
+.tab:hover,.tab:focus-visible{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+.tab .ti{font-size:26px;line-height:1;flex:0 0 auto}
+.tab .tl{flex:1;min-width:0;line-height:1.2}
+.tab .n{font-size:13.5px;font-weight:600;color:var(--muted);background:var(--surface2);border-radius:999px;padding:2px 9px;flex:0 0 auto}
+.tab[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
+.tab[aria-pressed="true"] .n{background:rgba(255,255,255,.25);color:#fff}
+.tabhint{color:var(--muted);font-size:15px;margin:8px 0 0}
+.tpc{margin:20px 0 10px;font-size:18px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:8px}
+.tpc::before{content:"";width:6px;height:18px;border-radius:3px;background:var(--c)}
+.tabbody>.tpc:first-child{margin-top:14px}
+.tabbody>.empty{margin-top:14px}
+@media (max-width:760px){.tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.tab{padding:11px 10px;font-size:15px;gap:8px}.tab .ti{font-size:22px}}
 .empty{background:var(--surface);border:1.5px dashed var(--border);border-radius:14px;padding:26px;text-align:center;color:var(--muted);margin-top:26px}
 footer{color:var(--muted);font-size:14px;padding:20px 0 40px;border-top:1px solid var(--border)}
 /* editor */
@@ -117,7 +131,10 @@ textarea.in{resize:vertical;min-height:70px}
 const DATA = JSON.parse(document.getElementById("data").textContent);
 const COLORS = ["#2F5BEA","#12805A","#C2660E","#8E3FD6","#C0392B","#0E7C86","#A67C00","#5A6782","#D6336C","#3B7D23"];
 let D = DATA, DRAFT = null, EDIT = false, DIRTY = false, FORM = null, FORMERR = "", MSG = "", BUSY = false;
-let API = null, CAN_EDIT = false, Q = "", FILTER = "all", SUB = null;
+let API = null, CAN_EDIT = false, Q = "", FILTER = "all", SUB = null, TAB = {};
+/* karty v triede: Hodiny / Poznámky do zošita / Domáce úlohy / Testy */
+const TABS = [{ k: "hod", name: "Hodiny", icon: "🎓", open: "Otvoriť hodinu" }, { k: "pozn", name: "Poznámky do zošita", icon: "📒", open: "Otvoriť poznámky" }, { k: "du", name: "Domáce úlohy", icon: "🏠", open: "Otvoriť domácu úlohu" }, { k: "test", name: "Testy", icon: "📝", open: "Otvoriť test" }];
+const kindOf = l => /^Pozn[aá]mky_/i.test(l.title) ? "pozn" : /^D[UÚ]_/i.test(l.title) ? "du" : (l.topic === "Test" || /^Test\b/i.test(l.title)) ? "test" : "hod";
 /* triedy, ktorých hodiny sa zobrazujú v priečinkoch podľa témy */
 const FOLDERS = { "4roc": [{ topic: "Python", name: "Python", icon: "🐍", desc: "Programovanie v jazyku Python: učebnica a kapitoly 1 – 9" }, { topic: "Teória", name: "Teória", icon: "📚", desc: "Teória k maturite: témy 1 – 7" }] };
 try { FILTER = localStorage.getItem("katalog-trieda") || "all"; } catch (e) {}
@@ -143,7 +160,7 @@ function card(l, clsId) {
     <h3>${esc(l.title)}</h3>
     ${l.topic ? `<span class="topic">${esc(l.topic)}</span>` : ""}
     ${l.desc ? `<p class="desc">${esc(l.desc)}</p>` : '<p class="desc"></p>'}
-    <div class="foot"><span>${esc(l.subj || "Informatika")}${l.min ? ", " + esc(l.min) + " min" : ""}</span>${EDIT ? "" : '<span class="open">Otvoriť hodinu</span>'}</div>
+    <div class="foot"><span>${esc(l.subj || "Informatika")}${l.min ? ", " + esc(l.min) + " min" : ""}</span>${EDIT ? "" : '<span class="open">' + (TABS.find(t => t.k === kindOf(l)) || TABS[0]).open + '</span>'}</div>
     ${EDIT ? `<div class="cardtools"><button class="btn sm sec" data-edit="${l.id}">Upraviť</button><button class="btn sm warn" data-del="${l.id}">Odstrániť</button></div>` : ""}`;
   return EDIT ? `<div class="card" style="--c:${c}">${inner}</div>` : `<a class="card" style="--c:${c}" href="${esc(l.url)}" target="_blank" rel="noopener">${inner}</a>`;
 }
@@ -167,6 +184,21 @@ function listHTML() {
       else out += `<section class="cls"><div class="clsh"><span class="bar" style="background:${colorOf(c.id)}"></span><h2>${esc(c.name)}</h2><span class="cnt">${hw(ls.length)}</span></div>
           <div class="folders">${FD.map(f => `<button class="folder" style="--c:${colorOf(c.id)}" data-folder="${esc(c.id)}|${esc(f.topic)}"><span class="fi" aria-hidden="true">📁</span><span><span class="ft">${esc(f.icon)} ${esc(f.name)}</span><br><span class="fc">${esc(f.desc)}</span><br><span class="fc"><b>${hw(inF(f).length)}</b></span></span></button>`).join("")}</div>
           ${rest.length ? `<div class="grid" style="margin-top:14px">${rest.map(l => card(l, c.id)).join("")}</div>` : ""}</section>`;
+      continue;
+    }
+    if (!EDIT && !Q) {
+      const col = colorOf(c.id), openK = TAB[c.id], ofK = k => ls.filter(l => kindOf(l) === k);
+      let body = "";
+      if (openK) {
+        const items = ofK(openK);
+        if (!items.length) body = '<div class="empty">Zatiaľ tu nič nie je.</div>';
+        else if (openK === "test") body = `<div class="grid" style="margin-top:14px">${items.map(l => card(l, c.id)).join("")}</div>`;
+        else { const topics = [...new Set(items.map(l => l.topic || ""))];
+          body = topics.map(t => `${t ? `<h3 class="tpc">${esc(t)}</h3>` : ""}<div class="grid">${items.filter(l => (l.topic || "") === t).map(l => card(l, c.id)).join("")}</div>`).join(""); }
+      } else body = '<p class="tabhint">Vyber, čo chceš otvoriť.</p>';
+      out += `<section class="cls" style="--c:${col}"><div class="clsh"><span class="bar" style="background:${col}"></span><h2>${esc(c.name)}</h2></div>
+        <div class="tabs" role="group" aria-label="Časti – ${esc(c.name)}">${TABS.map(t => `<button class="tab" data-tab="${esc(c.id)}|${t.k}" aria-pressed="${openK === t.k}"><span class="ti" aria-hidden="true">${t.icon}</span><span class="tl">${t.name}</span><span class="n">${ofK(t.k).length}</span></button>`).join("")}</div>
+        <div class="tabbody">${body}</div></section>`;
       continue;
     }
     out += `<section class="cls"><div class="clsh"><span class="bar" style="background:${colorOf(c.id)}"></span><h2>${esc(c.name)}</h2><span class="cnt">${ls.length} ${ls.length === 1 ? "hodina" : ls.length >= 2 && ls.length <= 4 ? "hodiny" : "hodín"}</span></div>
@@ -257,7 +289,8 @@ function readForm() {
 document.addEventListener("click", async e => {
   const b = e.target.closest("button"); if (!b) return;
   const ds = b.dataset;
-  if (ds.filter) { FILTER = ds.filter; SUB = null; try { localStorage.setItem("katalog-trieda", FILTER); } catch (err) {} return render(); }
+  if (ds.tab) { const [cls, k] = ds.tab.split("|"); TAB[cls] = k; return renderList(); }
+  if (ds.filter) { FILTER = ds.filter; SUB = null; TAB = {}; try { localStorage.setItem("katalog-trieda", FILTER); } catch (err) {} return render(); }
   if (ds.folder !== undefined) { const [cls, topic] = ds.folder.split("|"); SUB = cls ? { cls, topic } : null; renderList(); const el = document.getElementById("list"); if (el) { const top = el.getBoundingClientRect().top + scrollY - 80; if (scrollY > top) scrollTo({ top, behavior: "smooth" }); } return; }
   if (ds.startedit !== undefined) { DRAFT = clone(D); EDIT = true; DIRTY = false; MSG = ""; FORM = null; return render(); }
   if (ds.cancel !== undefined) { if (DIRTY && !b.dataset.armed) { b.dataset.armed = "1"; b.textContent = "Naozaj zahodiť?"; return; } EDIT = false; DRAFT = null; FORM = null; DIRTY = false; MSG = ""; return render(); }
