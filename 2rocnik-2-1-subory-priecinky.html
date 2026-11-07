@@ -655,7 +655,7 @@ function genHTML() { const G = S.mgen; return `<div class="calc"><label>Dátum<i
     <p class="muted" style="font-size:14px;margin:6px 0 0">Diakritika zmizne, medzery a zvláštne znaky nahradí podčiarkovník, dátum na začiatku zoradí súbory podľa času.</p>`; }
 function genInput(e) { const id = e.target.id; if (!["mgd", "mgp", "mgt", "mge"].includes(id)) return false; S.mgen[{ mgd: "d", mgp: "p", mgt: "t", mge: "e" }[id]] = e.target.value; save(); const o = document.getElementById("mgout"); if (o) o.textContent = genName(); return true; }
 
-const KEY = "subory-m21-v2";
+const KEY = "subory-m21-v3";
 const LESSON = "2.1 Súbor, priečinok, mená a typy súborov";
 const BRAND = "2.1 Súbory a priečinky";
 const CLASS_DEFAULT = "II.";
@@ -739,7 +739,7 @@ const VIEWS = {
     </div><div>${TFIG.meno}${TFIG.vlastnosti}</div></div>
     ${VEDEL("V systéme MS-DOS mohol mať názov súboru najviac 8 znakov a prípona 3 znaky. Preto dodnes stretneš krátke prípony ako .jpg, .htm či .exe.")}
     <h3>Vyskúšaj: generátor dobrého mena</h3><p>Vyplň údaje a pozri, ako by mal vyzerať názov súboru, ktorý odovzdáš učiteľovi. Za túto časť sa body nedávajú.</p><div class="tool">${genHTML()}</div>
-    <h3>Úloha 1: premenuj súbory</h3><p>Klikni na Premenovať, napíš nové meno a potvrď Enterom alebo tlačidlom OK.</p>
+    <h3>Úloha 1: premenuj súbory</h3><p>Klikni na Premenovať, poskladaj nové meno z dielikov a potvrď tlačidlom OK.</p>
     <div class="task">${expHTML()}${S.t.ren ? `<div class="checkbar"><span class="score ${S.t.ren.score < 3 ? "part" : ""}">Splnené: ${S.t.ren.score} z 3</span></div>` : ""}</div>
     <h3>Úloha 2: platné, alebo neplatné meno?</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("msort")}</div>` + nextBar(); },
   typy() { return head() + `<h2>Typy súborov</h2>
@@ -907,6 +907,188 @@ Object.assign(QIMG, (() => { const { TX, EM, QM, QS, XS, bob, dash, pulse, blink
 const HOT = { hPriloha(q, done) { const z = HZ(q, done), K = ["a", "b", "c", "d", "e"], I = { a: "📕", b: "📕", c: "🖼️", d: "🎵", e: "🗜️" }, S2 = { a: "182 kB", b: "48 kB", c: "3,1 MB", d: "4,6 MB", e: "12 MB" };
   return HK.SV(520, 250, `<rect width="520" height="250" rx="10" fill="#F5F7FA"/><rect x="30" y="10" width="460" height="230" rx="8" fill="#fff" stroke="#C9D1DF"/><rect x="30" y="10" width="460" height="28" rx="8" fill="#E9EDF3"/>${HK.TX(46, 29, "📁 Stiahnuté", { fs: 12.5, b: 1 })}${HK.TX(60, 58, "Názov", { fs: 11, c: "#566381" })}${HK.TX(420, 58, "Veľkosť", { fs: 11, c: "#566381" })}
     ${K.map((k, i) => `<text x="52" y="${92 + i * 34}" font-size="18">${I[k]}</text>${HK.TX(82, 90 + i * 34, q.names[k], { fs: 14, b: 1, mono: 1 })}${HK.TX(420, 90 + i * 34, S2[k], { fs: 12, c: "#566381" })}<rect class="${z(k)}" data-z="${k}" x="44" y="${70 + i * 34}" width="432" height="30" rx="6" tabindex="0" role="button" aria-label="${q.names[k]}"/>`).join("")}`, "Priečinok Stiahnuté"); } };
+
+
+/* ===== HODINY 2.1 (úprava 2026-11-07): bez písania – premenovanie a nový priečinok z dielikov, 5. zastávka Súborový detektív ===== */
+/* menšie úpravy bodov, aby hodina mala 49 bodov aj s novou zastávkou */
+TASKS.msort.items = TASKS.msort.items.filter(x => !["2", "5", "7", "10"].includes(x.id));
+TASKS.tsort.items = TASKS.tsort.items.filter(x => !["3", "13"].includes(x.id));
+TASKS.opq.qs = TASKS.opq.qs.filter(q => q.id !== "4");
+
+/* Úloha 1 v zastávke Súbor: premenovanie skladaním mena z dielikov */
+const REN_P = ["vylet", "tatry", "referat", "vtaky", "_", "?", ".jpg", ".docx", ".txt"];
+function expHTML() {
+  const F = S.files, G = S.rg, rb = S.rb || [];
+  return `<div class="exp"><div class="wt">📁 Dokumenty</div><div class="fr h"><span>Názov</span><span>Typ</span><span>Veľkosť</span><span></span></div>
+    ${F.map((f, i) => { const ext = f.n.includes(".") ? f.n.split(".").pop().toLowerCase() : "";
+      if (S.edit === i) return `<div class="fr"><span class="nm" style="color:#2F6FEB;font-weight:600">✏️ ${esc(f.n)}</span><span style="font-size:13px;color:#555">${TYPEN[ext] || "Súbor"}</span><span style="font-size:13px">${f.s}</span><button data-rx="1">Zrušiť</button></div>
+        <div class="rnb"><div class="rnl">Nové meno – klikaj na dieliky (dielik vrátiš kliknutím naň):</div>
+        <div class="bslots mono">${rb.length ? rb.map((k, j) => `<button class="bsl" data-rbu="${j}" title="Kliknutím dielik vrátiš">${esc(REN_P[k])}</button>`).join("") : '<span class="bsl">…</span>'}</div>
+        <div class="pool">${REN_P.map((p, k) => `<button class="chipb mono" data-rbp="${k}" ${rb.length >= 6 ? "disabled" : ""}>${esc(p)}</button>`).join("")}</div>
+        <div class="row" style="margin-top:8px"><button class="primary" data-rok="${i}" ${rb.length ? "" : "disabled"}>OK, premenovať</button></div>
+        ${S.err ? `<div class="tip">${S.err}</div>` : ""}</div>`;
+      return `<div class="fr"><span class="nm">${FICON[ext] || "📄"} ${esc(f.n)}</span><span style="font-size:13px;color:#555">${TYPEN[ext] || "Súbor"}</span><span style="font-size:13px">${f.s}</span><button data-ren="${i}">Premenovať</button></div>`; }).join("")}</div>
+    <ul class="goals">${[["a", "Premenuj <b>IMG_2034.jpg</b> na <b>vylet_tatry.jpg</b>"], ["b", "Premenuj <b>Dokument1.docx</b> na <b>referat_vtaky.docx</b>"], ["c", "Skús dať súboru názov s otáznikom a pozri, čo povie Windows"]].map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`;
+}
+function doRename(i) {
+  const v = (S.rb || []).map(k => REN_P[k]).join(""), F = S.files, old = F[i].n;
+  if (FORBID.test(v)) { S.err = `⚠️ Názov súboru nemôže obsahovať žiadny z nasledujúcich znakov: \\ / : * ? " &lt; &gt; |`; S.rg.c = true; scoreRen(); return; }
+  if (!v) { S.err = "Názov nesmie byť prázdny."; return; }
+  if (F.some((f, j) => j !== i && f.n.toLowerCase() === v.toLowerCase())) { S.err = "V tomto priečinku už súbor s takým menom existuje."; return; }
+  const oe = old.split(".").pop().toLowerCase(), ne = v.includes(".") ? v.split(".").pop().toLowerCase() : "";
+  if (oe !== ne && !S.warned) { S.warned = true; S.err = "⚠️ Ak zmeníte príponu súboru, súbor sa môže stať nepoužiteľným. Naozaj ju chcete zmeniť? (Klikni znova na OK, alebo meno oprav.)"; return; }
+  F[i].n = v; S.edit = null; S.err = null; S.warned = false; S.rb = [];
+  if (old === "IMG_2034.jpg" && v === "vylet_tatry.jpg") S.rg.a = true;
+  if (old === "Dokument1.docx" && v === "referat_vtaky.docx") S.rg.b = true;
+  if (F.some(f => f.n === "vylet_tatry.jpg")) S.rg.a = true; if (F.some(f => f.n === "referat_vtaky.docx")) S.rg.b = true;
+  scoreRen();
+}
+
+/* Úloha 1 v zastávke Správa: názov nového priečinka sa vyberá z dielikov */
+const NF_OPTS = ["Škola", "Matematika", "Informatika", "Fotky", "Hudba", "Videá", "Hry"];
+function fxHTML() {
+  const F = S.fs, sub = F.dirs.filter(d => d && d.split("/").slice(0, -1).join("/") === F.cur).sort(), files = Object.keys(F.files).filter(f => F.files[f] === F.cur).sort();
+  const navDirs = [...F.dirs].sort();
+  return `<div class="fx"><div class="tb"><button data-fx="up" ${F.cur ? "" : "disabled"} aria-label="O úroveň vyššie">⬆ Hore</button><span class="ad">📁 ${esc(disp(F.cur))}</span></div>
+    <div class="body"><div class="nav">${navDirs.map(d => `<button class="${d === F.cur ? "on" : ""}" data-go2="${esc(d)}" style="padding-left:${4 + (d ? d.split("/").length : 0) * 12}px">${d ? "📁 " + esc(d.split("/").pop()) : "🖥️ Plocha"}</button>`).join("")}</div>
+      <div class="items">${sub.map(d => `<button class="item" data-go2="${esc(d)}" title="Otvoriť"><span class="i">📁</span>${esc(d.split("/").pop())}</button>`).join("")}${files.map(f => `<button class="item ${F.sel === f ? "sel" : ""}" data-fsel="${esc(f)}"><span class="i">${ICON(f)}</span>${esc(f)}</button>`).join("")}${!sub.length && !files.length ? `<p style="color:#888;font-size:13px;grid-column:1/-1">Priečinok je prázdny.</p>` : ""}</div></div>
+    <div class="foot nfoot"><span>Nový priečinok:</span>${NF_OPTS.map(n => `<button class="nfc ${F.nf === n ? "on" : ""}" data-nfp="${esc(n)}">${esc(n)}</button>`).join("")}<button data-fx="new" ${F.nf ? "" : "disabled"}>📁 Vytvoriť${F.nf ? " " + esc(F.nf) : ""}</button></div>
+    <div class="foot">${F.sel ? `Presunúť <b>${esc(F.sel)}</b> do: <select id="mv">${F.dirs.map(d => `<option value="${esc(d)}">${d ? esc(d.replace(/\//g, " › ")) : "Plocha"}</option>`).join("")}</select> <button data-fx="move">Presunúť</button>` : `<span style="color:#888">Klikni na súbor, ktorý chceš presunúť.</span>`}</div></div>
+    ${F.msg ? `<div class="fb ${F.msg.k}">${F.msg.t}</div>` : ""}`;
+}
+function s13Click(e) {
+  const tn = e.target.closest && e.target.closest("[data-tn]");
+  if (tn) { S.tsel = tn.dataset.tn; save(); render(false); return true; }
+  const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, F = S.fs;
+  if (ds.nfp !== undefined) { F.nf = F.nf === ds.nfp ? "" : ds.nfp; save(); render(false); return true; }
+  if (ds.go2 !== undefined) { F.cur = ds.go2; F.sel = null; F.msg = null; save(); render(false); return true; }
+  if (ds.fsel) { F.sel = F.sel === ds.fsel ? null : ds.fsel; save(); render(false); return true; }
+  if (ds.fx) {
+    const a = ds.fx; F.msg = null;
+    if (a === "up") { F.cur = F.cur.split("/").slice(0, -1).join("/"); F.sel = null; }
+    if (a === "new") { const v = F.nf || ""; F.nf = "";
+      if (!v) F.msg = { k: "bad", t: "Vyber názov priečinka." };
+      else { const p = F.cur ? F.cur + "/" + v : v; if (F.dirs.some(d => n2(d) === n2(p))) F.msg = { k: "bad", t: "Priečinok s takým názvom tu už je." }; else { F.dirs.push(p); F.msg = { k: "ok", t: `📁 Priečinok <b>${esc(v)}</b> vytvorený v priečinku ${F.cur ? esc(F.cur.split("/").pop()) : "Plocha"}.` }; } } }
+    if (a === "move") { const s = document.getElementById("mv"); if (s && F.sel) { F.files[F.sel] = s.value; F.msg = { k: "ok", t: `Súbor <b>${esc(F.sel)}</b> presunutý do ${s.value ? esc(s.value.replace(/\//g, " › ")) : "Plocha"}.` }; F.sel = null; } }
+    if (a === "reset") { S.fs = { dirs: [""], files: Object.assign({}, FILES0), cur: "", sel: null, msg: null, nf: "" }; }
+    uprScore(); save(); render(false); return true;
+  }
+  return false;
+}
+
+/* generátor dobrého mena (bez bodov): iba výber, nič sa nepíše */
+const GEN_D = (() => { const d = new Date(), f = x => x.toISOString().slice(0, 10); return [f(d), f(new Date(d.getTime() + 7 * 864e5)), f(new Date(d.getTime() + 14 * 864e5))]; })();
+const GEN_P = ["informatika", "biológia", "dejepis", "slovenčina", "matematika"];
+const GEN_T = ["projekt školská sieť", "referát o vtákoch", "výlet do Tatier", "laboratórna práca"];
+function genHTML() { const G = S.mgen, sel = (id, L, v) => `<select id="${id}">${L.map(x => `<option ${x === v ? "selected" : ""}>${x}</option>`).join("")}</select>`;
+  return `<div class="calc"><label>Dátum${sel("mgd", GEN_D, G.d)}</label><label>Predmet${sel("mgp", GEN_P, G.p)}</label><label>Téma${sel("mgt", GEN_T, G.t)}</label><label>Prípona${sel("mge", ["docx", "pptx", "xlsx", "pdf", "jpg"], G.e)}</label></div>
+    <p style="margin:10px 0 0">Navrhované meno: <code class="pathbar" id="mgout" style="display:inline-block">${esc(genName())}</code></p>
+    <p class="muted" style="font-size:14px;margin:6px 0 0">Diakritika zmizne, medzery a zvláštne znaky nahradí podčiarkovník, dátum na začiatku zoradí súbory podľa času.</p>`; }
+
+function CUSTOM_CLICK(e) {
+  if (BQ_CLICK(e)) return true;
+  const el = e.target.closest("button");
+  if (el && el.dataset.ren !== undefined) { S.edit = +el.dataset.ren; S.err = null; S.warned = false; S.rb = []; save(); render(false); return true; }
+  if (el && el.dataset.rx !== undefined) { S.edit = null; S.err = null; S.warned = false; S.rb = []; save(); render(false); return true; }
+  if (el && el.dataset.rbp !== undefined) { S.rb = S.rb || []; if (S.rb.length < 6) S.rb.push(+el.dataset.rbp); S.err = null; S.warned = false; save(); render(false); return true; }
+  if (el && el.dataset.rbu !== undefined) { S.rb = (S.rb || []).filter((_, j) => j !== +el.dataset.rbu); S.err = null; S.warned = false; save(); render(false); return true; }
+  if (el && el.dataset.rok !== undefined) { doRename(+el.dataset.rok); save(); render(false); return true; }
+  return s13Click(e);
+}
+
+/* ---------- nová zastávka: Súborový detektív (vlastnosti súboru, veľkosť na disku) ---------- */
+const RN21 = (() => { const k = KEY + ":rn"; let o = null;
+  try { o = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+  if (!o || o.v !== 1) { let s; do { s = 4300 + Math.floor(Math.random() * 11000); } while (s % 4096 === 0); o = { v: 1, s }; try { localStorage.setItem(k, JSON.stringify(o)); } catch (e) {} } return o; })();
+const nf21 = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+const DET_C = Math.ceil(RN21.s / 4096) * 4096;
+
+STEPS.splice(STEPS.findIndex(s => s.id === "test"), 0, { id: "detektiv", title: "Súborový detektív", min: 5 });
+Object.assign(STEPS.find(s => s.id === "subor"), { min: 8 }); Object.assign(STEPS.find(s => s.id === "typy"), { min: 7 });
+Object.assign(STEPS.find(s => s.id === "strom"), { min: 8 }); Object.assign(STEPS.find(s => s.id === "sprava"), { min: 8 });
+STEP_TASKS.detektiv = ["detsort", "detq"];
+WIDE.detektiv = 1;
+START.lead = START.lead.replace("4 zastávky", "5 zastávok");
+
+TASKS.detsort = { id: "detsort", type: "sort",
+  buckets: [{ id: "d", label: "📁 Dokumenty" }, { id: "o", label: "📁 Obrázky" }, { id: "h", label: "📁 Hudba" }, { id: "x", label: "🗑️ Neotvárať, zmazať", sub: "podozrivý súbor" }],
+  items: [{ id: "1", t: "📄 ziadost_ospravedlnenie.pdf", b: "d" }, { id: "2", t: "📄 vylet_jazero.png", b: "o" }, { id: "3", t: "📄 skladba_gitara.mp3", b: "h" }, { id: "4", t: "📄 vysvedcenie.pdf.exe", b: "x" }],
+  after: "Pri každom súbore rozhoduje <b>posledná</b> prípona. Súbor vysvedcenie.pdf.exe je program, ktorý sa iba tvári ako PDF." };
+TASKS.detq = { id: "detq", type: "mc", qs: [
+  { id: "1", q: "V okne Vlastnosti vidíš <b>Umiestnenie</b> súboru <b>rozvrh.pdf</b>. Aká je jeho <b>absolútna cesta</b>?",
+    opts: ["<code>D:\\Škola\\Rozvrhy\\rozvrh.pdf</code>", "<code>D:\\Škola\\Rozvrhy</code>", "<code>D:\\rozvrh.pdf</code>", "<code>Rozvrhy\\rozvrh.pdf</code>"], a: 0,
+    why: "Umiestnenie je cesta k priečinku. Absolútnu cestu dostaneš, keď za ňu pridáš \\ a meno súboru." },
+  { id: "2", q: `Súbor má veľkosť <b>${nf21(RN21.s)} bajtov</b>. Klaster na disku má <b>4 096 bajtov</b>. Koľko bajtov ukáže položka <b>Veľkosť na disku</b>?`,
+    opts: [nf21(DET_C) + " bajtov", nf21(RN21.s) + " bajtov", nf21(DET_C - 4096) + " bajtov", nf21(DET_C + 4096) + " bajtov"], a: 0,
+    why: `${nf21(RN21.s)} : 4 096 ≐ ${(RN21.s / 4096).toFixed(2).replace(".", ",")}, súbor teda zaberie ${DET_C / 4096} celé klastre: ${DET_C / 4096} · 4 096 = ${nf21(DET_C)} bajtov.` },
+  { id: "3", q: "Po dvojkliku sa tabuľka <b>plan.xlsx</b> otvorí ako nečitateľné znaky. Pozri jej vlastnosti. Čo urobíš?",
+    opts: ["pri Otvára sa pomocou klikneš na Zmeniť a vyberieš Excel", "premenuješ príponu na .txt", "zapneš atribút Skrytý", "presunieš súbor na Plochu"], a: 0,
+    why: "Súbor bol priradený k Poznámkovému bloku. Zmeníš to v položke Otvára sa pomocou (alebo cez Otvoriť pomocou)." }
+]};
+THEORY.detektiv = ["<b>Vlastnosti</b> súboru: Alt + Enter alebo pravý klik → Vlastnosti.", "<b>Umiestnenie</b> = cesta k priečinku so súborom (bez mena súboru).", "<b>Otvára sa pomocou</b> = program priradený k prípone súboru.", "Disk ukladá súbory po celých <b>klastroch</b> (zvyčajne 4 096 bajtov), preto je <b>veľkosť na disku</b> väčšia alebo rovná veľkosti.", "<b>Atribúty</b>: Len na čítanie, Skrytý, Archív."];
+
+Object.assign(TFIG, (() => { const { C, fig, SV, ar, T, box } = PF; const A = "#6A3FD0", AS = "#E9E2FB";
+  return {
+    cesta2: fig(SV(440, 200, `
+      ${T(220, 22, "Umiestnenie + meno = absolútna cesta", { a: "middle", fs: 13, b: 1, c: A })}
+      ${box(20, 40, 400, 64, "#fff", "#C9CED6", 8)}${T(34, 64, "Umiestnenie:", { fs: 11, c: C.mut })}${T(126, 64, "C:\\Používatelia\\Eva\\Hudba", { fs: 11.5, mono: 1 })}
+      ${T(34, 88, "Názov:", { fs: 11, c: C.mut })}${T(126, 88, "pesnicka.mp3", { fs: 11.5, mono: 1, b: 1 })}
+      ${ar(220, 110, 220, 136, A, 2.5)}${box(20, 142, 400, 40, AS, A, 8)}
+      <g>${T(220, 167, "C:\\Používatelia\\Eva\\Hudba<tspan fill=\"" + C.amb + "\" font-weight=\"700\">\\</tspan>pesnicka.mp3", { a: "middle", fs: 12, mono: 1 })}<animate attributeName="opacity" values="0.35;1;1;0.35" dur="3s" repeatCount="indefinite"/></g>`, "Umiestnenie a názov tvoria cestu"),
+      "K umiestneniu pridáš <b>\\</b> a meno súboru: vznikne <b>absolútna cesta</b>."),
+    klaster: fig(SV(440, 200, `
+      ${T(220, 22, "Súbor 9 kB na disku s klastrom 4 kB", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[0, 1, 2].map(i => `${box(40 + i * 124, 46, 112, 56, "#fff", "#9AA7C4", 6)}${T(96 + i * 124, 120, "klaster " + (i + 1), { a: "middle", fs: 11, c: C.mut })}`).join("")}
+      <rect x="40" y="46" height="56" rx="6" fill="${C.blue}" opacity=".75"><animate attributeName="width" values="0;112;236;261;261" keyTimes="0;.25;.5;.6;1" dur="4s" repeatCount="indefinite"/></rect>
+      ${T(388, 80, "voľné", { a: "middle", fs: 11, c: C.mut })}
+      ${box(40, 140, 170, 44, C.okS, C.ok, 8)}${T(125, 158, "Veľkosť", { a: "middle", fs: 11, c: C.mut })}${T(125, 176, "9 kB", { a: "middle", fs: 13, b: 1, c: C.ok })}
+      ${box(230, 140, 170, 44, C.ambS, C.amb, 8)}${T(315, 158, "Veľkosť na disku", { a: "middle", fs: 11, c: C.mut })}${T(315, 176, "12 kB (3 klastre)", { a: "middle", fs: 13, b: 1, c: C.amb })}`, "Klastre na disku"),
+      "Súbor zaberá vždy <b>celé klastre</b>, aj keď posledný zaplní len čiastočne."),
+    postup: fig(SV(440, 150, `
+      ${T(220, 22, "Ako otvoriť Vlastnosti", { a: "middle", fs: 13, b: 1, c: A })}
+      ${[["1", "označ súbor", "🖱️"], ["2", "Alt + Enter", "⌨️"], ["3", "karta Všeobecné", "🗂️"]].map(([n, t, e], i) => `${box(24 + i * 136, 40, 120, 80, "#fff", "#C9CED6", 10)}${T(84 + i * 136, 78, e, { a: "middle", fs: 22 })}${T(84 + i * 136, 106, t, { a: "middle", fs: 11.5, b: 1 })}${i < 2 ? ar(146 + i * 136, 80, 158 + i * 136, 80, C.mut, 2) : ""}`).join("")}
+      <rect y="40" width="120" height="80" rx="10" fill="none" stroke="${A}" stroke-width="3.5"><animate attributeName="x" values="24;160;296" dur="3s" calcMode="discrete" repeatCount="indefinite"/></rect>
+      ${T(220, 140, "alebo: pravý klik na súbor → Vlastnosti", { a: "middle", fs: 11, c: C.mut })}`, "Postup otvorenia vlastností"),
+      "Vlastnosti otvoríš klávesmi <b>Alt + Enter</b> alebo pravým klikom.")
+  }; })());
+
+Object.assign(QIMG, (() => { const { TX, EM, QS, XS, bob, dash } = HK; const A = "#6A3FD0";
+  const dlg = (title, rows, extra) => `<rect x="10" y="10" width="220" height="130" rx="8" fill="#fff" stroke="#C9D1DF"/><rect x="10" y="10" width="220" height="24" rx="8" fill="#E9EDF3"/><rect x="10" y="26" width="220" height="8" fill="#E9EDF3"/>${TX(20, 27, title, { fs: 11, b: 1 })}`
+    + rows.map(([a, b, o], i) => `${TX(20, 56 + i * 22, a, { fs: 10.5, c: "#566381" })}${TX(o && o.x ? o.x : 100, 56 + i * 22, b, Object.assign({ fs: 11 }, o || {}))}`).join("") + (extra || "");
+  return {
+    detsort: XS(`${[0, 1, 2, 3].map(i => bob(FI(70 + i * 100, 26, "? ? ?", 1, "#566381"), i, 4)).join("")}${EM(36, 70, "⬇️", 26)}${TX(260, 108, "Priečinok Stiahnuté – kam s ktorým súborom?", { a: "middle", fs: 12, b: 1, c: "#566381" })}`, "Súbory v priečinku Stiahnuté", 120),
+    "detq:1": QS(dlg("Vlastnosti: rozvrh.pdf", [["Typ:", "Dokument PDF"], ["Umiestnenie:", "D:\\Škola\\Rozvrhy", { mono: 1, b: 1, c: A }], ["Veľkosť:", "86 kB"]]) + `${EM(212, 132, "🔍", 18)}`, "Okno Vlastnosti súboru rozvrh.pdf"),
+    "detq:2": QS(dlg("Vlastnosti: projekt.docx", [["Veľkosť:", nf21(RN21.s) + " B", { mono: 1 }], ["Na disku:", "? B", { mono: 1, b: 1, c: A }]]) + `${[0, 1, 2, 3].map(i => `<rect x="${24 + i * 50}" y="92" width="44" height="18" rx="4" fill="#F5F7FA" stroke="#9AA7C4"/>`).join("")}${TX(120, 130, "klaster = 4 096 B", { a: "middle", fs: 10.5, c: "#566381" })}`, "Veľkosť súboru a klastre"),
+    "detq:3": QS(dlg("Vlastnosti: plan.xlsx", [["Typ:", "Hárok Excel (.xlsx)", { fs: 10.5 }], ["Otvára sa:", "📝 Poznámkový blok", { fs: 10.5, b: 1 }]]) + `<rect x="150" y="104" width="68" height="22" rx="5" fill="#fff" stroke="#2F6FEB"/>${TX(184, 119, "Zmeniť…", { a: "middle", fs: 10.5, c: "#2F6FEB" })}${TX(20, 119, "PK·ÿ‡¤…", { fs: 10.5, mono: 1, c: "#C0392B" })}`, "Okno Vlastnosti súboru plan.xlsx")
+  }; })());
+
+VIEWS.detektiv = function () { return head() + `<h2>Súborový detektív</h2>
+  <div class="theory tsplit"><div><p>Keď o súbore potrebuješ zistiť viac, otvor jeho <b>Vlastnosti</b>: označ ho a stlač <b>Alt + Enter</b> (alebo pravý klik → Vlastnosti). Na karte <b>Všeobecné</b> nájdeš:</p>
+    <table class="rtab"><thead><tr><th>Položka</th><th>Čo prezradí</th></tr></thead><tbody>
+      <tr><td><b>Typ súboru</b></td><td>typ podľa prípony, napr. Dokument PDF (.pdf)</td></tr>
+      <tr><td><b>Otvára sa pomocou</b></td><td>program priradený k prípone, dá sa zmeniť tlačidlom Zmeniť</td></tr>
+      <tr><td><b>Umiestnenie</b></td><td>cesta k priečinku, v ktorom súbor je</td></tr>
+      <tr><td><b>Veľkosť</b> a <b>Veľkosť na disku</b></td><td>skutočný počet bajtov a miesto, ktoré súbor na disku zaberá</td></tr>
+      <tr><td>Vytvorený, Zmenený, Otvorený</td><td>dátumy a časy</td></tr>
+      <tr><td><b>Atribúty</b></td><td>Len na čítanie, Skrytý (Archív je v Rozšírených)</td></tr></tbody></table>
+    <p>Disk ukladá údaje po blokoch, ktorým hovoríme <b>klastre</b>. Na bežnom disku NTFS má klaster <b>4 096 bajtov</b>. Súbor vždy zaberie celé klastre, preto je veľkosť na disku zaokrúhlená nahor. Aj súbor s jediným bajtom môže zabrať celých 4 096 bajtov.</p>
+    <p>Detektív sa pozerá na <b>poslednú príponu</b>, typ a umiestnenie. Tak odhalí aj program, ktorý sa tvári ako dokument.</p>
+  </div><div>${TFIG.cesta2}${TFIG.klaster}</div></div>
+  ${ltfigs(TFIG.postup)}
+  ${VEDEL("Veľmi malé súbory (približne do 700 bajtov) uloží systém NTFS priamo do svojej tabuľky súborov MFT. Vo Vlastnostiach potom uvidíš Veľkosť na disku 0 bajtov.")}
+  <h3>Úloha 1: uprac priečinok Stiahnuté</h3><div class="task"><div class="ins">Klikni na kartičku a potom na priečinok.</div>${taskHTML("detsort")}</div>
+  <h3>Úloha 2: prečítaj vlastnosti</h3><div class="task">${taskHTML("detq")}</div>` + nextBar(); };
+
+/* štýly pre nové prvky */
+document.head.insertAdjacentHTML("beforeend", `<style>
+.exp .rnb{padding:10px 12px;background:#F7F9FC;border-bottom:1px solid #E3E6EA}
+.exp .rnb .rnl{font-size:13px;color:#555;margin-bottom:6px}
+.exp .rnb .bslots{margin-bottom:8px}.exp .rnb .pool{margin:0}
+.exp .rnb .tip{margin:8px 0 0}
+.fx .nfoot .nfc{background:#fff;color:#1B1B1F;border-color:#BFC7D5}
+.fx .nfoot .nfc.on{background:#FFF6DC;border-color:#E0A100;color:#1B1B1F;font-weight:600}
+.fx .nfoot button:disabled{opacity:.5;cursor:default}
+</style>`);
 
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
