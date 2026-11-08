@@ -255,6 +255,14 @@ code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--b
 .tfig figcaption{font-size:14px;line-height:1.45;color:#3E3858;text-align:center;padding:0 4px}
 .tsplit>div{min-width:0}
 .rtab td{overflow-wrap:anywhere}
+
+/* LENKA: kompaktne rozlozenie a kontrola mobilu 390 px */
+.theory>:first-child{margin-top:0}.theory>:last-child{margin-bottom:0}.theory,.task,.tool,.fig,.result,.arw,.rlew,.jw,.pb{max-width:100%}
+@media (min-width:861px){.tsplit{align-items:stretch}.tsplit>div{min-width:0;display:flex;flex-direction:column}.tsplit>div:last-child{justify-content:center}.tsplit>div:last-child>.tfig,.tsplit>div:last-child>figure{margin:0;flex:1;display:flex;flex-direction:column;justify-content:center}.tsplit>div:last-child svg{width:100%;height:auto;max-height:100%}}
+@media (max-width:390px){body{font-size:16px}.topbar,.line,main{padding-left:12px;padding-right:12px}main{padding-top:18px}.task,.theory,.tool,.result,.memo,.fig,.side{padding:14px}.opts,.buckets,.cards,.two,.lab,.cpu,.demo,.scr,.tfigs,.projt,.pb,.dg{grid-template-columns:1fr!important}.iqa{padding-left:0}.next{margin-top:24px}.next .primary{width:100%}.grade{margin-left:0}.tbl-wrap,.ctab,.rtab,.arw,.rlew,.jw,.pb{max-width:100%;overflow-x:auto}.side{position:static}.pool{padding:10px}.chipb{padding:8px 12px}.slot{align-items:flex-start}.slot .n{flex-basis:30px}.row button{max-width:100%}.big .n{font-size:44px}.rlew{display:block}.bmg{grid-template-columns:repeat(10,24px)}.bmg span{width:24px;height:24px}.hrow{gap:6px}.hnode{padding:6px 10px}.jw figure{min-width:0}.arw .arb{grid-template-columns:1fr}.arw .fld{grid-template-columns:1fr}.pb .thumbs{max-height:260px}.pb .ctl{padding:10px}.ps{min-width:0}.ps h2{font-size:clamp(16px,6vw,25px)}.ps ul{font-size:clamp(11px,4vw,17px)}.tfig figcaption{font-size:12.5px}.result table{font-size:13px}}
+/* HODINY: obrázky pri úlohách projektu */
+.tpic{margin:0 0 14px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px;max-width:620px}
+.tpic svg{width:100%;height:auto;display:block}
 </style>
 </head>
 <body>
@@ -503,6 +511,66 @@ function CUSTOM_INPUT(e) { const t = e.target, ds = t.dataset || {}, P = S.P;
   return false; }
 document.addEventListener("keydown", e => { if (!document.getElementById("play") || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; if (e.key === "ArrowRight") { const b = document.querySelector('[data-pv="1"]'); if (b) b.click(); } if (e.key === "ArrowLeft") { const b = document.querySelector('[data-pv="-1"]'); if (b) b.click(); } });
 
+/* ===== HODINY: kreslenie obrázkov k otázkam (neprezrádzajú odpoveď) ===== */
+const HK = (() => {
+  const FF = `font-family="Rubik,Segoe UI,Arial,sans-serif"`, MONO = `font-family="Consolas,JetBrains Mono,monospace"`;
+  const SV = (w, h, body, label) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}" ${FF}>${body}</svg>`;
+  const TX = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.fs || 12}" ${o.a ? `text-anchor="${o.a}"` : ""} fill="${o.c || "#16213A"}" font-weight="${o.b ? 700 : 400}"${o.mono ? ` ${MONO}` : ""}>${s}</text>`;
+  const EM = (x, y, e, fs) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${fs || 26}">${e}</text>`;
+  const QM = (x, y, r) => { r = r || 14; return `<circle cx="${x}" cy="${y}" r="${r}" fill="#F0B429"><animate attributeName="r" values="${r};${r + 2};${r}" dur="1.6s" repeatCount="indefinite"/></circle>${TX(x, y + r * 0.42, "?", { a: "middle", b: 1, fs: r * 1.2, c: "#fff" })}`; };
+  const QS = (body, label) => SV(240, 150, `<rect width="240" height="150" rx="10" fill="#F5F7FA"/>` + body, label);
+  const BAN = (body, label) => SV(480, 120, `<rect width="480" height="120" rx="10" fill="#F5F7FA"/>` + body, label);
+  const XS = (body, label, h) => SV(520, h || 120, `<rect width="520" height="${h || 120}" rx="10" fill="#F5F7FA"/>` + body, label);
+  const bob = (inner, i, d) => `<g>${inner}<animateTransform attributeName="transform" type="translate" values="0 0;0 ${-(d || 4)};0 0" dur="2s" begin="${(i || 0) * 0.4}s" repeatCount="indefinite"/></g>`;
+  const blink = (x, y, h, c) => `<rect x="${x}" y="${y}" width="2" height="${h || 16}" fill="${c || "#16213A"}"><animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/></rect>`;
+  const dot = (path, c, dur, begin) => `<circle r="5" fill="${c || "#2F5BEA"}"><animateMotion dur="${dur || 2.4}s" ${begin ? `begin="-${begin}s"` : ""} repeatCount="indefinite" path="${path}"/></circle>`;
+  const fly = (path, e, dur, fs, begin) => `<text font-size="${fs || 20}" text-anchor="middle">${e}<animateMotion dur="${dur || 2.4}s" ${begin ? `begin="-${begin}s"` : ""} repeatCount="indefinite" path="${path}"/></text>`;
+  const dash = (x1, y1, x2, y2, c, rev) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c || "#9AA7C4"}" stroke-width="3" stroke-dasharray="6 5"><animate attributeName="stroke-dashoffset" values="${rev ? "0;22" : "22;0"}" dur="1s" repeatCount="indefinite"/></line>`;
+  const pulse = (inner, cx, cy) => `<g>${inner}<animateTransform attributeName="transform" type="scale" additive="sum" values="1;1.06;1" dur="1.8s" repeatCount="indefinite"/></g>`;
+  const pc = (x, y, sc = 1, scr) => `<g transform="translate(${x} ${y}) scale(${sc})"><rect x="0" y="0" width="64" height="42" rx="4" fill="#16213A"/><rect x="4" y="4" width="56" height="34" rx="2" fill="${scr || "#D5DFFB"}"/><rect x="26" y="42" width="12" height="8" fill="#566381"/><rect x="16" y="50" width="32" height="5" rx="2" fill="#566381"/></g>`;
+  const laptop = (x, y, sc = 1, scr) => `<g transform="translate(${x} ${y}) scale(${sc})"><rect x="6" y="0" width="60" height="40" rx="4" fill="#16213A"/><rect x="10" y="4" width="52" height="32" rx="2" fill="${scr || "#D5DFFB"}"/><path d="M0 42 H72 L66 48 H6z" fill="#566381"/></g>`;
+  const phone = (x, y, sc = 1, inner, scr) => `<g transform="translate(${x} ${y}) scale(${sc})"><rect x="0" y="0" width="46" height="84" rx="8" fill="#16213A"/><rect x="4" y="9" width="38" height="64" rx="2" fill="${scr || "#fff"}"/><circle cx="23" cy="78" r="2.5" fill="#566381"/>${inner || ""}</g>`;
+  const server = (x, y, sc = 1) => `<g transform="translate(${x} ${y}) scale(${sc})"><rect x="0" y="0" width="50" height="66" rx="5" fill="#16213A"/>${[0, 1, 2].map(i => `<rect x="6" y="${7 + i * 19}" width="38" height="13" rx="2" fill="#34425F"/><circle cx="38" cy="${13.5 + i * 19}" r="2.5" fill="#3CCB8E"/>`).join("")}</g>`;
+  const env = (x, y, sc = 1, c) => `<g transform="translate(${x} ${y}) scale(${sc})"><rect x="0" y="0" width="48" height="32" rx="4" fill="#fff" stroke="${c || "#2F5BEA"}" stroke-width="2"/><path d="M2 3 L24 19 L46 3" fill="none" stroke="${c || "#2F5BEA"}" stroke-width="2"/></g>`;
+  const win = (x, y, w, h, url, lock) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#fff" stroke="#C9D1DF"/><rect x="${x}" y="${y}" width="${w}" height="26" rx="8" fill="#E9EDF3"/><rect x="${x}" y="${y + 18}" width="${w}" height="8" fill="#E9EDF3"/><rect x="${x + 8}" y="${y + 5}" width="${w - 16}" height="16" rx="8" fill="#fff"/>${lock ? TX(x + 14, y + 17, "🔒", { fs: 9 }) : ""}${url ? TX(x + (lock ? 27 : 15), y + 17, url, { fs: 10.5 }) : ""}`;
+  const lines = (x, y, n, w, gap, c) => Array.from({ length: n }, (_, i) => `<rect x="${x}" y="${y + i * (gap || 12)}" width="${(w || 100) - (i % 3) * 14}" height="5" rx="2.5" fill="${c || "#D6DCE6"}"/>`).join("");
+  const bubble = (x, y, w, s, o = {}) => `<rect x="${x}" y="${y}" width="${w}" height="${o.h || 26}" rx="12" fill="${o.f || "#D5DFFB"}"${o.st ? ` stroke="${o.st}"` : ""}/>${s ? TX(x + (o.a === "middle" ? w / 2 : 10), y + (o.h || 26) / 2 + 4.5, s, { fs: o.fs || 11.5, a: o.a, b: o.b, c: o.c }) : ""}`;
+  const key = (x, y, s, w) => `<rect x="${x}" y="${y}" width="${w || 34}" height="30" rx="6" fill="#fff" stroke="#9AA7C4" stroke-width="1.5"/><rect x="${x}" y="${y + 24}" width="${w || 34}" height="6" rx="3" fill="#C9D1DF"/>${TX(x + (w || 34) / 2, y + 19, s, { a: "middle", fs: 12, b: 1 })}`;
+  const field = (x, y, w, lab, val, o = {}) => `<rect x="${x}" y="${y}" width="${w}" height="22" rx="5" fill="#fff" stroke="${o.st || "#C9D1DF"}"/>${TX(x + 7, y + 15, lab, { fs: 10.5, c: "#566381" })}${val ? TX(x + (o.lw || 58), y + 15, val, { fs: 11, b: o.b, mono: o.mono, c: o.c }) : ""}`;
+  const mailwin = (x, y, w, h, rows) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#fff" stroke="#C9D1DF"/><rect x="${x}" y="${y}" width="${w}" height="22" rx="8" fill="#2F5BEA"/><rect x="${x}" y="${y + 14}" width="${w}" height="8" fill="#2F5BEA"/>${TX(x + 10, y + 15, "✉️ Nová správa", { fs: 10.5, b: 1, c: "#fff" })}${(rows || []).map((r, i) => field(x + 8, y + 30 + i * 27, w - 16, r[0], r[1], r[2] || {})).join("")}`;
+  const avatar = (x, y, e, c) => `<circle cx="${x}" cy="${y}" r="16" fill="${c || "#D5DFFB"}"/>${EM(x, y + 7, e, 18)}`;
+  const shield = (x, y, sc = 1, c) => `<g transform="translate(${x} ${y}) scale(${sc})"><path d="M20 0 L40 8 V24 C40 38 30 46 20 50 C10 46 0 38 0 24 V8z" fill="${c || "#12805A"}"/><path d="M11 25 L18 32 L30 18" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/></g>`;
+  return { FF, MONO, SV, TX, EM, QM, QS, BAN, XS, bob, blink, dot, fly, dash, pulse, pc, laptop, phone, server, env, win, lines, bubble, key, field, mailwin, avatar, shield };
+})();
+
+/* ===== HODINY: 2. ročník 3.3 – pohyblivé obrázky k teórii a obrázky pri úlohách projektu ===== */
+{ const ad = (k, s) => { if (TFIG[k]) TFIG[k] = TFIG[k].replace("</svg>", s + "</svg>"); };
+  const hl = (pos, w, h, dur) => `<rect width="${w}" height="${h}" rx="8" fill="none" stroke="#F0B429" stroke-width="3"><animate attributeName="x" values="${pos.map(p => p[0]).join(";")}" dur="${dur}s" calcMode="discrete" repeatCount="indefinite"/><animate attributeName="y" values="${pos.map(p => p[1]).join(";")}" dur="${dur}s" calcMode="discrete" repeatCount="indefinite"/></rect>`;
+  const dot = (p, c, d, b) => `<circle r="5" fill="${c || "#F0B429"}"><animateMotion dur="${d || 2}s" ${b ? `begin="-${b}s"` : ""} repeatCount="indefinite" path="${p}"/></circle>`;
+  ad("osnova", hl([...Array(8)].map((_, i) => [219 + (i % 2) * 106, 5 + Math.floor(i / 2) * 64]), 104, 62, 8) + dot("M184 130 L214 130", "#0B7A75", 1.4));
+  ad("mapa", [["M220 110 C290 110 300 60 360 60", "#1E6FD9", 0], ["M220 110 C290 110 300 160 360 160", "#12805A", 0.6], ["M220 110 C150 110 140 60 80 60", "#C2560C", 1.2], ["M220 110 C150 110 140 160 80 160", "#B4235A", 1.8]].map(([p, c, b]) => dot(p, c, 2.4, b)).join(""));
+  ad("zdroje", hl([0, 1, 2, 3].map(i => [14, 48 + i * 44]), 194, 42, 6));
+  ad("rozhranie", `<rect width="84" height="218" rx="8" fill="none" stroke="#F0B429" stroke-width="3"><animate attributeName="x" values="6;96;326" dur="6s" calcMode="discrete" repeatCount="indefinite"/><animate attributeName="y" values="26;26;26" dur="6s" calcMode="discrete" repeatCount="indefinite"/><animate attributeName="width" values="84;224;108" dur="6s" calcMode="discrete" repeatCount="indefinite"/><animate attributeName="height" values="218;144;218" dur="6s" calcMode="discrete" repeatCount="indefinite"/></rect>`);
+  ad("rozlozenia", hl([0, 1, 2, 3, 4].map(i => [5 + i * 86, 11]), 84, 62, 6));
+  ad("heslovite", dot("M206 68 L232 68", "#0B7A75", 1.2));
+  ad("ovladanie", hl([0, 1, 2, 3].map(i => [14, 30 + i * 46]), 412, 40, 6));
+  ad("prejav", `<text x="0" y="0" font-size="16">👀<animateMotion dur="3s" repeatCount="indefinite" path="M236 100 L180 196 L236 100"/></text>`);
+  ad("sebahod", `<rect x="14" y="44" width="412" height="44" rx="8" fill="none" stroke="#F0B429" stroke-width="3"><animate attributeName="y" values="44;88;132" dur="5s" calcMode="discrete" repeatCount="indefinite"/></rect>`);
+}
+const GPIC = (() => { const { SV, TX, EM, bob, dash } = HK; const A = "#0B7A75";
+  const XS = (body, label) => SV(520, 110, `<rect width="520" height="110" rx="10" fill="#F5F7FA"/>` + body, label);
+  const sl = (x, y, inner, c) => `<rect x="${x}" y="${y}" width="86" height="56" rx="4" fill="#fff" stroke="${c || "#9AA7C4"}" stroke-width="1.5"/><rect x="${x}" y="${y}" width="86" height="5" fill="${A}"/>${inner || ""}`;
+  return {
+    tema: XS(`${bob(EM(60, 66, "💡", 40))}${dash(100, 55, 150, 55, A)}<rect x="160" y="14" width="110" height="82" rx="6" fill="#FFFDE7" stroke="#E0C870"/>${[0, 1, 2, 3, 4].map(i => `<rect x="172" y="${26 + i * 14}" width="${80 - (i % 2) * 18}" height="5" rx="2" fill="#C9B458"/>`).join("")}${dash(282, 55, 330, 55, A)}${[0, 1, 2].map(i => bob(sl(340 + i * 58 - i * 26, 22 + i * 10, `<rect x="${348 + i * 32}" y="${36 + i * 10}" width="40" height="5" rx="2" fill="#D6DCE6"/>`), i, 3)).join("")}`, "Od nápadu k osnove"),
+    tvorba: XS(`${[0, 1, 2, 3, 4, 5].map(i => `<g opacity="0">${sl(14 + i * 84, 26, `<rect x="${22 + i * 84}" y="${40}" width="44" height="6" rx="2" fill="${A}"/><rect x="${22 + i * 84}" y="${54}" width="56" height="4" rx="2" fill="#D6DCE6"/><rect x="${22 + i * 84}" y="${64}" width="46" height="4" rx="2" fill="#D6DCE6"/>`)}<animate attributeName="opacity" values="0;0;1;1" keyTimes="0;${(i * 0.13).toFixed(2)};${(i * 0.13 + 0.08).toFixed(2)};1" dur="6s" repeatCount="indefinite"/></g>`).join("")}${TX(260, 102, "snímka za snímkou podľa osnovy", { a: "middle", fs: 11, b: 1, c: A })}`, "Pribúdajúce snímky"),
+    prezentuj: XS(`<rect x="20" y="14" width="130" height="78" rx="4" fill="#fff" stroke="#566381" stroke-width="2"/><rect x="20" y="14" width="130" height="6" fill="${A}"/>${TX(34, 44, "Moja téma", { fs: 12, b: 1, c: A })}<circle cx="180" cy="40" r="10" fill="#FFE0B2" stroke="#16213A"/><rect x="169" y="52" width="22" height="30" rx="7" fill="${A}"/>${bob(EM(214, 46, "🗣️", 20))}${[0, 1, 2].map(i => `<circle cx="${250 + i * 34}" cy="70" r="8" fill="#B0BEC5"/><rect x="${240 + i * 34}" y="79" width="20" height="12" rx="5" fill="#B0BEC5"/>`).join("")}${dash(370, 55, 410, 55, A)}${bob(EM(450, 66, "💾", 36), 1)}${TX(450, 100, "súbor HTML", { a: "middle", fs: 11, b: 1, c: A })}`, "Prezentovanie a uloženie")
+  }; })();
+{ const fig = k => `<figure class="tpic">${GPIC[k]}</figure>`;
+  const v1 = VIEWS.tema; VIEWS.tema = () => v1().replace('<div class="projt">', fig("tema") + '<div class="projt">');
+  const v2 = VIEWS.tvorba; VIEWS.tvorba = () => v2().replace('<div class="task" id="rgoals">', fig("tvorba") + '<div class="task" id="rgoals">');
+  const v3 = VIEWS.prezentuj; VIEWS.prezentuj = () => v3().replace('<div class="task" id="ogoals">', fig("prezentuj") + '<div class="task" id="ogoals">'); }
+
+
 /* ===== shared lesson engine ===== */
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
 function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
@@ -536,7 +604,8 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function projectComplete() { return ["g_tema", "g_pres", "g_out"].every(id => S.t[id] && S.t[id].score >= maxOf(TASKS[id])); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return projectComplete(); return STEP_TASKS[id].every(t => S.t[t]); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -627,7 +696,7 @@ if (!VIEWS.start) VIEWS.start = function () {
   <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
-  if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${STEPS.length - 2}">Prejsť na záverečný test</button>`;
+  if (!projectComplete()) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí po dokončení témy a osnovy, všetkých pravidiel prezentácie, odprezentovania, stiahnutia súboru a sebahodnotenia.</p><button class="primary" data-go="${STEPS.length - 2}">Vrátiť sa k dokončeniu projektu</button>`;
   const pct = Math.round(total() / MAX * 100);
   const grade = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
   const when = new Date(S.finished || Date.now()).toLocaleString("sk-SK", { day: "numeric", month: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -641,9 +710,7 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
   <div class="result"><p style="margin:0"><b>${esc(S.name.trim())}</b>, ${esc(S.cls.trim())} <span class="muted">· ${when}</span></p>
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
-  <h3>Pošli výsledok učiteľovi</h3><p>Výsledok sa učiteľovi odošle automaticky. Pre istotu si ho môžeš aj skopírovať alebo urobiť snímku obrazovky.</p>
-  <textarea id="restxt" rows="4" readonly>${esc(txt)}</textarea>
-  <div class="row"><button class="primary" data-copy>Kopírovať výsledok</button>${formBtn}<span id="copied" class="muted" aria-live="polite"></span></div>`;
+  <div class="row">${formBtn}</div>`;
 };
 
 const main = document.getElementById("main");
@@ -657,7 +724,12 @@ function render(toTop) {
   if (toTop) { window.scrollTo(0, 0); const c = document.querySelector(".stn.cur"); if (c) c.scrollIntoView({ block: "nearest", inline: "center" }); }
   else window.scrollTo(0, y);
 }
-function go(i) { if (!S.started && i > 0) return; S.cur = i; SEL = null; save(); render(true); }
+function go(i) {
+  if (!S.started && i > 0) return;
+  const resultI = STEPS.findIndex(x => x.id === "vysledok");
+  if (i === resultI && !projectComplete()) return;
+  S.cur = i; SEL = null; save(); render(true);
+}
 function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t]) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
 
 let resetArmed = null;
