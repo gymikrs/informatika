@@ -441,12 +441,12 @@ function renderTop() {
 }
 
 /* ---------- Generic tasks ---------- */
-const REVEAL = () => !!S.testLocked;                 /* po spustení testu sa v zastávkach ukážu správne odpovede */
+const REVEAL = () => true;                           /* po skontrolovaní sa hneď ukážu správne odpovede (kontrola iba raz) */
 const RO = () => !!S.testLocked && !["test", "vysledok"].includes(STEPS[S.cur].id); /* zastávky len na prezeranie */
 const pic = (k, cl) => k && QIMG[k] ? `<figure class="${cl || "qpic"}">${QIMG[k]}</figure>` : "";
 function checkBar(T, ready, hint) {
   const r = S.t[T.id];
-  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span>${!S.testLocked && r.score < r.max ? `<button class="ghost retry" data-retry="${T.id}">↺ Opraviť a skontrolovať znova</button>` : ""}</div>`;
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span></div>`;
   return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button>${ready ? "" : `<span class="hint">${hint || "Najprv vyrieš všetko, potom skontroluj."}</span>`}</div>`;
 }
 
@@ -459,7 +459,7 @@ function mcHTML(T) {
         if (d[q.id] === i) c += " sel";
         if (done) { if (rv && i === q.a) c += " ok"; else if (d[q.id] === i) c += i === q.a ? " ok" : " bad"; }
         return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
-      }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good ? `<p class="why miss">Toto nie je správne. Oprav odpoveď a skontroluj znova.</p>` : ""}`;
+      }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good ? `<p class="why miss">Správna odpoveď: ${q.opts[q.a]}</p>` : ""}`;
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend>${q.img ? `<div class="qrow"><div>${opts}</div>${pic(q.img)}</div>` : opts}</fieldset>`;
   }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
 }
@@ -1092,7 +1092,6 @@ document.addEventListener("click", e => {
     Object.keys(STEP_TASKS).filter(k => k !== "test").forEach(k => STEP_TASKS[k].forEach(t => { if (!S.t[t]) S.t[t] = { score: 0, max: maxOf(TASKS[t]), skip: true }; }));
     save(); return render(true);
   }
-  if (ds.retry) { if (S.testLocked) return; delete S.t[ds.retry]; save(); return render(false); }
   if (ds.pwp !== undefined) { if (S.pw.length < 24) S.pw += PWP[+ds.pwp]; save(); return render(false); }
   if (ds.pwclr !== undefined) { S.pw = ""; save(); return render(false); }
   if (STEPS[S.cur].id === "test" && S.testLocked && !S.t.test) {
