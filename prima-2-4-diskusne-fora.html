@@ -87,6 +87,8 @@ label.f{display:block;font-weight:600;margin:12px 0 4px}
 .chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
 .chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
 .chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipw{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:100%}
+.fixb{font-size:13px;font-weight:600;color:var(--ok);padding-left:6px;line-height:1.3}
 .chipb:disabled{cursor:default}
 .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
 .bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
@@ -891,10 +893,12 @@ function sortHTML(T) {
   const ids = ord(T.id, T.items.map(x => x.id));
   const by = Object.fromEntries(T.items.map(x => [x.id, x]));
   const chip = id => { let c = "chipb" + (T.mono ? " mono" : ""); if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
-    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+    const fix = done && d[id] !== by[id].b ? `<span class="fixb">→ patrí do: ${(T.buckets.find(b => b.id === by[id].b) || {}).label || ""}</span>` : "";
+    return `<span class="chipw"><button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>${fix}</span>`; };
   const pool = ids.filter(id => !d[id]);
   return pic(T.img || T.id, "tpic") + (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
     `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && ids.some(id => !d[id]) ? `<div class="box v" style="margin-top:12px"><p><b>Správne roztriedenie:</b></p><ul>${T.buckets.map(b => `<li><b>${b.label}:</b> ${T.items.filter(x => x.b === b.id).map(x => x.t).join(", ")}</li>`).join("")}</ul></div>` : "") +
     (done && T.after && (done.score === done.max || REVEAL()) ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
 }
 function orderHTML(T) {
