@@ -87,6 +87,8 @@ label.f{display:block;font-weight:600;margin:12px 0 4px}
 .chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
 .chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
 .chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipw{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:100%}
+.fixb{font-size:13px;font-weight:600;color:var(--ok);padding-left:6px;line-height:1.3}
 .chipb:disabled{cursor:default}
 .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
 .bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
@@ -374,7 +376,7 @@ const THEORY = {"web": ["<b>Webmail</b> = pošta v internetovom <b>prehliadači<
 function XS(k) { S.x = S.x || {}; if (!S.x[k]) S.x[k] = { exp: null, seen: [], fi: 0, res: [], last: null }; return S.x[k]; }
 function efSVG(k, ctx) {
   const x = XS(k), Z = SCRS[k].zones;
-  const st = id => { if (ctx === "explore") return (x.exp === id ? "on " : "") + (x.seen.includes(id) ? "seen" : ""); const L = x.last; if (!L) return ""; if (id === L.correct && (L.ok || S.testLocked)) return "ok"; if (id === L.clicked && !L.ok) return "bad"; return ""; };
+  const st = id => { if (ctx === "explore") return (x.exp === id ? "on " : "") + (x.seen.includes(id) ? "seen" : ""); const L = x.last; if (!L) return ""; if (id === L.correct) return "ok"; if (id === L.clicked && !L.ok) return "bad"; return ""; };
   const z = (id, hit, inner) => `<g class="zone ${st(id)}" data-sz="${k}|${id}|${ctx}" tabindex="0" role="button" aria-label="${ctx === "explore" ? Z[id][0] : "Časť obrazovky"}">${inner}${hit.map(r => `<rect class="hit" x="${r[0]}" y="${r[1]}" width="${r[2]}" height="${r[3]}" rx="5"/>`).join("")}</g>`;
   return SCRS[k].svg(z);
 }
@@ -382,7 +384,7 @@ function efExplore(k, hint) { const x = XS(k), Z = SCRS[k].zones, keys = Object.
   return `<div class="scr"><div class="fig" style="margin:0">${efSVG(k, "explore")}</div><div class="side">${e ? `<span class="tag">Preskúmané ${x.seen.length} z ${keys.length}</span><h4>${e[0]}</h4><p style="font-size:15.5px;margin:0">${e[1]}</p>` : `<h4>Klikni na časť obrázka</h4><p class="muted" style="font-size:15px;margin:0">${hint || "Zisti, na čo slúžia jednotlivé časti."}</p>`}<div class="meter"><i style="width:${Math.round(x.seen.length / keys.length * 100)}%"></i></div></div></div>`; }
 function efFind(k) { const x = XS(k), Z = SCRS[k].zones, F = SCRS[k].find, done = S.t["f_" + k]; let fs;
   if (done) fs = `<div class="side"><h4>Hotovo</h4><span class="score ${done.score < done.max ? "part" : ""}">${done.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : `Získal si ${done.score} z ${done.max} bodov`}</span><div class="row">${retryBtn("f_" + k)}</div></div>`;
-  else { const L = x.last; fs = `<div class="side"><span class="tag">Otázka ${x.fi + 1} z ${F.length}</span><div class="prompt">${F[x.fi][1]}</div>${L ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne!" : "❌ To je: " + Z[L.clicked][0] + "."}</div><div class="row"><button class="primary" data-sn="${k}">${x.fi + 1 < F.length ? "Ďalšia otázka" : "Dokončiť"}</button></div>` : `<p class="muted" style="font-size:14.5px">Klikni na správne miesto. Máš jeden pokus, pri chybe môžeš celú úlohu skúsiť znova.</p>`}</div>`; }
+  else { const L = x.last; fs = `<div class="side"><span class="tag">Otázka ${x.fi + 1} z ${F.length}</span><div class="prompt">${F[x.fi][1]}</div>${L ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne!" : "❌ To je: " + Z[L.clicked][0] + ". Správne miesto svieti nazeleno."}</div><div class="row"><button class="primary" data-sn="${k}">${x.fi + 1 < F.length ? "Ďalšia otázka" : "Dokončiť"}</button></div>` : `<p class="muted" style="font-size:14.5px">Klikni na správne miesto. Máš jeden pokus, pri chybe môžeš celú úlohu skúsiť znova.</p>`}</div>`; }
   return `<div class="scr"><div class="fig" style="margin:0">${efSVG(k, "find")}</div>${fs}</div>`; }
 function efClick(e) {
   const z = e.target.closest && e.target.closest("[data-sz]");
@@ -617,8 +619,8 @@ const TASKS = {
 function wizHTML() { const W = S.wz, O = W.ok || {};
   return `<div class="box2"><div class="card2">📋 Údaje od správcu školskej pošty:<br>E-mail: jana.n@skola.sk<br>Prichádzajúca pošta: <b>imap.skola.sk</b>, port <b>993</b>, SSL/TLS<br>(alebo POP3: pop.skola.sk, port 995)<br>Odchádzajúca pošta (SMTP): <b>smtp.skola.sk</b>, port <b>465</b>, SSL/TLS</div>
     <div class="reg" style="max-width:460px"><h4>📬 Thunderbird – nastavenie účtu</h4><label>Protokol prichádzajúcej pošty</label><select id="wzp"><option value="">— vyber —</option><option ${W.proto === "IMAP" ? "selected" : ""}>IMAP</option><option ${W.proto === "POP3" ? "selected" : ""}>POP3</option></select>
-      <div class="row2"><div><label>Server prichádzajúcej</label><input id="wzi" value="${esc(W.in)}" placeholder="napr. imap.…"></div><div><label>Port</label><input id="wzip" value="${esc(W.inp)}" inputmode="numeric"></div></div>
-      <div class="row2"><div><label>Server odchádzajúcej (SMTP)</label><input id="wzo" value="${esc(W.out)}" placeholder="napr. smtp.…"></div><div><label>Port</label><input id="wzop" value="${esc(W.outp)}" inputmode="numeric"></div></div>
+      <div class="row2"><div><label>Server prichádzajúcej</label><select id="wzi"><option value="">— vyber —</option><option ${W.in === "imap.skola.sk" ? "selected" : ""}>imap.skola.sk</option><option ${W.in === "pop3.skola.sk" ? "selected" : ""}>pop3.skola.sk</option><option ${W.in === "smtp.skola.sk" ? "selected" : ""}>smtp.skola.sk</option><option ${W.in === "www.skola.sk" ? "selected" : ""}>www.skola.sk</option></select></div><div><label>Port</label><select id="wzip"><option value="">— vyber —</option><option ${W.inp === "993" ? "selected" : ""}>993</option><option ${W.inp === "995" ? "selected" : ""}>995</option><option ${W.inp === "465" ? "selected" : ""}>465</option><option ${W.inp === "80" ? "selected" : ""}>80</option></select></div></div>
+      <div class="row2"><div><label>Server odchádzajúcej (SMTP)</label><select id="wzo"><option value="">— vyber —</option><option ${W.out === "smtp.skola.sk" ? "selected" : ""}>smtp.skola.sk</option><option ${W.out === "imap.skola.sk" ? "selected" : ""}>imap.skola.sk</option><option ${W.out === "mail.skola.sk" ? "selected" : ""}>mail.skola.sk</option><option ${W.out === "www.skola.sk" ? "selected" : ""}>www.skola.sk</option></select></div><div><label>Port</label><select id="wzop"><option value="">— vyber —</option><option ${W.outp === "465" ? "selected" : ""}>465</option><option ${W.outp === "993" ? "selected" : ""}>993</option><option ${W.outp === "110" ? "selected" : ""}>110</option><option ${W.outp === "80" ? "selected" : ""}>80</option></select></div></div>
       <button class="btn" data-wz>Otestovať a uložiť</button>${W.msg ? `<div class="fb ${W.msgk}" style="margin-top:10px">${W.msg}</div>` : ""}</div></div>`; }
 
 const VIEWS = {
@@ -712,9 +714,9 @@ const VIEWS = {
 
 const ORG = [["Pani učiteľka Malá", "Rozvrh písomiek na október", "skola", "Školská informácia patrí do priečinka Škola."], ["Robotický krúžok", "Stretnutie v piatok o 14:00", "kruzok", "Správa krúžku patrí do priečinka Krúžok."], ["Výherná loto centrála", "Vyhral si 10 000 €! Zadaj číslo karty", "spam", "Podvodná výhra je spam."], ["Triedna učiteľka", "Do štvrtka doniesť podpísaný súhlas na výlet", "flag", "Treba ešte niečo urobiť, preto príznak a nechať v Doručenej pošte."], ["E-shop HraMánia", "Týždenný newsletter so zľavami", "del", "Nepotrebný newsletter môžeš zmazať (alebo sa odhlásiť z odberu)."], ["Robotický krúžok", "Fotky zo súťaže", "kruzok", "Patrí do priečinka Krúžok."], ["Microsoft-Podpora (m1crosoft-help.com)", "Váš účet bude zablokovaný, overte heslo", "spam", "Falošná doména a žiadosť o heslo: phishing, spam."], ["Pani učiteľka Malá", "Hodnotenie tvojho referátu", "skola", "Patrí do priečinka Škola."]];
 const ORGO = [["", "— vyber —"], ["skola", "📁 Škola"], ["kruzok", "📁 Krúžok"], ["flag", "🚩 Príznak (dôležité)"], ["spam", "🚫 Nevyžiadaná"], ["del", "🗑️ Odstrániť"]];
-function orgHTML() { const D = S.orgd; return `<div class="win" style="background:#fff;color:#222;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden"><div style="background:#0F6CBD;color:#fff;padding:7px 12px;font-weight:700">📥 Doručená pošta (8)</div>${ORG.map(([f, sub, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 190px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #E5E5E5"><div><b>${f}</b><br><span style="font-size:13.5px">${sub}</span>${D ? `<div style="font-size:12.5px;margin-top:3px">${S.org[i] === ok ? "✔️" : "❌"} ${why}</div>` : ""}</div><select data-org="${i}" ${D ? "disabled" : ""} style="border:1px solid #AAA;border-radius:6px;padding:4px">${ORGO.map(([v, l]) => `<option value="${v}" ${S.org[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("")}</div>${D ? `<div class="row"><button class="ghost" data-orgr>↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-orgok>✔ Vyhodnotiť</button></div>`}`; }
+function orgHTML() { const D = S.orgd; return `<div class="win" style="background:#fff;color:#222;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden"><div style="background:#0F6CBD;color:#fff;padding:7px 12px;font-weight:700">📥 Doručená pošta (8)</div>${ORG.map(([f, sub, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 190px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #E5E5E5"><div><b>${f}</b><br><span style="font-size:13.5px">${sub}</span>${D ? `<div style="font-size:12.5px;margin-top:3px">${S.org[i] === ok ? "✔️" : "❌"} ${why}</div>` : ""}</div><select data-org="${i}" ${D ? "disabled" : ""} style="border:1px solid #AAA;border-radius:6px;padding:4px">${ORGO.map(([v, l]) => `<option value="${v}" ${S.org[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("")}</div>${D ? "" : `<div class="row"><button class="primary" data-orgok>✔ Vyhodnotiť</button></div>`}`; }
 function CUSTOM_CLICK(e) {
-  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.orgok !== undefined) { if (ORG.some((_, i) => !S.org[i])) { alert("Rozhodni pri všetkých správach."); return true; } S.orgd = true; const n = ORG.filter((o, i) => S.org[i] === o[2]).length; if (n && (!S.t.g_org || S.t.g_org.score < n)) award("g_org", n); save(); render(false); return true; } if (el0 && el0.dataset.orgr !== undefined) { S.orgd = false; S.org = {}; save(); render(false); return true; } }
+  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.orgok !== undefined) { if (ORG.some((_, i) => !S.org[i])) { alert("Rozhodni pri všetkých správach."); return true; } S.orgd = true; const n = ORG.filter((o, i) => S.org[i] === o[2]).length; award("g_org", n); save(); render(false); return true; } if (el0 && el0.dataset.orgr !== undefined) { S.orgd = false; S.org = {}; save(); render(false); return true; } }
   if (efClick(e)) return true;
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, Y = SY(), G = S.syg;
   if (ds.syp) { Y.proto = ds.syp; Y.log.push(`Protokol zmenený na ${ds.syp}.`); save(); render(false); return true; }
@@ -887,13 +889,13 @@ function renderTop() {
 }
 
 /* ---------- úlohy v zastávkach ---------- */
-const REVEAL = () => !!S.testLocked;                 /* po spustení testu sa v zastávkach ukážu správne odpovede */
+const REVEAL = () => true;                           /* po skontrolovaní sa hneď ukážu správne odpovede (kontrola iba raz) */
 const RO = () => !!S.testLocked && !["test", "vysledok"].includes(STEPS[S.cur].id); /* zastávky už len na prezeranie */
 const QIMG0 = () => (typeof QIMG !== "undefined" ? QIMG : {});
 const pic = (k, cl) => k && QIMG0()[k] ? `<figure class="${cl || "qpic"}">${QIMG0()[k]}</figure>` : "";
 const qpic = (T, q) => q.img || (QIMG0()[T.id + ":" + q.id] ? T.id + ":" + q.id : "");
 const withPic = (k, inner) => k && QIMG0()[k] ? `<div class="qrow"><div>${inner}</div>${pic(k)}</div>` : inner;
-function retryBtn(id) { const r = S.t[id]; return r && !r.skip && !S.testLocked && r.score < r.max ? `<button class="ghost retry" data-retry="${id}">↺ Opraviť a skontrolovať znova</button>` : ""; }
+function retryBtn(id) { return ""; }                 /* úlohy sa kontrolujú iba raz */
 function checkBar(T, ready, hint) {
   const r = S.t[T.id];
   if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span>${retryBtn(T.id)}</div>`;
@@ -907,7 +909,7 @@ function mcHTML(T) {
       let c = "opt"; if (d[q.id] === i) c += " sel";
       if (done) { if (rv && i === q.a) c += " ok"; else if (d[q.id] === i) c += i === q.a ? " ok" : " bad"; }
       return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
-    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good && !rv ? `<p class="why miss">Toto nie je správne. Oprav odpoveď a skontroluj znova.</p>` : ""}`;
+    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good ? `<p class="why miss">Správna odpoveď: ${q.opts[q.a]}</p>` : ""}`;
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend>${withPic(qpic(T, q), opts)}</fieldset>`;
   }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
 }
@@ -916,10 +918,12 @@ function sortHTML(T) {
   const ids = ord(T.id, T.items.map(x => x.id));
   const by = Object.fromEntries(T.items.map(x => [x.id, x]));
   const chip = id => { let c = "chipb" + (T.mono ? " mono" : ""); if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
-    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+    const fix = done && d[id] !== by[id].b ? `<span class="fixb">→ patrí do: ${(T.buckets.find(b => b.id === by[id].b) || {}).label || ""}</span>` : "";
+    return `<span class="chipw"><button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>${fix}</span>`; };
   const pool = ids.filter(id => !d[id]);
   return pic(T.img || T.id, "tpic") + (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
     `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && ids.some(id => !d[id]) ? `<div class="box v" style="margin-top:12px"><p><b>Správne roztriedenie:</b></p><ul>${T.buckets.map(b => `<li><b>${b.label}:</b> ${T.items.filter(x => x.b === b.id).map(x => x.t).join(", ")}</li>`).join("")}</ul></div>` : "") +
     (done && T.after && (done.score === done.max || REVEAL()) ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
 }
 function orderHTML(T) {
@@ -1109,7 +1113,6 @@ document.addEventListener("click", e => {
     Object.keys(STEP_TASKS).filter(k => k !== "test").forEach(k => STEP_TASKS[k].forEach(t => { if (!S.t[t]) S.t[t] = { score: 0, max: maxOf(TASKS[t]), skip: true }; }));
     save(); return render(true);
   }
-  if (ds.retry) { if (S.testLocked) return; delete S.t[ds.retry]; if (typeof RETRY === "function") RETRY(ds.retry); SEL = null; save(); return render(false); }
   if (STEPS[S.cur].id === "test") {
     if (!S.testLocked || S.t.test) { if (ds.check !== "test") return; }
     else {
