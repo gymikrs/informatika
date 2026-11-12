@@ -87,6 +87,8 @@ label.f{display:block;font-weight:600;margin:12px 0 4px}
 .chipb.sel{background:var(--acc);border-color:var(--acc);color:#fff}
 .chipb.ok{background:var(--okSoft);border-color:var(--ok);color:var(--ok)}
 .chipb.bad{background:var(--badSoft);border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.chipw{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:100%}
+.fixb{font-size:13px;font-weight:600;color:var(--ok);padding-left:6px;line-height:1.3}
 .chipb:disabled{cursor:default}
 .buckets{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
 .bucket{border:2px dashed var(--acc);border-radius:12px;padding:12px;min-height:120px;cursor:pointer;background:var(--surface)}
@@ -491,11 +493,11 @@ const TASKS = {
     items: [{ id: "1", t: "jana.novak@gmail.com", b: "y" }, { id: "2", t: "peter_12@azet.sk", b: "y" }, { id: "3", t: "info@skola.sk", b: "y" }, { id: "4", t: "m.kovac@zoznam.sk", b: "y" },
       { id: "5", t: "jana.novakgmail.com", b: "n" }, { id: "6", t: "jana@@gmail.com", b: "n" }, { id: "7", t: "jana novak@gmail.com", b: "n" }, { id: "8", t: "jana@gmail", b: "n" }, { id: "9", t: "@azet.sk", b: "n" }],
     after: "Chyby: chýba zavináč, dva zavináče, medzera, chýba koncovka domény (.com), chýba meno." },
-  tvor: { id: "tvor", type: "input", qs: [
-    { id: "1", q: "Vytvor adresu pre <b>Janu Novú</b> na serveri <b>azet.sk</b>.", ok: v => /^(jana[._-]?nova|nova[._-]?jana)@azet\.sk$/.test(n2(v)), show: "jana.nova@azet.sk", ph: "…@azet.sk" },
-    { id: "2", q: "Oprav chybnú adresu: <code>peter.kral(at)gmail.com</code>", ok: v => n2(v) === "peter.kral@gmail.com", show: "peter.kral@gmail.com", ph: "?" },
-    { id: "3", q: "Oprav chybnú adresu: <code>tomas kovac@azet.sk</code>", ok: v => /^tomas[._-]?kovac@azet\.sk$/.test(n2(v)), show: "tomas.kovac@azet.sk", ph: "?" },
-    { id: "4", q: "Vymysli si adresu pre seba na serveri <b>skola.sk</b> (bez diakritiky a medzier).", ok: v => isMail(v) && /@skola\.sk$/i.test(String(v).trim()), show: "napr. meno.priezvisko@skola.sk", ph: "…@skola.sk" }
+  tvor: { id: "tvor", type: "mc", qs: [
+    { id: "1", q: "Ktorá adresa je správna pre <b>Janu Novú</b> na serveri <b>azet.sk</b>?", opts: ["jana.nova@azet.sk", "jana nova@azet.sk", "jana.nova.azet.sk", "jana.nová@azet.sk"], a: 0, why: "Adresa má tvar meno@server, bez medzier a bez diakritiky." },
+    { id: "2", q: "Ako správne opravíš adresu <code>peter.kral(at)gmail.com</code>?", opts: ["peter.kral@gmail.com", "peter.kral@gmail", "peter kral@gmail.com", "peter.kral.gmail.com"], a: 0, why: "Namiesto (at) patrí zavináč @ a za ním celý server aj s koncovkou." },
+    { id: "3", q: "Ako správne opravíš adresu <code>tomas kovac@azet.sk</code>?", opts: ["tomas.kovac@azet.sk", "tomas kovac@azet", "tomaskovac(at)azet.sk", "tomas,kovac@azet.sk"], a: 0, why: "V adrese nesmie byť medzera, mená sa oddeľujú bodkou." },
+    { id: "4", q: "Ktorú adresu si môžeš vytvoriť na serveri <b>skola.sk</b>?", opts: ["meno.priezvisko@skola.sk", "meno priezvisko@skola.sk", "méno.priezvisko@skola.sk", "meno.priezvisko@skola"], a: 0, why: "Bez medzier, bez diakritiky a s celým menom servera za zavináčom." }
   ]},
   cmp: { id: "cmp", type: "custom", max: 4 },
   inb: { id: "inb", type: "custom", max: 2 },
@@ -520,12 +522,12 @@ const TASKS = {
 /* ---------- views ---------- */
 function composeHTML() {
   const C = S.cmp;
-  if (C.sent) return `<div class="fb ok" style="font-size:16px">📨 E-mail bol odoslaný pani učiteľke!</div><div class="row"><button class="ghost" data-cnew>Napísať znova</button></div>`;
+  if (C.sent) return `<div class="fb ok" style="font-size:16px">📨 E-mail bol odoslaný pani učiteľke!</div>`;
   return `<div class="mail"><div class="top2">✉️ Nová správa</div>
-    <div class="fld"><label for="cto">Komu:</label><input id="cto" data-cm="to" value="${esc(C.to)}" autocomplete="off" placeholder="adresa príjemcu"></div>
-    <div class="fld"><label for="ccc">Kópia:</label><input id="ccc" data-cm="cc" value="${esc(C.cc)}" autocomplete="off" placeholder="(nepovinné)"></div>
-    <div class="fld"><label for="csu">Predmet:</label><input id="csu" data-cm="subj" value="${esc(C.subj)}" autocomplete="off" placeholder="o čom je e-mail"></div>
-    <textarea data-cm="body" aria-label="Text správy" placeholder="Text správy…">${esc(C.body)}</textarea>
+    <div class="fld"><label for="cto">Komu:</label><select id="cto" data-cm="to"><option value="" ${C.to === "" ? "selected" : ""}>— vyber adresu —</option><option value="ucitelka@skola.sk" ${C.to === "ucitelka@skola.sk" ? "selected" : ""}>ucitelka@skola.sk</option><option value="ucitelka@skola" ${C.to === "ucitelka@skola" ? "selected" : ""}>ucitelka@skola</option><option value="ucitelka.skola.sk" ${C.to === "ucitelka.skola.sk" ? "selected" : ""}>ucitelka.skola.sk</option><option value="ucitelka(at)skola.sk" ${C.to === "ucitelka(at)skola.sk" ? "selected" : ""}>ucitelka(at)skola.sk</option></select></div>
+    <div class="fld"><label for="ccc">Kópia:</label><select id="ccc" data-cm="cc"><option value="" ${C.cc === "" ? "selected" : ""}>(nikto)</option><option value="mama@posta.sk" ${C.cc === "mama@posta.sk" ? "selected" : ""}>mama@posta.sk</option><option value="spoluziak@skola.sk" ${C.cc === "spoluziak@skola.sk" ? "selected" : ""}>spoluziak@skola.sk</option></select></div>
+    <div class="fld"><label for="csu">Predmet:</label><select id="csu" data-cm="subj"><option value="" ${C.subj === "" ? "selected" : ""}>— vyber predmet —</option><option value="Domáca úloha z informatiky" ${C.subj === "Domáca úloha z informatiky" ? "selected" : ""}>Domáca úloha z informatiky</option><option value="??" ${C.subj === "??" ? "selected" : ""}>??</option><option value="ahoj" ${C.subj === "ahoj" ? "selected" : ""}>ahoj</option></select></div>
+    <select data-cm="body" aria-label="Text správy" style="width:100%"><option value="" ${C.body === "" ? "selected" : ""}>— vyber text správy —</option><option value="Dobrý deň, posielam domácu úlohu z informatiky v prílohe. S pozdravom Jana" ${C.body === "Dobrý deň, posielam domácu úlohu z informatiky v prílohe. S pozdravom Jana" ? "selected" : ""}>Dobrý deň, posielam domácu úlohu z informatiky v prílohe. S pozdravom Jana</option><option value="cau tu to mas" ${C.body === "cau tu to mas" ? "selected" : ""}>cau tu to mas</option><option value="Posielam úlohu." ${C.body === "Posielam úlohu." ? "selected" : ""}>Posielam úlohu.</option></select>
     <div class="bar2"><button class="send" data-csend>Odoslať</button><button class="att" data-catt>📎 ${C.att ? "Odobrať prílohu" : "Priložiť súbor"}</button>${C.att ? `<span class="chip2">📄 domaca_uloha.docx</span>` : ""}</div></div>
     ${C.msgs.length ? `<div class="fb bad">${C.msgs.map(m => "• " + m).join("<br>")}</div>` : ""}`;
 }
@@ -603,8 +605,8 @@ const VIEWS = {
     ${ltfigs(TFIG.odpoved)}
     ${VEDEL("Skratka Re: v predmete pochádza z latinčiny a znamená „vo veci“. Fwd: je z anglického forward, teda poslať ďalej.")}
     <h3>Úloha: pošli domácu úlohu</h3>
-    <div class="task"><b>Napíš e-mail pani učiteľke:</b><ul class="goals" style="list-style:none;padding:0;margin:8px 0 0">
-      <li>${G.to ? "✅" : "⬜"} adresa <b>ucitelka@skola.sk</b></li><li>${G.subj ? "✅" : "⬜"} vyplnený <b>predmet</b></li><li>${G.body ? "✅" : "⬜"} slušný text: začni <b>Dobrý deň</b> a na konci sa podpíš</li><li>${G.att ? "✅" : "⬜"} priložený súbor <b>domaca_uloha.docx</b></li></ul>
+    <div class="task"><b>Priprav e-mail pani učiteľke – v každom políčku vyber správnu možnosť:</b><ul class="goals" style="list-style:none;padding:0;margin:8px 0 0">
+      <li>${G.to ? "✅" : "⬜"} adresa <b>ucitelka@skola.sk</b></li><li>${G.subj ? "✅" : "⬜"} výstižný <b>predmet</b></li><li>${G.body ? "✅" : "⬜"} slušný text: začni <b>Dobrý deň</b> a na konci sa podpíš</li><li>${G.att ? "✅" : "⬜"} priložený súbor <b>domaca_uloha.docx</b></li></ul>
       ${S.t.cmp ? `<div class="checkbar"><span class="score ${S.t.cmp.score < 4 ? "part" : ""}">Splnené: ${S.t.cmp.score} zo 4</span></div>` : ""}</div>
     ${composeHTML()}` + nextBar();
   },
@@ -634,7 +636,7 @@ const VIEWS = {
 function cmpCheck() {
   const C = S.cmp, G = S.cg = S.cg || {}, m = [];
   if (n2(C.to) === "ucitelka@skola.sk") G.to = true; else m.push(C.to.trim() ? (isMail(C.to) ? "Adresa je platná, ale nie je to adresa pani učiteľky." : "Adresa v políčku Komu nie je platná.") : "Chýba adresa príjemcu.");
-  if (C.subj.trim().length >= 3) G.subj = true; else m.push("Chýba predmet.");
+  if (C.subj === "Domáca úloha z informatiky") G.subj = true; else m.push(C.subj ? "Predmet nehovorí, o čom e-mail je." : "Chýba predmet.");
   const b = n2(C.body); if (/dobry den/.test(b) && b.length >= 25) G.body = true; else m.push("Text má začínať pozdravom „Dobrý deň“ a mať aspoň jednu vetu a podpis.");
   if (C.att) G.att = true; else m.push("Zabudol si priložiť domácu úlohu.");
   const n = ["to", "subj", "body", "att"].filter(k => G[k]).length; if (n) award("cmp", n);
@@ -817,13 +819,13 @@ function renderTop() {
 }
 
 /* ---------- úlohy v zastávkach ---------- */
-const REVEAL = () => !!S.testLocked;                 /* po spustení testu sa v zastávkach ukážu správne odpovede */
+const REVEAL = () => true;                           /* po skontrolovaní sa hneď ukážu správne odpovede (kontrola iba raz) */
 const RO = () => !!S.testLocked && !["test", "vysledok"].includes(STEPS[S.cur].id); /* zastávky už len na prezeranie */
 const QIMG0 = () => (typeof QIMG !== "undefined" ? QIMG : {});
 const pic = (k, cl) => k && QIMG0()[k] ? `<figure class="${cl || "qpic"}">${QIMG0()[k]}</figure>` : "";
 const qpic = (T, q) => q.img || (QIMG0()[T.id + ":" + q.id] ? T.id + ":" + q.id : "");
 const withPic = (k, inner) => k && QIMG0()[k] ? `<div class="qrow"><div>${inner}</div>${pic(k)}</div>` : inner;
-function retryBtn(id) { const r = S.t[id]; return r && !r.skip && !S.testLocked && r.score < r.max ? `<button class="ghost retry" data-retry="${id}">↺ Opraviť a skontrolovať znova</button>` : ""; }
+function retryBtn(id) { return ""; }                 /* úlohy sa kontrolujú iba raz */
 function checkBar(T, ready, hint) {
   const r = S.t[T.id];
   if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span>${retryBtn(T.id)}</div>`;
@@ -837,7 +839,7 @@ function mcHTML(T) {
       let c = "opt"; if (d[q.id] === i) c += " sel";
       if (done) { if (rv && i === q.a) c += " ok"; else if (d[q.id] === i) c += i === q.a ? " ok" : " bad"; }
       return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
-    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good && !rv ? `<p class="why miss">Toto nie je správne. Oprav odpoveď a skontroluj znova.</p>` : ""}`;
+    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good ? `<p class="why miss">Správna odpoveď: ${q.opts[q.a]}</p>` : ""}`;
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend>${withPic(qpic(T, q), opts)}</fieldset>`;
   }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
 }
@@ -846,10 +848,12 @@ function sortHTML(T) {
   const ids = ord(T.id, T.items.map(x => x.id));
   const by = Object.fromEntries(T.items.map(x => [x.id, x]));
   const chip = id => { let c = "chipb" + (T.mono ? " mono" : ""); if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
-    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+    const fix = done && d[id] !== by[id].b ? `<span class="fixb">→ patrí do: ${(T.buckets.find(b => b.id === by[id].b) || {}).label || ""}</span>` : "";
+    return `<span class="chipw"><button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>${fix}</span>`; };
   const pool = ids.filter(id => !d[id]);
   return pic(T.img || T.id, "tpic") + (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
     `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && ids.some(id => !d[id]) ? `<div class="box v" style="margin-top:12px"><p><b>Správne roztriedenie:</b></p><ul>${T.buckets.map(b => `<li><b>${b.label}:</b> ${T.items.filter(x => x.b === b.id).map(x => x.t).join(", ")}</li>`).join("")}</ul></div>` : "") +
     (done && T.after && (done.score === done.max || REVEAL()) ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
 }
 function orderHTML(T) {
@@ -985,7 +989,9 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
   <p class="muted" style="font-size:15px">Zastávky si teraz môžeš znova prezrieť (iba na čítanie). Uvidíš v nich aj správne odpovede.</p>
-  <div class="row" aria-live="polite">${formBtn}</div>`;
+  <div class="row" aria-live="polite">${formBtn}</div>
+  <div class="box" style="margin-top:16px">${S.rconfirm ? `<p style="margin:0"><b>Naozaj začať odznova?</b> Body aj odpovede sa vymažú.</p><div class="confirm"><button class="primary" data-ryes>Áno, začať odznova</button><button class="ghost" data-rno>Späť</button></div>`
+    : `<p style="margin:0 0 10px">Chceš si hodinu prejsť ešte raz? Začneš od Štartu s novými úlohami a nový výsledok sa tiež odošle učiteľovi.</p><button class="ghost" data-rreset>↺ Začať odznova</button>`}</div>`;
 };
 
 const main = document.getElementById("main");
@@ -1025,6 +1031,9 @@ document.addEventListener("click", e => {
   const el = e.target.closest("button,[data-bucket],[data-tg]"); if (!el) return;
   const ds = el.dataset;
   if (ds.go !== undefined) return go(+ds.go);
+  if (ds.rreset !== undefined) { S.rconfirm = true; save(); return render(false); }
+  if (ds.rno !== undefined) { S.rconfirm = false; save(); return render(false); }
+  if (ds.ryes !== undefined) { const keep = { cls: S.cls }; try { localStorage.removeItem(KEY); } catch (e) {} S = fresh(); S.cls = keep.cls; SEL = null; if (typeof TSEL !== "undefined") TSEL = null; save(); window.scrollTo(0, 0); return render(true); }
   if (ds.reset !== undefined) {
     if (S.testLocked) return;
     if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
@@ -1039,7 +1048,6 @@ document.addEventListener("click", e => {
     Object.keys(STEP_TASKS).filter(k => k !== "test").forEach(k => STEP_TASKS[k].forEach(t => { if (!S.t[t]) S.t[t] = { score: 0, max: maxOf(TASKS[t]), skip: true }; }));
     save(); return render(true);
   }
-  if (ds.retry) { if (S.testLocked) return; delete S.t[ds.retry]; if (typeof RETRY === "function") RETRY(ds.retry); SEL = null; save(); return render(false); }
   if (STEPS[S.cur].id === "test") {
     if (!S.testLocked || S.t.test) { if (ds.check !== "test") return; }
     else {
