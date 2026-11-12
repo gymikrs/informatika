@@ -858,8 +858,8 @@ function instHTML() { const I = S.inst;
   if (I.st === 1) return `<div class="inst"><div class="top">Install Python 3 (64-bit)</div><div class="bd"><p><b>Install Now</b><br><small>C:\\Users\\ziak\\AppData\\Local\\Programs\\Python<br>Includes IDLE, pip and documentation</small></p><label><input type="checkbox" checked disabled> Use admin privileges when installing py.exe</label><label><input type="checkbox" data-path ${I.path ? "checked" : ""}> <b>Add python.exe to PATH</b></label><div class="row"><button class="primary" data-in="now">Install Now</button></div></div></div>`;
   if (I.st === 2) return `<div class="inst"><div class="top">Setup was successful ✅</div><div class="bd"><p>Python je nainštalovaný. ${I.path ? "" : "⚠️ Nezaškrtol si PATH – príkaz python nemusí fungovať v príkazovom riadku."}</p><p>Over inštaláciu v príkazovom riadku (Win + R › <code>cmd</code>):</p><div class="cmdw" id="cmdw">Microsoft Windows [Version 10.0]\n${S.cmd.map(c => `C:\\Users\\ziak&gt; ${esc(c.c)}\n${esc(c.o)}\n`).join("")}C:\\Users\\ziak&gt; <input id="cmdin" autocomplete="off" spellcheck="false" aria-label="Príkazový riadok"></div>${I.path ? "" : `<div class="row"><button class="ghost" data-in="again">↺ Preinštalovať s PATH</button></div>`}</div></div>`;
   return ""; }
-function instScore() { const I = S.inst; let n = 0; if (I.st >= 1) n++; if (I.st >= 2 && I.path) n++; if (I.ver) n++; if (n && (!S.t.g_inst || S.t.g_inst.score < n)) award("g_inst", n); }
-function REPLGOAL(c) { const G = S.sg, last = S.repl[S.repl.length - 1]; if (/^print\s*\(\s*['"]/.test(c) && !last.e) G.print = true; if (/^[\d\s+\-*/().%]+$/.test(c) && /[+\-*/%]/.test(c) && !last.e) G.calc = true; if (/^[A-Za-z_]\w*\s*=(?!=)/.test(c) && !last.e) G.var = true; if (last.e) G.err = true; const n = Object.keys(G).length; if (n && (!S.t.g_sh || S.t.g_sh.score < n)) award("g_sh", n); }
+function instScore() { const I = S.inst; let n = 0; if (I.st >= 1) n++; if (I.st >= 2 && I.path) n++; if (I.ver) n++; award("g_inst", n); }
+function REPLGOAL(c) { const G = S.sg, last = S.repl[S.repl.length - 1]; if (/^print\s*\(\s*['"]/.test(c) && !last.e) G.print = true; if (/^[\d\s+\-*/().%]+$/.test(c) && /[+\-*/%]/.test(c) && !last.e) G.calc = true; if (/^[A-Za-z_]\w*\s*=(?!=)/.test(c) && !last.e) G.var = true; if (last.e) G.err = true; const n = Object.keys(G).length; award("g_sh", n); }
 /* ---------- LENKA: obrázky k teórii ---------- */
 /* ---------- LENKA: obrázky k teórii ---------- */
 const PF = (() => {
@@ -1478,7 +1478,9 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
   <p class="muted" style="font-size:15px">Zastávky si teraz môžeš znova prezrieť (iba na čítanie). Uvidíš v nich aj správne odpovede.</p>
-  <div class="row" aria-live="polite">${formBtn}</div>`;
+  <div class="row" aria-live="polite">${formBtn}</div>
+  <div class="box" style="margin-top:16px">${S.rconfirm ? `<p style="margin:0"><b>Naozaj začať odznova?</b> Body aj odpovede sa vymažú.</p><div class="confirm"><button class="primary" data-ryes>Áno, začať odznova</button><button class="ghost" data-rno>Späť</button></div>`
+    : `<p style="margin:0 0 10px">Chceš si hodinu prejsť ešte raz? Začneš od Štartu s novými úlohami a nový výsledok sa tiež odošle učiteľovi.</p><button class="ghost" data-rreset>↺ Začať odznova</button>`}</div>`;
 };
 
 const main = document.getElementById("main");
@@ -1518,6 +1520,9 @@ document.addEventListener("click", e => {
   const el = e.target.closest("button,[data-bucket],[data-tg]"); if (!el) return;
   const ds = el.dataset;
   if (ds.go !== undefined) return go(+ds.go);
+  if (ds.rreset !== undefined) { S.rconfirm = true; save(); return render(false); }
+  if (ds.rno !== undefined) { S.rconfirm = false; save(); return render(false); }
+  if (ds.ryes !== undefined) { const keep = { cls: S.cls }; try { localStorage.removeItem(KEY); } catch (e) {} S = fresh(); S.cls = keep.cls; SEL = null; if (typeof TSEL !== "undefined") TSEL = null; save(); window.scrollTo(0, 0); return render(true); }
   if (ds.reset !== undefined) {
     if (S.testLocked) return;
     if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }

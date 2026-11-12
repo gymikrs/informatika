@@ -886,7 +886,9 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
   <p class="muted" style="font-size:15px">Zastávky si teraz môžeš znova prezrieť (iba na čítanie). Uvidíš v nich aj správne odpovede.</p>
-  <div class="row" aria-live="polite">${formBtn}</div>`;
+  <div class="row" aria-live="polite">${formBtn}</div>
+  <div class="box" style="margin-top:16px">${S.rconfirm ? `<p style="margin:0"><b>Naozaj začať odznova?</b> Body aj odpovede sa vymažú.</p><div class="confirm"><button class="primary" data-ryes>Áno, začať odznova</button><button class="ghost" data-rno>Späť</button></div>`
+    : `<p style="margin:0 0 10px">Chceš si hodinu prejsť ešte raz? Začneš od Štartu s novými úlohami a nový výsledok sa tiež odošle učiteľovi.</p><button class="ghost" data-rreset>↺ Začať odznova</button>`}</div>`;
 };
 
 const main = document.getElementById("main");
@@ -926,6 +928,9 @@ document.addEventListener("click", e => {
   const el = e.target.closest("button,[data-bucket],[data-tg]"); if (!el) return;
   const ds = el.dataset;
   if (ds.go !== undefined) return go(+ds.go);
+  if (ds.rreset !== undefined) { S.rconfirm = true; save(); return render(false); }
+  if (ds.rno !== undefined) { S.rconfirm = false; save(); return render(false); }
+  if (ds.ryes !== undefined) { const keep = { cls: S.cls }; try { localStorage.removeItem(KEY); } catch (e) {} S = fresh(); S.cls = keep.cls; SEL = null; if (typeof TSEL !== "undefined") TSEL = null; save(); window.scrollTo(0, 0); return render(true); }
   if (ds.reset !== undefined) {
     if (S.testLocked) return;
     if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
