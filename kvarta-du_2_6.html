@@ -673,6 +673,7 @@ const VIEWS = {
       <p>Každú premennú môžeš meniť <b>zvlášť</b>: zmena šírky nezmení výšku a naopak.</p>
       <p>Keď chceš iný obrázok, zmeníš iba <b>hodnoty v priradeniach</b> na začiatku programu. Príkazy na kreslenie ostanú rovnaké.</p>
       <p>Uhly otočenia a farby s veľkosťou nesúvisia, tie meníš priamo v príkazoch.</p>
+      <p>Premenné pomenuj tak, aby bolo jasné, čo v nich je: sirka a vyska sú lepšie ako a a b. Mená premenných píš bez medzier a bez diakritiky.</p>
       ${VEDEL("Aj formulár na stránke e-shopu so šírkou a výškou obrázka funguje ako dve premenné. Keď zamkneš pomer strán, zmena jednej premennej prepočíta aj druhú.")}`, FIG_C1 + FIG_C2, [[6, "🪑", "stôl podľa predlohy", "k6", simHTML("k6")], [7, "🤔", "ktorú premennú zmeniť?", "k7", mcHTML(TASKS.k7)]]); },
   m4() { return missionHTML(4, "Premenná môže byť aj v príkaze pensize. Hrubé pero nakreslí kruh.", `Kokosové orechy sú okrúhle! ⚫ Nakreslím ich hrubým perom: <code>pensize</code> a <code>fd(0)</code>.`, "wow", `
       <p>Premenná môže byť aj v iných príkazoch ako <code>fd</code>, napríklad v <code>pensize(p)</code>.</p>
@@ -684,7 +685,8 @@ const VIEWS = {
       <p>Dobrý programátor vie <b>predpovedať</b>, čo program urobí, bez toho, aby ho spustil.</p>
       <p>Na papier si nakresli <b>škatuľky</b> pre všetky premenné. Choď po programe riadok po riadku. Pri každom priradení prepíš obsah škatuľky naľavo od znaku <b>=</b>.</p>
       <p>Pozor na priradenie <code>y = x</code>. Skopíruje do <code>y</code> hodnotu, ktorú má <code>x</code> <b>v tej chvíli</b>. Keď sa <code>x</code> neskôr zmení, v <code>y</code> ostane stará hodnota.</p>
-      <p>Najprv odhadni výsledok, potom ho over spustením alebo krokovaním.</p>`, FIG_E1 + FIG_E2 + VEDEL("Programátori tomu hovoria <b>trasovanie</b>. Slovo pochádza z angličtiny (trace = stopa): sleduješ stopu, ktorú hodnoty v programe zanechávajú."), [[11, "📋", "tabuľka hodnôt", "k11", traceHTML("k11")], [12, "🔮", "čo nakreslí program?", "k12", mcHTML(TASKS.k12)], [13, "🧠", "aká je hodnota?", "k13", mcHTML(TASKS.k13)]]); },
+      <p>Najprv odhadni výsledok, potom ho over spustením alebo krokovaním.</p>
+      <p>Pri trasovaní si hodnoty zapisuj do tabuľky: každý stĺpec patrí jednej premennej, každý riadok jednému riadku programu. Keď sa premenná zmení, starú hodnotu prečiarkni a novú napíš pod ňu.</p>`, FIG_E1 + FIG_E2 + VEDEL("Programátori tomu hovoria <b>trasovanie</b>. Slovo pochádza z angličtiny (trace = stopa): sleduješ stopu, ktorú hodnoty v programe zanechávajú."), [[11, "📋", "tabuľka hodnôt", "k11", traceHTML("k11")], [12, "🔮", "čo nakreslí program?", "k12", mcHTML(TASKS.k12)], [13, "🧠", "aká je hodnota?", "k13", mcHTML(TASKS.k13)]]); },
   m6() { return missionHTML(6, "Navyše: nájdi chyby, ktoré pri premenných robí každý začiatočník.", `Posledná misia! 🐞 Aj ja sa občas pomýlim. Pomôž mi nájsť chyby v mojom programe.`, "wow", `
       <p>Keď Python nájde chybu, zastaví sa a v Shelli vypíše <b>chybové hlásenie</b>.</p>
       <table class="rtab"><thead><tr><th>Hlásenie</th><th>Častá príčina</th></tr></thead><tbody>
@@ -925,4 +927,58 @@ document.addEventListener("input", e => {
 Object.assign(VIEWS, RESULT_VIEW);
 render(false);
 
-</script></body></html>
+</script>
+<script>
+/* LENKA: stĺpec s textom a stĺpec s obrázkami v teórii končia v rovnakej výške (pravidlo z 27. 10.) */
+(function () {
+  const moved = [], grids = [];
+  const H = el => el.getBoundingClientRect().height;
+  const put = m => { m.el.style.cssText = m.css; if (m.par.isConnected && (!m.next || m.next.parentNode === m.par)) m.par.insertBefore(m.el, m.next); };
+  function undo() { while (moved.length) put(moved.pop()); while (grids.length) { const g = grids.pop(); if (g.css !== undefined) g.el.style.cssText = g.css; else g.el.style.gridTemplateColumns = g.v; } }
+  function mv(el, to, css) { moved.push({ el, par: el.parentNode, next: el.nextSibling, css: el.style.cssText }); to.appendChild(el); if (css) el.style.cssText += css; }
+  function back(n) { while (moved.length > n) put(moved.pop()); }
+  function one(ts) {
+    const c = [...ts.children]; if (c.length < 2) return; const L = c[0], R = c[1];
+    const rl = L.getBoundingClientRect(), rr = R.getBoundingClientRect();
+    if (Math.abs(rl.top - rr.top) > 4 || rr.left < rl.right) return; /* na mobile sú stĺpce pod sebou */
+    const d0 = H(L) - H(R); if (Math.abs(d0) < 40) return;
+    const gap = parseFloat(getComputedStyle(ts).columnGap) || 22, tot = rl.width + rr.width, w0 = rr.width;
+    const wMin = Math.max(w0 * .96, tot * .38), wMax = Math.min(560, tot * .56);
+    grids.push({ el: ts, v: ts.style.gridTemplateColumns });
+    const setW = w => { ts.style.gridTemplateColumns = `minmax(0,1fr) ${Math.round(w)}px`; };
+    const tune = () => { /* šírka stĺpca s obrázkami tak, aby rozdiel výšok bol čo najmenší */
+      let lo = wMin, hi = wMax, best = null;
+      const ev = w => { setW(w); const d = H(L) - H(R); if (!best || Math.abs(d) < Math.abs(best.d)) best = { w, d }; return d; };
+      ev(w0); if (ev(lo) < 0) return best; if (ev(hi) > 0) return best;
+      for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; if (ev(m) > 0) lo = m; else hi = m; }
+      return best; };
+    const lastFig = () => R.children.length > 1 ? R.lastElementChild : null;
+    const vedL = () => [...L.children].reverse().find(x => x.classList.contains("vedel"));
+    const vedO = () => { const n = ts.nextElementSibling; return n && n.classList.contains("vedel") && /Vedel si/.test(n.textContent) ? n : null; };
+    const plans = [];
+    const figL = () => [...L.children].reverse().find(x => x.classList.contains("tfig")), hasF = R.children.length > 1, hasG = !!figL(), hasO = !!vedO(), hasV = !!vedL();
+    for (const f of hasF ? [0, 1, .85, .7] : [0]) for (const v of hasV ? [0, 1] : [0]) for (const o of hasO ? [0, "L", "R"] : [0]) for (const g of hasG ? [0, 1] : [0]) if (!(v && o)) plans.push({ f, v, o, g });
+    const apply = p => {
+      if (p.o) { const el = vedO(); if (!el) return false; mv(el, p.o === "L" ? L : R, p.o === "L" ? ";margin-top:14px" : ";margin:0"); }
+      if (p.f) { const el = lastFig(); if (!el) return false; mv(el, L, el.classList.contains("tfig") ? `;margin:14px auto 0;max-width:${Math.round(w0 * p.f)}px` : ";margin-top:14px"); }
+      if (p.g) { const el = figL(); if (!el) return false; mv(el, R, ";margin:0"); }
+      if (p.v) { const el = vedL(); if (!el || L.children.length < 2) return false; mv(el, R, ";margin:0"); }
+      return true; };
+    let pick = null;
+    plans.forEach((p, pi) => {
+      const k = moved.length; setW(w0);
+      if (apply(p)) { const b = tune(); const sc = Math.abs(b.d) + (!!p.f + p.v + !!p.o + p.g) * 30 + (p.f && p.f < 1 ? 15 : 0) + Math.abs(b.w - w0) / 4; if (!pick || sc < pick.sc) pick = { p, w: b.w, sc }; }
+      back(k);
+    });
+    setW(w0);
+    if (!pick) return;
+    apply(pick.p);
+    setW(pick.w);
+  }
+  function bal() { undo(); document.querySelectorAll(".tsplit").forEach(one); }
+  let raf = 0; const go = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(bal); };
+  const main = document.getElementById("main"); if (main) new MutationObserver(go).observe(main, { childList: true });
+  window.addEventListener("resize", go); if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); go();
+})();
+</script>
+</body></html>

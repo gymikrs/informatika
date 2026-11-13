@@ -895,6 +895,7 @@ const VIEWS = {
         <tr><td><b>orientácia</b></td><td>strana je otočená na výšku alebo na šírku</td></tr>
         <tr><td><b>veľkosť</b></td><td>rozmer papiera, v škole najčastejšie A4</td></tr></tbody></table>
       <p>Nastavenie strany platí pre <b>celý dokument</b>. Keď ho zmeníš, Word celý text znova rozloží.</p>
+      <p>Ako bude strana vyzerať po vytlačení, vidíš v zobrazení Rozloženie pri tlači a pred tlačou aj v ponuke Súbor › Tlačiť.</p>
     </div><div class="tfigs" style="margin:0;grid-template-columns:1fr">${FIG_MARGIN}${FIG_ORI}</div></div>
     ${VEDEL("Po anglicky sa orientácia na výšku volá <b>portrait</b> (portrét) a na šírku <b>landscape</b> (krajina). Maliari totiž portréty maľovali na vysoké plátno a krajinky na široké.")}
     ${H3("🗂️", "na výšku, alebo na šírku?", "osort")}<div class="task">${sortHTML(TASKS.osort)}</div>
@@ -910,6 +911,7 @@ const VIEWS = {
         <tr><td><b>normálne</b></td><td>2,5 cm</td><td>referát, list</td></tr>
         <tr><td><b>úzke</b></td><td>1,27 cm</td><td>keď sa potrebuje zmestiť veľa obsahu</td></tr>
         <tr><td><b>široké</b></td><td>5,08 cm</td><td>keď chceš miesto na poznámky</td></tr></tbody></table>
+      <p>Každý ďalší formát radu A má polovičnú plochu: z listu A3 vzniknú preložením dva listy A4 a z A4 dva listy A5.</p>
     </div><div class="tfigs" style="margin:0;grid-template-columns:1fr">${FIG_MG3}${S.t.paper ? FIG_A : FIG_LETTER}</div></div>
     ${VEDEL("Formát A4 určuje norma, ktorá vznikla v Nemecku už v roku <b>1922</b>. Dnes ju používa takmer celý svet, okrem USA a Kanady.")}
     ${H3("🧩", "zoraď formáty papiera", "paper")}<div class="task">${orderHTML(TASKS.paper)}</div>
@@ -942,6 +944,7 @@ const VIEWS = {
         <tr><td><b>riadkovanie</b></td><td>1,0; 1,15; 1,5; 2,0</td></tr>
         <tr><td><b>medzery</b></td><td>pred odsekom a za ním</td></tr></tbody></table>
       <p>Tlačidlo <b>¶</b> zobrazí <b>skryté znaky</b>. Uvidíš, kde si stlačil Enter, Tab alebo medzerník.</p>
+      <p>Nastavenia odseku platia pre odsek, v ktorom stojí kurzor. Ak chceš zmeniť viac odsekov naraz, najprv ich označ.</p>
     </div><div class="tfigs" style="margin:0;grid-template-columns:1fr">${FIG_PARA}${FIG_SPACE}</div></div>
     ${VEDEL("Znak <b>¶</b> sa volá <b>odsekový znak</b>. Používali ho už stredovekí pisári, ktorí ním v rukopisoch označovali začiatok nového odseku.")}
     ${H3("↔️", "ako je odsek zarovnaný?", "align")}<div class="task">${matchHTML(TASKS.align)}</div>
@@ -1091,4 +1094,58 @@ document.addEventListener("input", e => {
   const t = e.target, f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
 });
 render(false);
-</script></body></html>
+</script>
+<script>
+/* LENKA: stĺpec s textom a stĺpec s obrázkami v teórii končia v rovnakej výške (pravidlo z 27. 10.) */
+(function () {
+  const moved = [], grids = [];
+  const H = el => el.getBoundingClientRect().height;
+  const put = m => { m.el.style.cssText = m.css; if (m.par.isConnected && (!m.next || m.next.parentNode === m.par)) m.par.insertBefore(m.el, m.next); };
+  function undo() { while (moved.length) put(moved.pop()); while (grids.length) { const g = grids.pop(); if (g.css !== undefined) g.el.style.cssText = g.css; else g.el.style.gridTemplateColumns = g.v; } }
+  function mv(el, to, css) { moved.push({ el, par: el.parentNode, next: el.nextSibling, css: el.style.cssText }); to.appendChild(el); if (css) el.style.cssText += css; }
+  function back(n) { while (moved.length > n) put(moved.pop()); }
+  function one(ts) {
+    const c = [...ts.children]; if (c.length < 2) return; const L = c[0], R = c[1];
+    const rl = L.getBoundingClientRect(), rr = R.getBoundingClientRect();
+    if (Math.abs(rl.top - rr.top) > 4 || rr.left < rl.right) return; /* na mobile sú stĺpce pod sebou */
+    const d0 = H(L) - H(R); if (Math.abs(d0) < 40) return;
+    const gap = parseFloat(getComputedStyle(ts).columnGap) || 22, tot = rl.width + rr.width, w0 = rr.width;
+    const wMin = Math.max(w0 * .96, tot * .38), wMax = Math.min(560, tot * .56);
+    grids.push({ el: ts, v: ts.style.gridTemplateColumns });
+    const setW = w => { ts.style.gridTemplateColumns = `minmax(0,1fr) ${Math.round(w)}px`; };
+    const tune = () => { /* šírka stĺpca s obrázkami tak, aby rozdiel výšok bol čo najmenší */
+      let lo = wMin, hi = wMax, best = null;
+      const ev = w => { setW(w); const d = H(L) - H(R); if (!best || Math.abs(d) < Math.abs(best.d)) best = { w, d }; return d; };
+      ev(w0); if (ev(lo) < 0) return best; if (ev(hi) > 0) return best;
+      for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; if (ev(m) > 0) lo = m; else hi = m; }
+      return best; };
+    const lastFig = () => R.children.length > 1 ? R.lastElementChild : null;
+    const vedL = () => [...L.children].reverse().find(x => x.classList.contains("vedel"));
+    const vedO = () => { const n = ts.nextElementSibling; return n && n.classList.contains("vedel") && /Vedel si/.test(n.textContent) ? n : null; };
+    const plans = [];
+    const figL = () => [...L.children].reverse().find(x => x.classList.contains("tfig")), hasF = R.children.length > 1, hasG = !!figL(), hasO = !!vedO(), hasV = !!vedL();
+    for (const f of hasF ? [0, 1, .85, .7] : [0]) for (const v of hasV ? [0, 1] : [0]) for (const o of hasO ? [0, "L", "R"] : [0]) for (const g of hasG ? [0, 1] : [0]) if (!(v && o)) plans.push({ f, v, o, g });
+    const apply = p => {
+      if (p.o) { const el = vedO(); if (!el) return false; mv(el, p.o === "L" ? L : R, p.o === "L" ? ";margin-top:14px" : ";margin:0"); }
+      if (p.f) { const el = lastFig(); if (!el) return false; mv(el, L, el.classList.contains("tfig") ? `;margin:14px auto 0;max-width:${Math.round(w0 * p.f)}px` : ";margin-top:14px"); }
+      if (p.g) { const el = figL(); if (!el) return false; mv(el, R, ";margin:0"); }
+      if (p.v) { const el = vedL(); if (!el || L.children.length < 2) return false; mv(el, R, ";margin:0"); }
+      return true; };
+    let pick = null;
+    plans.forEach((p, pi) => {
+      const k = moved.length; setW(w0);
+      if (apply(p)) { const b = tune(); const sc = Math.abs(b.d) + (!!p.f + p.v + !!p.o + p.g) * 30 + (p.f && p.f < 1 ? 15 : 0) + Math.abs(b.w - w0) / 4; if (!pick || sc < pick.sc) pick = { p, w: b.w, sc }; }
+      back(k);
+    });
+    setW(w0);
+    if (!pick) return;
+    apply(pick.p);
+    setW(pick.w);
+  }
+  function bal() { undo(); document.querySelectorAll(".tsplit").forEach(one); }
+  let raf = 0; const go = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(bal); };
+  const main = document.getElementById("main"); if (main) new MutationObserver(go).observe(main, { childList: true });
+  window.addEventListener("resize", go); if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); go();
+})();
+</script>
+</body></html>

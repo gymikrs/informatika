@@ -991,6 +991,7 @@ const VIEWS = {
       <p>Hranaté písmená sa skladajú z <b>rovných čiar</b> a <b>otočení o 90°</b>. Na kreslenie stačia príkazy <code>fd</code>, <code>bk</code>, <code>lt</code> a <code>rt</code>.</p>
       <p>Korytnačka smie prejsť po tej istej čiare aj <b>viackrát</b>. Príkazom <code>bk()</code> cúva späť po čiare a dostane sa na miesto, odkiaľ pokračuje ďalšia čiara. Smer, kam sa pozerá, sa pri tom nemení.</p>
       <p>Pred písaním programu si písmeno <b>načrtni</b>: kde začneš, v akom poradí pôjdeš a aké dlhé sú čiary. Po spustení porovnaj kresbu s predlohou a program oprav.</p>
+      <p>Keď sa písmeno nakreslí inak, ako si chcel, hľadaj chybu od začiatku programu. Najčastejšie je zlý smer otočenia (lt namiesto rt) alebo zlá dĺžka čiary.</p>
     </div><div class="tfigs">${FIG_TPLAN}${FIG_BK}</div></div>
     ${VEDEL("Na prvých obrazovkách počítačov sa písmená skladali z bodov v mriežke s rozmermi iba <b>5 × 7</b>. Preto boli hranaté, podobne ako tvoje písmená z korytnačky.")}
     ${H3(9, "🔮", "čo nakreslí program?", "predict")}<div class="task">${mcHTML(TASKS.predict)}</div>
@@ -1004,6 +1005,7 @@ const VIEWS = {
       <p>Číslice na digitálnych hodinách sa skladajú zo <b>siedmich úsečiek</b>, ktorým hovoríme segmenty. Označujeme ich písmenami a až g.</p>
       <p>Naša číslica je <b>50 široká a 100 vysoká</b>, každý segment má dĺžku 50.</p>
       <p>Pravidlo z pracovného listu: kreslenie začni v <b>ľavom dolnom rohu</b>, korytnačka sa pozerá doprava, a na konci ju vráť späť do ľavého dolného rohu. Nevadí, ak ide po niektorom segmente viackrát. Vďaka tomu sa dajú číslice ľahko kresliť <b>vedľa seba</b>, napríklad pri digitálnych hodinách.</p>
+      <p>Pri každej číslici si najprv vypíš, ktoré segmenty svietia. Potom hľadaj cestu, po ktorej korytnačka prejde všetky svietiace segmenty a vráti sa do ľavého dolného rohu.</p>
     </div><div class="tfigs">${FIG_SEG}${FIG_ZERO}</div></div>
     ${VEDEL("Prvé digitálne hodinky na svete, <b>Hamilton Pulsar</b>, sa začali predávať v roku 1972. Mali svietiaci displej, ktorý ukázal čas, až keď si stlačil tlačidlo. Inak by sa batéria rýchlo vybila.")}
     ${H3(12, "💡", "rozsvieť displej", "seg")}<div class="task">${segHTML()}</div>
@@ -1141,4 +1143,58 @@ document.addEventListener("input", e => {
   const f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
 });
 render(false);
-</script></body></html>
+</script>
+<script>
+/* LENKA: stĺpec s textom a stĺpec s obrázkami v teórii končia v rovnakej výške (pravidlo z 27. 10.) */
+(function () {
+  const moved = [], grids = [];
+  const H = el => el.getBoundingClientRect().height;
+  const put = m => { m.el.style.cssText = m.css; if (m.par.isConnected && (!m.next || m.next.parentNode === m.par)) m.par.insertBefore(m.el, m.next); };
+  function undo() { while (moved.length) put(moved.pop()); while (grids.length) { const g = grids.pop(); if (g.css !== undefined) g.el.style.cssText = g.css; else g.el.style.gridTemplateColumns = g.v; } }
+  function mv(el, to, css) { moved.push({ el, par: el.parentNode, next: el.nextSibling, css: el.style.cssText }); to.appendChild(el); if (css) el.style.cssText += css; }
+  function back(n) { while (moved.length > n) put(moved.pop()); }
+  function one(ts) {
+    const c = [...ts.children]; if (c.length < 2) return; const L = c[0], R = c[1];
+    const rl = L.getBoundingClientRect(), rr = R.getBoundingClientRect();
+    if (Math.abs(rl.top - rr.top) > 4 || rr.left < rl.right) return; /* na mobile sú stĺpce pod sebou */
+    const d0 = H(L) - H(R); if (Math.abs(d0) < 40) return;
+    const gap = parseFloat(getComputedStyle(ts).columnGap) || 22, tot = rl.width + rr.width, w0 = rr.width;
+    const wMin = Math.max(w0 * .96, tot * .38), wMax = Math.min(560, tot * .56);
+    grids.push({ el: ts, v: ts.style.gridTemplateColumns });
+    const setW = w => { ts.style.gridTemplateColumns = `minmax(0,1fr) ${Math.round(w)}px`; };
+    const tune = () => { /* šírka stĺpca s obrázkami tak, aby rozdiel výšok bol čo najmenší */
+      let lo = wMin, hi = wMax, best = null;
+      const ev = w => { setW(w); const d = H(L) - H(R); if (!best || Math.abs(d) < Math.abs(best.d)) best = { w, d }; return d; };
+      ev(w0); if (ev(lo) < 0) return best; if (ev(hi) > 0) return best;
+      for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; if (ev(m) > 0) lo = m; else hi = m; }
+      return best; };
+    const lastFig = () => R.children.length > 1 ? R.lastElementChild : null;
+    const vedL = () => [...L.children].reverse().find(x => x.classList.contains("vedel"));
+    const vedO = () => { const n = ts.nextElementSibling; return n && n.classList.contains("vedel") && /Vedel si/.test(n.textContent) ? n : null; };
+    const plans = [];
+    const figL = () => [...L.children].reverse().find(x => x.classList.contains("tfig")), hasF = R.children.length > 1, hasG = !!figL(), hasO = !!vedO(), hasV = !!vedL();
+    for (const f of hasF ? [0, 1, .85, .7] : [0]) for (const v of hasV ? [0, 1] : [0]) for (const o of hasO ? [0, "L", "R"] : [0]) for (const g of hasG ? [0, 1] : [0]) if (!(v && o)) plans.push({ f, v, o, g });
+    const apply = p => {
+      if (p.o) { const el = vedO(); if (!el) return false; mv(el, p.o === "L" ? L : R, p.o === "L" ? ";margin-top:14px" : ";margin:0"); }
+      if (p.f) { const el = lastFig(); if (!el) return false; mv(el, L, el.classList.contains("tfig") ? `;margin:14px auto 0;max-width:${Math.round(w0 * p.f)}px` : ";margin-top:14px"); }
+      if (p.g) { const el = figL(); if (!el) return false; mv(el, R, ";margin:0"); }
+      if (p.v) { const el = vedL(); if (!el || L.children.length < 2) return false; mv(el, R, ";margin:0"); }
+      return true; };
+    let pick = null;
+    plans.forEach((p, pi) => {
+      const k = moved.length; setW(w0);
+      if (apply(p)) { const b = tune(); const sc = Math.abs(b.d) + (!!p.f + p.v + !!p.o + p.g) * 30 + (p.f && p.f < 1 ? 15 : 0) + Math.abs(b.w - w0) / 4; if (!pick || sc < pick.sc) pick = { p, w: b.w, sc }; }
+      back(k);
+    });
+    setW(w0);
+    if (!pick) return;
+    apply(pick.p);
+    setW(pick.w);
+  }
+  function bal() { undo(); document.querySelectorAll(".tsplit").forEach(one); }
+  let raf = 0; const go = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(bal); };
+  const main = document.getElementById("main"); if (main) new MutationObserver(go).observe(main, { childList: true });
+  window.addEventListener("resize", go); if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); go();
+})();
+</script>
+</body></html>

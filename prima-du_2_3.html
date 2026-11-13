@@ -903,6 +903,8 @@ const VIEWS = {
       <p>V mobiloch s Androidom je predinštalovaná aplikácia <b>Gmail</b>. Môžeš si nainštalovať aj iného klienta, napríklad <b>Outlook</b>.</p>
       <p>Mobil má malú obrazovku, preto sa časti pošty <b>striedajú</b>. Nevidíš priečinky, zoznam a správu naraz ako v počítači.</p>
       <p>Mobil ovládaš <b>klepnutím</b> a <b>potiahnutím</b> prsta. Aplikácia ťa na novú poštu upozorní <b>oznámením</b>, aj keď je zatvorená. Pošta v mobile je stále pri tebe, preto mobil chráň <b>zámkom obrazovky</b>.</p>
+      <p>Oznámenia si môžeš nastaviť: vypnúť zvuk, nechať iba číslo na ikone aplikácie alebo ich na noc úplne stíšiť.</p>
+      <p>Gmail aj Outlook v mobile vedia spravovať viac účtov naraz, napríklad súkromný a školský. Medzi nimi sa prepneš klepnutím na ikonu účtu.</p>
     </div><div class="tfigs">${FIG_MOB}${FIG_NOTIF}</div></div>
     ${VEDEL("Prvý mobil s Androidom sa začal predávať v roku <b>2008</b>. Mal vysúvaciu klávesnicu a aplikáciu Gmail v ňom našiel každý majiteľ už od prvého dňa.")}
     ${H3(5, "👆", "ovládaj poštu v mobile", "gest")}<div class="task">${gestHTML()}</div>
@@ -947,6 +949,7 @@ const VIEWS = {
       <p>V Outlooku, Thunderbirde aj v Gmaile nájdeš <b>kalendár</b>. Zapisuješ si do neho <b>udalosti</b>: tréningy, krúžky, oslavy alebo písomky.</p>
       <p><b>Pozvánka</b> je špeciálny e‑mail s tlačidlami <b>Prijať</b>, <b>Možno</b> a <b>Odmietnuť</b>. Keď pozvánku prijmeš, udalosť sa sama <b>zapíše do kalendára</b> a organizátor dostane tvoju odpoveď.</p>
       <p>Ak ťa niekto pozve obyčajným e‑mailom, udalosť si do kalendára zapíšeš sám. Vyplníš <b>názov</b>, <b>deň</b> a <b>čas</b> a môžeš si nastaviť aj <b>pripomienku</b>.</p>
+      <p>Ak používaš v mobile aj v počítači rovnaký účet, kalendár sa zosynchronizuje. Udalosť zapísaná v škole sa ti doma ukáže aj v mobile.</p>
     </div><div class="tfigs">${FIG_POZV}${FIG_UDAL}</div></div>
     ${VEDEL("Pozvánka do kalendára sa posiela ako malý súbor s príponou <b>.ics</b>. Rozumie mu Outlook, Thunderbird aj Gmail, preto môžeš pozvať kamaráta, aj keď používa iný klient ako ty.")}
     ${H3(13, "📨", "prijmi, alebo odmietni?", "inv")}<div class="task">${invHTML()}</div>
@@ -1055,4 +1058,58 @@ document.addEventListener("change", e => {
 });
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.dataset && e.target.dataset.wz) { e.preventDefault(); const b = document.querySelector('[data-wza="next"]'); if (b && !b.disabled) b.click(); } });
 render(false);
-</script></body></html>
+</script>
+<script>
+/* LENKA: stĺpec s textom a stĺpec s obrázkami v teórii končia v rovnakej výške (pravidlo z 27. 10.) */
+(function () {
+  const moved = [], grids = [];
+  const H = el => el.getBoundingClientRect().height;
+  const put = m => { m.el.style.cssText = m.css; if (m.par.isConnected && (!m.next || m.next.parentNode === m.par)) m.par.insertBefore(m.el, m.next); };
+  function undo() { while (moved.length) put(moved.pop()); while (grids.length) { const g = grids.pop(); if (g.css !== undefined) g.el.style.cssText = g.css; else g.el.style.gridTemplateColumns = g.v; } }
+  function mv(el, to, css) { moved.push({ el, par: el.parentNode, next: el.nextSibling, css: el.style.cssText }); to.appendChild(el); if (css) el.style.cssText += css; }
+  function back(n) { while (moved.length > n) put(moved.pop()); }
+  function one(ts) {
+    const c = [...ts.children]; if (c.length < 2) return; const L = c[0], R = c[1];
+    const rl = L.getBoundingClientRect(), rr = R.getBoundingClientRect();
+    if (Math.abs(rl.top - rr.top) > 4 || rr.left < rl.right) return; /* na mobile sú stĺpce pod sebou */
+    const d0 = H(L) - H(R); if (Math.abs(d0) < 40) return;
+    const gap = parseFloat(getComputedStyle(ts).columnGap) || 22, tot = rl.width + rr.width, w0 = rr.width;
+    const wMin = Math.max(w0 * .96, tot * .38), wMax = Math.min(560, tot * .56);
+    grids.push({ el: ts, v: ts.style.gridTemplateColumns });
+    const setW = w => { ts.style.gridTemplateColumns = `minmax(0,1fr) ${Math.round(w)}px`; };
+    const tune = () => { /* šírka stĺpca s obrázkami tak, aby rozdiel výšok bol čo najmenší */
+      let lo = wMin, hi = wMax, best = null;
+      const ev = w => { setW(w); const d = H(L) - H(R); if (!best || Math.abs(d) < Math.abs(best.d)) best = { w, d }; return d; };
+      ev(w0); if (ev(lo) < 0) return best; if (ev(hi) > 0) return best;
+      for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; if (ev(m) > 0) lo = m; else hi = m; }
+      return best; };
+    const lastFig = () => R.children.length > 1 ? R.lastElementChild : null;
+    const vedL = () => [...L.children].reverse().find(x => x.classList.contains("vedel"));
+    const vedO = () => { const n = ts.nextElementSibling; return n && n.classList.contains("vedel") && /Vedel si/.test(n.textContent) ? n : null; };
+    const plans = [];
+    const figL = () => [...L.children].reverse().find(x => x.classList.contains("tfig")), hasF = R.children.length > 1, hasG = !!figL(), hasO = !!vedO(), hasV = !!vedL();
+    for (const f of hasF ? [0, 1, .85, .7] : [0]) for (const v of hasV ? [0, 1] : [0]) for (const o of hasO ? [0, "L", "R"] : [0]) for (const g of hasG ? [0, 1] : [0]) if (!(v && o)) plans.push({ f, v, o, g });
+    const apply = p => {
+      if (p.o) { const el = vedO(); if (!el) return false; mv(el, p.o === "L" ? L : R, p.o === "L" ? ";margin-top:14px" : ";margin:0"); }
+      if (p.f) { const el = lastFig(); if (!el) return false; mv(el, L, el.classList.contains("tfig") ? `;margin:14px auto 0;max-width:${Math.round(w0 * p.f)}px` : ";margin-top:14px"); }
+      if (p.g) { const el = figL(); if (!el) return false; mv(el, R, ";margin:0"); }
+      if (p.v) { const el = vedL(); if (!el || L.children.length < 2) return false; mv(el, R, ";margin:0"); }
+      return true; };
+    let pick = null;
+    plans.forEach((p, pi) => {
+      const k = moved.length; setW(w0);
+      if (apply(p)) { const b = tune(); const sc = Math.abs(b.d) + (!!p.f + p.v + !!p.o + p.g) * 30 + (p.f && p.f < 1 ? 15 : 0) + Math.abs(b.w - w0) / 4; if (!pick || sc < pick.sc) pick = { p, w: b.w, sc }; }
+      back(k);
+    });
+    setW(w0);
+    if (!pick) return;
+    apply(pick.p);
+    setW(pick.w);
+  }
+  function bal() { undo(); document.querySelectorAll(".tsplit").forEach(one); }
+  let raf = 0; const go = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(bal); };
+  const main = document.getElementById("main"); if (main) new MutationObserver(go).observe(main, { childList: true });
+  window.addEventListener("resize", go); if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); go();
+})();
+</script>
+</body></html>

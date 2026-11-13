@@ -555,7 +555,8 @@ const VIEWS = {
       <p><b>Zvukové editory</b> upravujú jednu nahrávku: strih, hlasitosť, odstránenie šumu, efekty, uloženie do iného formátu. Napríklad Audacity (zadarmo pre Windows, macOS aj Linux), ocenaudio, Adobe Audition.</p>
       <p><b>Hudobné štúdiá</b> (DAW, digital audio workstation) skladajú hudbu z viacerých <b>stôp</b>, pracujú s virtuálnymi nástrojmi a MIDI. Napríklad GarageBand (Apple), BandLab (v prehliadači), FL Studio, Ableton Live, Logic Pro.</p>
       <p>Na mobile nahrávaš cez aplikáciu Diktafón alebo Hlasový záznamník.</p>
-      <p>Pri úprave platí: <b>originál si odlož</b> a pracuj na kópii.</p>`, FIG_APPS + FIG_COPY, [[1, "🗂️", "editor, či DAW?", "druh"], [2, "💻", "aký program?", "app"]]); },
+      <p>Pri úprave platí: <b>originál si odlož</b> a pracuj na kópii.</p>
+      ${VEDEL("Skratka <b>DAW</b> znamená <b>digital audio workstation</b>, po slovensky digitálna zvuková pracovná stanica.")}`, FIG_APPS + FIG_COPY, [[1, "🗂️", "editor, či DAW?", "druh"], [2, "💻", "aký program?", "app"]]); },
   m2() { return missionHTML(2, "Prečo je MP3 desaťkrát menšie ako WAV? Vyskúšaj si analyzátor formátov.", `Nekomprimovaný zvuk je obrovský. 🗜️ Pozrime sa, ako ho zmenšiť.`, "wow", `
       <p>Nekomprimovaný zvuk (PCM) je veľký: minúta v kvalite CD má asi 10,6 MB. Formáty delíme do troch skupín:</p>
       <p><b>Nekomprimované:</b> presný PCM záznam, veľké súbory, vhodné na úpravy (napríklad WAV).</p>
@@ -573,7 +574,8 @@ const VIEWS = {
       <p><b>Ekvalizér</b> zosilní alebo zoslabí pásma frekvencií: basy (nízke), stredy, výšky.</p>
       <p><b>Kompresor dynamiky</b> zmenší rozdiel medzi tichými a hlasnými miestami.</p>
       <p><b>Dozvuk</b> (reverb) a <b>ozvena</b> (echo) napodobnia priestor: izbu, halu, kostol.</p>
-      <p><b>Zmena tempa</b> zrýchli alebo spomalí bez zmeny výšky, <b>zmena výšky tónu</b> mení výšku bez zmeny tempa. <b>Zmena rýchlosti</b> mení oboje.</p>`, FIG_FX + FIG_EQ, [[8, "🧰", "efekt na problém", "efx"], [9, "🎚️", "ekvalizér", "eq"], [10, "⏩", "rýchlosť", "tem"]]); },
+      <p><b>Zmena tempa</b> zrýchli alebo spomalí bez zmeny výšky, <b>zmena výšky tónu</b> mení výšku bez zmeny tempa. <b>Zmena rýchlosti</b> mení oboje.</p>
+      ${VEDEL("Mikrofón zachytí aj šum chladničky či ventilátora, ktorý si pri nahrávaní ani nevšimneš. Najlepšie je preto nahrávať v tichej miestnosti.")}`, FIG_FX + FIG_EQ, [[8, "🧰", "efekt na problém", "efx"], [9, "🎚️", "ekvalizér", "eq"], [10, "⏩", "rýchlosť", "tem"]]); },
   m5() { return missionHTML(5, "Pozri sa na priebeh signálu a spoznáš, čo sa s nahrávkou stalo.", `Dostal som nahrávky od kamarátov. 🕵️ Spoznáš z obrázka, čo s nimi je?`, "", `
       <p>Veľa problémov uvidíš priamo na <b>priebehu signálu</b>, ešte predtým, ako nahrávku pustíš.</p>
       <p>Sleduj, ako vysoké sú kmity na začiatku, v strede aj na konci, a kde sa výška kmitov mení.</p>
@@ -786,4 +788,58 @@ document.addEventListener("input", e => {
 document.addEventListener("change", e => { const t = e.target; if (t.dataset && (t.dataset.lab || t.dataset.ci)) render(false); });
 
 render(false);
-</script></body></html>
+</script>
+<script>
+/* LENKA: stĺpec s textom a stĺpec s obrázkami v teórii končia v rovnakej výške (pravidlo z 27. 10.) */
+(function () {
+  const moved = [], grids = [];
+  const H = el => el.getBoundingClientRect().height;
+  const put = m => { m.el.style.cssText = m.css; if (m.par.isConnected && (!m.next || m.next.parentNode === m.par)) m.par.insertBefore(m.el, m.next); };
+  function undo() { while (moved.length) put(moved.pop()); while (grids.length) { const g = grids.pop(); if (g.css !== undefined) g.el.style.cssText = g.css; else g.el.style.gridTemplateColumns = g.v; } }
+  function mv(el, to, css) { moved.push({ el, par: el.parentNode, next: el.nextSibling, css: el.style.cssText }); to.appendChild(el); if (css) el.style.cssText += css; }
+  function back(n) { while (moved.length > n) put(moved.pop()); }
+  function one(ts) {
+    const c = [...ts.children]; if (c.length < 2) return; const L = c[0], R = c[1];
+    const rl = L.getBoundingClientRect(), rr = R.getBoundingClientRect();
+    if (Math.abs(rl.top - rr.top) > 4 || rr.left < rl.right) return; /* na mobile sú stĺpce pod sebou */
+    const d0 = H(L) - H(R); if (Math.abs(d0) < 40) return;
+    const gap = parseFloat(getComputedStyle(ts).columnGap) || 22, tot = rl.width + rr.width, w0 = rr.width;
+    const wMin = Math.max(w0 * .96, tot * .38), wMax = Math.min(560, tot * .56);
+    grids.push({ el: ts, v: ts.style.gridTemplateColumns });
+    const setW = w => { ts.style.gridTemplateColumns = `minmax(0,1fr) ${Math.round(w)}px`; };
+    const tune = () => { /* šírka stĺpca s obrázkami tak, aby rozdiel výšok bol čo najmenší */
+      let lo = wMin, hi = wMax, best = null;
+      const ev = w => { setW(w); const d = H(L) - H(R); if (!best || Math.abs(d) < Math.abs(best.d)) best = { w, d }; return d; };
+      ev(w0); if (ev(lo) < 0) return best; if (ev(hi) > 0) return best;
+      for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; if (ev(m) > 0) lo = m; else hi = m; }
+      return best; };
+    const lastFig = () => R.children.length > 1 ? R.lastElementChild : null;
+    const vedL = () => [...L.children].reverse().find(x => x.classList.contains("vedel"));
+    const vedO = () => { const n = ts.nextElementSibling; return n && n.classList.contains("vedel") && /Vedel si/.test(n.textContent) ? n : null; };
+    const plans = [];
+    const figL = () => [...L.children].reverse().find(x => x.classList.contains("tfig")), hasF = R.children.length > 1, hasG = !!figL(), hasO = !!vedO(), hasV = !!vedL();
+    for (const f of hasF ? [0, 1, .85, .7] : [0]) for (const v of hasV ? [0, 1] : [0]) for (const o of hasO ? [0, "L", "R"] : [0]) for (const g of hasG ? [0, 1] : [0]) if (!(v && o)) plans.push({ f, v, o, g });
+    const apply = p => {
+      if (p.o) { const el = vedO(); if (!el) return false; mv(el, p.o === "L" ? L : R, p.o === "L" ? ";margin-top:14px" : ";margin:0"); }
+      if (p.f) { const el = lastFig(); if (!el) return false; mv(el, L, el.classList.contains("tfig") ? `;margin:14px auto 0;max-width:${Math.round(w0 * p.f)}px` : ";margin-top:14px"); }
+      if (p.g) { const el = figL(); if (!el) return false; mv(el, R, ";margin:0"); }
+      if (p.v) { const el = vedL(); if (!el || L.children.length < 2) return false; mv(el, R, ";margin:0"); }
+      return true; };
+    let pick = null;
+    plans.forEach((p, pi) => {
+      const k = moved.length; setW(w0);
+      if (apply(p)) { const b = tune(); const sc = Math.abs(b.d) + (!!p.f + p.v + !!p.o + p.g) * 30 + (p.f && p.f < 1 ? 15 : 0) + Math.abs(b.w - w0) / 4; if (!pick || sc < pick.sc) pick = { p, w: b.w, sc }; }
+      back(k);
+    });
+    setW(w0);
+    if (!pick) return;
+    apply(pick.p);
+    setW(pick.w);
+  }
+  function bal() { undo(); document.querySelectorAll(".tsplit").forEach(one); }
+  let raf = 0; const go = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(bal); };
+  const main = document.getElementById("main"); if (main) new MutationObserver(go).observe(main, { childList: true });
+  window.addEventListener("resize", go); if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); go();
+})();
+</script>
+</body></html>

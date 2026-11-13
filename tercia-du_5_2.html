@@ -604,7 +604,7 @@ const TASKS = {
 const THEORY = {
   m1: ["Poradie stĺpcov: <b>nezávislá</b> veličina, potom <b>namerané</b> a <b>vypočítané</b> hodnoty.", "Jedno meranie = <b>jeden riadok</b>.", "V bunkách iba <b>čísla</b> s desatinnou čiarkou, jednotky patria do záhlavia.", "Konštanty patria do <b>samostatnej bunky</b>."],
   m2: ["Hmotnosť v gramoch prevedieš na kg: <b>m ÷ 1000</b>.", "Sila: <b>F = m · g</b>, g = 10 N/kg, jednotka newton (N).", "Tuhosť pružiny: <b>k = F ÷ Δl</b> (N/cm).", "<b>Hookov zákon</b>: predĺženie je priamo úmerné sile."],
-  m3: ["Vypočítané hodnoty počítaj <b>vzorcami</b> s adresami buniek.", "Konštantu (g) zamkni vo vzorci <b>absolútnou adresou</b> ($).", "Vzorec napíš raz a skopíruj ho <b>vyplnením nadol</b>."],
+  m3: ["Vypočítané hodnoty počítaj <b>vzorcami</b> s adresami buniek.", "Konštantu (g) zamkni vo vzorci <b>absolútnou adresou</b> ($).", "Vzorec napíš raz a skopíruj ho <b>vyplnením nadol</b>.", "Keď jeden riadok výsledkov veľmi trčí, hľadaj chybu v meraní alebo vo vzorci."],
   m4: ["Záhlavie zvýrazni <b>tučným písmom</b>.", "Tabuľke pridaj <b>orámovanie</b> (Domov → Písmo → Orámovanie).", "V stĺpci rovnaký počet <b>desatinných miest</b> podľa presnosti meradla.", "Desatinné miesta menia iba <b>zobrazenie</b>, skutočne zaokrúhli <b>ZAOKRÚHLIŤ(číslo;počet)</b>."],
   m5: ["<b>Perióda T</b> = čas jedného kmitu (tam aj späť).", "Meriame čas <b>10 kmitov</b> a delíme ho 10.", "Opakované meranie spracuje <b>PRIEMER</b>, rozptyl je <b>MAX − MIN</b>.", "Meranie s <b>hrubou chybou</b> zopakujeme."],
   m6: ["Každé meradlo má <b>najmenší dielik</b>.", "Zapisuj toľko desatinných miest, koľko meradlo naozaj odmeria.", "Viac číslic, ako meradlo dovolí, je klamstvo, menej je strata informácie.", "Neistotu merania zmenší <b>opakovanie</b> a <b>priemer</b>."]
@@ -803,6 +803,7 @@ const VIEWS = {
       <p>Každé meranie má <b>vlastný riadok</b>. V bunkách sú iba <b>čísla</b> s desatinnou <b>čiarkou</b>. Jednotku napíšeme do záhlavia, napríklad <b>teplota T (°C)</b>.</p>
       <p>Konštanty (napríklad g = 10 N/kg) dáme do <b>samostatnej bunky</b>. Vypočítané hodnoty nepočítame na kalkulačke, ale <b>vzorcami</b> s adresami buniek.</p>
       <p>Meranie opakujeme a spracujeme priemerom. Rozdiely medzi meraniami ukazujú <b>chybu merania</b>.</p>
+      <p>Tabuľku navrhni ešte pred meraním. Počas pokusu potom už len dopĺňaš čísla do pripravených riadkov.</p>
     </div><div class="tfigs">${FIG_COLS}${FIG_HEAD}${VEDEL("Vedci v laboratóriách si vedú <b>laboratórny denník</b>. Zapisujú doň každé meranie aj s dátumom, aby ho mohol ktokoľvek zopakovať a overiť.")}</div></div>
     ${H3(1, "📐", "záhlavie tabuľky", "stl")}<div class="task">${stlHTML()}</div>
     ${H3(2, "🕵️", "chyby v návrhu", "zly")}<div class="task">${zlyHTML()}</div>` + nextBar();
@@ -1016,4 +1017,58 @@ const endDrg = e => { if (!DRG) return; const D = DRG; DRG = null;
 document.addEventListener("pointerup", endDrg); document.addEventListener("pointercancel", endDrg);
 render(false);
 
-</script></body></html>
+</script>
+<script>
+/* LENKA: stĺpec s textom a stĺpec s obrázkami v teórii končia v rovnakej výške (pravidlo z 27. 10.) */
+(function () {
+  const moved = [], grids = [];
+  const H = el => el.getBoundingClientRect().height;
+  const put = m => { m.el.style.cssText = m.css; if (m.par.isConnected && (!m.next || m.next.parentNode === m.par)) m.par.insertBefore(m.el, m.next); };
+  function undo() { while (moved.length) put(moved.pop()); while (grids.length) { const g = grids.pop(); if (g.css !== undefined) g.el.style.cssText = g.css; else g.el.style.gridTemplateColumns = g.v; } }
+  function mv(el, to, css) { moved.push({ el, par: el.parentNode, next: el.nextSibling, css: el.style.cssText }); to.appendChild(el); if (css) el.style.cssText += css; }
+  function back(n) { while (moved.length > n) put(moved.pop()); }
+  function one(ts) {
+    const c = [...ts.children]; if (c.length < 2) return; const L = c[0], R = c[1];
+    const rl = L.getBoundingClientRect(), rr = R.getBoundingClientRect();
+    if (Math.abs(rl.top - rr.top) > 4 || rr.left < rl.right) return; /* na mobile sú stĺpce pod sebou */
+    const d0 = H(L) - H(R); if (Math.abs(d0) < 40) return;
+    const gap = parseFloat(getComputedStyle(ts).columnGap) || 22, tot = rl.width + rr.width, w0 = rr.width;
+    const wMin = Math.max(w0 * .96, tot * .38), wMax = Math.min(560, tot * .56);
+    grids.push({ el: ts, v: ts.style.gridTemplateColumns });
+    const setW = w => { ts.style.gridTemplateColumns = `minmax(0,1fr) ${Math.round(w)}px`; };
+    const tune = () => { /* šírka stĺpca s obrázkami tak, aby rozdiel výšok bol čo najmenší */
+      let lo = wMin, hi = wMax, best = null;
+      const ev = w => { setW(w); const d = H(L) - H(R); if (!best || Math.abs(d) < Math.abs(best.d)) best = { w, d }; return d; };
+      ev(w0); if (ev(lo) < 0) return best; if (ev(hi) > 0) return best;
+      for (let i = 0; i < 9; i++) { const m = (lo + hi) / 2; if (ev(m) > 0) lo = m; else hi = m; }
+      return best; };
+    const lastFig = () => R.children.length > 1 ? R.lastElementChild : null;
+    const vedL = () => [...L.children].reverse().find(x => x.classList.contains("vedel"));
+    const vedO = () => { const n = ts.nextElementSibling; return n && n.classList.contains("vedel") && /Vedel si/.test(n.textContent) ? n : null; };
+    const plans = [];
+    const figL = () => [...L.children].reverse().find(x => x.classList.contains("tfig")), hasF = R.children.length > 1, hasG = !!figL(), hasO = !!vedO(), hasV = !!vedL();
+    for (const f of hasF ? [0, 1, .85, .7] : [0]) for (const v of hasV ? [0, 1] : [0]) for (const o of hasO ? [0, "L", "R"] : [0]) for (const g of hasG ? [0, 1] : [0]) if (!(v && o)) plans.push({ f, v, o, g });
+    const apply = p => {
+      if (p.o) { const el = vedO(); if (!el) return false; mv(el, p.o === "L" ? L : R, p.o === "L" ? ";margin-top:14px" : ";margin:0"); }
+      if (p.f) { const el = lastFig(); if (!el) return false; mv(el, L, el.classList.contains("tfig") ? `;margin:14px auto 0;max-width:${Math.round(w0 * p.f)}px` : ";margin-top:14px"); }
+      if (p.g) { const el = figL(); if (!el) return false; mv(el, R, ";margin:0"); }
+      if (p.v) { const el = vedL(); if (!el || L.children.length < 2) return false; mv(el, R, ";margin:0"); }
+      return true; };
+    let pick = null;
+    plans.forEach((p, pi) => {
+      const k = moved.length; setW(w0);
+      if (apply(p)) { const b = tune(); const sc = Math.abs(b.d) + (!!p.f + p.v + !!p.o + p.g) * 30 + (p.f && p.f < 1 ? 15 : 0) + Math.abs(b.w - w0) / 4; if (!pick || sc < pick.sc) pick = { p, w: b.w, sc }; }
+      back(k);
+    });
+    setW(w0);
+    if (!pick) return;
+    apply(pick.p);
+    setW(pick.w);
+  }
+  function bal() { undo(); document.querySelectorAll(".tsplit").forEach(one); }
+  let raf = 0; const go = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(bal); };
+  const main = document.getElementById("main"); if (main) new MutationObserver(go).observe(main, { childList: true });
+  window.addEventListener("resize", go); if (document.fonts && document.fonts.ready) document.fonts.ready.then(go); go();
+})();
+</script>
+</body></html>
