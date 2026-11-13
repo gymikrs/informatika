@@ -691,7 +691,7 @@ const HP = [["🧑‍🎓 Peter", "Píšem „zes“ namiesto „yes“, Z a Y s
 const HPO = [["", "— vyber —"], ["kl", "Čas a jazyk › Jazyk a oblasť (klávesnica)"], ["cas", "Čas a jazyk › Dátum a čas"], ["mier", "Systém › Obrazovka › Mierka"], ["noc", "Systém › Obrazovka › Nočné svetlo"], ["zvuk", "Systém › Zvuk"], ["ozn", "Systém › Oznámenia"], ["mys", "Bluetooth a zariadenia › Myš"]];
 function helpHTML() { const D = S.hpd; return HP.map(([w, t, ok, why], i) => `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><b>${w}:</b> ${t}<br><select data-hp="${i}" ${D ? "disabled" : ""} style="margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink);max-width:100%">${HPO.map(([v, l]) => `<option value="${v}" ${S.hp[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select>${D ? `<div style="font-size:13px;margin-top:4px">${S.hp[i] === ok ? "✔️" : "❌"} ${why}</div>` : ""}</div>`).join("") + (D ? `<div class="row"><button class="ghost" data-hpr>↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-hpok>✔ Vyhodnotiť</button></div>`); }
 function CUSTOM_CLICK(e) {
-  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.hpok !== undefined) { if (HP.some((_, i) => !S.hp[i])) { alert("Vyber riešenie pri všetkých problémoch."); return true; } S.hpd = true; const n = HP.filter((h, i) => S.hp[i] === h[2]).length; if (n && (!S.t.g_help || S.t.g_help.score < n)) award("g_help", n); save(); render(false); return true; } if (el0 && el0.dataset.hpr !== undefined) { S.hpd = false; S.hp = {}; save(); render(false); return true; } }
+  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.hpok !== undefined) { if (HP.some((_, i) => !S.hp[i])) { el0.textContent = "⚠️ Vyber riešenie pri všetkých problémoch"; setTimeout(() => render(false), 2200); return true; } S.hpd = true; const n = HP.filter((h, i) => S.hp[i] === h[2]).length; if (n && (!S.t.g_help || S.t.g_help.score < n)) award("g_help", n); save(); render(false); return true; } if (el0 && el0.dataset.hpr !== undefined) { S.hpd = false; S.hp = {}; save(); render(false); return true; } }
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, s = S.set;
   if (ds.pg) { s.page = ds.pg; save(); render(false); return true; }
   if (ds.tog) { s[ds.tog] = !s[ds.tog]; checkGoals(); save(); render(false); return true; }
@@ -1076,7 +1076,9 @@ if (!VIEWS.vysledok) VIEWS.vysledok = function () {
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
   <p class="muted" style="font-size:15px">Zastávky si teraz môžeš znova prezrieť (iba na čítanie). Uvidíš v nich aj správne odpovede.</p>
-  <div class="row" aria-live="polite">${formBtn}</div>`;
+  <div class="row" aria-live="polite">${formBtn}</div>
+  <div class="box" style="margin-top:16px">${S.rconfirm ? `<p style="margin:0"><b>Naozaj začať odznova?</b> Body aj odpovede sa vymažú.</p><div class="confirm"><button class="primary" data-ryes>Áno, začať odznova</button><button class="ghost" data-rno>Späť</button></div>`
+    : `<p style="margin:0 0 10px">Chceš si hodinu prejsť ešte raz? Začneš od Štartu s novými úlohami a nový výsledok sa tiež odošle učiteľovi.</p><button class="ghost" data-rreset>↺ Začať odznova</button>`}</div>`;
 };
 
 const main = document.getElementById("main");
@@ -1116,6 +1118,9 @@ document.addEventListener("click", e => {
   const el = e.target.closest("button,[data-bucket],[data-tg]"); if (!el) return;
   const ds = el.dataset;
   if (ds.go !== undefined) return go(+ds.go);
+  if (ds.rreset !== undefined) { S.rconfirm = true; save(); return render(false); }
+  if (ds.rno !== undefined) { S.rconfirm = false; save(); return render(false); }
+  if (ds.ryes !== undefined) { const keep = { cls: S.cls }; try { localStorage.removeItem(KEY); } catch (e) {} S = fresh(); S.cls = keep.cls; SEL = null; if (typeof TSEL !== "undefined") TSEL = null; save(); window.scrollTo(0, 0); return render(true); }
   if (ds.reset !== undefined) {
     if (S.testLocked) return;
     if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
