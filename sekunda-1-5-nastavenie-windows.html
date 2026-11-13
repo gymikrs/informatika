@@ -293,6 +293,8 @@ textarea{width:100%;font-family:var(--mono);font-size:13.5px;padding:10px;border
 .bslots.mono button.bsl{font-family:var(--mono)}
 .bslots .bsl.ok{border-color:var(--ok);background:var(--okSoft)}.bslots .bsl.bad{border-color:var(--bad);background:var(--badSoft)}
 .chipb.mono{font-family:var(--mono)}
+.chipw{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:100%}
+.fixb{font-size:13px;font-weight:600;color:var(--ok);padding-left:6px;line-height:1.3}
 </style>
 </head>
 <body>
@@ -689,9 +691,9 @@ const VIEWS = {
 
 const HP = [["🧑‍🎓 Peter", "Píšem „zes“ namiesto „yes“, Z a Y sú prehodené!", "kl", "Prepol si klávesnicu (Alt + Shift). Nastavíš ju v Čas a jazyk › Jazyk a oblasť."], ["👵 Babka", "Na notebooku je všetko maličké, nevidím to.", "mier", "Systém › Obrazovka › Mierka zväčší všetko naraz."], ["🧑‍🏫 Pani učiteľka", "Večer ma od monitora bolia oči.", "noc", "Systém › Obrazovka › Nočné svetlo ubere modrú farbu."], ["🧒 Ema", "Myš behá po obrazovke príliš rýchlo.", "mys", "Bluetooth a zariadenia › Myš › Rýchlosť ukazovateľa."], ["🧑 Marek", "Som ľavák, chcem prehodiť tlačidlá myši.", "mys", "Bluetooth a zariadenia › Myš › Primárne tlačidlo."], ["👦 Tomáš", "Z reproduktorov nejde zvuk, hoci slúchadlá fungujú.", "zvuk", "Systém › Zvuk: vyber správne výstupné zariadenie."], ["👧 Lucka", "Stále mi vyskakujú oznámenia z hier, keď sa učím.", "ozn", "Systém › Oznámenia, prípadne režim Nerušiť."], ["🧑‍🔧 Školník", "Po zmene na letný čas ukazuje počítač zlý čas.", "cas", "Čas a jazyk › Dátum a čas: zapni automatický čas a správne pásmo."]];
 const HPO = [["", "— vyber —"], ["kl", "Čas a jazyk › Jazyk a oblasť (klávesnica)"], ["cas", "Čas a jazyk › Dátum a čas"], ["mier", "Systém › Obrazovka › Mierka"], ["noc", "Systém › Obrazovka › Nočné svetlo"], ["zvuk", "Systém › Zvuk"], ["ozn", "Systém › Oznámenia"], ["mys", "Bluetooth a zariadenia › Myš"]];
-function helpHTML() { const D = S.hpd; return HP.map(([w, t, ok, why], i) => `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><b>${w}:</b> ${t}<br><select data-hp="${i}" ${D ? "disabled" : ""} style="margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink);max-width:100%">${HPO.map(([v, l]) => `<option value="${v}" ${S.hp[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select>${D ? `<div style="font-size:13px;margin-top:4px">${S.hp[i] === ok ? "✔️" : "❌"} ${why}</div>` : ""}</div>`).join("") + (D ? `<div class="row"><button class="ghost" data-hpr>↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-hpok>✔ Vyhodnotiť</button></div>`); }
+function helpHTML() { const D = S.hpd; return HP.map(([w, t, ok, why], i) => `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><b>${w}:</b> ${t}<br><select data-hp="${i}" ${D ? "disabled" : ""} style="margin-top:6px;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink);max-width:100%">${HPO.map(([v, l]) => `<option value="${v}" ${S.hp[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select>${D ? `<div style="font-size:13px;margin-top:4px">${S.hp[i] === ok ? "✔️" : `❌ Správne: <b>${(HPO.find(o => o[0] === ok) || ["", ""])[1]}</b>.`} ${why}</div>` : ""}</div>`).join("") + (D ? "" : `<div class="row"><button class="primary" data-hpok>✔ Vyhodnotiť</button></div>`); }
 function CUSTOM_CLICK(e) {
-  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.hpok !== undefined) { if (HP.some((_, i) => !S.hp[i])) { el0.textContent = "⚠️ Vyber riešenie pri všetkých problémoch"; setTimeout(() => render(false), 2200); return true; } S.hpd = true; const n = HP.filter((h, i) => S.hp[i] === h[2]).length; if (n && (!S.t.g_help || S.t.g_help.score < n)) award("g_help", n); save(); render(false); return true; } if (el0 && el0.dataset.hpr !== undefined) { S.hpd = false; S.hp = {}; save(); render(false); return true; } }
+  { const el0 = e.target.closest && e.target.closest("button"); if (el0 && el0.dataset.hpok !== undefined) { if (HP.some((_, i) => !S.hp[i])) { el0.textContent = "⚠️ Vyber riešenie pri všetkých problémoch"; setTimeout(() => render(false), 2200); return true; } if (S.t.g_help) return true; S.hpd = true; const n = HP.filter((h, i) => S.hp[i] === h[2]).length; award("g_help", n); save(); render(false); return true; } if (el0 && el0.dataset.hpr !== undefined) { S.hpd = false; S.hp = {}; save(); render(false); return true; } }
   const el = e.target.closest("button"); if (!el) return false; const ds = el.dataset, s = S.set;
   if (ds.pg) { s.page = ds.pg; save(); render(false); return true; }
   if (ds.tog) { s[ds.tog] = !s[ds.tog]; checkGoals(); save(); render(false); return true; }
@@ -883,14 +885,14 @@ function renderTop() {
 }
 
 /* ---------- úlohy v zastávkach ---------- */
-const REVEAL = () => !!S.testLocked;                 /* po spustení testu sa v zastávkach ukážu správne odpovede */
+const REVEAL = () => true;                           /* po skontrolovaní sa hneď ukážu správne odpovede (kontrola iba raz) */
 const RO = () => !!S.testLocked && !["test", "vysledok"].includes(STEPS[S.cur].id); /* zastávky už len na prezeranie */
 const QIMG0 = () => (typeof QIMG !== "undefined" ? QIMG : {});
 const pic = (k, cl) => k && QIMG0()[k] ? `<figure class="${cl || "qpic"}">${QIMG0()[k]}</figure>` : "";
 const qpic = (T, q) => q.img || (QIMG0()[T.id + ":" + q.id] ? T.id + ":" + q.id : "");
 const hasPic = (T, q) => !!qpic(T, q) || /<svg|<div|<img/.test(q.q);
 const withPic = (k, inner) => k && QIMG0()[k] ? `<div class="qrow"><div>${inner}</div>${pic(k)}</div>` : inner;
-function retryBtn(id) { const r = S.t[id]; return r && !r.skip && !S.testLocked && r.score < r.max ? `<button class="ghost retry" data-retry="${id}">↺ Opraviť a skontrolovať znova</button>` : ""; }
+function retryBtn(id) { return ""; }                 /* úlohy sa kontrolujú iba raz */
 function checkBar(T, ready, hint) {
   const r = S.t[T.id];
   if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span>${retryBtn(T.id)}</div>`;
@@ -904,7 +906,7 @@ function mcHTML(T) {
       let c = "opt"; if (d[q.id] === i) c += " sel";
       if (done) { if (rv && i === q.a) c += " ok"; else if (d[q.id] === i) c += i === q.a ? " ok" : " bad"; }
       return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
-    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good && !rv ? `<p class="why miss">Toto nie je správne. Oprav odpoveď a skontroluj znova.</p>` : ""}`;
+    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good ? `<p class="why miss">Správna odpoveď: ${q.opts[q.a]}</p>` : ""}`;
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend>${withPic(qpic(T, q), opts)}</fieldset>`;
   }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
 }
@@ -913,10 +915,12 @@ function sortHTML(T) {
   const ids = ord(T.id, T.items.map(x => x.id));
   const by = Object.fromEntries(T.items.map(x => [x.id, x]));
   const chip = id => { let c = "chipb" + (T.mono ? " mono" : ""); if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
-    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>`; };
+    const fix = done && d[id] !== by[id].b ? `<span class="fixb">→ patrí do: ${(T.buckets.find(b => b.id === by[id].b) || {}).label || ""}</span>` : "";
+    return `<span class="chipw"><button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>${fix}</span>`; };
   const pool = ids.filter(id => !d[id]);
   return pic(T.img || T.id, "tpic") + (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
     `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && ids.some(id => !d[id]) ? `<div class="box v" style="margin-top:12px"><p><b>Správne roztriedenie:</b></p><ul>${T.buckets.map(b => `<li><b>${b.label}:</b> ${T.items.filter(x => x.b === b.id).map(x => x.t).join(", ")}</li>`).join("")}</ul></div>` : "") +
     (done && T.after && (done.score === done.max || REVEAL()) ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
 }
 function orderHTML(T) {
@@ -1135,7 +1139,6 @@ document.addEventListener("click", e => {
     Object.keys(STEP_TASKS).filter(k => k !== "test").forEach(k => STEP_TASKS[k].forEach(t => { if (!S.t[t]) S.t[t] = { score: 0, max: maxOf(TASKS[t]), skip: true }; }));
     save(); return render(true);
   }
-  if (ds.retry) { if (S.testLocked) return; delete S.t[ds.retry]; if (typeof RETRY === "function") RETRY(ds.retry); SEL = null; save(); return render(false); }
   if (STEPS[S.cur].id === "test") {
     if (!S.testLocked || S.t.test) { if (ds.check !== "test") return; }
     else {

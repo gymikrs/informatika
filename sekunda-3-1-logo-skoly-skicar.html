@@ -346,7 +346,7 @@ let PC = null, PX2 = null, PSTACK = [], PDOWN = null, PSNAP = null, PCACHE = nul
 function PS() { S.pn = S.pn || { tool: "ellipse", col: "#1565C0", size: 6, filled: true, used: {}, cols: [] }; return S.pn; }
 function paintHTML(W, H) { const P = PS(); return `<div class="paint"><div class="ptb"><div class="grp">${PT.map(([k, e, n]) => `<button class="${P.tool === k ? "on" : ""}" data-pt="${k}" title="${n}" aria-label="${n}">${e}</button>`).join("")}</div>
   <div class="grp"><label style="font-size:12.5px"><input type="checkbox" data-pfill ${P.filled ? "checked" : ""}> Výplň tvaru</label></div>
-  <div class="grp"><span style="font-size:12.5px">Hrúbka</span><input type="range" min="1" max="30" value="${P.size}" data-psize style="width:80px" aria-label="Hrúbka"></div>
+  <div class="grp"><span style="font-size:12.5px">Text</span><select data-ptxt aria-label="Text pre nástroj Text" style="font:inherit;font-size:12.5px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;max-width:170px">${["GIK", "Gymnázium Ivana Kraska", "GIK Rimavská Sobota", "Rimavská Sobota", "Gymnázium"].map(t => `<option ${(P.txt || "GIK") === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>   <div class="grp"><span style="font-size:12.5px">Hrúbka</span><input type="range" min="1" max="30" value="${P.size}" data-psize style="width:80px" aria-label="Hrúbka"></div>
   <div class="grp">${PAL.map(c => `<button class="sw ${P.col === c ? "on" : ""}" style="background:${c}" data-pc="${c}" aria-label="Farba ${c}"></button>`).join("")}<input type="color" value="${P.col}" data-pcc aria-label="Vlastná farba" style="width:30px;height:24px;border:0;padding:0;background:none"></div>
   <div class="grp" style="border:0"><button data-pundo title="Späť">↶</button><button data-pclr title="Nový obrázok">🗋</button><button data-psave title="Uložiť ako PNG">💾 PNG</button></div></div>
   <div class="cv"><canvas id="pcv" width="${W}" height="${H}" aria-label="Plátno"></canvas></div><div class="st"><span id="pxy">—</span><span>${W} × ${H} px</span><span>Nástroj: ${PT.find(t => t[0] === P.tool)[2]}</span></div></div>`; }
@@ -365,7 +365,7 @@ function shape(tool, a, b, P) { PX2.lineWidth = P.size; PX2.strokeStyle = P.col;
   if (tool === "ellipse") { PX2.ellipse((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.abs(b[0] - a[0]) / 2 || 1, Math.abs(b[1] - a[1]) / 2 || 1, 0, 0, 7); if (P.filled) PX2.fill(); else PX2.stroke(); } }
 document.addEventListener("pointerdown", e => { if (e.target.id !== "pcv") return; pInit(); const P = PS(), p = pPos(e); pPush();
   if (P.tool === "fill") { flood(p[0], p[1], P.col); pMark("fill"); pStore(); return; }
-  if (P.tool === "text") { const t = prompt("Text:"); if (t) { PX2.fillStyle = P.col; PX2.font = `bold ${Math.max(14, P.size * 4)}px Arial, sans-serif`; PX2.fillText(t, p[0], p[1]); pMark("text"); pStore(); } else PSTACK.pop(); return; }
+  if (P.tool === "text") { const t = P.txt || "GIK"; if (t) { PX2.fillStyle = P.col; PX2.font = `bold ${Math.max(14, P.size * 4)}px Arial, sans-serif`; PX2.fillText(t, p[0], p[1]); pMark("text"); pStore(); } else PSTACK.pop(); return; }
   PDOWN = p; PSNAP = PX2.getImageData(0, 0, PC.width, PC.height); PC.setPointerCapture(e.pointerId);
   if (["pencil", "brush", "eraser"].includes(P.tool)) { PX2.beginPath(); PX2.moveTo(p[0], p[1]); } });
 document.addEventListener("pointermove", e => { if (e.target.id === "pcv" && PC) { const p = pPos(e), t = document.getElementById("pxy"); if (t) t.textContent = p[0] + ", " + p[1] + " px"; } if (!PDOWN || !PC) return; const P = PS(), p = pPos(e);
@@ -380,7 +380,7 @@ function paintClick(e) { const el = e.target.closest("button, input"); if (!el) 
   if (ds.pclr !== undefined) { pInit(); pPush(); PX2.fillStyle = "#fff"; PX2.fillRect(0, 0, PC.width, PC.height); pStore(); return true; }
   if (ds.psave !== undefined) { pInit(); const a = document.createElement("a"); a.download = (typeof PAINTNAME === "string" ? PAINTNAME : "logo") + ".png"; a.href = PC.toDataURL("image/png"); document.body.appendChild(a); a.click(); a.remove(); P.used.save = true; save(); if (typeof PAINTCHANGE === "function") PAINTCHANGE(); render(false); return true; }
   return false; }
-function paintInput(e) { const t = e.target, P = PS(); if (t.dataset.psize !== undefined) { P.size = +t.value; save(); return true; } if (t.dataset.pfill !== undefined) { P.filled = t.checked; save(); return true; } if (t.dataset.pcc !== undefined) { P.col = t.value.toUpperCase(); save(); pUI(); return true; } return false; }
+function paintInput(e) { const t = e.target, P = PS(); if (t.dataset.psize !== undefined) { P.size = +t.value; save(); return true; } if (t.dataset.ptxt !== undefined) { P.txt = t.value; save(); return true; } if (t.dataset.pfill !== undefined) { P.filled = t.checked; save(); return true; } if (t.dataset.pcc !== undefined) { P.col = t.value.toUpperCase(); save(); pUI(); return true; } return false; }
 setInterval(() => { const c = document.getElementById("pcv"); if (c && !c.dataset.on) { PC = null; pInit(); } }, 250);
 
 /* Spoločné pomôcky na ilustrácie k teórii (Prima) */
@@ -617,7 +617,7 @@ const VIEWS = {
       <table class="rtab"><thead><tr><th>Chcem…</th><th>Ako na to</th></tr></thead><tbody>
         <tr><td>tvar alebo čiaru</td><td>ťahaj myšou</td></tr>
         <tr><td>vyfarbiť plochu</td><td><b>Výplň</b>: klikni do uzavretej plochy</td></tr>
-        <tr><td>nápis</td><td><b>Text</b>: klikni a napíš</td></tr>
+        <tr><td>nápis</td><td><b>Text</b>: vyber nápis a klikni na plátno</td></tr>
         <tr><td>vrátiť omyl</td><td>tlačidlo ↶</td></tr>
         <tr><td>uložiť logo</td><td>tlačidlo 💾 PNG</td></tr></tbody></table>
       <p>Nápady: kruh s iniciálami <b>GIK</b>, otvorená kniha, pero, sova múdrosti, obrys budovy. Použi farby, ktoré sa k škole hodia.</p>
