@@ -340,6 +340,10 @@ main.ro .task,main.ro .ws,main.ro .robo,main.ro .lab,main.ro .chal,main.ro .tsim
 .bpool{min-height:0;padding:10px}
 .chipb small{color:var(--ok);font-weight:600}
 
+.chipw{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;max-width:100%}
+.fixb{font-size:13px;font-weight:600;color:var(--ok);padding-left:6px;line-height:1.3}
+.confirm{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.qpic svg,.tpic svg{max-width:100%;height:auto}
 </style>
 </head>
 <body>
@@ -507,7 +511,7 @@ document.addEventListener("keydown", e => {
 });
 function gl(list, G) { return `<ul class="goals" style="list-style:none;padding:0;margin:6px 0 0">${list.map(([k, t]) => `<li>${G[k] ? "✅" : "⬜"} ${t}</li>`).join("")}</ul>`; }
 
-const KEY = "python-k210-v2";
+const KEY = "python-k210-v3";
 const LESSON = "2.10 Cyklus for (riadiaca premenná)";
 const BRAND = "2.10 Cyklus for";
 const CLASS_DEFAULT = "Kvarta";
@@ -867,7 +871,7 @@ function CUSTOM_INPUT(e) {
   if (selInput(e)) return true; return helperInput(e); }
 document.addEventListener("keydown", e => { const t = e.target; if (!(t.dataset && t.dataset.ed) || e.key !== "Tab") return; e.preventDefault(); const s = t.selectionStart; t.value = t.value.slice(0, s) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 4; S.ws[t.dataset.ed].text = t.value; save(); });
 
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? `<div class="row"><button class="ghost" data-selr="${key}">↺ Skúsiť znova</button></div>` : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? "" : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button>${S[key + "warn"] ? `<span class="muted">Vyber odpoveď pri všetkých položkách.</span>` : ""}</div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
   if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { el0.textContent = "Najprv vyber odpoveď pri všetkých položkách"; el0.disabled = true; setTimeout(() => render(false), 1600); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; if (n && (!S.t[gid] || S.t[gid].score < n)) award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
 function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
@@ -1018,6 +1022,24 @@ const HQ = (() => { const { C, SV, T, box, codeWin, canvas, scene, win, code } =
 
 Object.keys(TFIG).forEach(k => { TFIG[k] = ANIM(TFIG[k]); });
 
+/* ===== HODINY: obrázky k otázkam a výberové odpovede namiesto písania ===== */
+const KSV = (w, h, inner, lab) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${lab}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+function KPIC(e1, e2, lab) { return KSV(240, 150, `<rect x="4" y="4" width="232" height="142" rx="16" fill="#EEF3FB" stroke="#C9D6EA"/><text x="80" y="92" font-size="46" text-anchor="middle">${e1}</text><text x="168" y="92" font-size="38" text-anchor="middle">${e2}</text><text x="120" y="134" font-size="13" text-anchor="middle" fill="#41506B" font-weight="700">${lab}</text>`, lab); }
+function KWIDE(es, lab) { return KSV(520, 130, `<rect x="4" y="4" width="512" height="122" rx="16" fill="#EEF3FB" stroke="#C9D6EA"/>${es.map((e, i) => `<text x="${260 + (i - (es.length - 1) / 2) * 110}" y="78" font-size="42" text-anchor="middle">${e}</text>`).join("")}<text x="260" y="116" font-size="13" text-anchor="middle" fill="#41506B" font-weight="700">${lab}</text>`, lab); }
+function NUMBAD(a) { const n = +a, c = Number.isInteger(n) ? [n + 1, n - 1, n * 2, n + 10, n - 10, Math.round(n / 2), n + 2] : [Math.floor(n), Math.ceil(n), n * 2, n + 1, n - 1];
+  const out = []; for (const x of c) { const s = String(+(+x).toFixed(4)); if (s !== String(+n) && !out.includes(s) && !(n >= 0 && x < 0)) out.push(s); if (out.length === 3) break; } return out; }
+function INP2MC(id, bad) { const T = TASKS[id]; if (!T || T.type !== "input") return; bad = bad || {};
+  T.type = "mc"; T.qs = T.qs.map(q => { const show = String(q.show).replace(/\s*\(.*\)\s*$/, "").replace(/°$/, "").trim(), b = bad[q.id] || NUMBAD(show.replace(",", "."));
+    const unit = q.unit ? " " + q.unit : ""; return { id: q.id, q: q.q, opts: [show + unit, ...b.map(x => x + unit)], a: 0, why: q.why || (String(q.show) !== show ? "Správne: " + q.show + "." : "") }; }); }
+function AUTOPIC(theme, icons) { icons = icons || ["❓", "🔍", "🧩", "💡", "🎯", "🧮", "📐", "🔁"];
+  for (const T of Object.values(TASKS)) {
+    if (T.type === "mc") T.qs.forEach((q, i) => { const d = Object.getOwnPropertyDescriptor(q, "img"); if (!d || (!d.get && !d.value)) { try { q.img = KPIC(theme[0], icons[i % icons.length], theme[1]); } catch (e) {} } });
+    if ((T.type === "sort" || T.type === "order") && !T.img) T.img = KWIDE([theme[0], "🗂️", theme[2] || "🐢"], theme[1]);
+  } }
+function KFIN(theme, inbad, icons) { for (const [k, T] of Object.entries(TASKS)) if (T.type === "input") { for (const q of T.qs) { const s = String(q.show).replace(/\s*\(.*\)\s*$/, "").replace(/°$/, "").trim(); if (isNaN(+s.replace(",", ".")) && !((inbad || {})[k] || {})[q.id]) console.error("KFIN: chýbajú možnosti pre " + k + ":" + q.id + " = " + s); } INP2MC(k, (inbad || {})[k]); } AUTOPIC(theme, icons); }
+
+KFIN(["🐢", "Python"]);
+
 /* ===== shared lesson engine ===== */
 /* HODINY: úlohy v zastávkach sa dajú opraviť a skontrolovať znova; záverečný test je interaktívny (zoraď, priraď, klikni do obrázka, roztrieď, poskladaj),
    spúšťa sa tlačidlom s potvrdením a po spustení sú zastávky uzamknuté (iba na prezeranie) */
@@ -1063,7 +1085,7 @@ function nextBar() { return memoHTML() + nextBar0(); }
 function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; if (S.testLocked && n.id === "test" && S.t.test) return `<div class="next"><button class="primary" data-go="${STEPS.length - 1}">Späť na výsledok</button></div>`;
   return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
 function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
-const REVEAL = () => !!S.testLocked;   /* po spustení testu sa v zastávkach ukážu správne odpovede */
+const REVEAL = () => true;   /* po skontrolovaní sa hneď ukážu správne odpovede (kontrola iba raz) */
 const RO = () => !!S.testLocked && !["test", "vysledok"].includes(STEPS[S.cur].id);   /* zastávky po spustení testu: iba na prezeranie */
 const QPIC = (svg, cl) => svg ? `<figure class="${cl || "qpic"}">${svg}</figure>` : "";
 
@@ -1077,7 +1099,7 @@ function renderTop() {
 }
 function checkBar(T, ready, hint) {
   const r = S.t[T.id];
-  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span>${!S.testLocked && r.score < r.max ? `<button class="ghost retry" data-retry="${T.id}">↺ Opraviť a skontrolovať znova</button>` : ""}</div>`;
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span></div>`;
   return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
 }
 function mcHTML(T) {
@@ -1088,7 +1110,7 @@ function mcHTML(T) {
       let c = "opt"; if (d[q.id] === i) c += " sel";
       if (done) { if (rv && i === q.a) c += " ok"; else if (d[q.id] === i) c += i === q.a ? " ok" : " bad"; }
       return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
-    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good && !rv ? `<p class="why miss">Toto nie je správne. Oprav odpoveď a skontroluj znova.</p>` : ""}`;
+    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good ? `<p class="why miss">Správna odpoveď: ${q.opts[q.a]}</p>` : ""}`;
     const img = typeof q.img === "function" ? q.img(done) : q.img;
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend>${img ? `<div class="qrow"><div>${opts}</div>${QPIC(img)}</div>` : opts}</fieldset>`;
   }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
@@ -1098,10 +1120,12 @@ function sortHTML(T) {
   const ids = ord(T.id, T.items.map(x => x.id));
   const by = Object.fromEntries(T.items.map(x => [x.id, x]));
   const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
-    return `<button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}${done && rv && d[id] !== by[id].b ? ` <small>→ ${T.buckets.find(b => b.id === by[id].b).label}</small>` : ""}</button>`; };
+    const fix = done && d[id] !== by[id].b ? `<span class="fixb">→ patrí do: ${(T.buckets.find(b => b.id === by[id].b) || {}).label || ""}</span>` : "";
+    return `<span class="chipw"><button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>${fix}</span>`; };
   const pool = ids.filter(id => !d[id]);
   return QPIC(T.img, "tpic") + (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
     `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
+    (done && ids.some(id => !d[id]) ? `<div class="box v" style="margin-top:12px"><p><b>Správne roztriedenie:</b></p><ul>${T.buckets.map(b => `<li><b>${b.label}:</b> ${T.items.filter(x => x.b === b.id).map(x => x.t).join(", ")}</li>`).join("")}</ul></div>` : "") +
     (done && T.after && (done.score === done.max || rv) ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
 }
 function orderHTML(T) {
@@ -1127,7 +1151,7 @@ function buildHTML(T) {
     const slots = `<div class="bsl ${q.mono === false ? "" : "mono"}">${q.pre ? `<span class="bpre">${q.pre}</span>` : ""}${q.a.map((_, i) => { const k = seq[i];
       return k === undefined ? `<span class="bsx">${(q.lab && q.lab[i]) || "…"}</span>` : `<button class="bsx full ${done ? (q.pieces[k] === q.a[i] ? "ok" : "bad") : ""}" data-bu="${T.id}|${q.id}|${i}" ${done ? "disabled" : ""} title="Kliknutím dielik vrátiš">${q.pieces[k]}</button>`; }).join("")}${q.post ? `<span class="bpre">${q.post}</span>` : ""}</div>`;
     const pool = done ? "" : `<div class="pool bpool">${P.filter(k => !seq.includes(k)).map(k => `<button class="chipb ${q.mono === false ? "" : "mono"}" data-bp="${T.id}|${q.id}|${k}" ${seq.length >= q.a.length ? "disabled" : ""}>${q.pieces[k]}</button>`).join("")}</div>`;
-    const fb = done ? (ok ? (q.why ? `<p class="why good">${q.why}</p>` : "") : rv ? `<p class="why miss">Správne: <b>${(q.pre || "") + q.a.join(q.join == null ? " " : q.join) + (q.post || "")}</b>${q.why ? ". " + q.why : ""}</p>` : `<p class="why miss">Toto nie je správne. Oprav odpoveď a skontroluj znova.</p>`) : "";
+    const fb = done ? (ok ? (q.why ? `<p class="why good">${q.why}</p>` : "") : rv ? `<p class="why miss">Správne: <b>${(q.pre || "") + q.a.join(q.join == null ? " " : q.join) + (q.post || "")}</b>${q.why ? ". " + q.why : ""}</p>` : "") : "";
     const img = typeof q.img === "function" ? q.img(done) : q.img;
     const body = slots + pool + fb;
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend>${img ? `<div class="qrow"><div>${body}</div>${QPIC(img)}</div>` : body}</fieldset>`;
@@ -1252,6 +1276,8 @@ VIEWS.vysledok = function () {
     <div class="big"><span class="n">${total()}</span><span class="of">z ${MAX} bodov (${pct} %)</span><div class="grade"><b>${grade}</b><span>orientačná známka</span></div></div>
     <div class="tbl-wrap"><table><thead><tr><th>Zastávka</th><th>Body</th></tr></thead><tbody>${rows.map(r => `<tr><td>${r.title}</td><td>${r.done ? `${r.sc} / ${r.mx}` : '<span class="muted">nedokončené</span>'}</td></tr>`).join("")}</tbody></table></div></div>
   <div class="row">${formBtn}</div>
+  <div class="box" style="margin-top:16px">${S.rconfirm ? `<p style="margin:0"><b>Naozaj začať odznova?</b> Body aj odpovede sa vymažú.</p><div class="confirm"><button class="primary" data-ryes>Áno, začať odznova</button><button class="ghost" data-rno>Späť</button></div>`
+    : `<p style="margin:0 0 10px">Chceš si hodinu prejsť ešte raz? Začneš od Štartu s novými úlohami a nový výsledok sa tiež odošle učiteľovi.</p><button class="ghost" data-rreset>↺ Začať odznova</button>`}</div>
   <p class="muted" style="font-size:15px">Zastávky si môžeš znova prezrieť (kliknutím hore na ich názov), ale už v nich nič nezmeníš.</p>`;
 };
 
@@ -1284,6 +1310,9 @@ document.addEventListener("click", e => {
   const el = e.target.closest("button,[data-bucket],[data-tg]"); if (!el) return;
   const ds = el.dataset;
   if (ds.go !== undefined) return go(+ds.go);
+  if (ds.rreset !== undefined) { S.rconfirm = true; save(); return render(false); }
+  if (ds.rno !== undefined) { S.rconfirm = false; save(); return render(false); }
+  if (ds.ryes !== undefined) { const keep = { cls: S.cls }; try { localStorage.removeItem(KEY); } catch (e) {} S = fresh(); S.cls = keep.cls; SEL = null; if (typeof TSEL !== "undefined") TSEL = null; save(); window.scrollTo(0, 0); return render(true); }
   if (ds.reset !== undefined) { if (S.testLocked) return;
     if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
     clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
@@ -1296,7 +1325,6 @@ document.addEventListener("click", e => {
     Object.keys(STEP_TASKS).filter(k => k !== "test").forEach(k => STEP_TASKS[k].forEach(t => { if (!S.t[t]) S.t[t] = { score: 0, max: maxOf(TASKS[t]), skip: true }; }));
     save(); return render(true);
   }
-  if (ds.retry) { if (S.testLocked) return; delete S.t[ds.retry]; save(); return render(false); }
   if (STEPS[S.cur].id === "test" && S.testLocked && !S.t.test) {
     const A = TA(), Q = id => TASKS.test.qs.find(x => x.id === id);
     if (ds.tord) { const [q, k] = ds.tord.split("|"); const s = A[q] = A[q] || []; if (!s.includes(+k)) s.push(+k); save(); return render(false); }

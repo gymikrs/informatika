@@ -438,7 +438,7 @@ function sameShape(a, b) { const A = cellsNorm(a), B = cellsNorm(b); if (Math.ab
 const E8 = [[0, 0, 50, 0], [50, 0, 50, 100], [50, 100, 0, 100], [0, 100, 0, 0], [0, 50, 50, 50]].map(p => ({ p }));
 
 
-const KEY = "python-k25-v2";
+const KEY = "python-k25-v3";
 const LESSON = "2.5 Premenné";
 const BRAND = "2.5 Premenné";
 const CLASS_DEFAULT = "Kvarta";
@@ -804,9 +804,9 @@ document.addEventListener("keydown", e => {
   if (e.key === "Tab") { e.preventDefault(); const t = e.target, s = t.selectionStart; t.value = t.value.slice(0, s) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 4; S.ws[k].text = t.value; save(); }
 });
 
-function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:1fr 250px;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? "" : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button></div>`); }
+function selBlock(key, items, opts) { const D = S[key + "d"], V = S[key] || (S[key] = {}); return items.map(([t, ok, why], i) => `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin:6px 0"><span>${i + 1}. ${t}${D ? `<br><small>${V[i] === ok ? "✔️ správne" : "❌ správne: " + opts.find(o => o[0] === ok)[1]}${why ? " – " + why : ""}</small>` : ""}</span><select data-sel="${key}|${i}" ${D ? "disabled" : ""} style="border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--surface2);color:var(--ink)">${opts.map(([v, l]) => `<option value="${v}" ${V[i] === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>`).join("") + (D ? "" : `<div class="row"><button class="primary" data-selok="${key}">✔ Vyhodnotiť</button>${S[key + "warn"] ? `<span class="muted">Vyber odpoveď pri všetkých položkách.</span>` : ""}</div>`); }
 function selClick(e, defs) { const el0 = e.target.closest && e.target.closest("button"); if (!el0) return false; const k = el0.dataset.selok || el0.dataset.selr; if (!k || !defs[k]) return false; const [items, gid] = defs[k]; S[k] = S[k] || {};
-  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { alert("Vyber odpoveď pri všetkých položkách."); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
+  if (el0.dataset.selok) { if (items.some((_, i) => !S[k][i])) { S[k + "warn"] = true; save(); render(false); return true; } S[k + "d"] = true; const n = items.filter((x, i) => S[k][i] === x[1]).length; award(gid, n); } else { S[k + "d"] = false; S[k] = {}; } save(); render(false); return true; }
 function selInput(e) { const t = e.target; if (t.dataset && t.dataset.sel) { const [k, i] = t.dataset.sel.split("|"); S[k] = S[k] || {}; S[k][i] = t.value; save(); return true; } return false; }
 
 /* ===== HODINY: obrázky k otázkam (Kvarta) ===== */
@@ -933,6 +933,24 @@ const ANIM = svg => String(svg)
 })();
 
 Object.keys(TFIG).forEach(k => { TFIG[k] = ANIM(TFIG[k]); });
+
+/* ===== HODINY: obrázky k otázkam a výberové odpovede namiesto písania ===== */
+const KSV = (w, h, inner, lab) => `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${lab}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
+function KPIC(e1, e2, lab) { return KSV(240, 150, `<rect x="4" y="4" width="232" height="142" rx="16" fill="#EEF3FB" stroke="#C9D6EA"/><text x="80" y="92" font-size="46" text-anchor="middle">${e1}</text><text x="168" y="92" font-size="38" text-anchor="middle">${e2}</text><text x="120" y="134" font-size="13" text-anchor="middle" fill="#41506B" font-weight="700">${lab}</text>`, lab); }
+function KWIDE(es, lab) { return KSV(520, 130, `<rect x="4" y="4" width="512" height="122" rx="16" fill="#EEF3FB" stroke="#C9D6EA"/>${es.map((e, i) => `<text x="${260 + (i - (es.length - 1) / 2) * 110}" y="78" font-size="42" text-anchor="middle">${e}</text>`).join("")}<text x="260" y="116" font-size="13" text-anchor="middle" fill="#41506B" font-weight="700">${lab}</text>`, lab); }
+function NUMBAD(a) { const n = +a, c = Number.isInteger(n) ? [n + 1, n - 1, n * 2, n + 10, n - 10, Math.round(n / 2), n + 2] : [Math.floor(n), Math.ceil(n), n * 2, n + 1, n - 1];
+  const out = []; for (const x of c) { const s = String(+(+x).toFixed(4)); if (s !== String(+n) && !out.includes(s) && !(n >= 0 && x < 0)) out.push(s); if (out.length === 3) break; } return out; }
+function INP2MC(id, bad) { const T = TASKS[id]; if (!T || T.type !== "input") return; bad = bad || {};
+  T.type = "mc"; T.qs = T.qs.map(q => { const show = String(q.show).replace(/\s*\(.*\)\s*$/, "").replace(/°$/, "").trim(), b = bad[q.id] || NUMBAD(show.replace(",", "."));
+    const unit = q.unit ? " " + q.unit : ""; return { id: q.id, q: q.q, opts: [show + unit, ...b.map(x => x + unit)], a: 0, why: q.why || (String(q.show) !== show ? "Správne: " + q.show + "." : "") }; }); }
+function AUTOPIC(theme, icons) { icons = icons || ["❓", "🔍", "🧩", "💡", "🎯", "🧮", "📐", "🔁"];
+  for (const T of Object.values(TASKS)) {
+    if (T.type === "mc") T.qs.forEach((q, i) => { const d = Object.getOwnPropertyDescriptor(q, "img"); if (!d || (!d.get && !d.value)) { try { q.img = KPIC(theme[0], icons[i % icons.length], theme[1]); } catch (e) {} } });
+    if ((T.type === "sort" || T.type === "order") && !T.img) T.img = KWIDE([theme[0], "🗂️", theme[2] || "🐢"], theme[1]);
+  } }
+function KFIN(theme, inbad, icons) { for (const [k, T] of Object.entries(TASKS)) if (T.type === "input") { for (const q of T.qs) { const s = String(q.show).replace(/\s*\(.*\)\s*$/, "").replace(/°$/, "").trim(); if (isNaN(+s.replace(",", ".")) && !((inbad || {})[k] || {})[q.id]) console.error("KFIN: chýbajú možnosti pre " + k + ":" + q.id + " = " + s); } INP2MC(k, (inbad || {})[k]); } AUTOPIC(theme, icons); }
+
+KFIN(["🐢", "Python"]);
 
 /* ===== shared lesson engine ===== */
 /* HODINY: úlohy v zastávkach sa dajú opraviť a skontrolovať znova; záverečný test je interaktívny (zoraď, priraď, klikni do obrázka, roztrieď, poskladaj),
