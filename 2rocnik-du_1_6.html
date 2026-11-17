@@ -248,7 +248,7 @@ const LESSON = "2. ročník – DU_1.6 Periférne zariadenia";
 const CLASS_DEFAULT = "";
 const CLASSES = ["SEXTA_1", "SEXTA_2", "II.A"];
 const OLD_DONE_KEY = "du-2r16-done"; /* zámok staršej verzie (40 ⭐) */
-const ATT_KEY = "du-2r16-att"; /* pokusy: známka 1 – 2 = koniec, známka 3 – 5 = jedna oprava */
+const ATT_KEY = "du-2r16-att"; /* pokusy (DOMACE od 17. 11. 2026): len 1 pokus, bez opravy – platí známka z prvého pokusu */
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
 
 const STEPS = [
@@ -518,7 +518,7 @@ function attempts() { let A = null; try { A = JSON.parse(localStorage.getItem(AT
     try { localStorage.setItem(ATT_KEY, JSON.stringify(A)); } catch (e) {} }
   return A; }
 function saveAttempts(A) { try { localStorage.setItem(ATT_KEY, JSON.stringify(A)); } catch (e) {} }
-const canRetry = A => A.length === 1 && A[0].g >= 3;
+const canRetry = A => false; /* DOMACE: bez opravy */
 function ord(key, ids) { if (!S.ord[key] || S.ord[key].length !== ids.length) { let o = ids.slice(), n = 0; do { shuffle(o); n++; } while (n < 10 && o.length > 1 && o.every((x, i) => x === ids[i])); S.ord[key] = o; save(); } return S.ord[key]; }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
@@ -647,7 +647,7 @@ const VIEWS = {
       <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
       <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
       ${S.att === 2 ? (() => { const P = attempts()[0]; return `<div class="vedel" style="margin-top:16px;background:#EAF7EF;border-color:#9ED7B6;border-left-color:#12805A;color:#0B3D27"><b>🔁 Oprava – posledný pokus.</b> Predchádzajúci výsledok: <b>${P.score} z ${P.max} ⭐ (známka ${P.g})</b>. Teraz máš ešte <b>jeden</b> pokus. Platí výsledok opravy a ďalší pokus už nebude.</div>`; })() :
-      `<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Ak dostaneš známku <b>1 alebo 2</b>, domáca úloha je hotová. Pri známke <b>3, 4 alebo 5</b> môžeš raz skúsiť <b>opravu</b>.</div>`}</div>`;
+      `<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Výsledok sa uzamkne hneď po odoslaní.</div>`}</div>`;
   },
   m1() {
     return banner(1, "Pán Novák zamkol do trezora lístky na koncert a zabudol kód. Číslice schoval na periférie v pracovni.") +
@@ -745,9 +745,8 @@ const VIEWS = {
           `<div class="row"><button class="primary" data-end>📨 Ukončiť a odoslať výsledok</button></div>`}</div>`; }
     if (!S.finished) { S.finished = Date.now(); save(); }
     const pct = Math.round(total() / MAX * 100), g = gradeOf(total(), MAX);
-    let A = attempts(); if (!S.rec) { A.push({ name: S.name, cls: S.cls, score: total(), max: MAX, g, at: S.finished }); saveAttempts(A); S.rec = true; save(); }
-    const retry = canRetry(A) ? `<div class="vedel" style="margin-top:16px"><b>🔁 Máš nárok na opravu.</b> Pri známke 3, 4 alebo 5 môžeš domácu úlohu ešte <b>raz</b> vypracovať znova. Platí výsledok opravy.<div class="row"><button class="primary" data-retry>🔁 Opraviť domácu úlohu (posledný pokus)</button></div></div>` :
-      `<p class="muted" style="margin-top:14px">${S.att === 2 ? "Toto bola oprava, ďalší pokus už nie je možný." : "Domáca úloha je hotová, oprava pri známke 1 alebo 2 nie je potrebná. 👍"}</p>`;
+    let A = attempts(); if (!S.rec) { A.push({ name: S.name, cls: S.cls, score: total(), max: MAX, g, at: S.finished, snap: Object.assign({}, S, { sending: false, viewOnly: true, rec: true }) }); saveAttempts(A); S.rec = true; save(); }
+    const retry = `<div class="vedel" style="margin-top:16px;background:#EEF3FB;border-color:#B9C8EA;border-left-color:#2F5BEA;color:#16213A"><b>🔒 Domáca úloha je odoslaná a uzamknutá.</b> Platí známka z tohto pokusu, opakovať ju nie je možné. Svoje odpovede aj vysvetlenia si môžeš kedykoľvek pozrieť v jednotlivých misiách hore.</div>`;
     return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.split(" ")[0])}!</h2>${say(g <= 2 ? "Si skvelý detektív periférií! Prípad je uzavretý. 🖱️🕵️" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil.", "wow")}
       ${S.early ? `<p class="muted" style="margin:0 0 6px">📨 Domácu úlohu si ukončil predčasne, nevyriešené úlohy sú za 0 bodov.</p>` : ""}<div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
       <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
@@ -762,13 +761,18 @@ function sendResults() {
   const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, LESSON + (S.att === 2 ? " (oprava)" : "") + (S.early ? " (nedokončené)" : "")); p.set(E.body, `${total()}/${MAX} (${pct} %)` + durTxt()); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
   const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|");
   const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.viewOnly) return `<span id="sendst" style="font-weight:600;color:#1E7B34">✅ Výsledok bol odoslaný učiteľovi.</span>`; /* len prezeranie uloženého pokusu, nič sa znova neodosiela */
   if (S.sentKey !== key && !S.sending) { S.sending = true;
     fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
       .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Pripoj sa na internet a obnov stránku, výsledok sa odošle znova.", "#B3261E"); }); }
   return `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`;
 }
-function lockedDone() { if (S.finished) return null; const A = attempts(); if (!A.length) return null; if (canRetry(A)) { if (S.att !== 2) { S.att = 2; if (!S.name) { S.name = A[0].name || ""; S.cls = A[0].cls || ""; } save(); } return null; } return A; }
-function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const last = L[L.length - 1]; document.getElementById("main").innerHTML = `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(last.name)} (${esc(last.cls)}) už túto domácu úlohu odoslal/a s výsledkom <b>${last.score} z ${last.max} ⭐ (známka ${last.g})</b>. ${L.length >= 2 ? "Opravu si už využil/a, ďalší pokus nie je možný." : "Pri známke 1 alebo 2 sa oprava nerobí."}`)}</div>`; return; }
+/* DOMACE: jediný pokus – po odoslaní je DU uzamknutá pri každej známke (rozbehnutá oprava zo starej verzie sa tiež zamkne) */
+function lockedDone() { if (S.finished) return null; const A = attempts(); return A.length ? A : null; }
+function render(scroll) { const L = lockedDone(); if (L) { document.getElementById("top").innerHTML = ""; const last = L[L.length - 1], mx = last.max || MAX, g = last.g || gradeOf(last.score, mx), pct = Math.round(last.score / mx * 100);
+    document.getElementById("main").innerHTML = `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(last.name)} (${esc(last.cls)}) už túto domácu úlohu odoslal/a. Opakovať ju nie je možné.`)}
+      <div class="bign"><span class="n">${last.score}</span><span class="of">z ${mx} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
+      ${last.snap ? `<div class="row"><button class="primary" data-view>👀 Pozrieť si svoje odpovede</button></div>` : ""}</div>`; typo(document.getElementById("main")); return; }
   const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); hitAreas(m); typo(m); typo(document.getElementById("top")); window.scrollTo({ top: scroll ? 0 : y }); }
 function hitAreas(m) { m.querySelectorAll(".room [data-hot]").forEach(g => { try { const r = g.getBBox(), pad = 6, n = document.createElementNS("http://www.w3.org/2000/svg", "rect");
   n.setAttribute("x", r.x - pad); n.setAttribute("y", r.y - pad); n.setAttribute("width", r.width + 2 * pad); n.setAttribute("height", r.height + 2 * pad); n.setAttribute("fill", "transparent"); g.insertBefore(n, g.firstChild); } catch (e) {} }); }
@@ -796,7 +800,7 @@ document.addEventListener("click", e => {
     else S.rmsg = DECOY[id];
     save(); render(false); return; }
   const el = e.target.closest("button"); if (!el) return; const ds = el.dataset;
-  if (ds.retry !== undefined) { if (!canRetry(attempts())) return; const nm = S.name, cl = S.cls; S = fresh(); S.att = 2; S.name = nm; S.cls = cl; save(); render(true); return; }
+  if (ds.view !== undefined) { const A = attempts(), r = A[A.length - 1]; if (r && r.snap) { S = Object.assign(fresh(), r.snap, { viewOnly: true, cur: STEPS.length - 1 }); save(); render(true); } return; }
   if (ds.end !== undefined) { S.confirmEnd = true; save(); render(false); return; }
   if (ds.endno !== undefined) { S.confirmEnd = false; save(); render(false); return; }
   if (ds.endyes !== undefined) { finishEarly(); return; }
