@@ -270,6 +270,9 @@ table.res td:last-child,table.res th:last-child{text-align:right}
 .tprev .cap{font-size:13px;color:var(--muted);text-align:center;margin-top:4px}
 .goals{list-style:none;padding:0;margin:6px 0 0}.goals li{padding:3px 0}
 .fb{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:15.5px}
+.readout{display:inline-block;margin:0 0 0 8px;padding:4px 12px;border-radius:10px;background:#16213A;color:#7FE3A0;font-family:var(--mono);font-weight:700;font-size:17px}
+.pctbar{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:10px;font-weight:600}
+.shtr{max-height:none;min-height:0}
 .fb.ok{background:var(--okSoft)}.fb.bad{background:var(--badSoft)}.fb.info{background:var(--accSoft)}
 .fb ul{margin:4px 0 0;padding-left:20px}
 .code{font-family:var(--mono);font-size:14.5px;line-height:1.6;background:#0F1A2E;color:#DCE7FF;border-radius:10px;padding:10px 14px;white-space:pre;overflow-x:auto;margin:8px 0;font-weight:500}
@@ -323,7 +326,7 @@ table.res td:last-child,table.res th:last-child{text-align:right}
 <header class="top" id="top"></header><main id="main" tabindex="-1"></main>
 <script>
 /* ===== DU 2.3 – Kvarta: Programovací režim, ukladanie a spúšťanie programu ===== */
-const KEY = "du-k23-v3";
+const KEY = "du-k23-v4"; /* v4 (19. 11. 2026): písanie programu v každej misii, hodnotenie zhodou s predlohou v % */
 const LESSON = "Kvarta – DU_2.3 Programovací režim, ukladanie a spúšťanie programu";
 const CLASS_DEFAULT = "KVARTA";
 const CLASSES = ["KVARTA"];
@@ -341,7 +344,7 @@ const STEPS = [
   { id: "m6", title: "Digitálne číslice", ic: "🔢", min: 3, col: "linear-gradient(120deg,#0B6F8A,#2BB3D6)" },
   { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
 ];
-const STEP_TASKS = { m1: ["rsort", "idle"], m2: ["order", "prog"], m3: ["bugs", "errs"], m4: ["names", "comic"], m5: ["predict", "pF", "pU"], m6: ["seg", "d6", "d9", "m6q"] };
+const STEP_TASKS = { m1: ["idle", "sh"], m2: ["order", "prog"], m3: ["bugs", "fix"], m4: ["comic", "sv"], m5: ["predict", "pF", "pU"], m6: ["seg", "d6", "d9", "m6q"] };
 
 /* ===== LENKA: typografia ===== */
 const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
@@ -622,6 +625,8 @@ function cells(segs) {
   const o = new Set(); set.forEach(c => { const [a, b] = c.split(",").map(Number); o.add((a - mx) + "," + (b - my)); }); return o;
 }
 function same(A, B) { let d = 0; A.forEach(c => { if (!B.has(c)) d++; }); B.forEach(c => { if (!A.has(c)) d++; }); return d <= Math.max(4, B.size * 0.08); }
+/* zhoda kresby s predlohou v % (tvar, nezáleží na posunutí) */
+function matchPct(segs, target) { if (!segs || !segs.length) return 0; const A = cells(segs), B = cells(target); if (same(A, B)) return 100; let n = 0; A.forEach(c => { if (B.has(c)) n++; }); return Math.min(99, Math.round(100 * n / (A.size + B.size - n))); }
 function matches(segs, target) { return segs.length > 0 && same(cells(segs), cells(target)); }
 function fitVB(segs, pad) { let a = [], b = []; segs.forEach(s => { a.push(s[0], s[2]); b.push(-s[1], -s[3]); }); a.push(0); b.push(0); const x0 = Math.min(...a) - pad, x1 = Math.max(...a) + pad, y0 = Math.min(...b) - pad, y1 = Math.max(...b) + pad, w = Math.max(x1 - x0, y1 - y0); return `${(x0 + x1) / 2 - w / 2} ${(y0 + y1) / 2 - w / 2} ${w} ${w}`; }
 function targetSVG(segs, labels) {
@@ -642,7 +647,19 @@ function traceSVG(W, tx, ty, th) {
 const ORDER_SHAPE = [[0, 0, 100, 0], [100, 0, 100, 60]];
 const RECT_A = [[0, 0, 100, 0], [100, 0, 100, 50], [100, 50, 0, 50], [0, 50, 0, 0]], RECT_B = [[0, 0, 50, 0], [50, 0, 50, 100], [50, 100, 0, 100], [0, 100, 0, 0]];
 const digSegs = d => [...d].map(x => SEGP[x]);
+const SQ80 = [[0, 0, 80, 0], [80, 0, 80, 80], [80, 80, 0, 80], [0, 80, 0, 0]];
 const SIMS = {
+  sh: { kind: "let", name: "03zo_shellu.py", segs: [[0, 0, 80, 0], [80, 0, 80, 80], [80, 80, 40, 80]], labels: [[40, -13, "80"], [96, 40, "80"], [60, 92, "40"]],
+    t: "Včera si korytnačke zadával príkazy v okne <b>Shell</b>. Dnes chceš tú istú kresbu ako <b>program</b>, aby si ju nemusel písať znova. Do editora prepíš iba príkazy, ktoré kresbu naozaj vytvorili, a spusti program.",
+    pre: `<div class="win" style="margin:10px 0 0"><div class="wt"><span class="tt">🐍 IDLE Shell – včera</span><span class="dots">— ▢ ✕</span></div><div class="shell shtr"><span class="p">&gt;&gt;&gt; </span>from turtle import *\n<span class="p">&gt;&gt;&gt; </span>fd(80)\n<span class="p">&gt;&gt;&gt; </span>lt(90)\n<span class="p">&gt;&gt;&gt; </span>fd(8O)\n<span class="e">SyntaxError: invalid decimal literal</span>\n<span class="p">&gt;&gt;&gt; </span>fd(80)\n<span class="p">&gt;&gt;&gt; </span>lt(90)\n<span class="p">&gt;&gt;&gt; </span>17 * 23\n391\n<span class="p">&gt;&gt;&gt; </span>fd(40)\n<span class="p">&gt;&gt;&gt; </span></div></div>`,
+    sol: "from turtle import *\nfd(80)\nlt(90)\nfd(80)\nlt(90)\nfd(40)", solNote: "Riadok s chybou <code>fd(8O)</code> sa nevykonal a výpočet <code>17 * 23</code> nič nenakreslil, preto do programu nepatria." },
+  fix: { kind: "let", name: "03durov_tvar.py", segs: [[0, 0, 100, 0], [100, 0, 100, 60], [100, 60, 0, 60]], labels: [[50, -13, "100"], [116, 30, "60"], [50, 73, "100"]],
+    start: "from turtle import *\nfd(100\nlt(90)\nfd(6O)\nrt(90)\nforwrd(100)\n",
+    t: "Ďuro napísal program na tvar z predlohy, ale nefunguje. Oprav ho <b>priamo v editore</b> a spusti. Pozor: niektoré chyby ti ukáže Shell, ale jedna sa prejaví až na obrázku.",
+    sol: "from turtle import *\nfd(100)\nlt(90)\nfd(60)\nlt(90)\nfd(100)", solNote: "Chyby: chýbajúca zátvorka <code>fd(100</code>, písmeno O v čísle <code>6O</code>, zlý smer <code>rt</code> namiesto <code>lt</code> a preklep <code>forwrd</code>." },
+  sv: { kind: "sv", save: 1, name: "turtle.py", segs: SQ80, labels: [[40, -13, "80"], [96, 40, "80"]],
+    t: "Ďuro začal písať program na <b>štvorec so stranou 80</b> a uložil ho ako <code>turtle.py</code>. Dopíš program, ulož ho pod <b>správnym názvom</b> (File → Save As, číslo pracovného listu je <b>03</b>) a spusti ho.",
+    sol: "from turtle import *\nfd(80)\nlt(90)\nfd(80)\nlt(90)\nfd(80)\nlt(90)\nfd(80)", solNote: "Program ulož napríklad ako <code>03stvorec.py</code>." },
   pF: { kind: "let", name: "03pismenoF.py", segs: [[0, 0, 0, 100], [0, 100, 60, 100], [0, 50, 40, 50]], labels: [[-14, 50, "100"], [30, 109, "60"], [20, 57, "40"]],
     t: "Nakresli písmeno <b>F</b>: zvislá čiara 100, horná čiara 60 a stredná čiara 40 (je presne v polovici výšky).", sol: "from turtle import *\nlt(90)\nfd(100)\nrt(90)\nfd(60)\nbk(60)\nrt(90)\nfd(50)\nlt(90)\nfd(40)" },
   pU: { kind: "let", name: "03pismenoU.py", segs: [[0, 100, 0, 0], [0, 0, 60, 0], [60, 0, 60, 100]], labels: [[-14, 50, "100"], [30, -13, "60"], [74, 50, "100"]],
@@ -668,19 +685,13 @@ const SEGT = { a: { d: "4", s: "bcfg" } };
 
 /* ===== ÚLOHY ===== */
 const TASKS = {
-  rsort: { id: "rsort", type: "sort", max: 2, bins: RS_BINS, items: [
-    { id: "1", t: "Chcem rýchlo zistiť, koľko je 17 * 23.", a: "p" }, { id: "3", t: "Každý riadok začína znakmi >>>.", a: "p" },
-    { id: "5", t: "Kresbu si chcem uložiť a zajtra ju ukázať.", a: "g" }, { id: "6", t: "Mám 30 riadkov a chcem ich spustiť všetky naraz.", a: "g" }] },
   idle: { id: "idle", type: "idle", max: 3 },
+  sh: { id: "sh", type: "sim", max: 2 },
   order: { id: "order", type: "order", max: 2, items: [{ id: "a", t: "from turtle import *" }, { id: "b", t: "fd(100)" }, { id: "c", t: "lt(90)" }, { id: "d", t: "fd(60)" }] },
   prog: { id: "prog", type: "prog", max: 3 },
   bugs: { id: "bugs", type: "bugs", max: 3 },
-  errs: { id: "errs", type: "errs", max: 2, items: [
-    { id: "a", code: "fd(100)\nlt(90)", a: 0, why: "Program nezačína riadkom <code>from turtle import *</code>, preto Python príkaz <code>fd</code> nepozná." },
-    { id: "c", code: "from turtle import *\nfd(100)\nlt(9O)", a: 2, why: "V čísle <code>9O</code> je namiesto nuly <b>veľké písmeno O</b> (deväť a „ó“). Číslo nesmie obsahovať písmená, preto ho Python odmietne ako neplatné číslo." }] },
-  names: { id: "names", type: "names", keep: 1, qs: [
-    { id: "1", old: "turtle.py", ds: "kreslí štvorec", q: "📄 <code>turtle.py</code> kreslí štvorec. Ako ho premenuješ?", opts: ["03stvorec.py", "stvorec turtle.py", "03štvorec.py", "math.py"], a: 0, why: "<code>turtle</code> aj <code>math</code> sú mená modulov Pythonu, program by nefungoval. Názov nesmie mať medzeru ani diakritiku." },
-    { id: "3", old: "domcek.txt", ds: "kreslí domček (napísaný v Poznámkovom bloku)", q: "📄 <code>domcek.txt</code> kreslí domček. Ďuro ho napísal v Poznámkovom bloku. Ako ho premenuješ?", opts: ["03domcek.py", "03domcek.txt", "03domcek.py.txt", "03domcek"], a: 0, why: "Program v Pythone musí mať príponu <b>.py</b>. Súbor .txt (aj .py.txt) by Windows otvoril ako obyčajný text." }] },
+  fix: { id: "fix", type: "sim", max: 2 },
+  sv: { id: "sv", type: "sim", max: 2 },
   comic: { id: "comic", type: "comic", panels: [
     { w: "d", mood: "sad", t: "Turbo, pomoc! 😩 Napísal som program na štvorec, uložil som ho ako <b>turtle.py</b> a stlačil F5. Shell píše <b>NameError: name 'fd' is not defined</b>. Veď <code>from turtle import *</code> tam mám!" },
     { w: "t", q: "1", opts: ["Python pri importe hľadá najprv v priečinku s tvojím programom. Našiel tvoj turtle.py a skutočný modul turtle nenačítal.", "Chyba je v tom, že si program uložil skôr, ako si ho spustil.", "Windows nedovolí uložiť súbor s menom turtle.py celý, preto sa uložil iba prvý riadok.", "F5 nevie spustiť programy, ktorých názov začína písmenom t."], a: 0, why: "Python hľadá moduly najprv v priečinku s programom. Tvoj súbor <code>turtle.py</code> tak „zakryl“ skutočný modul turtle a príkaz <code>fd</code> sa nenačítal." },
@@ -793,7 +804,7 @@ function wsHTML(k, mode, locked) {
   const menu = mode === "full" ? `<div class="menubar"><button data-wm="${k}|file" class="${w.menu === "file" ? "on" : ""}" ${dis}>File</button><button ${dis}>Edit</button><button ${dis}>Format</button><button data-wm="${k}|run" class="${w.menu === "run" ? "on" : ""}" ${dis}>Run</button><button ${dis}>Options</button><button ${dis}>Window</button><button ${dis}>Help</button>
       ${w.menu === "file" ? `<div class="drop" style="left:6px"><button data-wa="${k}|new">New File &nbsp;<small>Ctrl+N</small></button><button data-wa="${k}|open">Open... &nbsp;<small>Ctrl+O</small></button><button data-wa="${k}|save" ${w.ed ? "" : "disabled"}>Save &nbsp;<small>Ctrl+S</small></button><button data-wa="${k}|saveas" ${w.ed ? "" : "disabled"}>Save As...</button><button data-wa="${k}|close" ${w.ed ? "" : "disabled"}>Close Window</button></div>` : ""}
       ${w.menu === "run" ? `<div class="drop" style="left:150px"><button data-wa="${k}|run" ${w.ed ? "" : "disabled"}>Run Module &nbsp;<small>F5</small></button></div>` : ""}</div>`
-    : `<div class="menubar"><button data-wa="${k}|run" ${dis}>▶ Run Module (F5)</button><button data-wa="${k}|clear" ${dis}>🧹 Vymazať program</button></div>`;
+    : `<div class="menubar"><button data-wa="${k}|run" ${dis}>▶ Run Module (F5)</button><button data-wa="${k}|clear" ${dis}>${SIMS[k] && SIMS[k].start ? "↺ Vrátiť pôvodný program" : "🧹 Vymazať program"}</button></div>`;
   const editor = w.ed ? `<div class="win editor"><div class="wt"><span class="tt">📝 ${esc(title)} – ${DOCS}${esc(w.name || "untitled")}</span><span class="dots">— ▢ ✕</span></div>${menu}<textarea data-ed="${k}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Editor programu" ${locked ? "readonly" : ""}>${esc(w.text)}</textarea><div class="status">Programovací režim · F5 = spustiť${mode === "full" ? " · Ctrl+S = uložiť" : ""}</div></div>`
     : `<div class="win editor"><div class="wt"><span class="tt">🐍 IDLE Shell 3.12.4</span><span class="dots">— ▢ ✕</span></div>${menu}<div class="edempty">Editor zatiaľ nie je otvorený.<br>Klikni na <b>File → New File</b>.</div></div>`;
   let dlg = "";
@@ -810,7 +821,7 @@ function validName(n) { return /^[\w\-]+\.py$/i.test(n) && !MOD.test(n); }
 function doSave(k, name) {
   const w = WS(k); name = String(name || "").trim(); if (!name) return;
   if (!/\.py$/i.test(name)) name += ".py";
-  w.name = name; w.saved = w.text; S.files[name] = w.text; w.dlg = null; S.g.saved = true;
+  w.name = name; w.saved = w.text; S.files[name] = w.text; w.dlg = null; if (k === "prog") S.g.saved = true;
   S.msg[k] = MOD.test(name) ? { c: "bad", t: `Pozor, <b>${esc(name)}</b> je meno modulu Pythonu! Program sa uložil, ale skús ho spustiť a uvidíš, čo sa stane.` }
     : !validName(name) ? { c: "bad", t: `💾 Uložené ako <b>${esc(name)}</b>. Názov však obsahuje medzeru alebo diakritiku, to nie je dobrý nápad.` }
     : { c: "ok", t: `💾 Uložené ako <b>${esc(name)}</b>.` };
@@ -818,22 +829,23 @@ function doSave(k, name) {
 }
 function doRun(k) {
   const w = WS(k); if (!w.ed) return;
-  if (k === "prog" && (w.text !== w.saved || !w.name)) { w.dlg = "must"; return; }
+  if ((k === "prog" || (SIMS[k] && SIMS[k].save)) && (w.text !== w.saved || !w.name)) { w.dlg = "must"; return; }
   if (!w.name) w.name = SIMS[k] ? SIMS[k].name : "program.py";
   const r = runProgram(w), noImp = !/^\s*from\s+turtle\s+import\s+\*/m.test(w.text);
   if (k === "prog") S.g.ran = true;
   if (r.self) S.msg[k] = { c: "bad", t: "Program nefunguje, lebo súbor sa volá rovnako ako modul Pythonu. Ulož program pod iným menom (File → Save As)." };
   else if (!r.ok && noImp) S.msg[k] = { c: "bad", t: "Chýba riadok <b>from turtle import *</b> na začiatku programu! Pri spustení sa Python reštartuje a zabudne aj import zo Shellu." };
   else if (!r.ok) S.msg[k] = { c: "bad", t: "V Shelli je chyba (červený text). Prečítaj si, na ktorom riadku je, oprav ju a spusti program znova." };
-  else S.msg[k] = { c: "info", t: k === "prog" ? "▶ Program sa spustil bez chyby. Pozri sa, či korytnačka nakreslila obdĺžnik 100 × 50. Keď áno, odovzdaj program." : "▶ Program sa spustil. Porovnaj kresbu s predlohou. Keď sedí, klikni na Odovzdať kresbu." };
+  else S.msg[k] = { c: "info", t: k === "prog" ? "▶ Program sa spustil bez chyby. Pozri sa, či korytnačka nakreslila obdĺžnik 100 × 50. Keď áno, klikni na Skontrolovať." : "▶ Program sa spustil. Porovnaj kresbu s predlohou a pozri sa na zhodu v %. Keď je kresba hotová, klikni na Skontrolovať." };
 }
 /* M2 – vlastný program */
 function progHTML() {
   const T = TASKS.prog, done = S.t.prog, w = WS("prog"), G = (k, t) => `<li>${S.g[k] ? "✅" : "⬜"} ${t}</li>`;
-  return `<ul class="goals">${G("newfile", "Otvor nový súbor: <b>File → New File</b>.")}${G("saved", "Napíš program, ktorý nakreslí <b>obdĺžnik so stranami 100 a 50</b>, a ulož ho (<b>File → Save</b> alebo Ctrl + S). Názov vymysli podľa pravidiel z hodiny, číslo pracovného listu je <b>03</b>.")}${G("ran", "Spusti program (<b>Run → Run Module</b> alebo F5).")}<li>📤 Keď je kresba hotová, klikni na <b>Odovzdať program</b>. Hodnotí sa posledné spustenie a názov uloženého súboru.</li></ul>
+  return `<ul class="goals">${G("newfile", "Otvor nový súbor: <b>File → New File</b>.")}${G("saved", "Napíš program, ktorý nakreslí <b>obdĺžnik so stranami 100 a 50</b>, a ulož ho (<b>File → Save</b> alebo Ctrl + S). Názov vymysli podľa pravidiel z hodiny, číslo pracovného listu je <b>03</b>.")}${G("ran", "Spusti program (<b>Run → Run Module</b> alebo F5).")}<li>✔️ Keď je kresba hotová, klikni na <b>Skontrolovať</b> (len raz). Hodnotí sa posledné spustenie a názov uloženého súboru.</li></ul>
     ${wsHTML("prog", "full", !!done)}
+    ${w.W && w.W.win ? (p => `<div class="pctbar">zhoda s obdĺžnikom 100 × 50:<span class="readout">${p} %</span></div>`)(Math.max(matchPct(w.W.segs, RECT_A), matchPct(w.W.segs, RECT_B))) : ""}
     ${done ? `<div class="fb ${done.score === done.max ? "ok" : "bad"}"><b>Hodnotenie programu:</b>${S.res.prog || ""}</div>${done.score < done.max ? `<p class="why miss" style="margin-top:10px">Takto mohol vyzerať program <code>03obdlznik.py</code>:</p><div class="code">${esc("from turtle import *\nfd(100)\nlt(90)\nfd(50)\nlt(90)\nfd(100)\nlt(90)\nfd(50)")}</div>` : ""}` : ""}` +
-    checkBar(T, w.runs > 0, "Najprv program ulož a aspoň raz spusti.", "📤 Odovzdať program");
+    checkBar(T, w.runs > 0, "Najprv program ulož a aspoň raz spusti.");
 }
 function gradeProg() {
   const w = WS("prog"), W = w.W || newWorld(), nm = w.name || "";
@@ -841,25 +853,30 @@ function gradeProg() {
   S.res.prog = `<ul>${[[c2, `názov súboru ${nm ? `<code>${esc(nm)}</code>` : "(neuložený)"} ${c2 ? "je správny" : "nespĺňa pravidlá: 03 + čo program kreslí, prípona .py, bez medzier a diakritiky, nie meno modulu"}`], [c3, c3 ? "program sa spustil bez chyby" : "posledné spustenie skončilo chybou"], [c4, c4 ? "korytnačka nakreslila obdĺžnik 100 × 50" : "kresba nie je obdĺžnik 100 × 50"]].map(([o, t]) => `<li>${o ? "✅" : "❌"} ${t}</li>`).join("")}</ul>`;
   return [c2, c3, c4].filter(Boolean).length;
 }
-/* M5, M6 – kreslenie podľa predlohy */
+/* písanie programu podľa predlohy (v každej misii) – spúšťať sa dá ľubovoľne, kontrola len raz, hodnotí sa zhoda v % */
 function simHTML(id) {
-  const T = TASKS[id], X = SIMS[id], done = S.t[id], w = WS(id);
-  if (!w.ed) { w.ed = true; w.name = X.name; w.text = "from turtle import *\n"; w.saved = w.text; }
+  const T = TASKS[id], X = SIMS[id], done = S.t[id], w = WS(id), full = !!X.save;
+  if (!w.ed) { w.ed = true; w.name = X.name; w.text = X.start || "from turtle import *\n"; w.saved = w.text; }
+  const ran = !!(w.W && w.W.win), pct = ran ? matchPct(w.W.segs, X.segs) : 0;
   return `<div class="tgtbar"><div class="tprev">${targetSVG(X.segs, X.labels)}<div class="cap">predloha · zelená bodka = začiatok</div></div><div><p style="margin:0 0 8px">${X.t}</p>
-    <p class="muted" style="font-size:15px;margin:0">Povolené príkazy: <code>fd()</code>, <code>bk()</code>, <code>lt()</code>, <code>rt()</code> aj ich dlhé tvary. Program môžeš spúšťať koľkokrát chceš, odovzdáš ho len raz.</p>
-    ${done ? `<div class="fb ${done.score === done.max ? "ok" : "bad"}">${S.res[id] || ""}</div>${done.score < done.max ? `<p class="why miss" style="margin-top:8px">Jedno z možných riešení:</p><div class="code">${esc(X.sol)}</div>` : ""}` : ""}</div></div>
-    ${wsHTML(id, "simple", !!done)}` + checkBar(T, !!(w.W && w.W.win), "Najprv program spusti tlačidlom ▶ Run Module.", "📤 Odovzdať kresbu");
+    <p class="muted" style="font-size:15px;margin:0">Povolené príkazy: <code>fd()</code>, <code>bk()</code>, <code>lt()</code>, <code>rt()</code> aj ich dlhé tvary. Program môžeš spúšťať (F5) koľkokrát chceš, skontrolovať ho môžeš <b>len raz</b>. Za úplnú zhodu s predlohou získaš ${maxOf(T)} ⭐, pri čiastočnej menej.</p>
+    ${X.pre || ""}
+    ${done ? `<div class="fb ${done.score === done.max ? "ok" : "bad"}">${S.res[id] || ""}</div>${done.score < done.max ? `<p class="why miss" style="margin-top:8px">Jedno z možných riešení:</p><div class="code">${esc(X.sol)}</div>${X.solNote ? `<p class="why miss" style="margin-top:6px">${X.solNote}</p>` : ""}` : ""}` : ""}</div></div>
+    ${wsHTML(id, full ? "full" : "simple", !!done)}
+    ${ran ? `<div class="pctbar">zhoda s predlohou:<span class="readout">${pct} %</span>${pct === 100 ? `<span style="color:${C.ok}">✔ tvar sedí</span>` : ""}</div>` : ""}` + checkBar(T, ran, "Najprv program spusti (▶ Run Module alebo F5).");
 }
 function gradeSim(id) {
-  const X = SIMS[id], W = WS(id).W;
-  if (!W || !W.segs.length) return [0, "❌ Korytnačka pri poslednom spustení nič nenakreslila."];
-  const okShape = matches(W.segs, X.segs);
-  if (X.kind === "let") return okShape ? [2, "✅ Písmeno presne zodpovedá predlohe."] : [0, "❌ Kresba sa nezhoduje s predlohou. Skontroluj dĺžky čiar a smery otočení."];
-  if (!okShape) return [0, "❌ Číslica sa nezhoduje s predlohou. Skontroluj dĺžky 50 a 100 a otočenia."];
-  let mx = Infinity, my = Infinity; W.segs.forEach(s => { mx = Math.min(mx, s[0], s[2]); my = Math.min(my, s[1], s[3]); });
-  const startOk = Math.abs(mx) <= 3 && Math.abs(my) <= 3, endOk = Math.hypot(W.x, W.y) <= 3;
-  if (startOk && endOk) return [2, "✅ Číslica je správne a korytnačka je späť v ľavom dolnom rohu."];
-  return [1, "🟡 Tvar číslice je správny, ale " + (startOk ? "korytnačka sa na konci nevrátila do ľavého dolného rohu." : "číslica nezačína v ľavom dolnom rohu (na zelenej bodke).")];
+  const X = SIMS[id], w = WS(id), W = w.W, mx = maxOf(TASKS[id]);
+  if (X.kind === "sv") { const nm = w.name || "", nOk = validName(nm) && /^03[\w-]*stvor[\w-]*\.py$/i.test(nm), p = W ? matchPct(W.segs, X.segs) : 0;
+    return [(nOk ? 1 : 0) + (p === 100 ? 1 : 0), `<ul style="margin:0;padding-left:20px"><li>${nOk ? "✅" : "❌"} názov <code>${esc(nm)}</code> ${nOk ? "je správny" : "nespĺňa pravidlá: 03 + čo program kreslí, prípona .py, bez medzier a diakritiky, nie meno modulu"}</li><li>${p === 100 ? "✅" : "❌"} zhoda kresby s predlohou: <b>${p} %</b></li></ul>`]; }
+  if (!W || !W.segs.length) return [0, "❌ Korytnačka pri poslednom spustení nič nenakreslila. Zhoda: 0 %."];
+  const p = matchPct(W.segs, X.segs);
+  if (X.kind === "let") return p === 100 ? [mx, "✅ Zhoda s predlohou: <b>100 %</b>. Kresba presne sedí."] : [Math.floor(mx * p / 100), `❌ Zhoda s predlohou: <b>${p} %</b>. Skontroluj dĺžky čiar a smery otočení.`];
+  if (p < 100) return [Math.min(mx - 1, Math.floor(mx * p / 100)), `❌ Zhoda s predlohou: <b>${p} %</b>. Skontroluj dĺžky 50 a 100 a otočenia.`];
+  let x0 = Infinity, y0 = Infinity; W.segs.forEach(s => { x0 = Math.min(x0, s[0], s[2]); y0 = Math.min(y0, s[1], s[3]); });
+  const startOk = Math.abs(x0) <= 3 && Math.abs(y0) <= 3, endOk = Math.hypot(W.x, W.y) <= 3;
+  if (startOk && endOk) return [mx, "✅ Zhoda s predlohou: <b>100 %</b> a korytnačka je späť v ľavom dolnom rohu."];
+  return [mx - 1, "🟡 Zhoda tvaru je 100 %, ale " + (startOk ? "korytnačka sa na konci nevrátila do ľavého dolného rohu." : "číslica nezačína v ľavom dolnom rohu (na zelenej bodke).")];
 }
 /* M3 – Ďurov program s chybami */
 function bugsHTML() {
@@ -913,8 +930,8 @@ function nextBar() { const n = STEPS[S.cur + 1]; return memo() + (n ? `<div clas
 const VIEWS = {
   start() {
     return `<div class="hero"><div><p class="kicker">Informatika · Kvarta · domáca úloha k hodine 2.3</p><h1>Domáca úloha: Programovací režim</h1>
-      <p style="font-size:18.5px">Ahoj! Som <b>Turbo</b>, korytnačka, ktorá nakreslí presne to, čo jej prikážeš. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: okná IDLE, prvý uložený program, hon na chyby, upratovanie súborov, písmená a digitálne číslice. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
-      <p class="muted" style="font-size:15.5px">Programy budeš písať priamo na tejto stránke v simulátore IDLE. Python v počítači netreba.</p>
+      <p style="font-size:18.5px">Ahoj! Som <b>Turbo</b>, korytnačka, ktorá nakreslí presne to, čo jej prikážeš. Čaká nás <b>6 misií</b> a <b>15 úloh</b>: okná IDLE, prvý uložený program, hon na chyby, názvy súborov, písmená a digitálne číslice. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <p class="muted" style="font-size:15.5px">V každej misii napíšeš program priamo na tejto stránke v simulátore IDLE. Spúšťať ho môžeš koľkokrát chceš a uvidíš, na koľko percent sa kresba zhoduje s predlohou. Python v počítači netreba.</p>
       <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
       <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
       <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
@@ -923,7 +940,7 @@ const VIEWS = {
   },
   m1() {
     return banner(1, "IDLE má dva režimy a tri okná. Zisti, kedy sa príkaz vykoná hneď a kedy až po spustení programu.") +
-    say(`Ahoj, som korytnačka <b>Turbo</b>! 🐢 Doteraz si mi dával príkazy v okne Shell jeden po druhom. Dnes z nich urobíme <b>program</b>, ktorý si uložíš a spustíš, kedy budeš chcieť. Najprv sa však poriadne poobzeraj po IDLE.`) +
+    say(`Ahoj, som korytnačka <b>Turbo</b>! 🐢 Doteraz si mi dával príkazy v okne Shell jeden po druhom. Dnes z nich urobíme <b>program</b>, ktorý si uložíš a spustíš, kedy budeš chcieť. Najprv sa poobzeraj po IDLE a potom prepíš príkazy zo Shellu do svojho prvého programu.`) +
     `<div class="theory tsplit"><div>
       <p>Python v prostredí IDLE môžeš používať v dvoch režimoch:</p>
       <table class="rtab"><thead><tr><th>Režim</th><th>Kde píšeš</th><th>Kedy sa príkazy vykonajú</th></tr></thead><tbody>
@@ -933,8 +950,8 @@ const VIEWS = {
       <p>Pri spustení sa Python najprv <b>reštartuje</b> a zabudne všetko, čo si predtým zadal v Shelli. Potom vykoná riadky programu <b>zhora nadol</b>.</p>
     </div><div class="tfigs">${FIG_MODES}${FIG_F5}</div></div>
     ${VEDEL("Názov <b>IDLE</b> je skratka anglických slov Integrated Development and Learning Environment. Je to aj žartovná pocta Ericovi Idlovi z britskej komediálnej skupiny Monty Python, podľa ktorej dostal meno samotný jazyk Python.")}
-    ${H3(1, "🗂️", "Shell, alebo editor?", "rsort")}<div class="task">${sortHTML(TASKS.rsort)}</div>
-    ${H3(2, "🔎", "nájdi okná IDLE na obrazovke", "idle")}<div class="task">${idleHTML()}</div>` + nextBar();
+    ${H3(1, "🔎", "nájdi okná IDLE na obrazovke", "idle")}<div class="task">${idleHTML()}</div>
+    ${H3(2, "🔁", "zo Shellu do programu", "sh")}<div class="task">${simHTML("sh")}</div>` + nextBar();
   },
   m2() {
     return banner(2, "Poskladaj rozhádzaný program a potom napíš, ulož a spusti vlastný program ako v skutočnom IDLE.") +
@@ -954,7 +971,7 @@ const VIEWS = {
   },
   m3() {
     return banner(3, "Programy sa nie vždy podaria. Nauč sa čítať chybové hlásenia a nájsť, kde sa chyba skrýva.") +
-    say(`Môj kamarát <b>Ďuro</b> napísal program na obdĺžnik, ale korytnačka nenakreslila nič. 🐞 Pomôž mu nájsť chyby! Python ti vždy napíše, <b>na ktorom riadku</b> je chyba a <b>akého druhu</b> je.`, "wow") +
+    say(`Môj kamarát <b>Ďuro</b> napísal program na obdĺžnik, ale korytnačka nenakreslila nič. 🐞 Pomôž mu nájsť chyby a potom oprav ešte jeden jeho program priamo v editore. Python ti vždy napíše, <b>na ktorom riadku</b> je chyba a <b>akého druhu</b> je.`, "wow") +
     `<div class="theory tsplit"><div>
       <p>Keď Python v programe nájde chybu, zastaví sa a v okne Shell vypíše <b>chybové hlásenie</b> červenou farbou. Najčastejšie sú tieto tri druhy chýb:</p>
       <table class="rtab"><thead><tr><th>Hlásenie</th><th>Čo znamená</th></tr></thead><tbody>
@@ -965,12 +982,12 @@ const VIEWS = {
     </div><div class="tfigs">${FIG_TB}</div></div>
     ${VEDEL("Chybe v programe sa po anglicky hovorí <b>bug</b>, teda chrobák. V roku 1947 našli technici v počítači Mark II mušku, ktorá spôsobila poruchu. Programátorka Grace Hopperová ju nalepila do denníka s poznámkou o prvom skutočnom nájdenom chrobákovi.")}
     ${H3(5, "🐞", "oprav Ďurov program", "bugs")}<div class="task">${bugsHTML()}</div>
-    ${H3(6, "🧾", "ktoré hlásenie patrí ku ktorému programu?", "errs")}<div class="task">${errsHTML()}</div>
+    ${H3(6, "🛠️", "oprav program v editore", "fix")}<div class="task">${simHTML("fix")}</div>
 ` + nextBar();
   },
   m4() {
     return banner(4, "Dobrý názov súboru ušetrí čas a zlý názov dokáže pokaziť aj správny program.") +
-    say(`Ďuro má v priečinku poriadny neporiadok. 📁 Pomôž mu dva súbory premenovať podľa pravidiel a potom mu v komikse vysvetli, prečo mu nefungoval program <b>turtle.py</b>.`) +
+    say(`Ďuro sa trápi s názvami súborov. 📁 Najprv mu v komikse vysvetli, prečo mu nefungoval program <b>turtle.py</b>. Potom jeho program dopíš a ulož pod správnym názvom.`) +
     `<div class="theory tsplit"><div>
       <p>Program uložíš klávesmi <kbd>Ctrl</kbd> + <kbd>S</kbd>. Pri prvom uložení sa IDLE opýta na názov. Uložený program otvoríš v IDLE cez <b>File → Open</b> alebo pravým tlačidlom myši na súbore a voľbou <b>Edit with IDLE</b>.</p>
       <table class="rtab"><thead><tr><th>Pravidlo pre názov programu</th><th>Príklad</th></tr></thead><tbody>
@@ -981,8 +998,8 @@ const VIEWS = {
         <tr><td>prípona <b>.py</b></td><td><code>05hviezda.txt</code> ❌</td></tr></tbody></table>
     </div><div class="tfigs">${FIG_FOLDER}${FIG_SAVE}</div></div>
     ${VEDEL("Okrem prípony <b>.py</b> existuje aj <b>.pyw</b>. Program s ňou sa vo Windows spustí bez čierneho okna konzoly, čo sa hodí pre programy s vlastným oknom, napríklad pre hry.")}
-    ${H3(7, "🧹", "uprac Ďurov priečinok", "names")}<div class="task"><p class="ins">Pri každom súbore vyber nový názov. V okne priečinka hneď uvidíš, ako bude vyzerať.</p>${namesHTML()}</div>
-    ${H3(8, "💬", "komiks: záhada súboru turtle.py", "comic")}<div class="task">${comicHTML()}</div>` + nextBar();
+    ${H3(7, "💬", "komiks: záhada súboru turtle.py", "comic")}<div class="task">${comicHTML()}</div>
+    ${H3(8, "💾", "dopíš a ulož pod správnym názvom", "sv")}<div class="task">${simHTML("sv")}</div>` + nextBar();
   },
   m5() {
     return banner(5, "Z rovných čiar a otočení poskladáš celé písmená veľkej abecedy.") +
@@ -1025,7 +1042,7 @@ const VIEWS = {
     const pct = Math.round(total() / MAX * 100), g = pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5;
     return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? "Si skvelý programátor! Moje programy sú uložené, chyby opravené a číslice svietia. 🐢💾" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil, a programy si vyskúšaj aj v skutočnom IDLE.", "wow")}
       <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
-      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + (S.t[t] ? S.t[t].score : 0), 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
       <div class="row">${sendResults()}</div>
       ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
       <div class="vedel" style="margin-top:16px;background:#EEF3FB;border-color:#B9C8EA;border-left-color:#2F5BEA;color:#16213A"><b>🔒 Domáca úloha je odoslaná a uzamknutá.</b> Platí známka z tohto pokusu, opakovať ju nie je možné. Svoje odpovede aj vysvetlenia si môžeš kedykoľvek pozrieť v jednotlivých misiách hore.</div></div>`;
@@ -1125,7 +1142,7 @@ document.addEventListener("click", e => {
     if (a === "open") w.dlg = "open";
     if (a === "close") { w.ed = false; w.dlg = null; }
     if (a === "run") doRun(k);
-    if (a === "clear") { w.text = "from turtle import *\n"; w.saved = w.text; }
+    if (a === "clear") { w.text = (SIMS[k] && SIMS[k].start) || "from turtle import *\n"; w.saved = w.text; }
     save(); render(false); return;
   }
   if (ds.wo) { const [k, f] = ds.wo.split("|"), w = WS(k); if (S.t[k]) return; w.ed = true; w.name = f; w.text = S.files[f]; w.saved = w.text; w.dlg = null; S.msg[k] = { c: "ok", t: `📂 Otvorený súbor <b>${esc(f)}</b>.` }; save(); render(false); return; }
@@ -1136,11 +1153,11 @@ document.addEventListener("keydown", e => {
   const k = t.dataset && t.dataset.ed; if (!k || t.readOnly) return;
   if (e.key === "Tab") { e.preventDefault(); const s = t.selectionStart; t.value = t.value.slice(0, s) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 4; WS(k).text = t.value; save(); return; }
   if (e.key === "F5") { e.preventDefault(); WS(k).text = t.value; doRun(k); save(); render(false); return; }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (k !== "prog") return; const w = WS(k); w.text = t.value; if (w.name) doSave(k, w.name); else w.dlg = "saveas"; save(); render(false); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (k !== "prog" && !(SIMS[k] && SIMS[k].save)) return; const w = WS(k); w.text = t.value; if (w.name) doSave(k, w.name); else w.dlg = "saveas"; save(); render(false); }
 });
 document.addEventListener("input", e => {
   const t = e.target, k = t.dataset.ed;
-  if (k) { const w = WS(k); w.text = t.value; save(); if (k === "prog") { const tt = t.closest(".editor").querySelector(".wt .tt"); if (tt) { const dirty = w.text !== w.saved; tt.textContent = `📝 ${dirty ? "*" : ""}${w.name || "untitled"}${dirty ? "*" : ""} – ${DOCS}${w.name || "untitled"}`; } } return; }
+  if (k) { const w = WS(k); w.text = t.value; save(); if (k === "prog" || (SIMS[k] && SIMS[k].save)) { const tt = t.closest(".editor").querySelector(".wt .tt"); if (tt) { const dirty = w.text !== w.saved; tt.textContent = `📝 ${dirty ? "*" : ""}${w.name || "untitled"}${dirty ? "*" : ""} – ${DOCS}${w.name || "untitled"}`; } } return; }
   const f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
 });
 render(false);

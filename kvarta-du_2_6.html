@@ -354,9 +354,242 @@ table.res td:last-child,table.res th:last-child{text-align:right}
 .code{white-space:pre-wrap}
 .opts.pics .opt svg{max-height:190px}
 
+/* ===== PYW: písanie programu v simulátore IDLE (DOMACE 19. 11. 2026) ===== */
+.pytop{display:grid;grid-template-columns:210px minmax(0,1fr);gap:16px;align-items:start}
+.pygoal{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:8px}
+.pygoal svg{width:100%;height:auto;display:block}
+.pygoal .cap{font-size:12.5px;color:var(--muted);text-align:center;margin-top:4px;line-height:1.35}
+.pyws{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:12px;margin-top:12px;align-items:start}
+.pywin{background:#fff;color:#000;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 10px 24px -16px rgba(10,20,60,.45);margin-bottom:10px}
+.pyt{display:flex;justify-content:space-between;gap:8px;background:#E9EDF3;color:#1B1B1F;font-size:13px;padding:6px 10px;border-bottom:1px solid #D5DCE6;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pyt span{color:#666;letter-spacing:4px;flex:0 0 auto}
+.pymenu{font-size:12.5px;color:#566381;padding:3px 10px;border-bottom:1px solid #EEF1F5;white-space:pre;overflow:hidden}
+.pyed{width:100%;min-height:230px;border:0;border-radius:0;font-family:"Courier New",var(--mono);font-size:15px;line-height:1.5;padding:10px 12px;background:#fff;color:#000;resize:vertical;outline:none;display:block;tab-size:4}
+.pyed[readonly]{background:#F6F7F9;color:#3A3A44}
+.pyst{font-size:12px;color:#566381;background:#F3F5F8;padding:3px 10px;border-top:1px solid #EEF1F5}
+.pysh{font-family:"Courier New",var(--mono);font-size:14px;padding:8px 12px;min-height:70px;max-height:230px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#000;background:#fff}
+.pysh .p{color:#7A2E00}.pysh .e{color:#D10000}
+.pyin{font-family:"Courier New",var(--mono);font-size:14px;border:0;border-bottom:1.5px dashed #9AA6B8;outline:none;width:calc(100% - 40px);background:#FFFBEA;color:#000;padding:2px 4px}
+.pywin svg{width:100%;height:auto;display:block}
+.pyempty{min-height:180px;display:grid;place-items:center;text-align:center;color:#8A93A6;font-size:14px;padding:12px}
+.pybtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.pybtns .primary{padding:9px 16px;font-size:15.5px}
+.pystale{color:#C0392B;font-size:14px;font-weight:600}
+.pctbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:4px;font-weight:600}
+.readout{display:inline-block;margin:0 0 0 4px;padding:4px 12px;border-radius:10px;background:#16213A;color:#7FE3A0;font-family:var(--mono);font-weight:700;font-size:17px}
+.pymsg{font-weight:500;font-size:14.5px;color:#7A4A00;background:#FDF1D6;border-radius:8px;padding:3px 10px}
+.pycode{font-family:"Courier New",var(--mono);white-space:pre;background:#fff;color:#000;border:1px solid #D6DCE6;border-radius:10px;padding:8px 12px;font-size:14.5px;line-height:1.5;overflow-x:auto;max-width:560px}
+.pyws.one{grid-template-columns:minmax(0,1fr)}
+@media (max-width:860px){.pyws{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.pytop{grid-template-columns:minmax(0,1fr)}.pygoal{max-width:240px}}
 </style></head><body>
 <header class="top" id="top"></header><main id="main" tabindex="-1"></main>
 <script>
+/* ===== PYW: simulátor Pythonu s korytnačkou pre písanie programov (DOMACE 19. 11. 2026, interpreter z hodín Kvarty) ===== */
+const PYW = (() => {
+const DOCS = "C:\\Users\\ziak\\Documents\\";
+const COLORS = "black white red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray darkgreen darkblue darkred darkgray darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink lawngreen springgreen chartreuse".split(" ");
+function tokenize(s) { const t = []; let i = 0; while (i < s.length) { const c = s[i]; if (c === " ") { i++; continue; } if (/[A-Za-z_]/.test(c)) { let j = i; while (j < s.length && /\w/.test(s[j])) j++; t.push({ v: s.slice(i, j) }); i = j; continue; } if (/[0-9.]/.test(c)) { let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ n: s.slice(i, j) }); i = j; continue; } if (s.startsWith("**", i) || s.startsWith("//", i)) { t.push({ o: s.slice(i, i + 2) }); i += 2; continue; } if ("+-*/%()".includes(c)) { t.push({ o: c }); i++; continue; } throw "syntax"; } return t; }
+let VARS = {};
+function evalNum(src) { const t = tokenize(src); let p = 0; const peek = () => t[p], eat = o => { if (t[p] && t[p].o === o) { p++; return true; } return false; };
+  function atom() { const x = peek(); if (!x) throw "syntax"; if (x.n !== undefined) { p++; const v = parseFloat(x.n); if (isNaN(v)) throw "syntax"; return v; } if (x.v !== undefined) { p++; if (!(x.v in VARS)) throw { name: x.v }; return VARS[x.v]; } if (eat("(")) { const r = add(); if (!eat(")")) throw "syntax"; return r; } if (eat("-")) return -pw(); if (eat("+")) return pw(); throw "syntax"; }
+  function pw() { const b = atom(); if (eat("**")) return Math.pow(b, pw()); return b; }
+  function mul() { let a = pw(); for (;;) { const x = peek(); if (!x || !["*", "/", "//", "%"].includes(x.o)) return a; p++; const b = pw(); if (x.o !== "*" && b === 0) throw "zero"; a = x.o === "*" ? a * b : x.o === "/" ? a / b : x.o === "//" ? Math.floor(a / b) : ((a % b) + b) % b; } }
+  function add() { let a = mul(); for (;;) { const x = peek(); if (!x || !["+", "-"].includes(x.o)) return a; p++; const b = mul(); a = x.o === "+" ? a + b : a - b; } }
+  const r = add(); if (p !== t.length) throw "syntax"; return r; }
+const CMDS = { forward: ["fd", "distance"], fd: ["fd", "distance"], back: ["bk", "distance"], bk: ["bk", "distance"], backward: ["bk", "distance"], right: ["rt", "angle"], rt: ["rt", "angle"], left: ["lt", "angle"], lt: ["lt", "angle"],
+  reset: ["reset", null], showturtle: ["st", null], st: ["st", null], hideturtle: ["ht", null], ht: ["ht", null], penup: ["pu", null], pu: ["pu", null], up: ["pu", null], pendown: ["pd", null], pd: ["pd", null], down: ["pd", null],
+  pencolor: ["pc", "color"], color: ["pc", "color"], pensize: ["ps", "width"], width: ["ps", "width"], speed: ["sp", "speed"], home: ["home", null], dot: ["dot", "size"] };
+function newW() { return { imp: false, win: false, x: 0, y: 0, h: 0, vis: true, pen: true, col: "black", w: 1, segs: [] }; }
+function step(W, op, a, a2) {
+  W.win = true;
+  if (op === "fd" || op === "bk") { const d = op === "fd" ? a : -a, r = W.h * Math.PI / 180, nx = W.x + d * Math.cos(r), ny = W.y + d * Math.sin(r); if (W.pen) W.segs.push({ p: [W.x, W.y, nx, ny], c: W.col, w: W.w }); W.x = nx; W.y = ny; }
+  if (op === "rt") W.h = ((W.h - a) % 360 + 360) % 360; if (op === "lt") W.h = ((W.h + a) % 360 + 360) % 360;
+  if (op === "pu") W.pen = false; if (op === "pd") W.pen = true; if (op === "pc") W.col = a; if (op === "ps") W.w = a;
+  if (op === "reset") { Object.assign(W, newW(), { imp: W.imp, win: true }); } if (op === "st") W.vis = true; if (op === "ht") W.vis = false;
+  if (op === "home") { if (W.pen && (W.x || W.y)) W.segs.push({ p: [W.x, W.y, 0, 0], c: W.col, w: W.w }); W.x = 0; W.y = 0; W.h = 0; }
+  if (op === "dot") W.segs.push({ p: [W.x, W.y, W.x, W.y], c: a2 || W.col, w: a || Math.max(W.w + 4, 2 * W.w), dot: true });
+}
+function parseColor(arg) {
+  const m = arg.match(/^(['"])(.*)\1$/); if (!m) { if (/^['"]/.test(arg)) throw { syn: "unterminated string literal" }; if (/^[A-Za-z_]\w*$/.test(arg)) throw { name: arg }; throw { syn: "invalid syntax" }; }
+  const c = m[2].trim(), lc = c.toLowerCase().replace(/\s/g, ""); if (/^#[0-9a-f]{6}$/i.test(c) || /^#[0-9a-f]{3}$/i.test(c)) return c; if (COLORS.includes(lc)) return lc === "grey" ? "gray" : lc; throw { tge: `bad color string: ${c}` };
+}
+function execOne(W, c, self) {
+  if (/^from\s+turtle\s+import\s+\*$/.test(c)) { if (!self) W.imp = true; return {}; }
+  const KW = ["False", "None", "True", "and", "as", "assert", "break", "class", "continue", "def", "del", "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try", "while", "with", "yield"];
+  let am = c.match(/^(.+?)\s*=(?!=)\s*(.+)$/);
+  if (am && !/[(]/.test(am[1])) { const nm = am[1].trim(); if (!/^[A-Za-z_]\w*$/.test(nm) || KW.includes(nm)) return { err: /^\d/.test(nm) ? "SyntaxError: invalid decimal literal" : "SyntaxError: cannot assign to expression here", syn: true }; try { VARS[nm] = evalNum(am[2]); return { assign: nm }; } catch (e) { if (e && e.name) return { err: `NameError: name '${e.name}' is not defined` }; return { err: e === "zero" ? "ZeroDivisionError: division by zero" : "SyntaxError: invalid syntax", syn: e !== "zero" }; } }
+  if (/^[A-Za-z0-9_\s+\-*/%().]+$/.test(c) && !/^[A-Za-z_]\w*\s*\(/.test(c)) { try { const v = evalNum(c); return { val: v }; } catch (e) { if (e && e.name) return { err: `NameError: name '${e.name}' is not defined` }; return { err: e === "zero" ? "ZeroDivisionError: division by zero" : "SyntaxError: invalid syntax", syn: e !== "zero" }; } }
+  if (/^[A-Za-z_]\w*\s+[A-Za-z_]\w*\s*\(/.test(c)) return { err: "SyntaxError: invalid syntax", syn: true };
+  let m = c.match(/^([A-Za-z_][A-Za-z_0-9]*)\s*\((.*)\)$/);
+  if (m) { const name = m[1], arg = m[2].trim(), def = CMDS[name];
+    if (!def || !W.imp) return { err: `NameError: name '${name}' is not defined` };
+    try {
+      if (def[0] === "pc") { if (!arg) return { out: W.col }; step(W, "pc", parseColor(arg.split(",")[0].trim())); return {}; }
+      if (def[0] === "dot") { const parts = arg ? arg.split(",").map(s => s.trim()) : []; step(W, "dot", parts[0] ? evalNum(parts[0]) : 0, parts[1] ? parseColor(parts[1]) : null); return {}; }
+      if (def[0] === "sp") { return {}; }
+      if (def[1]) { if (!arg) { if (def[0] === "ps") return { out: String(W.w) }; return { err: `TypeError: ${name}() missing 1 required positional argument: '${def[1]}'` }; } let v; try { v = evalNum(arg); } catch (e) { if (e && e.name) return { err: `NameError: name '${e.name}' is not defined` }; if (/^['"]/.test(arg)) return { err: `TypeError: can't multiply sequence by non-int of type 'float'` }; return { err: "SyntaxError: invalid syntax", syn: true }; } step(W, def[0], v); return {}; }
+      if (arg) return { err: `TypeError: ${name}() takes 0 positional arguments but 1 was given` }; step(W, def[0], 0); return {};
+    } catch (e) { if (e.tge) return { err: `turtle.TurtleGraphicsError: ${e.tge}` }; if (e.syn) return { err: "SyntaxError: " + e.syn, syn: true }; if (e.name) return { err: `NameError: name '${e.name}' is not defined` }; throw e; } }
+  
+  return { err: "SyntaxError: invalid syntax", syn: true };
+}
+function strip(l) { let q = null; for (let i = 0; i < l.length; i++) { const c = l[i]; if (q) { if (c === q) q = null; } else if (c === "'" || c === '"') q = c; else if (c === "#") return l.slice(0, i); } return l; }
+function fmt(v) { return Number.isInteger(v) ? String(v) : String(+v.toPrecision(15)); }
+function splitArgs(s) { const a = []; let d = 0, q = null, cur = ""; for (const ch of s) { if (q) { cur += ch; if (ch === q) q = null; continue; } if (ch === "'" || ch === '"') { q = ch; cur += ch; continue; } if (ch === "(") d++; if (ch === ")") d--; if (ch === "," && !d) { a.push(cur.trim()); cur = ""; continue; } cur += ch; } if (cur.trim()) a.push(cur.trim()); return a; }
+function splitTop(s, kw) { const out = []; let d = 0, q = null, cur = ""; for (let i = 0; i < s.length; i++) { const ch = s[i]; if (q) { cur += ch; if (ch === q) q = null; continue; } if (ch === "'" || ch === '"') { q = ch; cur += ch; continue; } if (ch === "(") d++; if (ch === ")") d--; if (!d && s.startsWith(kw, i)) { out.push(cur); cur = ""; i += kw.length - 1; continue; } cur += ch; } out.push(cur); return out; }
+function evalCond(s) {
+  s = s.trim(); const o = splitTop(s, " or "); if (o.length > 1) return o.some(evalCond);
+  const a = splitTop(s, " and "); if (a.length > 1) return a.every(evalCond);
+  if (/^not\s+/.test(s)) return !evalCond(s.replace(/^not\s+/, ""));
+  if (s === "True") return true; if (s === "False") return false;
+  if (/^\(.*\)$/.test(s) && splitTop(s.slice(1, -1), ")(").length === 1) { let d = 0, okp = true; for (let i = 0; i < s.length - 1; i++) { if (s[i] === "(") d++; if (s[i] === ")") d--; if (d === 0 && i > 0) { okp = false; break; } } if (okp) return evalCond(s.slice(1, -1)); }
+  if (/(^|[^=!<>])=($|[^=])/.test(s)) throw { syn: "invalid syntax. Maybe you meant '==' or ':=' instead of '='?" };
+  const m = s.match(/^(.*?)(==|!=|<=|>=|<|>)(.*)$/); if (!m) return evalNum(s) !== 0;
+  const x = evalNum(m[1]), y = evalNum(m[3]);
+  return m[2] === "==" ? x === y : m[2] === "!=" ? x !== y : m[2] === "<" ? x < y : m[2] === ">" ? x > y : m[2] === "<=" ? x <= y : x >= y;
+}
+function runProg(text, name) {
+  VARS = {}; const FUNCS = {}; let depth = 0;
+  const W = newW(), raw = text.split("\n"), out = [`===== RESTART: ${DOCS}${name} =====`]; let ok = true, steps = 0;
+  const L = raw.map((l, i) => ({ i, ind: (strip(l).match(/^\s*/) || [""])[0].replace(/\t/g, "    ").length, c: strip(l).trim() })).filter(x => x.c);
+  const fail = (x, msg, syn) => { ok = false; out.push({ e: syn ? `  File "${DOCS}${name}", line ${x.i + 1}\n    ${raw[x.i].trim()}\n${msg}` : `Traceback (most recent call last):\n  File "${DOCS}${name}", line ${x.i + 1}, in <module>\n    ${raw[x.i].trim()}\n${msg}` }); };
+  const bodyEnd = (k, to, ind) => { let e = k + 1; while (e < to && L[e].ind > ind) e++; return e; };
+  const rsub = str => !/\brandint\s*\(/.test(str) ? str : str.replace(/(random\.)?randint\s*\(([^()]*)\)/g, (mm, mod, args) => { if (!W.rnd || (mod && !W.rmod) || (!mod && W.rmod && !W.rall)) throw { name: mod ? "random" : "randint" }; const ab = splitArgs(args).map(a => evalNum(a)); if (ab.length !== 2) throw "syntax"; return String(ab[0] + Math.floor(Math.random() * (ab[1] - ab[0] + 1))); });
+  function block(from, to, ind) { let k = from;
+    while (k < to && ok) { const x = L[k]; if (x.ind > ind) { fail(x, "IndentationError: unexpected indent", true); return; } if (x.ind < ind) return;
+      if (/^(import\s+random|from\s+random\s+import\s+(\*|randint))$/.test(x.c)) { W.rnd = true; if (/^import/.test(x.c)) W.rmod = true; else W.rall = true; k++; continue; }
+      let c = x.c;
+      if (!/^(def|elif|else)\b/.test(c) && /\brandint\s*\(/.test(c)) { try { c = rsub(c); } catch (er) { fail(x, er && er.name ? `NameError: name '${er.name}' is not defined` : "SyntaxError: invalid syntax", !(er && er.name)); return; } }
+      if (/^(elif\b|else\b)/.test(c)) { fail(x, "SyntaxError: invalid syntax", true); return; }
+      if (/^if\b/.test(c)) {
+        const im = c.match(/^if\s+(.+):$/); if (!im) { fail(x, c.endsWith(":") ? "SyntaxError: invalid syntax" : "SyntaxError: expected ':'", true); return; }
+        const br = []; let kk = k, e0 = bodyEnd(k, to, ind); if (e0 === k + 1) { fail(L[Math.min(k + 1, L.length - 1)] || x, "IndentationError: expected an indented block after 'if' statement", true); return; }
+        br.push({ cond: im[1], from: k + 1, to: e0, x }); kk = e0;
+        while (kk < to && L[kk].ind === ind && /^(elif\b|else\b)/.test(L[kk].c)) { const y = L[kk], em = y.c.match(/^elif\s+(.+):$/), el = /^else\s*:$/.test(y.c);
+          if (!em && !el) { fail(y, y.c.endsWith(":") ? "SyntaxError: invalid syntax" : "SyntaxError: expected ':'", true); return; }
+          const e2 = bodyEnd(kk, to, ind); if (e2 === kk + 1) { fail(L[Math.min(kk + 1, L.length - 1)] || y, `IndentationError: expected an indented block after '${em ? "elif" : "else"}' statement`, true); return; }
+          br.push({ cond: em ? em[1] : null, from: kk + 1, to: e2, x: y }); kk = e2; if (el) break; }
+        for (const b of br) { let v = true; if (b.cond !== null) { try { v = evalCond(rsub(b.cond)); } catch (er) { fail(b.x, er && er.name ? `NameError: name '${er.name}' is not defined` : er && er.syn ? "SyntaxError: " + er.syn : er === "zero" ? "ZeroDivisionError: division by zero" : "SyntaxError: invalid syntax", !(er && er.name) && er !== "zero"); return; } }
+          if (v) { block(b.from, b.to, L[b.from].ind); break; } }
+        if (!ok) return; k = kk; continue; }
+      const gm = c.match(/^(goto|setpos|setposition)\s*\((.*)\)$/), hm = c.match(/^(setheading|seth)\s*\((.*)\)$/);
+      if (gm || hm) { if (!W.imp) { fail(x, `NameError: name '${(gm || hm)[1]}' is not defined`); return; } let v; try { v = splitArgs((gm || hm)[2]).map(a => evalNum(a)); } catch (er) { fail(x, er && er.name ? `NameError: name '${er.name}' is not defined` : "SyntaxError: invalid syntax", !(er && er.name)); return; }
+        W.win = true; if (gm) { if (v.length !== 2) { fail(x, `TypeError: ${gm[1]}() needs x and y`); return; } if (W.pen) W.segs.push({ p: [W.x, W.y, v[0], v[1]], c: W.col, w: W.w }); W.x = v[0]; W.y = v[1]; } else { W.h = ((v[0] % 360) + 360) % 360; } k++; continue; }
+      const dm = c.match(/^def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*:$/);
+      if (/^def\b/.test(c) && !dm) { fail(x, c.endsWith(":") ? "SyntaxError: invalid syntax" : "SyntaxError: expected ':'", true); return; }
+      if (dm) { const e = bodyEnd(k, to, ind); if (e === k + 1) { fail(L[Math.min(k + 1, L.length - 1)] || x, "IndentationError: expected an indented block after function definition", true); return; }
+        FUNCS[dm[1]] = { params: dm[2].split(",").map(s => s.trim()).filter(Boolean), from: k + 1, to: e, ind: L[k + 1].ind }; k = e; continue; }
+      let m = c.match(/^for\s+([A-Za-z_]\w*)\s+in\s+range\s*\((.*)\)\s*:$/);
+      if (/^for\b/.test(c) && !m) { fail(x, c.endsWith(":") ? "SyntaxError: invalid syntax" : "SyntaxError: expected ':'", true); return; }
+      if (m) { const e = bodyEnd(k, to, ind); if (e === k + 1) { fail(L[Math.min(k + 1, L.length - 1)] || x, "IndentationError: expected an indented block after 'for' statement", true); return; }
+        let args; try { args = splitArgs(m[2]).map(a => evalNum(a)); } catch (er) { fail(x, er && er.name ? `NameError: name '${er.name}' is not defined` : "SyntaxError: invalid syntax", !(er && er.name)); return; }
+        if (!args.length || args.length > 3 || args.some(v => !Number.isInteger(v))) { fail(x, "TypeError: 'float' object cannot be interpreted as an integer"); return; }
+        const [a, b, s] = args.length === 1 ? [0, args[0], 1] : [args[0], args[1], args[2] || 1]; if (s === 0) { fail(x, "ValueError: range() arg 3 must not be zero"); return; }
+        for (let v = a; s > 0 ? v < b : v > b; v += s) { VARS[m[1]] = v; if (++steps > 8000) { fail(x, "Program beží príliš dlho (priveľa opakovaní)."); return; } block(k + 1, e, L[k + 1].ind); if (!ok) return; }
+        k = e; continue; }
+      const pm = c.match(/^print\s*\((.*)\)$/);
+      if (pm) { try { out.push({ o: splitArgs(pm[1]).map(a => /^(['"]).*\1$/.test(a) ? a.slice(1, -1) : fmt(evalNum(a))).join(" ") }); } catch (er) { fail(x, er && er.name ? `NameError: name '${er.name}' is not defined` : "SyntaxError: invalid syntax", !(er && er.name)); return; } k++; continue; }
+      const cm = c.match(/^([A-Za-z_]\w*)\s*\((.*)\)$/);
+      if (cm && FUNCS[cm[1]]) { const F = FUNCS[cm[1]], A = splitArgs(cm[2]);
+        if (A.length !== F.params.length) { fail(x, `TypeError: ${cm[1]}() takes ${F.params.length} positional argument${F.params.length === 1 ? "" : "s"} but ${A.length} ${A.length === 1 ? "was" : "were"} given`); return; }
+        let vals; try { vals = A.map(a => evalNum(a)); } catch (er) { fail(x, er && er.name ? `NameError: name '${er.name}' is not defined` : "SyntaxError: invalid syntax", !(er && er.name)); return; }
+        if (++depth > 40) { fail(x, "RecursionError: maximum recursion depth exceeded"); return; }
+        const saved = VARS; VARS = Object.assign({}, saved); F.params.forEach((p, i) => { VARS[p] = vals[i]; });
+        block(F.from, F.to, F.ind); VARS = saved; depth--; if (!ok) return; k++; continue; }
+      for (const part of c.split(";").map(s => s.trim()).filter(Boolean)) { const r = execOne(W, part, false); if (r.out) out.push({ o: r.out }); if (r.err) { fail(x, r.err, r.syn); return; } }
+      k++; } }
+  block(0, L.length, 0); return { W, out, ok };
+}
+
+/* ---------- porovnanie kresieb ---------- */
+function cellsOf(W, o) { const set = new Set(), G = 5;
+  W.segs.forEach(g => { const [x1, y1, x2, y2] = g.p, tag = (o.col ? "|" + g.c : "") + (o.width ? "|" + g.w : "");
+    if (g.dot || Math.hypot(x2 - x1, y2 - y1) < 0.01) { const r = Math.max(1, g.w / 2); for (let dx = -r; dx <= r; dx += G / 2) for (let dy = -r; dy <= r; dy += G / 2) if (dx * dx + dy * dy <= r * r) set.add(Math.round((x1 + dx) / G) + "," + Math.round((y1 + dy) / G) + tag); return; }
+    const n = Math.max(1, Math.ceil(Math.hypot(x2 - x1, y2 - y1))); for (let i = 0; i <= n; i++) set.add(Math.round((x1 + (x2 - x1) * i / n) / G) + "," + Math.round((y1 + (y2 - y1) * i / n) / G) + tag); });
+  if (o.abs) return set;
+  let mx = Infinity, my = Infinity; set.forEach(c => { const [a, b] = c.split("|")[0].split(",").map(Number); mx = Math.min(mx, a); my = Math.min(my, b); });
+  const out = new Set(); set.forEach(c => { const [p, ...t] = c.split("|"), [a, b] = p.split(",").map(Number); out.add([(a - mx) + "," + (b - my), ...t].join("|")); }); return out; }
+function pct(W, R, o) { if (!W || !W.segs.length) return 0; const A = cellsOf(W, o), B = cellsOf(R, o); let n = 0, d = 0; A.forEach(c => { if (B.has(c)) n++; else d++; }); d += B.size - n;
+  if (d <= Math.max(3, B.size * 0.06)) return 100; return Math.min(99, Math.round(100 * n / (A.size + B.size - n))); }
+function bounds(list, pad) { let xs = [], ys = []; list.forEach(W => W.segs.forEach(g => { const r = (g.w || 1) / 2; xs.push(g.p[0] - r, g.p[2] + r); ys.push(-g.p[1] - r, -g.p[3] - r, -g.p[1] + r, -g.p[3] + r); xs.push(g.p[0] + r, g.p[2] - r); })); xs.push(0); ys.push(0);
+  let x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad, y0 = Math.min(...ys) - pad, y1 = Math.max(...ys) + pad; const w = Math.max(x1 - x0, (y1 - y0) * 1.25, 120), h = Math.max(y1 - y0, w / 1.25); const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  return [cx - w / 2, cy - h / 2, w, h]; }
+function drawSegs(W, k) { return W.segs.map(g => { const [a, b, c, d] = g.p; return (g.dot || Math.hypot(c - a, d - b) < 0.01) ? `<circle cx="${a.toFixed(1)}" cy="${(-b).toFixed(1)}" r="${Math.max(1.2 * k, g.w / 2)}" fill="${g.c}"/>` : `<line x1="${a.toFixed(1)}" y1="${(-b).toFixed(1)}" x2="${c.toFixed(1)}" y2="${(-d).toFixed(1)}" stroke="${g.c}" stroke-width="${g.w > 3 ? g.w : Math.max(g.w, 1) * k}" stroke-linecap="round"/>`; }).join(""); }
+function goalSVG(R, o) { const [x, y, w, h] = bounds([R], 26), k = Math.max(1, w / 260);
+  return `<svg viewBox="${x} ${y} ${w} ${h}" role="img" aria-label="Predloha">${drawSegs(R, 1.6 * k)}${o.noStart ? "" : `<circle cx="0" cy="0" r="${4 * k}" fill="#12805A"/><g transform="translate(0,0) rotate(${-(o.h0 || 0)})"><path d="M${8 * k} 0 l${-6 * k} ${-4 * k} l0 ${8 * k}z" fill="#12805A"/></g>`}${(o.labels || []).map(l => `<text x="${l[0]}" y="${-l[1]}" text-anchor="middle" font-family="Consolas,monospace" font-size="${11 * k}" font-weight="700" fill="#C0392B">${l[2]}</text>`).join("")}</svg>`; }
+function winSVG(W, R) { const [x, y, w, h] = bounds([W, R], 30), k = Math.max(1, w / 300); let s = `<svg viewBox="${x} ${y} ${w} ${h}" role="img" aria-label="Kresba korytnačky"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#fff"/>`;
+  const st = 50; s += `<g stroke="#EEF1F5" stroke-width="${k}">`; for (let i = Math.ceil(x / st) * st; i <= x + w; i += st) s += `<line x1="${i}" y1="${y}" x2="${i}" y2="${y + h}"/>`; for (let j = Math.ceil(y / st) * st; j <= y + h; j += st) s += `<line x1="${x}" y1="${j}" x2="${x + w}" y2="${j}"/>`; s += `</g>`;
+  s += drawSegs(W, k); if (W.vis) s += `<g transform="translate(${W.x.toFixed(1)},${(-W.y).toFixed(1)}) rotate(${-W.h}) scale(${k})"><polygon points="11,0 -6,6 -3,0 -6,-6" fill="${W.col}" stroke="#000" stroke-width="0.8"/></g>`; return s + `</svg>`; }
+function needMsg(c, need) { if (!need) return ""; const loopy = /^\s*for\s+\w+\s+in\s+range\s*\(/m.test(c);
+  const nested = (() => { const R = c.split("\n"); for (let i = 0; i < R.length; i++) { const m = R[i].match(/^(\s*)for\b/); if (!m) continue; for (let j = i + 1; j < R.length; j++) { const n = R[j].match(/^(\s*)\S/); if (!n) continue; if (n[1].length <= m[1].length) break; if (/^\s*for\b/.test(R[j])) return true; } } return false; })();
+  if (need.loop && !loopy) return "Použi cyklus <code>for … in range(…):</code>.";
+  if (need.nested && !nested) return "Použi vnorený cyklus: jeden <code>for</code> v tele druhého.";
+  if (need.def && !new RegExp("^\\s*def\\s+" + need.def + "\\s*\\(", "m").test(c)) return `Definuj funkciu <code>${need.def}</code> pomocou <code>def</code>.`;
+  if (need.def && need.calls && (c.match(new RegExp("^\\s*" + need.def + "\\s*\\(", "gm")) || []).length < need.calls) return `Funkciu <code>${need.def}</code> zavolaj aspoň ${need.calls}-krát.`;
+  if (need.maxfd !== undefined && (c.match(/\b(fd|forward)\s*\(/g) || []).length > need.maxfd) return `Príkaz <code>fd</code> použi najviac ${need.maxfd}-krát, zvyšok nech urobí cyklus.`;
+  for (const [re, msg] of (need.re || [])) if (!new RegExp(re, "m").test(c)) return msg;
+  if (need.no) for (const [re, msg] of need.no) if (new RegExp(re, "m").test(c)) return msg;
+  if (need.fn) { const m = need.fn(c); if (m) return m; }
+  return ""; }
+const RUN = (code, file) => runProg(code, file || "program.py");
+const JD = { dots: W => W.segs.filter(g => g.dot || Math.hypot(g.p[2] - g.p[0], g.p[3] - g.p[1]) < 0.01).map(g => ({ x: g.p[0], y: g.p[1], w: g.w, c: g.c })),
+  lines: W => W.segs.filter(g => !g.dot && Math.hypot(g.p[2] - g.p[0], g.p[3] - g.p[1]) >= 0.01),
+  nums: R => R.out.filter(o => o.o !== undefined).map(o => String(o.o).trim().split(/\s+/).map(Number)) };
+const JDG = checks => { let p = 0, m = ""; checks.forEach(([ok, w, msg]) => { if (ok) p += w; else if (!m) m = msg; }); return { pct: Math.round(p), msg: m }; };
+return { RUN, pct, goalSVG, winSVG, needMsg, evalNum: s => evalNum(s), fmt, JD, JDG };
+})();
+
+/* ===== úloha s písaním programu: spec = { file, t, sol, start, need, labels, col, width, abs, out, judge, goal, shell, h0, hint } ===== */
+const PYSTATE = id => { S.py = S.py || {}; return S.py[id]; };
+function pyTask(id, max, P) {
+  const START = P.start !== undefined ? P.start : P.shell ? "" : "from turtle import *\n";
+  const st = () => { S.py = S.py || {}; if (!S.py[id]) S.py[id] = { text: START, ran: null, runs: 0, hist: P.shell ? (P.pre || []).slice() : null, tr: P.shell ? (P.pre || []).map(c => ({ c })) : null }; return S.py[id]; };
+  const ref = () => P._ref || (P._ref = PYW.RUN(P.sol, "vzor.py"));
+  const code = s => P.shell ? s.hist.join("\n") : s.ran;
+  const evalRun = s => { const c = code(s); if (c === null || c === undefined) return null; const R = PYW.RUN(c, P.file || "program.py");
+    let p = 0, msg = "";
+    if (P.judge) { const j = P.judge(R, c); p = j.pct; msg = j.msg || ""; }
+    else if (P.out !== undefined) { const got = R.out.filter(o => o.o !== undefined).map(o => String(o.o).trim()), exp = String(P.out).split("\n"); let n = 0; exp.forEach((e, i) => { if (got[i] === e.trim()) n++; }); p = Math.round(100 * n / Math.max(exp.length, got.length, 1)); }
+    else p = PYW.pct(R.W, ref().W, P);
+    return { R, p, msg, need: PYW.needMsg(c, P.need) }; };
+  return { id, type: "custom", max,
+    html: T => { const s = st(), done = S.t[id], E = evalRun(s), stale = !P.shell && s.ran !== null && s.ran !== s.text;
+      const outTxt = P.out !== undefined ? P.out : P.text ? ref().out.filter(o => o.o !== undefined).map(o => o.o).join("\n") : null;
+      const goal = P.goal !== undefined ? P.goal : outTxt !== null ? `<div class="pygoal"><b style="font-size:14px">🎯 ${P.out !== undefined ? "Shell má vypísať" : "Príklad výpisu"}:</b><div class="pycode" style="margin-top:6px">${esc(outTxt)}</div>${P.out !== undefined ? "" : `<div class="cap">tvoje čísla budú iné (náhoda)</div>`}</div>`
+        : `<div class="pygoal">${PYW.goalSVG(ref().W, P)}<div class="cap">🎯 ${P.example ? "príklad – tvoja kresba bude iná (náhoda)" : "predloha"}${P.noStart || P.example ? "" : " · zelená bodka = začiatok, šípka = smer"}</div></div>`;
+      const shellLines = P.shell ? s.tr.map(l => `<span class="p">&gt;&gt;&gt; </span>${esc(l.c)}\n${l.e ? `<span class="e">${esc(l.e)}</span>\n` : ""}`).join("") : (E ? E.R.out.map(o => o.o !== undefined ? `<span>${esc(o.o)}</span>\n` : `<span class="e">${esc(o.e)}</span>\n`).join("") : "");
+      const editor = P.shell ? `<div class="pywin"><div class="pyt">🐍 IDLE Shell 3.12.4 <span>— ▢ ✕</span></div><div class="pysh">${shellLines}${done ? "" : `<span class="p">&gt;&gt;&gt; </span><input class="pyin" data-pyin="${id}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Príkaz do Shellu" placeholder="sem napíš príkaz a stlač Enter">`}</div></div>`
+        : `<div class="pywin"><div class="pyt">📝 ${esc(P.file || "program.py")}${stale ? " *" : ""} – ${"C:\\Users\\ziak\\Documents\\"}${esc(P.file || "program.py")} <span>— ▢ ✕</span></div><div class="pymenu">File  Edit  Format  <b>Run</b>  Options  Window  Help</div><textarea class="pyed" data-pyed="${id}" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Editor programu" ${done ? "readonly" : ""}>${esc(s.text)}</textarea><div class="pyst">Programovací režim · F5 = spustiť · Tab = odsadenie</div></div>`;
+      const tw = P.out !== undefined || P.text ? "" : `<div class="pywin"><div class="pyt">🐢 Python Turtle Graphics <span>— ▢ ✕</span></div>${E && E.R.W.win ? PYW.winSVG(E.R.W, ref().W) : `<div class="pyempty">Okno s korytnačkou sa otvorí<br>po ${P.shell ? "prvom príkaze pre korytnačku" : "spustení programu"}.</div>`}</div>`;
+      const btns = done || P.shell ? (P.shell && !done ? `<div class="pybtns"><button class="ghost" data-py="${id}|clear">↺ Začať odznova</button></div>` : "") : `<div class="pybtns"><button class="primary" data-py="${id}|run">▶ Run › Run Module (F5)</button><button class="ghost" data-py="${id}|clear">${P.start && !/^(\s*(from|import)\b[^\n]*\n?)*$/.test(P.start) ? "↺ Vrátiť pôvodný program" : "🧹 Vymazať program"}</button>${stale ? `<span class="pystale">Program si zmenil, spusti ho znova (F5).</span>` : ""}</div>`;
+      const shellBox = P.shell ? "" : `<div class="pywin"><div class="pyt">🐍 IDLE Shell (výsledky spustenia) <span>— ▢ ✕</span></div><div class="pysh">${shellLines}<span class="p">&gt;&gt;&gt; </span></div></div>`;
+      const readout = E && (P.shell ? s.hist.length : true) ? `<div class="pctbar">${P.out !== undefined ? "zhoda výpisu s cieľom" : P.judge ? "splnenie zadania" : "zhoda s predlohou"}:<span class="readout">${E.p} %</span>${E.p === 100 && !E.need ? `<span style="color:#12805A">✔ ${P.out !== undefined ? "výpis sedí" : P.judge ? "všetko splnené" : "tvar sedí"}</span>` : ""}${E.msg ? `<span class="pymsg">${E.msg}</span>` : ""}${E.need ? `<span class="pymsg">⚠️ ${E.need}</span>` : ""}</div>` : "";
+      const res = done ? `<div class="fb ${done.score === done.max ? "ok" : "bad"}">${done.score === done.max ? "✅ Výborne, úloha je splnená na 100 %." : `❌ Výsledok: ${E ? E.p : 0} %${E && E.need ? ". " + E.need : ""}`}</div>${done.score < done.max ? `<p class="why miss" style="margin-top:8px">Jedno z možných riešení:</p><div class="pycode">${esc(P.sol)}</div>${P.solNote ? `<p class="why miss" style="margin-top:6px">${P.solNote}</p>` : ""}` : ""}` : "";
+      return `<div class="pytop">${goal}<div><p style="margin:0 0 8px">${P.t}</p>
+        <p class="muted" style="font-size:15px;margin:0">${P.shell ? "Príkazy píš do Shellu a každý potvrď klávesom <b>Enter</b>. Príkaz s chybou sa nevykoná." : "Program môžeš spúšťať (F5) koľkokrát chceš."} Skontrolovať ho môžeš <b>len raz</b>. Za úplnú zhodu získaš ${max} ⭐, pri čiastočnej menej.${P.hint ? " " + P.hint : ""}</p>${P.pre2 || ""}${res}</div></div>
+        <div class="pyws${tw ? "" : " one"}"><div>${editor}${btns}</div>${tw}</div>${shellBox}${readout}` +
+        checkBar(T, !!E && !stale && (!P.shell || s.hist.length > (P.pre || []).length), P.shell ? "Najprv zadaj príkazy do Shellu." : stale ? "Program si zmenil, najprv ho spusti (F5)." : "Najprv program spusti (▶ Run alebo F5)."); },
+    score: () => { const s = st(), E = evalRun(s); if (!E) return 0; if (P.shell && s.hist.length <= (P.pre || []).length) return 0; let sc = E.p >= 100 ? max : Math.floor(max * E.p / 100); if (E.need) sc = Math.min(sc, max - 1); return Math.max(0, sc); } };
+}
+function pyRun(id) { const T = TASKS[id], s = S.py && S.py[id]; if (!s || S.t[id]) return; const ta = document.querySelector(`[data-pyed="${id}"]`); if (ta) s.text = ta.value; s.ran = s.text; s.runs++; save(); render(false); }
+document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-py]"); if (!b) return; const [id, a] = b.dataset.py.split("|"), s = S.py && S.py[id]; if (!s || S.t[id]) return;
+  if (a === "run") return pyRun(id);
+  if (a === "clear") { const P = PYSPEC[id]; if (P.shell) { s.hist = (P.pre || []).slice(); s.tr = (P.pre || []).map(c => ({ c })); } else { s.text = P.start !== undefined ? P.start : "from turtle import *\n"; } save(); render(false); } }, true);
+document.addEventListener("input", e => { const t = e.target; if (t.dataset && t.dataset.pyed) { const s = S.py && S.py[t.dataset.pyed]; if (s) { s.text = t.value; save(); } } });
+document.addEventListener("keydown", e => { const t = e.target; if (!t.dataset) return;
+  if (t.dataset.pyin && e.key === "Enter") { e.preventDefault(); const id = t.dataset.pyin, s = S.py[id], c = t.value.trim(); if (!c || S.t[id]) return; const R = PYW.RUN(s.hist.concat([c]).join("\n"), "shell");
+    if (R.ok) { s.hist.push(c); s.tr.push({ c }); } else { const er = R.out.filter(o => o.e).pop(); s.tr.push({ c, e: er ? er.e.split("\n").pop() : "SyntaxError: invalid syntax" }); }
+    s.tr = s.tr.slice(-14); save(); render(false); const n = document.querySelector(`[data-pyin="${id}"]`); if (n) n.focus(); return; }
+  const id = t.dataset.pyed; if (!id || t.readOnly) return;
+  if (e.key === "F5") { e.preventDefault(); return pyRun(id); }
+  if (e.key === "Tab") { e.preventDefault(); const p = t.selectionStart; t.value = t.value.slice(0, p) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = p + 4; S.py[id].text = t.value; save(); return; }
+  if (e.key === "Enter") { const p = t.selectionStart, line = t.value.slice(0, p).split("\n").pop(); let ind = (line.match(/^\s*/) || [""])[0]; if (/:\s*$/.test(line)) ind += "    "; if (!ind) return; e.preventDefault(); t.value = t.value.slice(0, p) + "\n" + ind + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = p + 1 + ind.length; S.py[id].text = t.value; save(); } });
+const PYSPEC = {};
+const PYT = (id, max, P) => { PYSPEC[id] = P; return pyTask(id, max, P); };
+const JD = PYW.JD, JDG = PYW.JDG;
+const HDR_R = "from turtle import *\nfrom random import randint\n";
+
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 /* ===== LENKA: typografia ===== */
 const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
@@ -520,7 +753,7 @@ const theory = (txt, figs) => `<div class="theory tsplit"><div>${txt}</div><div 
 const code = s => `<div class="code">${esc(s)}</div>`;
 function startHTML(intro) {
   return `<div class="hero"><div><p class="kicker">Informatika · Kvarta · domáca úloha k hodine ${HOUR}</p><h1>Domáca úloha: ${TITLE}</h1>
-      <p style="font-size:18.5px">${intro} Čaká nás <b>6 misií</b> a <b>15 úloh</b>. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
+      <p style="font-size:18.5px">${intro} Čaká nás <b>6 misií</b> a <b>15 úloh</b>. V každej misii napíšeš program v simulátore IDLE: spúšťať ho môžeš koľkokrát chceš a uvidíš, na koľko percent sa zhoduje s cieľom. Potrvá to asi <b>20 minút</b> a môžeš získať <b>${MAX} ⭐</b>.</p>
       <p class="muted" style="font-size:15.5px">Programy budeš písať priamo na tejto stránke v simulátore IDLE. Python v počítači netreba.</p>
       <div class="mlist">${STEPS.slice(1, -1).map((s, i) => `<div class="mcard" style="background:${s.col}">${s.ic} Misia ${i + 1}<small>${s.title}</small></div>`).join("")}</div></div>${HERO}</div>
       <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
@@ -534,7 +767,7 @@ function missionHTML(i, sub, sayTxt, mood, theoryTxt, figs, tasks) {
 }
 
 /* ===== DU 2.6 – Kvarta: Riešenie úloh z pracovného listu (premenné) ===== */
-const KEY = "du-k26-v1", DONE_KEY = "du-k26-done-v1", OLD_DONE_KEYS = [];
+const KEY = "du-k26-v1-w", DONE_KEY = "du-k26-done-v1", OLD_DONE_KEYS = [];
 const LESSON = "Kvarta – DU_2.6 Riešenie úloh z pracovného listu (premenné)";
 const CLASS_DEFAULT = "KVARTA", CLASSES = ["KVARTA"];
 const BRAND = "2.6 Úlohy s premennými", HOUR = "2.6", TITLE = "Úlohy s premennými";
@@ -660,7 +893,7 @@ const VIEWS = {
       <p>V príkaze <code>fd(strana)</code> Python namiesto mena dosadí <b>hodnotu</b>, ktorá je v škatuľke uložená.</p>
       <p>Nové priradenie do tej istej premennej starú hodnotu <b>prepíše</b>. Dve škatuľky s rovnakým menom byť nemôžu.</p>
       <p>Program sa vykonáva zhora nadol. Premennej preto najprv <b>priraď hodnotu</b> a až potom ju používaj.</p>
-      ${VEDEL("Mená ako <code>dlzka</code>, <code>priemer</code> či <code>vyska</code> sú lepšie ako <code>x</code> alebo <code>a1</code>. Po týždni si budeš pamätať, čo v škatuľke je.")}`, FIG_A1 + FIG_A2, [[1, "📦", "škatuľky v pamäti", "k1", mcHTML(TASKS.k1)], [2, "✍️", "správne priradenie", "k2", sortHTML(TASKS.k2)], [3, "🤔", "čo sa stane?", "k3", mcHTML(TASKS.k3)]]); },
+      ${VEDEL("Mená ako <code>dlzka</code>, <code>priemer</code> či <code>vyska</code> sú lepšie ako <code>x</code> alebo <code>a1</code>. Po týždni si budeš pamätať, čo v škatuľke je.")}`, FIG_A1 + FIG_A2, [[1, "📦", "škatuľky v pamäti", "k1", mcHTML(TASKS.k1)], [2, "✍️", "správne priradenie", "k2", sortHTML(TASKS.k2)], [3, "📦", "výmena hodnôt", "w1", TASKS.w1.html(TASKS.w1)]]); },
   m2() { return missionHTML(2, "Čiary s rovnakou dĺžkou pomenuj jednou premennou. Potom zmeníš veľkosť obrázka jediným číslom.", `Na pracovnom liste sú obrázky, ktorých veľkosť chcem meniť. 🔺 Stačí nájsť čiary, ktoré sú rovnako dlhé.`, "wow", `
       <p>Premenné <b>zovšeobecňujú</b> program: veľkosť obrázka zmeníš jediným číslom na začiatku programu.</p>
       <p>Postup pri úlohe z pracovného listu:</p>
@@ -680,23 +913,72 @@ const VIEWS = {
       <p>Keď nastavíš hrúbku pera <code>pensize(p)</code> a urobíš <code>fd(0)</code>, korytnačka nakreslí na mieste <b>kruh s priemerom p</b>.</p>
       <p>Ak sa korytnačka (so zdvihnutým perom) posunie o celý <b>priemer p</b>, ďalší kruh sa bude toho prvého <b>dotýkať</b>. Pri menšom posune sa prekrývajú, pri väčšom je medzi nimi medzera.</p>
       <p>Pred posunom zdvihni pero <code>pu()</code> a pred ďalším kruhom ho spusti <code>pd()</code>.</p>
-      ${VEDEL("Najhrubšie pero v knižnici turtle nie je obmedzené. Pri <code>pensize(1000)</code> by korytnačka jedným <code>fd(0)</code> zakryla celé okno.")}`, FIG_D1 + FIG_D2, [[8, "🥥", "čo nakreslí program?", "k8", mcHTML(TASKS.k8)], [9, "⚫", "kruh z pera", "k9", mcHTML(TASKS.k9)], [10, "🔵", "tri kruhy v rade", "k10", mcHTML(TASKS.k10)]]); },
+      ${VEDEL("Najhrubšie pero v knižnici turtle nie je obmedzené. Pri <code>pensize(1000)</code> by korytnačka jedným <code>fd(0)</code> zakryla celé okno.")}`, FIG_D1 + FIG_D2, [[8, "⛄", "tri gule cez pensize", "w4", TASKS.w4.html(TASKS.w4)], [9, "⚫", "kruh z pera", "k9", mcHTML(TASKS.k9)], [10, "🔵", "tri kruhy v rade", "k10", mcHTML(TASKS.k10)]]); },
   m5() { return missionHTML(5, "Dobrý programátor vie predpovedať, čo program urobí, ešte pred spustením.", `Skúsim uhádnuť, čo program urobí, a až potom ho spustím. 🔮 Pomáhajú mi škatuľky na papieri.`, "", `
       <p>Dobrý programátor vie <b>predpovedať</b>, čo program urobí, bez toho, aby ho spustil.</p>
       <p>Na papier si nakresli <b>škatuľky</b> pre všetky premenné. Choď po programe riadok po riadku. Pri každom priradení prepíš obsah škatuľky naľavo od znaku <b>=</b>.</p>
       <p>Pozor na priradenie <code>y = x</code>. Skopíruje do <code>y</code> hodnotu, ktorú má <code>x</code> <b>v tej chvíli</b>. Keď sa <code>x</code> neskôr zmení, v <code>y</code> ostane stará hodnota.</p>
       <p>Najprv odhadni výsledok, potom ho over spustením alebo krokovaním.</p>
-      <p>Pri trasovaní si hodnoty zapisuj do tabuľky: každý stĺpec patrí jednej premennej, každý riadok jednému riadku programu. Keď sa premenná zmení, starú hodnotu prečiarkni a novú napíš pod ňu.</p>`, FIG_E1 + FIG_E2 + VEDEL("Programátori tomu hovoria <b>trasovanie</b>. Slovo pochádza z angličtiny (trace = stopa): sleduješ stopu, ktorú hodnoty v programe zanechávajú."), [[11, "📋", "tabuľka hodnôt", "k11", traceHTML("k11")], [12, "🔮", "čo nakreslí program?", "k12", mcHTML(TASKS.k12)], [13, "🧠", "aká je hodnota?", "k13", mcHTML(TASKS.k13)]]); },
+      <p>Pri trasovaní si hodnoty zapisuj do tabuľky: každý stĺpec patrí jednej premennej, každý riadok jednému riadku programu. Keď sa premenná zmení, starú hodnotu prečiarkni a novú napíš pod ňu.</p>`, FIG_E1 + FIG_E2 + VEDEL("Programátori tomu hovoria <b>trasovanie</b>. Slovo pochádza z angličtiny (trace = stopa): sleduješ stopu, ktorú hodnoty v programe zanechávajú."), [[11, "📋", "tabuľka hodnôt", "k11", traceHTML("k11")], [12, "🔮", "čo nakreslí program?", "k12", mcHTML(TASKS.k12)], [13, "🔮", "sleduj premenné", "w5", TASKS.w5.html(TASKS.w5)]]); },
   m6() { return missionHTML(6, "Navyše: nájdi chyby, ktoré pri premenných robí každý začiatočník.", `Posledná misia! 🐞 Aj ja sa občas pomýlim. Pomôž mi nájsť chyby v mojom programe.`, "wow", `
       <p>Keď Python nájde chybu, zastaví sa a v Shelli vypíše <b>chybové hlásenie</b>.</p>
       <table class="rtab"><thead><tr><th>Hlásenie</th><th>Častá príčina</th></tr></thead><tbody>
         <tr><td><b>NameError</b></td><td>premenná ešte nemá hodnotu alebo je v mene preklep či iné veľké písmeno</td></tr>
         <tr><td><b>SyntaxError</b></td><td>riadok je zle zapísaný, napríklad chýba = alebo je priradenie naopak</td></tr></tbody></table>
       <p>Číslo za slovom <b>line</b> prezradí, na ktorom riadku chyba je.</p>
-      <p>Pri NameError sa program zastaví až na chybnom riadku, čo sa nakreslilo predtým, v okne ostane.</p>`, FIG_F1 + FIG_F2 + VEDEL("V roku 1947 našli technici v počítači Mark II zaseknutého skutočného <b>mola</b> a nalepili ho do denníka ako prvý nájdený „bug“. Príbeh preslávila programátorka Grace Hopperová."), [[14, "🐞", "oprav Variin program", "k14", bugsHTML("k14")], [15, "🧾", "aké hlásenie?", "k15", mcHTML(TASKS.k15)]]); }
+      <p>Pri NameError sa program zastaví až na chybnom riadku, čo sa nakreslilo predtým, v okne ostane.</p>`, FIG_F1 + FIG_F2 + VEDEL("V roku 1947 našli technici v počítači Mark II zaseknutého skutočného <b>mola</b> a nalepili ho do denníka ako prvý nájdený „bug“. Príbeh preslávila programátorka Grace Hopperová."), [[14, "🐞", "oprav Variin program", "k14", bugsHTML("k14")], [15, "🛠️", "oprav program", "w6", TASKS.w6.html(TASKS.w6)]]); }
 };
 
 
+
+/* ===== DOMACE 19. 11. 2026: v každej misii písanie programu v simulátore IDLE (spúšťanie neobmedzene, kontrola raz, zhoda v %) ===== */
+(function (R, NEW) { Object.keys(R).forEach(m => { const [o, n] = R[m]; STEP_TASKS[m] = STEP_TASKS[m].map(x => x === o ? n : x); delete TASKS[o]; }); Object.assign(TASKS, NEW); })({m1: ["k3", "w1", "📦", "výmena hodnôt"], m4: ["k8", "w4", "⛄", "tri gule cez pensize"], m5: ["k13", "w5", "🔮", "sleduj premenné"], m6: ["k15", "w6", "🛠️", "oprav program"]}, {
+ w1: PYT("w1", 2, { file: "priradenie.py", start: "", out: "8 3", need: { re: [["^\\s*b\\s*=\\s*a\\s*$", "Hodnotu do b priraď z premennej a."]] }, sol: `a = 3
+b = a
+a = 8
+print(a, b)`, t: "Do <code>a</code> ulož <b>3</b>, potom priraď <code>b = a</code>, potom do <code>a</code> ulož <b>8</b> a vypíš <code>a</code> aj <code>b</code> jedným príkazom <code>print(a, b)</code>. Výsledok musí byť ako na predlohe." }),
+ w4: PYT("w4", 2, { file: "gule.py", width: 1, need: { re: [["^\\s*\\w+\\s*=\\s*50", "Veľkosť 50 ulož do premennej."]], no: [["pensize\\s*\\(\\s*\\d", "V pensize použi premennú, nie číslo."]] }, sol: `from turtle import *
+velkost = 50
+pensize(velkost)
+fd(0)
+pu()
+fd(60)
+pd()
+fd(0)
+pu()
+fd(60)
+pd()
+fd(0)`, t: "Nakresli <b>tri rovnaké gule</b> s priemerom <b>50</b> v rade vedľa seba, ich stredy sú od seba <b>60</b>. Guľu kresli cez <code>pensize(…)</code> a <code>fd(0)</code>. Veľkosť ulož do premennej a použi ju v <code>pensize</code>." }),
+ w5: PYT("w5", 2, { file: "sleduj.py", start: "", out: "9 4\n9 9", sol: `x = 4
+y = 9
+print(y, x)
+x = y
+print(x, y)`, t: "Napíš program: <code>x</code> = <b>4</b>, <code>y</code> = <b>9</b>, vypíš <code>y</code> a <code>x</code> (v tomto poradí). Potom priraď <code>x = y</code> a vypíš <code>x</code> a <code>y</code>." }),
+ w6: PYT("w6", 2, { file: "uholnik.py", start: `from turtle import *
+d = 80
+fd(d)
+lt(90)
+fd(D)
+lt(90)
+fd(d
+`, sol: `from turtle import *
+d = 80
+fd(d)
+lt(90)
+fd(d)
+lt(90)
+fd(d)`, t: "Program má nakresliť tri strany štvorca dĺžky 80, ale Shell hlási chyby. Oprav ich." })
+});
+
+/* staré úlohy s písaním programu: rovnaké hodnotenie zhodou v % */
+Object.keys(SIMS).forEach(k => { const X = SIMS[k], T0 = TASKS[k]; if (!T0) return; const need = {};
+  if (X.kind === "var") need.no = [["\\b(fd|bk|forward|back)\\s*\\(\\s*\\d", "Vo všetkých príkazoch fd a bk použi premennú, nie číslo."]];
+  if (X.kind === "keep") { const keep = s => s.split("\n").map(l => l.replace(/#.*/, "").replace(/\s/g, "")).filter(l => l && !/^\w+=/.test(l)).join("|"), base = keep(X.start); need.fn = c => keep(c) === base ? "" : (X.badB || "Meň iba hodnoty premenných, príkazy na kreslenie nechaj."); }
+  if (X.kind === "req") need.fn = c => { const L = c.split("\n").flatMap(l => l.replace(/#.*/, "").split(";")).map(l => l.replace(/\s/g, "")); return X.req.every(r => L.some(l => r.test(l))) ? "" : X.badB; };
+  if (X.kind === "scale") need.fn = c => { const big = s => s.replace(new RegExp("^(\\s*" + X.v + "\\s*=\\s*)[^\\n]*", "m"), "$1160"), A = PYW.RUN(big(c)), B = PYW.RUN(big(X.sol)); return A.ok && PYW.pct(A.W, B.W, {}) === 100 ? "" : X.badB; };
+  TASKS[k] = PYT(k, maxOf(T0), { file: X.name, t: X.t, sol: X.sol, start: X.start || "from turtle import *\n", labels: X.labels, noStart: X.noStart, col: /pencolor|dot\([^)]*,/.test(X.sol), width: /pensize/.test(X.sol), need }); });
+simHTML = id => TASKS[id].html(TASKS[id]);
+{ const _so = scoreOf; scoreOf = id => TASKS[id] && TASKS[id].type === "custom" ? Math.max(0, Math.min(TASKS[id].score(), maxOf(TASKS[id]))) : _so(id); }
 /* ===== ENGINE (spoločný pre DU Kvarta) ===== */
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max || (T.qs ? T.qs.length : T.items ? T.items.length : 0); }
@@ -842,7 +1124,7 @@ const RESULT_VIEW = {
     const pct = Math.round(total() / MAX * 100), g = gr;
     return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.trim().split(" ")[0])}!</h2>${say(g <= 2 ? RES_GOOD : RES_BAD, "wow")}
       <div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
-      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
+      <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + (S.t[t] ? S.t[t].score : 0), 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
       <div class="row">${sendResults()}</div>
       ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
       <div class="vedel" style="margin-top:16px;background:#EEF3FB;border-color:#B9C8EA;border-left-color:#2F5BEA;color:#16213A"><b>🔒 Domáca úloha je odoslaná a uzamknutá.</b> Platí známka z tohto pokusu, opakovať ju nie je možné. Svoje odpovede aj vysvetlenia si môžeš kedykoľvek pozrieť v jednotlivých misiách hore.</div></div>`;
