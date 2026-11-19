@@ -443,12 +443,35 @@ table.res td:last-child,table.res th:last-child{text-align:right}
 .tkshell pre{font-family:Consolas,monospace;font-size:12.5px;margin:0;padding:8px 10px;white-space:pre-wrap;overflow-wrap:anywhere}
 .tkwin svg{display:block}
 .opt.mono{font-family:Consolas,"Courier New",monospace}
+/* ===== písanie programu: IDLE ako v hodine ===== */
+.pgoal{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start;margin:8px 0 12px}
+@media (max-width:820px){.pgoal{grid-template-columns:1fr}}
+.pzad{background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;font-size:15.5px}
+.pzad ul{margin:6px 0 0;padding-left:20px}.pzad li{margin:4px 0}
+.pgoal .tkgoal svg{max-width:100%;height:auto}
+.pide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start;margin-top:4px}
+@media (max-width:900px){.pide{grid-template-columns:1fr}}
+.pwin{background:#fff;color:#1B1B1F;border:1px solid #BCC6D3;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px -14px rgba(10,20,60,.45);font-family:"Segoe UI",var(--font);font-size:14px;min-width:0}
+.pwt{background:#E9EDF3;padding:6px 12px;display:flex;align-items:center;gap:8px;font-size:13px;border-bottom:1px solid #D5DCE6}
+.pwt .dots{margin-left:auto;color:#666;letter-spacing:6px}
+.ptb{display:flex;gap:6px;padding:6px 8px;background:#F6F7F9;border-bottom:1px solid #E0E4EA;flex-wrap:wrap}
+.ptb button{border:1px solid #BFC7D5;background:#fff;color:#1B1B1F;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:13px}
+.ptb .run{background:#2E7D4F;border-color:#2E7D4F;color:#fff;font-weight:700}
+.ptb button:disabled{opacity:.5;cursor:default}
+.pwin textarea{display:block;width:100%;min-height:210px;border:0;outline:none;resize:vertical;font-family:"Courier New",var(--mono);font-size:15px;line-height:1.5;padding:10px 12px;color:#000;background:#fff;white-space:pre;overflow:auto;tab-size:4}
+.pwin textarea[readonly]{background:#F7F8FA}
+.pshell{background:#fff;font-family:"Courier New",var(--mono);font-size:13.5px;padding:8px 10px;min-height:54px;max-height:170px;overflow:auto;white-space:pre-wrap;border-top:1px solid #E0E4EA;color:#000;margin:0}
+.pshell .e{color:#D10000}.pshell .o{color:#0033CC}
+.ptk .pbody{padding:8px;background:#F0F0F0;display:flex;justify-content:center;align-items:flex-start;min-height:200px;overflow:auto}
+.tkempty{padding:30px 16px;text-align:center;color:#666;font-size:14px;line-height:1.7}
+.tsplit>div{min-width:0}.pyb{overflow-x:auto;max-width:100%}
+.pysol{font-family:"Courier New",var(--mono);font-size:14px;background:#F4F6FA;border:1px solid #DCE2EC;border-radius:8px;padding:8px 12px;white-space:pre;overflow-x:auto;margin:6px 0 0;color:#16213A}
 </style></head><body>
 <header class="top" id="top"></header><main id="main" tabindex="-1"></main>
 <script>
 /* ===== LENKA: typografia ===== */
 const VEDEL = t => `<div class="vedel"><b>💡 Vedel si?</b> ${t}</div>`;
-function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,kbd,textarea,.addr,.typed") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+function typo(root) { if (!root) return; const W = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement && n.parentElement.closest("code,script,style,svg,.mono,kbd,textarea,pre,.pshell,.addr,.typed") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
   const L = []; while (W.nextNode()) L.push(W.currentNode);
   L.forEach(n => { let t = n.nodeValue, o = t;
     t = t.replace(/([A-Za-z])-(?=\d)/g, "$1‑").replace(/(\d) (?=[\p{L}%°€⭐″×])/gu, "$1 ").replace(/(\d) ([–-]) (?=\d)/g, "$1 $2 ").replace(/(\d) (?=\d{3}\b)/g, "$1 ").replace(/ × /g, " × ").replace(/(Ctrl|Alt|Shift|Win) \+ /g, "$1 + ");
@@ -586,6 +609,171 @@ function tkTask(id, max, P, ins) {
         checkBar(T, !!st.run && keys.every(k => st.v[k] !== undefined) && !stale, "Doplň všetky dieliky a spusti program (F5)."); },
     score: () => { const st = X(id); if (!st.run) return 0; const pct = tkMatch(tkRun(tkLines(P, tkGood(P))), tkRun(tkLines(P, st.run)), P.canvasCmp); return pct >= 100 ? max : Math.floor(max * pct / 100); } }; }
 
+/* ===== interpreter Pythonu (tkinter) – rovnaký ako v hodine 2.6 ===== */
+const PYCOLORS = "white black red green blue yellow orange pink purple brown gray grey cyan magenta gold navy maroon olive lime teal silver violet indigo turquoise tan salmon khaki coral crimson beige lavender skyblue lightblue lightgreen lightyellow lightgray lightgrey darkgreen darkblue darkred darkgray darkgrey darkorange orchid plum tomato chocolate royalblue steelblue seagreen forestgreen deeppink hotpink wheat ivory snow".split(" ");
+function pyColor(c) { if (c === "" || c === null) return ""; const s = String(c).trim(); if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(s)) return s; if (PYCOLORS.includes(s.toLowerCase().replace(/\s/g, ""))) return s.toLowerCase().replace(/\s/g, "") === "grey" ? "gray" : s.toLowerCase().replace(/\s/g, ""); throw { tcl: `unknown color name "${s}"` }; }
+function pyTokens(s) {
+  const t = []; let i = 0;
+  while (i < s.length) { const c = s[i];
+    if (c === " " || c === "\t") { i++; continue; }
+    if (c === "'" || c === '"') { let j = i + 1; while (j < s.length && s[j] !== c) j++; if (j >= s.length) throw { syn: "unterminated string literal" }; t.push({ s: s.slice(i + 1, j) }); i = j + 1; continue; }
+    if (/[0-9]/.test(c) || (c === "." && /[0-9]/.test(s[i + 1] || ""))) { let j = i; while (j < s.length && /[0-9.]/.test(s[j])) j++; t.push({ n: parseFloat(s.slice(i, j)) }); i = j; continue; }
+    if (/[A-Za-z_]/.test(c)) { let j = i; while (j < s.length && /[A-Za-z_0-9]/.test(s[j])) j++; t.push({ id: s.slice(i, j) }); i = j; continue; }
+    if (s.startsWith("//", i) || s.startsWith("**", i)) { t.push({ o: s.slice(i, i + 2) }); i += 2; continue; }
+    if ("+-*/%(),=.[]".includes(c)) { t.push({ o: c }); i++; continue; }
+    throw { syn: "invalid syntax" }; }
+  return t;
+}
+function pyEval(src, env) {
+  const t = pyTokens(src); let p = 0; const pk = () => t[p], eat = o => { if (t[p] && t[p].o === o) { p++; return true; } return false; };
+  function atom() { const x = pk(); if (!x) throw { syn: "invalid syntax" };
+    if (x.n !== undefined) { p++; return x.n; } if (x.s !== undefined) { p++; return x.s; }
+    if (x.id) { p++; if (x.id === "True") return true; if (x.id === "False") return false; if (env.fn && env.fn[x.id] && t[p] && t[p].o === "(") { p++; const args = []; if (!eat(")")) { do { args.push(add()); } while (eat(",")); if (!eat(")")) throw { syn: "invalid syntax" }; } return env.fn[x.id](...args); }
+      if (x.id === "random" && eat(".")) { const m = pk(); p++; if (!eat("(")) throw { syn: "invalid syntax" }; const args = []; if (!eat(")")) { do { args.push(add()); } while (eat(",")); if (!eat(")")) throw { syn: "invalid syntax" }; } if (!env.imp.random) throw { name: "random" }; if (m.id === "randint") return Math.floor(Math.random() * (args[1] - args[0] + 1)) + args[0]; if (m.id === "randrange") return args.length === 1 ? Math.floor(Math.random() * args[0]) : args[0] + Math.floor(Math.random() * (args[1] - args[0])); if (m.id === "choice") return args[0][Math.floor(Math.random() * args[0].length)]; throw { attr: ["module 'random'", m.id] }; }
+      if (x.id in env.vars) return env.vars[x.id]; throw { name: x.id }; }
+    if (eat("[")) { const arr = []; if (!eat("]")) { do { arr.push(add()); } while (eat(",") && !(t[p] && t[p].o === "]")); if (!eat("]")) throw { syn: "invalid syntax" }; } return arr; }
+    if (eat("(")) { const v = add(); if (eat(",")) { const arr = [v]; if (!(t[p] && t[p].o === ")")) { do { arr.push(add()); } while (eat(",") && !(t[p] && t[p].o === ")")); } if (!eat(")")) throw { syn: "invalid syntax" }; return arr; } if (!eat(")")) throw { syn: "'(' was never closed" }; return v; }
+    if (eat("-")) return -unary(); if (eat("+")) return unary(); throw { syn: "invalid syntax" }; }
+  function unary() { const b = atom(); if (eat("**")) return Math.pow(b, unary()); return b; }
+  function mul() { let a = unary(); for (;;) { const x = pk(); if (!x || !["*", "/", "//", "%"].includes(x.o)) return a; p++; const b = unary(); if (typeof a === "string" || typeof b === "string") { if (x.o === "*") { a = typeof a === "string" ? a.repeat(b) : b.repeat(a); continue; } throw { type: "unsupported operand type(s)" }; } if (x.o !== "*" && b === 0) throw { zero: 1 }; a = x.o === "*" ? a * b : x.o === "/" ? a / b : x.o === "//" ? Math.floor(a / b) : ((a % b) + b) % b; } }
+  function add() { let a = mul(); for (;;) { const x = pk(); if (!x || !["+", "-"].includes(x.o)) return a; p++; const b = mul(); if (x.o === "+") { if ((typeof a === "string") !== (typeof b === "string")) throw { type: 'can only concatenate str (not "int") to str' }; a = a + b; } else a = a - b; } }
+  const r = add(); if (p !== t.length) throw { syn: "invalid syntax" }; return r;
+}
+function pySplitArgs(s) { const out = []; let d = 0, q = null, cur = ""; for (const c of s) { if (q) { cur += c; if (c === q) q = null; continue; } if (c === "'" || c === '"') { q = c; cur += c; continue; } if (c === "(") d++; if (c === ")") d--; if (c === "," && d === 0) { out.push(cur); cur = ""; continue; } cur += c; } if (cur.trim()) out.push(cur); return out.map(x => x.trim()); }
+function pyArgs(s, env) { const pos = [], kw = {}; pySplitArgs(s).forEach(a => { const m = a.match(/^([A-Za-z_]\w*)\s*=(?!=)\s*(.+)$/); if (m) kw[m[1]] = pyEval(m[2], env); else pos.push(pyEval(a, env)); }); return { pos, kw }; }
+const PYMETH = ["create_line", "create_rectangle", "create_oval", "create_text", "create_polygon", "delete", "pack", "mainloop", "update", "after", "config", "configure"];
+function pyStrip(l) { let q = null; for (let i = 0; i < l.length; i++) { const c = l[i]; if (q) { if (c === q) q = null; } else if (c === "'" || c === '"') q = c; else if (c === "#") return l.slice(0, i); } return l; }
+function pyRun(code, opt = {}) {
+  const env = { vars: {}, imp: {}, canv: null, cname: null, shapes: [], packed: false, out: [], fn: opt.fn || {} };
+  const lines = code.split("\n"), fname = opt.file || "program.py";
+  const tb = (i, msg) => ({ err: `Traceback (most recent call last):\n  File "${fname}", line ${i + 1}, in <module>\n    ${lines[i].trim()}\n${msg}`, line: i + 1 });
+  for (let i = 0; i < lines.length; i++) {
+    let L = pyStrip(lines[i]).trimEnd(); if (!L.trim()) continue;
+    if (/^\s+/.test(L)) return Object.assign(env, { err: `  File "${fname}", line ${i + 1}\n    ${lines[i].trim()}\nIndentationError: unexpected indent`, line: i + 1 });
+    L = L.trim();
+    try {
+      let m;
+      if (/^import\s+tkinter$/.test(L)) { env.imp.tkinter = true; continue; }
+      if (/^from\s+tkinter\s+import\s+\*$/.test(L)) { env.imp.star = true; continue; }
+      if (/^import\s+random$/.test(L)) { env.imp.random = true; continue; }
+      if (/^import\s+\w+$/.test(L)) { const mod = L.split(/\s+/)[1]; return Object.assign(env, tb(i, `ModuleNotFoundError: No module named '${mod}'`)); }
+      if ((m = L.match(/^([A-Za-z_]\w*)\s*=\s*(tkinter\.)?(\w+)\s*\((.*)\)$/)) && (m[2] || m[3] === "Canvas" || m[3] === "Tk") && /^(Canvas|Tk|canvas)$/.test(m[3])) {
+        if (m[2] && !env.imp.tkinter) throw { name: "tkinter" }; if (!m[2] && !env.imp.star) throw { name: m[3] };
+        if (m[3] === "canvas") throw { attr: ["module 'tkinter'", "canvas"] };
+        if (m[3] === "Tk") { env.vars[m[1]] = { tk: true }; continue; }
+        const a = pyArgs(m[4], env); const w = a.kw.width !== undefined ? a.kw.width : 380, h = a.kw.height !== undefined ? a.kw.height : 265;
+        env.canv = { w, h, bg: a.kw.bg !== undefined ? pyColor(a.kw.bg) : (a.kw.background !== undefined ? pyColor(a.kw.background) : "#F0F0F0"), bgSet: a.kw.bg !== undefined || a.kw.background !== undefined }; env.cname = m[1]; env.vars[m[1]] = { canvas: true }; continue; }
+      if ((m = L.match(/^([A-Za-z_]\w*)\.(\w+)\s*\((.*)\)$/))) {
+        const obj = m[1], meth = m[2];
+        if (obj === "tkinter" || obj === "random") { if (obj === "tkinter" && meth === "mainloop") { if (!env.imp.tkinter) throw { name: "tkinter" }; continue; } if (obj === "random") { pyEval(L, env); continue; } throw { attr: ["module 'tkinter'", meth] }; }
+        if (!(obj in env.vars)) throw { name: obj };
+        const o = env.vars[obj]; if (o.tk) { if (meth === "mainloop") continue; throw { attr: ["'Tk' object", meth] }; }
+        if (!o.canvas) throw { attr: [`'${typeof o === "number" ? "int" : "str"}' object`, meth] };
+        if (!PYMETH.includes(meth)) throw { attr: ["'Canvas' object", meth] };
+        if (meth === "pack") { env.packed = true; continue; } if (meth === "mainloop" || meth === "update") continue;
+        const a = pyArgs(m[3], env); let pts = a.pos.flat(Infinity);
+        if (meth === "delete") { if (pts[0] === "all") env.shapes = []; continue; }
+        if (meth === "config" || meth === "configure") { if (a.kw.bg) env.canv.bg = pyColor(a.kw.bg); if (a.kw.width) env.canv.w = a.kw.width; if (a.kw.height) env.canv.h = a.kw.height; continue; }
+        pts.forEach(v => { if (typeof v !== "number") throw { type: "could not convert string to float: '" + v + "'" }; });
+        const need = { create_line: 4, create_rectangle: 4, create_oval: 4, create_text: 2, create_polygon: 6 }[meth];
+        if (pts.length < need || (meth !== "create_text" && pts.length % 2)) throw { tcl: `wrong # coordinates: expected ${meth === "create_text" ? 2 : meth === "create_polygon" ? "at least 6" : meth === "create_line" ? "at least 4" : 4}, got ${pts.length}` };
+        const K = a.kw, sh = { t: meth.slice(7), pts, line: i + 1 };
+        if (meth === "create_line") { sh.fill = K.fill !== undefined ? pyColor(K.fill) : "black"; sh.width = K.width || 1; if (K.arrow) { if (!["first", "last", "both", "none"].includes(K.arrow)) throw { tcl: `bad arrow spec "${K.arrow}": must be none, first, last, or both` }; sh.arrow = K.arrow; } if (K.dash) sh.dash = [].concat(K.dash); }
+        if (meth === "create_rectangle" || meth === "create_oval") { sh.fill = K.fill !== undefined ? pyColor(K.fill) : ""; sh.outline = K.outline !== undefined ? pyColor(K.outline) : "black"; sh.width = K.width !== undefined ? K.width : 1; }
+        if (meth === "create_polygon") { sh.fill = K.fill !== undefined ? pyColor(K.fill) : "black"; sh.outline = K.outline !== undefined ? pyColor(K.outline) : ""; sh.width = K.width || 1; }
+        if (meth === "create_text") { sh.text = K.text !== undefined ? String(K.text) : ""; sh.fill = K.fill !== undefined ? pyColor(K.fill) : "black"; sh.anchor = K.anchor || "center"; let f = K.font; sh.font = Array.isArray(f) ? { fam: f[0], size: f[1] || 12, style: f.slice(2).join(" ") } : typeof f === "string" ? { fam: f.split(" ")[0], size: +f.split(" ")[1] || 12, style: f.split(" ").slice(2).join(" ") } : { fam: "TkDefaultFont", size: 9, style: "" }; }
+        if (!env.canv) throw { name: obj };
+        env.shapes.push(sh); continue; }
+      if ((m = L.match(/^([A-Za-z_]\w*)\s*=(?!=)\s*(.+)$/))) { env.vars[m[1]] = pyEval(m[2], env); continue; }
+      if ((m = L.match(/^print\s*\((.*)\)$/))) { const a = pyArgs(m[1], env); env.out.push(a.pos.map(v => typeof v === "number" && !Number.isInteger(v) ? +v.toPrecision(15) : v).join(" ")); continue; }
+      if ((m = L.match(/^([A-Za-z_]\w*)\s*\(/))) throw { name: m[1] };
+      if (/^[A-Za-z_]\w*$/.test(L)) { if (L in env.vars) continue; throw { name: L }; }
+      throw { syn: "invalid syntax" };
+    } catch (e) {
+      if (e.syn) return Object.assign(env, { err: `  File "${fname}", line ${i + 1}\n    ${lines[i].trim()}\nSyntaxError: ${e.syn}`, line: i + 1 });
+      if (e.name) return Object.assign(env, tb(i, `NameError: name '${e.name}' is not defined`));
+      if (e.attr) return Object.assign(env, tb(i, `AttributeError: ${e.attr[0]} has no attribute '${e.attr[1]}'`));
+      if (e.tcl) return Object.assign(env, tb(i, `_tkinter.TclError: ${e.tcl}`));
+      if (e.type) return Object.assign(env, tb(i, `TypeError: ${e.type}`));
+      if (e.zero) return Object.assign(env, tb(i, "ZeroDivisionError: division by zero"));
+      return Object.assign(env, tb(i, "Error: " + (e.message || e)));
+    }
+  }
+  return env;
+}
+function pySVG(env, opt = {}) {
+  const C = env.canv; if (!C) return `<div class="tkempty">Grafická plocha zatiaľ neexistuje.<br><code>canvas = tkinter.Canvas()</code></div>`;
+  if (!env.packed) return `<div class="tkempty">Plocha je vytvorená, ale nie je umiestnená do okna.<br>Chýba <code>canvas.pack()</code></div>`;
+  const W = C.w, H = C.h; let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" style="max-width:100%;height:auto;display:block;background:${C.bg}" role="img" aria-label="Grafická plocha ${W} × ${H}">`;
+  if (opt.grid) { s += `<g stroke="rgba(0,0,0,.08)" stroke-width="1">`; for (let x = 50; x < W; x += 50) s += `<line x1="${x}" y1="0" x2="${x}" y2="${H}"/>`; for (let y = 50; y < H; y += 50) s += `<line x1="0" y1="${y}" x2="${W}" y2="${y}"/>`; s += `</g>`; }
+  env.shapes.forEach(sh => { const p = sh.pts;
+    if (sh.t === "line") { const aw = Math.max(8, sh.width * 3), arr = (x1, y1, x2, y2) => { const a = Math.atan2(y2 - y1, x2 - x1), L = aw * 1.3, W2 = aw / 2; return `<polygon points="${x2},${y2} ${x2 - L * Math.cos(a) + W2 * Math.sin(a)},${y2 - L * Math.sin(a) - W2 * Math.cos(a)} ${x2 - L * Math.cos(a) - W2 * Math.sin(a)},${y2 - L * Math.sin(a) + W2 * Math.cos(a)}" fill="${sh.fill}"/>`; };
+      s += `<polyline points="${p.join(" ")}" fill="none" stroke="${sh.fill}" stroke-width="${sh.width}" stroke-linecap="butt" stroke-linejoin="miter"${sh.dash ? ` stroke-dasharray="${sh.dash.join(" ")}"` : ""}/>`;
+      const n = p.length; if (sh.arrow === "last" || sh.arrow === "both") s += arr(p[n - 4], p[n - 3], p[n - 2], p[n - 1]); if (sh.arrow === "first" || sh.arrow === "both") s += arr(p[2], p[3], p[0], p[1]); }
+    if (sh.t === "rectangle") s += `<rect x="${Math.min(p[0], p[2])}" y="${Math.min(p[1], p[3])}" width="${Math.abs(p[2] - p[0])}" height="${Math.abs(p[3] - p[1])}" fill="${sh.fill || "none"}" stroke="${sh.outline || "none"}" stroke-width="${sh.width}"/>`;
+    if (sh.t === "oval") s += `<ellipse cx="${(p[0] + p[2]) / 2}" cy="${(p[1] + p[3]) / 2}" rx="${Math.abs(p[2] - p[0]) / 2}" ry="${Math.abs(p[3] - p[1]) / 2}" fill="${sh.fill || "none"}" stroke="${sh.outline || "none"}" stroke-width="${sh.width}"/>`;
+    if (sh.t === "polygon") s += `<polygon points="${p.join(" ")}" fill="${sh.fill || "none"}" stroke="${sh.outline || "none"}" stroke-width="${sh.width}"/>`;
+    if (sh.t === "text") { const A = sh.anchor, ta = /w$/.test(A) || A === "w" ? "start" : /e$/.test(A) || A === "e" ? "end" : "middle", db = /^n/.test(A) ? "hanging" : /^s/.test(A) ? "alphabetic" : "central"; s += `<text x="${p[0]}" y="${p[1]}" fill="${sh.fill}" font-family="${esc(sh.font.fam)}, Segoe UI, sans-serif" font-size="${Math.abs(sh.font.size) * 1.33}" font-weight="${/bold/.test(sh.font.style) ? 700 : 400}" font-style="${/italic/.test(sh.font.style) ? "italic" : "normal"}" text-anchor="${ta}" dominant-baseline="${db}">${esc(sh.text)}</text>`; } });
+  return s + `</svg>`;
+}
+
+/* ===== PÍSANIE PROGRAMU: IDLE ako v hodine (žiak píše, Run Module / F5, Shell, okno tk), porovnanie s cieľom ===== */
+const D1 = "import tkinter\ncanvas = tkinter.Canvas()\ncanvas.pack()\n";
+const pyHex = (() => { const cx = document.createElement("canvas").getContext("2d"), M = {}; return c => { if (c === "" || c == null) return "none"; const k = String(c).toLowerCase(); if (M[k]) return M[k]; cx.fillStyle = "#010203"; cx.fillStyle = k; return (M[k] = cx.fillStyle); }; })();
+/* útvary žiaka sa porovnajú s cieľom: typ, súradnice (±2 px, úsečka aj opačne), farby, hrúbka, text */
+function pySame(g, s) { if (g.t !== s.t || g.pts.length !== s.pts.length) return false;
+  const near = (a, b) => a.every((v, i) => Math.abs(v - b[i]) <= 2), rev = p => { const r = []; for (let i = p.length - 2; i >= 0; i -= 2) r.push(p[i], p[i + 1]); return r; };
+  if (!near(g.pts, s.pts) && !(g.t === "line" && near(g.pts, rev(s.pts)))) return false;
+  if (pyHex(g.fill) !== pyHex(s.fill)) return false;
+  if (g.outline !== undefined && pyHex(g.outline) !== pyHex(s.outline)) return false;
+  if (g.t !== "text" && (g.width || 1) !== (s.width || 1)) return false;
+  if (g.t === "text" && String(g.text).trim().toLowerCase() !== String(s.text).trim().toLowerCase()) return false;
+  return true; }
+function pyMatch(G, E, cmp) { if (!E || !E.canv || !E.packed) return 0;
+  let hit = 0, n = 0; if (cmp) { n = 3; hit += (E.canv.w === G.canv.w) + (E.canv.h === G.canv.h) + (pyHex(E.canv.bg) === pyHex(G.canv.bg)); }
+  const pool = E.shapes.slice(); G.shapes.forEach(g => { const i = pool.findIndex(s => pySame(g, s)); if (i >= 0) { hit++; pool.splice(i, 1); } });
+  return Math.round(100 * hit / Math.max(n + G.shapes.length, n + E.shapes.length, 1)); }
+/* úloha: P = { file, start, sol, cmp, goal: [zadanie po bodoch] } */
+function pyTask(id, max, P, ins) {
+  const goalEnv = () => pyRun(P.sol);
+  return { id, type: "custom", max, start: P.start, init: () => ({ code: null, run: null }),
+    html: T => { const st = X(id), done = S.t[id], code = st.code != null ? st.code : P.start, G = goalEnv(), R = st.run != null ? pyRun(st.run, { file: "C:\\Users\\ziak\\" + P.file }) : null, pct = R ? pyMatch(G, R, P.cmp) : 0;
+      return `<p class="ins">${ins} Program píšeš sám. Spúšťaj ho tlačidlom <b>▶ Run Module</b> alebo klávesom <kbd>F5</kbd> a opravuj, koľkokrát chceš. <b>Skontrolovať</b> môžeš iba raz. Za úplnú zhodu s cieľom získaš ${max} ⭐, pri čiastočnej zhode menej.</p>
+        <div class="pgoal"><div class="pzad"><b>📋 Zadanie</b><ul>${P.goal.map(g => `<li>${g}</li>`).join("")}</ul></div><div class="tkgoal"><b>🎯 Cieľ</b> <span class="muted" style="font-size:13px">(mriežka po 50 px)</span>${pySVG(G, { grid: true })}</div></div>
+        <div class="pide"><div class="pwin"><div class="pwt">📝 ${P.file} – IDLE<span class="dots">— ▢ ✕</span></div>
+          <div class="ptb"><button class="run" data-prun="${id}" ${done ? "disabled" : ""}>▶ Run Module (F5)</button><button data-preset="${id}" ${done ? "disabled" : ""}>↺ Pôvodný kód</button></div>
+          <textarea data-ped="${id}" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" aria-label="Program v Pythone" ${done ? "readonly" : ""}>${esc(code)}</textarea>
+          <div class="pshell">${R ? `<span>===== RESTART: C:\\Users\\ziak\\${P.file} =====</span>\n${R.out.map(o => `<span class="o">${esc(o)}</span>\n`).join("")}${R.err ? `<span class="e">${esc(R.err)}</span>` : ""}` : `<span style="color:#888">Tu sa po spustení zobrazia správy a chyby.</span>`}</div></div>
+          <div class="pwin ptk"><div class="pwt">🪶 tk<span class="dots">— ▢ ✕</span></div><div class="pbody">${R ? (R.err && !R.canv ? `<div class="tkempty">Program skončil chybou, okno sa neotvorilo.</div>` : pySVG(R)) : `<div class="tkempty">Okno sa otvorí po spustení programu.</div>`}</div></div></div>
+        ${R ? `<div class="axo"><span class="lab">zhoda s cieľom:</span><span class="readout">${pct} %</span>${R.err && !done ? `<span class="lab" style="color:${C.bad}">Program skončil chybou, oprav ju podľa červeného hlásenia.</span>` : pct < 100 && !done ? `<span class="lab">Porovnaj svoje okno s cieľom a uprav program.</span>` : ""}</div>` : ""}
+        ${done ? (pct >= 100 ? `<p class="why good">Úplná zhoda s cieľom. ✔</p>` : `<p class="why miss">Vzorové riešenie:</p><pre class="pysol">${esc(P.sol.trim())}</pre>`) : ""}` +
+        checkBar(T, st.run != null, "Najprv program spusti (▶ Run Module alebo F5)."); },
+    /* kontroluje sa program, ktorý je práve v editore */
+    prep: () => { const st = X(id), ta = document.querySelector(`[data-ped="${id}"]`); if (ta) st.code = ta.value; if (st.code != null) st.run = st.code; },
+    score: () => { const st = X(id); if (st.run == null) return 0; const pct = pyMatch(goalEnv(), pyRun(st.run), P.cmp); return pct >= 100 ? max : Math.floor(max * pct / 100); } }; }
+
+const PY = {
+  w1: { file: "prvy.py", start: D1, cmp: 0,
+    sol: "import tkinter\ncanvas = tkinter.Canvas()\ncanvas.pack()\ncanvas.create_line(40, 200, 340, 200)\ncanvas.create_text(190, 130, text='Ahoj, Python!')\n",
+    goal: ["Plochu nechaj s predvolenou veľkosťou (tri riadky sú už napísané).", "Čiernu úsečku z bodu <b>(40, 200)</b> do bodu <b>(340, 200)</b>.", "Text <b>Ahoj, Python!</b> so stredom v bode <b>(190, 130)</b>."] },
+  w2: { file: "plocha.py", start: D1, cmp: 1,
+    sol: "import tkinter\ncanvas = tkinter.Canvas(width=450, height=220, bg='#87CEEB')\ncanvas.pack()\n",
+    goal: ["Plocha široká <b>450</b> a vysoká <b>220</b> pixelov.", "Farba pozadia zadaná kódom <b>#87CEEB</b> (nebeská modrá).", "Na plochu zatiaľ nič nekresli."] },
+  w3: { file: "uhlopriecky.py", start: D1, cmp: 1,
+    sol: "import tkinter\ncanvas = tkinter.Canvas(width=400, height=200, bg='white')\ncanvas.pack()\ncanvas.create_line(0, 0, 400, 200, fill='red', width=3)\ncanvas.create_line(400, 0, 0, 200, fill='red', width=3)\n",
+    goal: ["Plocha <b>400 × 200</b> s bielym pozadím (<b>'white'</b>).", "Dve <b>červené</b> úsečky s hrúbkou <b>3</b>: úhlopriečky plochy.", "Prvá z ľavého horného rohu do pravého dolného, druhá z pravého horného do ľavého dolného. Súradnice rohov si vypočítaj sám."] },
+  w4: { file: "terc.py", start: D1, cmp: 1,
+    sol: "import tkinter\ncanvas = tkinter.Canvas(width=300, height=300, bg='white')\ncanvas.pack()\ncanvas.create_oval(50, 50, 250, 250, fill='red')\ncanvas.create_oval(90, 90, 210, 210, fill='white')\ncanvas.create_oval(130, 130, 170, 170, fill='red')\n",
+    goal: ["Plocha <b>300 × 300</b>, pozadie <b>'white'</b>.", "Všetky tri kruhy majú stred v bode <b>(150, 150)</b>.", "Veľký <b>červený</b> kruh s polomerom <b>100</b>, na ňom <b>biely</b> s polomerom <b>60</b> a navrchu <b>červený</b> s polomerom <b>20</b>."] },
+  house: { file: "domcek.py", start: D1, cmp: 1,
+    sol: "import tkinter\ncanvas = tkinter.Canvas(width=400, height=250, bg='lightblue')\ncanvas.pack()\ncanvas.create_rectangle(0, 190, 400, 250, fill='green')\ncanvas.create_oval(300, 30, 360, 90, fill='yellow')\ncanvas.create_rectangle(120, 130, 220, 190, fill='white')\ncanvas.create_polygon(110, 130, 170, 80, 230, 130, fill='red')\ncanvas.create_text(200, 222, text='Môj dom', fill='white')\n",
+    goal: ["Plocha <b>400 × 250</b>, pozadie <b>'lightblue'</b>.", "Tráva: <b>zelený</b> obdĺžnik s rohmi (0, 190) a (400, 250).", "Slnko: <b>žltý</b> kruh v štvorci s rohmi (300, 30) a (360, 90).", "Stena: <b>biely</b> obdĺžnik s rohmi (120, 130) a (220, 190).", "Strecha: <b>červený</b> trojuholník s vrcholmi (110, 130), (170, 80), (230, 130).", "<b>Biely</b> text <b>Môj dom</b> so stredom v (200, 222)."] },
+  fix: { file: "oprava.py", cmp: 1,
+    start: "import tkinter\ncanvas = tkinter.canvas(width=400, height=300, bg='biela')\ncanvas.create_line(20, 20, 380, 20, fill='red', width=4)\ncanvas.create_rectangle(100, 60, 300, 250 fill='yellow')\n",
+    sol: "import tkinter\ncanvas = tkinter.Canvas(width=400, height=300, bg='white')\ncanvas.pack()\ncanvas.create_line(20, 20, 380, 20, fill='red', width=4)\ncanvas.create_rectangle(100, 60, 300, 250, fill='yellow')\n",
+    goal: ["Program v editore má <b>štyri chyby</b>.", "Spúšťaj ho, čítaj chybové hlásenia v Shelli a opravuj ich po jednej.", "Jednu chybu Python nehlási: všimneš si ju až v okne tk.", "Výsledok: biela plocha 400 × 300, červená čiara a žltý obdĺžnik ako na cieli."] }
+};
+
 const MAS = { c: "#A08A70", belly: "#E9DFD2", ears: "none", inner: "#C9B8A3", muzzle: "#E9DFD2", mask: "#6B5A47", extra: ["cap"], capc: "#2DA44E" };
 const P_CANVAS = { file: "plocha.py", canvasCmp: 1, goalNote: `<p class="why" style="margin:6px 0 0">Šírka 400 px, výška 200 px.</p>`,
   lines: [["import tkinter"], ["canvas = tkinter.Canvas(width=", { s: "w" }, ", height=", { s: "h" }, ", bg=", { s: "bg" }, ")"], ["canvas.pack()"]],
@@ -652,11 +840,11 @@ const FIG_SILENT = fig(SV(440, 140, `
   "Niektoré chyby Python nehlási, uvidíš ich až na obrázku.");
 
 const DU = {
-  KEY: "du-3r26-v1", DONE_KEY: "du-3r26-done-v1", OLD_DONE_KEYS: [], CLASSES: ["III.A", "III.A/III.B", "SEP_1", "SEP_2"],
+  KEY: "du-3r26-v2", DONE_KEY: "du-3r26-done-v1", OLD_DONE_KEYS: [], CLASSES: ["III.A", "III.A/III.B", "SEP_1", "SEP_2"],
   LESSON: "3. ročník – DU_2.6 Python – kreslenie, grafické príkazy, vytvorenie grafickej plochy",
   brand: "2.6 Grafika v Pythone", mascot: MAS, mascotName: "Lenochod Plátno",
   kicker: "Informatika · 3. ročník · domáca úloha k hodine 2.6", title: "Domáca úloha: Grafická plocha a grafické príkazy v Pythone",
-  startText: "Ahoj! Som lenochod <b>Plátno</b>. Som pomalý, ale keď kreslím, každý bod mám presne na svojom mieste. 🦥 Čaká nás <b>6 misií</b> a <b>15 úloh</b>: modul tkinter, grafická plocha, súradnice, grafické príkazy, prvý obrázok a časté chyby. V dvoch úlohách doplníš program v simulovanom IDLE a spustíš ho klávesom F5. Potrvá to asi <b>20 minút</b> a môžeš získať <b>{MAX} ⭐</b>.",
+  startText: "Ahoj! Som lenochod <b>Plátno</b>. Som pomalý, ale keď kreslím, každý bod mám presne na svojom mieste. 🦥 Čaká nás <b>6 misií</b> a <b>15 úloh</b>: modul tkinter, grafická plocha, súradnice, grafické príkazy, prvý obrázok a časté chyby. V každej misii napíšeš jeden program v simulovanom IDLE, spustíš ho klávesom F5 a porovnáš s cieľovým obrázkom. Potrvá to asi <b>20 minút</b> a môžeš získať <b>{MAX} ⭐</b>.",
   hero: SV(420, 300, `<defs><linearGradient id="hs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F5EC"/><stop offset="1" stop-color="#EAF3FF"/></linearGradient></defs><rect width="420" height="300" rx="18" fill="url(#hs)"/>
     ${box(220, 70, 186, 160, "#fff", "#9AA6B8", 10)}${tkSVG(tkRun(tkLines(P_HOUSE, tkGood(P_HOUSE))), 170).replace("<svg ", '<svg x="228" y="90" ')}
     ${animal(MAS, 110, 160, 1.4, "wow")}`, "Lenochod Plátno a obrázok domčeka"),
@@ -665,47 +853,39 @@ const DU = {
   STEPS: [
     { id: "start", title: "Štart", ic: "🚀", min: 1 },
     { id: "m1", title: "Grafika v Pythone", ic: "🐍", min: 3, col: "linear-gradient(120deg,#0E8A6A,#2FC39A)" },
-    { id: "m2", title: "Vytvorenie plochy", ic: "🖼️", min: 3, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
+    { id: "m2", title: "Vytvorenie plochy", ic: "🖼️", min: 2, col: "linear-gradient(120deg,#2F5BEA,#5B8CFF)" },
     { id: "m3", title: "Súradnice", ic: "📍", min: 3, col: "linear-gradient(120deg,#8A5A00,#E0A526)" },
     { id: "m4", title: "Grafické príkazy", ic: "✏️", min: 3, col: "linear-gradient(120deg,#6A3FD0,#A07BFF)" },
     { id: "m5", title: "Prvý obrázok", ic: "🏠", min: 5, col: "linear-gradient(120deg,#C2560C,#F08A3C)" },
-    { id: "m6", title: "Časté chyby", ic: "🐞", min: 2, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
+    { id: "m6", title: "Časté chyby", ic: "🐞", min: 3, col: "linear-gradient(120deg,#C0392B,#F06A5A)" },
     { id: "vysledok", title: "Výsledok", ic: "🏆", min: 0 }
   ],
-  STEP_TASKS: { m1: ["lines", "tkq"], m2: ["cv", "cvq"], m3: ["pts", "axq", "mid"], m4: ["cmd", "circ"], m5: ["house", "ord", "poly"], m6: ["err", "errq", "where"] },
+  STEP_TASKS: { m1: ["lines", "w1"], m2: ["cv", "cvq"], m3: ["pts", "mid", "diag"], m4: ["cmd", "terc"], m5: ["house", "ord", "poly"], m6: ["err", "fix", "where"] },
   TASKS: {
     lines: { id: "lines", type: "rows", per: 2, max: 3, layout: "list", same: 1, ins: "Čo urobí riadok programu?", opts: ["sprístupní modul tkinter", "vytvorí grafickú plochu", "umiestni plochu do okna", "nakreslí úsečku", "nakreslí elipsu alebo kruh", "napíše text"],
       items: [{ id: "1", t: CODE("import tkinter"), a: 0 }, { id: "2", t: CODE("canvas = tkinter.Canvas(bg='white')"), a: 1 }, { id: "3", t: CODE("canvas.pack()"), a: 2 }, { id: "4", t: CODE("canvas.create_line(10, 10, 90, 10)"), a: 3 }, { id: "5", t: CODE("canvas.create_oval(10, 10, 90, 90)"), a: 4 }, { id: "6", t: CODE("canvas.create_text(50, 50, text='Ahoj')"), a: 5 }] },
-    tkq: { id: "tkq", type: "mc", qs: [
-      { id: "1", q: "Čím sa kreslenie v tkinter líši od korytnačky?", opts: ["Zadáme presné súradnice útvaru, nie pohyb a otáčanie.", "tkinter kreslí iba čiary.", "tkinter nevie farby.", "Ničím, je to to isté."], a: 0, why: "V tkinter povieš <b>kde</b> je útvar, nie kam sa pohnúť." },
-      { id: "2", q: "Treba modul tkinter doinštalovať?", opts: ["Nie, je súčasťou Pythonu.", "Áno, z python.org.", "Áno, platí sa zaň.", "Iba na Linuxe."], a: 0, why: "tkinter je <b>súčasťou Pythonu</b>." }] },
-    cv: tkTask("cv", 3, P_CANVAS, "Doplň program tak, aby vytvoril plochu presne ako cieľ. Vyber dieliky ①–③ a spusti program."),
+    w1: pyTask("w1", 2, PY.w1, "Napíš svoj prvý grafický program."),
+    cv: pyTask("cv", 3, PY.w2, "Uprav riadok s Canvas tak, aby plocha vyzerala presne ako cieľ."),
     cvq: { id: "cvq", type: "mc", qs: [
       { id: "1", q: "Akú veľkosť má plocha, keď nezadáš width ani height?", opts: ["predvolenú, približne 380 × 265", "celú obrazovku", "0 × 0, nič nevidno", "100 × 100"], a: 0, why: "Bez parametrov má plocha <b>predvolenú</b> veľkosť asi 380 × 265." },
       { id: "2", q: "Čo znamená farba <b>'#00FF00'</b>?", opts: ["zelená: červená 0, zelená naplno, modrá 0", "červená", "biela", "čierna"], a: 0, why: "#RRGGBB: 00 červenej, <b>FF zelenej</b>, 00 modrej." }] },
     pts: { id: "pts", type: "rows", per: 2, max: 2, layout: "list", same: 1, keepLab: 1, fixed: 1, ins: "Na ploche 400 × 200 sú body A až D. Aké majú súradnice?", pre: `<div class="scn small">${GRID(400, 200, [["A", 100, 50], ["B", 300, 150], ["C", 50, 150], ["D", 350, 50]])}</div>`, opts: ["(100, 50)", "(300, 150)", "(50, 150)", "(350, 50)"],
       items: [{ id: "A", t: "", a: 0 }, { id: "B", t: "", a: 1 }, { id: "C", t: "", a: 2 }, { id: "D", t: "", a: 3 }] },
-    axq: { id: "axq", type: "mc", qs: [
-      { id: "1", q: "Bod P má súradnice (120, 40) a bod Q (120, 160). Ktorý je na ploche vyššie?", opts: ["P, lebo má menšie y", "Q, lebo má väčšie y", "sú rovnako vysoko", "nedá sa určiť"], a: 0, why: "Os y rastie <b>nadol</b>: menšie y = vyššie." },
-      { id: "2", q: "Kde je pravý dolný roh plochy 500 × 300?", opts: ["(500, 300)", "(0, 300)", "(500, 0)", "(300, 500)"], a: 0, why: "Pravý dolný roh = <b>(šírka, výška)</b>." }] },
     mid: { id: "mid", type: "mc", wide: 1, qs: [{ id: "1", q: "Kde je stred plochy 600 × 400?", opts: ["(300, 200)", "(600, 400)", "(200, 300)", "(0, 0)"], a: 0, why: "Polovica šírky a polovica výšky: <b>(300, 200)</b>." }] },
+    diag: pyTask("diag", 2, PY.w3, "Nakresli úhlopriečky plochy."),
     cmd: { id: "cmd", type: "rows", per: 2, max: 3, ins: "Ktorý príkaz použiješ?", opts: ["create_line", "create_rectangle", "create_oval", "create_polygon", "create_text"],
       items: [{ id: "1", e: "⚽", t: "lopta", a: 2 }, { id: "2", e: "🚧", t: "vodorovná značka na ceste", a: 0 }, { id: "3", e: "🔺", t: "trojuholníková strecha", a: 3 }, { id: "4", e: "🚪", t: "dvere domu", a: 1 }, { id: "5", e: "🏷️", t: "nápis Vitajte", a: 4 }, { id: "6", e: "⭐", t: "päťcípa hviezda", a: 3 }] },
-    circ: { id: "circ", type: "mc", qs: [
-      { id: "1", q: "Ktorý príkaz nakreslí kruh so stredom <b>(100, 80)</b> a polomerom <b>30</b>?", opts: [CODE("create_oval(70, 50, 130, 110)"), CODE("create_oval(100, 80, 30, 30)"), CODE("create_oval(100, 80, 130, 110)"), CODE("create_circle(100, 80, 30)")], a: 0, why: "Rohy štvorca: (100 − 30, 80 − 30) a (100 + 30, 80 + 30)." },
-      { id: "2", q: "Čo nakreslí <b>create_rectangle(50, 50, 150, 100)</b>?", opts: ["obdĺžnik široký 100 a vysoký 50", "štvorec 150 × 150", "obdĺžnik 50 × 100", "úsečku"], a: 0, why: "Šírka 150 − 50 = <b>100</b>, výška 100 − 50 = <b>50</b>." }] },
-    house: tkTask("house", 3, P_HOUSE, "Doplň program domčeka tak, aby nakreslil presne cieľový obrázok. Vyber dieliky ①–④ a spusti program."),
+    terc: pyTask("terc", 2, PY.w4, "Nakresli terč z troch kruhov."),
+    house: pyTask("house", 3, PY.house, "Napíš program, ktorý nakreslí domček podľa zadania."),
     ord: { id: "ord", type: "mc", wide: 1, qs: [{ id: "1", q: "Nakreslil si slnko a až potom modrú oblohu cez celú plochu. Slnko nevidno. Prečo?", opts: ["Obloha sa nakreslila navrch slnka.", "Slnko je mimo plochy.", "Žltá sa na modrej nedá zobraziť.", "Chýba import."], a: 0, why: "Každý ďalší útvar je <b>navrchu</b>. Pozadie kresli skôr." }] },
     poly: { id: "poly", type: "mc", wide: 1, qs: [{ id: "1", q: "Strecha <b>create_polygon(110, 130, 170, 80, 230, 130)</b> má koľko vrcholov?", opts: ["3", "6", "2", "4"], a: 0, why: "6 čísel = <b>3 body</b> (x, y)." }] },
     err: { id: "err", type: "rows", per: 2, max: 2, layout: "list", same: 1, ins: "Aké hlásenie vypíše Python?", opts: ["NameError", "AttributeError", "TclError", "SyntaxError"],
       items: [{ id: "1", t: CODE("canvas = tkintr.Canvas()"), a: 0 }, { id: "2", t: CODE("canvas = tkinter.canvas()"), a: 1 }, { id: "3", t: CODE("canvas.create_line(0, 0, 50, 50, fill='zlata')"), a: 2 }, { id: "4", t: CODE("canvas.create_line(0, 0 50, 50)"), a: 3 }] },
-    errq: { id: "errq", type: "mc", qs: [
-      { id: "1", q: "Program prebehne bez chyby, ale okno je prázdne. Čo pravdepodobne chýba?", opts: ["canvas.pack()", "import math", "print()", "nič, tak to má byť"], a: 0, why: "Bez <b>canvas.pack()</b> sa plocha do okna neumiestni." },
-      { id: "2", q: "Obdĺžnik je o kus nižšie, než si chcel. Čo skontroluješ?", opts: ["súradnice y, os y rastie nadol", "farbu výplne", "názov súboru", "verziu Pythonu"], a: 0, why: "Pri zlej polohe skontroluj <b>súradnice</b>, hlavne os y." }] },
+    fix: pyTask("fix", 2, PY.fix, "Oprav chybný program."),
     where: { id: "where", type: "mc", wide: 1, qs: [{ id: "1", q: "Chceš zmeniť farbu pozadia celej plochy. Kde to nastavíš?", opts: ["pri vytvorení plochy v tkinter.Canvas(bg=…)", "príkazom create_background", "v canvas.pack(bg=…)", "nakreslením textu"], a: 0, why: "Vlastnosti plochy sa nastavujú pri jej <b>vytvorení</b>." }] }
   },
   THEORY: {
-    m1: ["<b>tkinter</b> je súčasťou Pythonu.", "Kreslíme na plochu <b>canvas</b>.", "Zadávame presné súradnice.", "import, Canvas, pack."],
+    m1: ["<b>tkinter</b> je súčasťou Pythonu.", "Kreslíme na plochu <b>canvas</b>.", "Zadávame presné súradnice.", "import, Canvas, pack.", "Program spustíš klávesom F5."],
     m2: ["width: šírka, height: výška v pixeloch.", "bg: farba pozadia.", "Farba: názov alebo #RRGGBB.", "Parametre oddeľujeme čiarkou."],
     m3: ["(0, 0) je vľavo hore.", "x rastie doprava.", "y rastie nadol.", "Pravý dolný roh = (w, h)."],
     m4: ["create_line: začiatok a koniec.", "create_rectangle, create_oval: dva rohy.", "create_polygon: vrcholy.", "create_text: stred textu."],
@@ -716,40 +896,42 @@ const DU = {
     m1: { sub: "Kreslíme súradnicami, nie korytnačkou.", mood: "", say: "Ahoj, som lenochod <b>Plátno</b>! 🦥 Dnes nebudeme ťahať korytnačku, ale kresliť presne podľa súradníc.",
       txt: `<p>V Kvarte ste kreslili korytnačkou. Teraz budeme kresliť pomocou modulu <b>tkinter</b>. Je súčasťou Pythonu, netreba ho inštalovať.</p>
         <p>Kreslíme na grafickú plochu (<b>canvas</b> = plátno). Nehovoríme, kam sa pohnúť, ale presne zadáme súradnice útvaru: „nakresli obdĺžnik s rohmi tu a tu“.</p>
-        <p>Každý grafický program začína tromi riadkami: import modulu, vytvorenie plochy a jej umiestnenie do okna.</p>
+        <p>Každý grafický program začína tromi riadkami: import modulu, vytvorenie plochy a jej umiestnenie do okna. Až za ne píšeme príkazy na kreslenie, napríklad:</p>
+        <p>${CODEB("canvas.create_line(20, 30, 220, 30)\ncanvas.create_text(120, 70, text='Dobrý deň')")}</p>
+        <p>Prvý riadok nakreslí úsečku z bodu (20, 30) do (220, 30), druhý napíše text so stredom v bode (120, 70). Program spustíš klávesom <b>F5</b> (Run › Run Module). Nakreslené uvidíš v okne <b>tk</b>, chyby sa vypíšu v <b>Shelli</b>.</p>
         ${VEDEL("Názov tkinter znamená Tk interface. Tk je knižnica na tvorbu okien, ktorú používa aj IDLE.")}`,
-      figs: FIG_WIN + FIG_THREE, tasks: [[1, "🐍", "čo urobí riadok", "lines"], [2, "🐢", "tkinter a korytnačka", "tkq"]] },
+      figs: FIG_WIN + FIG_THREE, tasks: [[1, "🐍", "čo urobí riadok", "lines"], [2, "⌨️", "prvý program v IDLE", "w1"]] },
     m2: { sub: "Rozmery a farba plochy.", mood: "wow", say: "Najprv si pripravím plátno správnej veľkosti. 🖼️ Potom až kreslím.",
       txt: `<p>Pri vytváraní plochy môžeme zadať jej vlastnosti ako pomenované parametre. Na poradí nezáleží, oddeľujeme ich čiarkou:</p>
         <p>${CODE("canvas = tkinter.Canvas(width=500, height=300, bg='white')")}</p>
         <p><b>width</b> je šírka a <b>height</b> výška plochy v pixeloch. <b>bg</b> (background) je farba pozadia.</p>
         <p>Farbu zadávame ako text v apostrofoch: anglickým názvom ('red', 'lightblue'…) alebo kódom '#RRGGBB'. Dve šestnástkové cifry určujú množstvo červenej, zelenej a modrej.</p>
         ${VEDEL("Názov farby lightyellow znamená svetložltá. Predpona light- zosvetlí aj iné farby: lightblue, lightgreen, lightgray.")}`,
-      figs: FIG_SIZE + FIG_HEX, tasks: [[3, "🖼️", "vytvor plochu", "cv"], [4, "🎨", "veľkosť a farba", "cvq"]] },
+      figs: FIG_SIZE + FIG_HEX, tasks: [[3, "⌨️", "vytvor plochu", "cv"], [4, "🎨", "veľkosť a farba", "cvq"]] },
     m3: { sub: "Kde je ktorý pixel.", mood: "", say: "Pozor, v tkinter je svet hore nohami! 📍 Os y rastie nadol.",
       txt: `<p>Plocha sa skladá z pixelov (bodov obrazovky). Každý pixel má dve súradnice: <b>x</b> (vodorovne) a <b>y</b> (zvisle). Zapisujeme ich ako dvojicu (x, y).</p>
         <p>Počiatok (0, 0) je v <b>ľavom hornom rohu</b>. Os x rastie doprava, os y rastie <b>nadol</b>. To je opak matematiky!</p>
         <table class="rtab"><tbody><tr><td>ľavý horný roh</td><td>(0, 0)</td></tr><tr><td>pravý dolný roh</td><td>(šírka, výška)</td></tr><tr><td>menšie y</td><td>bod je vyššie</td></tr></tbody></table>
         ${VEDEL("Aj obrazovka počítača má počiatok vľavo hore. Monitor Full HD má pravý dolný pixel v bode (1919, 1079).")}`,
-      figs: FIG_AX + FIG_MATH, tasks: [[5, "📍", "súradnice bodov", "pts"], [6, "↕️", "os y", "axq"], [7, "🎯", "stred plochy", "mid"]] },
+      figs: FIG_AX + FIG_MATH, tasks: [[5, "📍", "súradnice bodov", "pts"], [6, "🎯", "stred plochy", "mid"], [7, "⌨️", "úhlopriečky", "diag"]] },
     m4: { sub: "canvas.create_…", mood: "wow", say: "Päť príkazov a môžem nakresliť čokoľvek. ✏️",
       txt: `<p>Kreslíme príkazmi plochy v tvare <b>canvas.create_útvar(súradnice, parametre)</b>.</p>
         <table class="rtab"><tbody><tr><td>create_line(x1, y1, x2, y2)</td><td>úsečka</td></tr><tr><td>create_rectangle(x1, y1, x2, y2)</td><td>obdĺžnik</td></tr><tr><td>create_oval(x1, y1, x2, y2)</td><td>elipsa, pri štvorci kruh</td></tr><tr><td>create_polygon(x1, y1, x2, y2, x3, y3 …)</td><td>mnohouholník</td></tr><tr><td>create_text(x, y, text='…')</td><td>text</td></tr></tbody></table>
         <p>Parametre: <b>fill</b> farba výplne, <b>outline</b> farba obrysu, <b>width</b> hrúbka, <b>font</b> písmo.</p>
         ${VEDEL("Príkaz create_… vráti číslo útvaru. Neskôr ním útvar posunieš alebo zmažeš.")}`,
-      figs: FIG_CMD + FIG_CIRC, tasks: [[8, "✏️", "ktorý príkaz", "cmd"], [9, "⭕", "kruh a obdĺžnik", "circ"]] },
+      figs: FIG_CMD + FIG_CIRC, tasks: [[8, "✏️", "ktorý príkaz", "cmd"], [9, "⌨️", "terč", "terc"]] },
     m5: { sub: "Obrázok vzniká riadok po riadku.", mood: "", say: "Nakreslíme domček. 🏠 Pomaly, ale presne, ako ja.",
       txt: `<p>Obrázok vzniká postupne: príkazy sa vykonávajú zhora nadol a každý ďalší útvar sa nakreslí <b>navrch</b> predchádzajúcich. Ak chceš mať niečo v pozadí, nakresli to skôr.</p>
         <p>Pred písaním si obrázok rozmysli na papieri so súradnicami: kde má byť každý roh, stred, začiatok čiary.</p>
         <p>Pri kruhu so stredom (sx, sy) a polomerom r sú rohy ohraničujúceho štvorca (sx − r, sy − r) a (sx + r, sy + r).</p>
         ${VEDEL("Profesionálni grafici tiež pracujú vo vrstvách: pozadie je dole, detaily navrchu.")}`,
-      figs: FIG_DEMO + FIG_ORDER, tasks: [[10, "🏠", "domček v IDLE", "house"], [11, "☀️", "slnko pod oblohou", "ord"], [12, "🔺", "vrcholy strechy", "poly"]] },
+      figs: FIG_DEMO + FIG_ORDER, tasks: [[10, "⌨️", "domček v IDLE", "house"], [11, "☀️", "slnko pod oblohou", "ord"], [12, "🔺", "vrcholy strechy", "poly"]] },
     m6: { sub: "Navyše: čítaj hlásenia ako detektív.", mood: "wow", say: "Posledná misia! 🐞 Aj lenochod sa niekedy pomýli. Dôležité je chybu nájsť.",
       txt: `<p>Chyby sú bežnou súčasťou programovania. Dôležité je čítať, čo Python vypíše, a najmä <b>číslo riadka</b>.</p>
         <table class="rtab"><tbody><tr><td>NameError</td><td>Python nepozná meno (preklep, chýba import)</td></tr><tr><td>AttributeError</td><td>objekt nemá takýto príkaz</td></tr><tr><td>TclError</td><td>napríklad neznáma farba</td></tr><tr><td>SyntaxError</td><td>chybný zápis</td></tr></tbody></table>
-        <p>Niektoré chyby Python nehlási: vtedy skontroluj obrázok.</p>
+        <p>Python vždy nahlási iba <b>prvú</b> chybu, na ktorú narazí. Oprav ju, spusti program znova a pokračuj ďalšou. Niektoré chyby Python nehlási: vtedy skontroluj obrázok.</p>
         ${VEDEL("Python rozlišuje veľké a malé písmená: Canvas a canvas sú pre neho dve rôzne mená.")}`,
-      figs: FIG_ERR + FIG_SILENT, tasks: [[13, "🐞", "aké hlásenie", "err"], [14, "🔍", "tichá chyba", "errq"], [15, "🎨", "farba pozadia", "where"]] }
+      figs: FIG_ERR + FIG_SILENT, tasks: [[13, "🐞", "aké hlásenie", "err"], [14, "⌨️", "oprav program", "fix"], [15, "🎨", "farba pozadia", "where"]] }
   }
 };
 
@@ -911,9 +1093,9 @@ function scoreOf(id) {
   else sc = T.score(T);
   return Math.max(0, Math.min(sc, maxOf(T)));
 }
-function check(id) { award(id, scoreOf(id)); save(); render(false); }
+function check(id) { if (TASKS[id].prep) TASKS[id].prep(); award(id, scoreOf(id)); save(); render(false); }
 /* predčasné ukončenie: rozpracované úlohy sa vyhodnotia podľa výberu, nedotknuté = 0 */
-function finishEarly() { Object.keys(TASKS).forEach(id => { if (!S.t[id]) award(id, scoreOf(id)); }); S.early = true; S.confirmEarly = false; S.finished = Date.now(); }
+function finishEarly() { Object.keys(TASKS).forEach(id => { if (!S.t[id]) { if (TASKS[id].prep) TASKS[id].prep(); award(id, scoreOf(id)); } }); S.early = true; S.confirmEarly = false; S.finished = Date.now(); }
 function gradeOf(sc, mx) { const pct = Math.round(sc / mx * 100); return pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5; }
 
 document.addEventListener("click", e => {
@@ -933,9 +1115,16 @@ document.addEventListener("click", e => {
   if (ds.pk) { const [t, id, i] = ds.pk.split("|"); if (S.t[t]) return; setD(t, id, +i); save(); render(false); return; }
   if (ds.oq) { const [t, id] = ds.oq.split("|"); if (S.t[t]) return; const d = S.d[t] = S.d[t] || {}; d.seq = d.seq || []; if (!d.seq.includes(id)) d.seq.push(id); save(); render(false); return; }
   if (ds.ou) { const [t, id] = ds.ou.split("|"); if (S.t[t]) return; const d = S.d[t] || {}; d.seq = (d.seq || []).filter(x => x !== id); save(); render(false); return; }
+  if (ds.prun) { const t = ds.prun; if (S.t[t]) return; pyRunTask(t); return; }
+  if (ds.preset) { const t = ds.preset; if (S.t[t]) return; X(t).code = null; X(t).run = null; save(); render(false); return; }
   if (ds.cx) { const [t, a, v] = ds.cx.split("|"); if (S.t[t]) return; TASKS[t].act(a, v, X(t)); save(); render(false); return; }
 });
-document.addEventListener("input", e => { const t = e.target, f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; } });
+document.addEventListener("input", e => { const t = e.target; if (t.dataset.ped) { if (S.t[t.dataset.ped]) return; X(t.dataset.ped).code = t.value; save(); return; } const f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; } });
+function pyRunTask(t) { const ta = document.querySelector(`[data-ped="${t}"]`), st = X(t); if (ta) st.code = ta.value; st.run = st.code != null ? st.code : (TASKS[t].start || ""); save(); render(false);
+  const n = document.querySelector(`[data-ped="${t}"]`); if (n && ta) { n.focus({ preventScroll: true }); n.selectionStart = n.selectionEnd = ta.selectionStart; } }
+document.addEventListener("keydown", e => { const t = e.target.dataset && e.target.dataset.ped; if (!t || S.t[t]) return;
+  if (e.key === "F5") { e.preventDefault(); pyRunTask(t); }
+  if (e.key === "Tab") { e.preventDefault(); const a = e.target, p = a.selectionStart; a.value = a.value.slice(0, p) + "    " + a.value.slice(a.selectionEnd); a.selectionStart = a.selectionEnd = p + 4; X(t).code = a.value; save(); } });
 render(false);
 </script>
 <script>
