@@ -475,7 +475,7 @@ const near = (a, b, t = 6) => Math.abs(a - b) <= t;
 function hasShape(env, t, pts, f) { return env.shapes.some(s => s.t === t && s.pts.length === pts.length && s.pts.every((v, i) => near(v, pts[i])) && (!f || f(s))); }
 
 function chalHTML(task, k) {
-  const L = CH[task], sel = S.chsel[task] || 0, c = L[sel], D = S.ch[task] || {};
+  const L = CH[task], sel = Math.min(S.chsel[task] || 0, CH[task].length - 1), c = L[sel], D = S.ch[task] || {};
   return `<div class="chal">${L.map((x, i) => `<button class="${i === sel ? "on" : ""}" data-chs="${task}|${i}">${D[i] ? "✅" : "⬜"} Úloha ${x.n}</button>`).join("")}</div>
     <div class="box v"><p>${c.t}</p><div class="row"><button class="primary" data-chk="${task}|${k}">✔ Skontrolovať</button></div></div>
     ${S.chmsg && S.chmsg.task === task ? `<div class="fb ${S.chmsg.k}">${S.chmsg.t}</div>` : ""}
@@ -494,10 +494,10 @@ function tkClick(e) {
   if (ds.chs) { const [t, i] = ds.chs.split("|"); S.chsel[t] = +i; S.chmsg = null; save(); render(false); return true; }
   if (ds.chk) {
     const [t, k] = ds.chk.split("|"), ta = document.querySelector(`[data-ied="${k}"]`); if (ta) { S.code[k] = ta.value; S.run[k] = ta.value; }
-    const src = S.run[k] || "", env = tkRun(src), sel = S.chsel[t] || 0, c = CH[t][sel];
+    const src = S.run[k] || "", env = tkRun(src), sel = Math.min(S.chsel[t] || 0, CH[t].length - 1), c = CH[t][sel];
     if (env.err) S.chmsg = { task: t, k: "bad", t: "Program skončil chybou. Najprv ju oprav (pozri červený text pod editorom)." };
     else if (!env.packed) S.chmsg = { task: t, k: "bad", t: "Plocha nie je vidieť: chýba canvas.pack()." };
-    else { const r = c.ok(env, src); if (r === true) { S.ch[t] = S.ch[t] || {}; S.ch[t][sel] = true; award(t, Object.keys(S.ch[t]).length); S.chmsg = { task: t, k: "ok", t: `✅ Úloha ${c.n} je splnená!` }; const nx = CH[t].findIndex((_, i) => !S.ch[t][i]); if (nx >= 0) S.chsel[t] = nx; } else S.chmsg = { task: t, k: "bad", t: typeof r === "string" ? r : "Ešte to nie je ono. Skontroluj súradnice, farby a hrúbky." }; }
+    else { const r = c.ok(env, src); if (r === true) { S.ch[t] = S.ch[t] || {}; S.ch[t][sel] = true; award(t, Math.min(Object.keys(S.ch[t]).length, CH[t].length)); S.chmsg = { task: t, k: "ok", t: `✅ Úloha ${c.n} je splnená!` }; const nx = CH[t].findIndex((_, i) => !S.ch[t][i]); if (nx >= 0) S.chsel[t] = nx; } else S.chmsg = { task: t, k: "bad", t: typeof r === "string" ? r : "Ešte to nie je ono. Skontroluj súradnice, farby a hrúbky." }; }
     save(); render(false); return true;
   }
   return false;
@@ -555,7 +555,7 @@ const STEPS = [
 const STEP_TASKS = { obdlznik: ["c_rect", "rq", "rin"], elipsa: ["c_ov", "oq", "oin"], obrazky: ["c_obr", "psort"], precvic: ["g_sit"], test: ["test"] };
 const START = {
   kicker: "Informatika, 3. ročník",
-  lead: "Čiary už kreslíš. Teraz pridáme plné tvary: obdĺžniky, štvorce, elipsy a kruhy s farebnou výplňou a obrysom. Naučíš sa, prečo sa kruh zadáva štvorcom okolo neho, ako nakresliť kruh so stredom a polomerom a z tvarov zostavíš snehuliaka a semafor. 4 zastávky, body a na konci výsledok.",
+  lead: "Čiary už kreslíš. Teraz pridáme plné tvary: obdĺžniky, štvorce, elipsy a kruhy s farebnou výplňou a obrysom. Naučíš sa, prečo sa kruh zadáva štvorcom okolo neho, ako nakresliť kruh so stredom a polomerom a z tvarov zostavíš snehuliaka, semafor a robota. 4 zastávky, body a na konci výsledok.",
   guessQ: "Čo nakreslí canvas.create_oval(100, 50, 300, 250)?",
   guessNote: "Tip sa neboduje. Na zastávke Elipsa a kruh zistíš, či si mal pravdu.",
   guesses: ["Kruh so stredom (100, 50) a polomerom 300", "Kruh vpísaný do štvorca s rohmi (100, 50) a (300, 250)", "Obdĺžnik", "Elipsu so stredom (300, 250)"],
@@ -565,7 +565,7 @@ function EXTRA_STATE() { return { code: {}, run: {}, ch: {}, chsel: {} }; }
 
 const PRE = "import tkinter\ncanvas = tkinter.Canvas(width=400, height=300, bg='white')\ncanvas.pack()\n";
 function chalHTML(task, k) {
-  const L = CH[task], sel = S.chsel[task] || 0, c = L[sel], D = S.ch[task] || {};
+  const L = CH[task], sel = Math.min(S.chsel[task] || 0, CH[task].length - 1), c = L[sel], D = S.ch[task] || {};
   return `<div class="chal">${L.map((x, i) => `<button class="${i === sel ? "on" : ""}" data-chs="${task}|${i}">${D[i] ? "✅" : "⬜"} Úloha ${x.n}</button>`).join("")}</div>
     <div class="tgt"><div class="pv">${c.ref ? tkSVG(tkRun(c.ref)) : ""}</div><div><p style="margin:0 0 8px">${c.t}</p><div class="row"><button class="primary" data-chk="${task}|${k}">✔ Skontrolovať</button></div>${S.chmsg && S.chmsg.task === task ? `<div class="fb ${S.chmsg.k}">${S.chmsg.t}</div>` : ""}</div></div>
     ${S.t[task] ? `<div class="checkbar"><span class="score ${S.t[task].score < S.t[task].max ? "part" : ""}">Splnené: ${S.t[task].score} z ${S.t[task].max}</span></div>` : ""}`;
