@@ -479,7 +479,7 @@ const near = (a, b, t = 6) => Math.abs(a - b) <= t;
 function hasShape(env, t, pts, f) { return env.shapes.some(s => s.t === t && s.pts.length === pts.length && s.pts.every((v, i) => near(v, pts[i])) && (!f || f(s))); }
 
 function chalHTML(task, k) {
-  const L = CH[task], sel = Math.min(S.chsel[task] || 0, CH[task].length - 1), c = L[sel], D = S.ch[task] || {};
+  const L = CH[task], sel = S.chsel[task] || 0, c = L[sel], D = S.ch[task] || {};
   return `<div class="chal">${L.map((x, i) => `<button class="${i === sel ? "on" : ""}" data-chs="${task}|${i}">${D[i] ? "✅" : "⬜"} Úloha ${x.n}</button>`).join("")}</div>
     <div class="box v"><p>${c.t}</p><div class="row"><button class="primary" data-chk="${task}|${k}">✔ Skontrolovať</button></div></div>
     ${S.chmsg && S.chmsg.task === task ? `<div class="fb ${S.chmsg.k}">${S.chmsg.t}</div>` : ""}
@@ -498,10 +498,10 @@ function tkClick(e) {
   if (ds.chs) { const [t, i] = ds.chs.split("|"); S.chsel[t] = +i; S.chmsg = null; save(); render(false); return true; }
   if (ds.chk) {
     const [t, k] = ds.chk.split("|"), ta = document.querySelector(`[data-ied="${k}"]`); if (ta) { S.code[k] = ta.value; S.run[k] = ta.value; }
-    const src = S.run[k] || "", env = tkRun(src), sel = Math.min(S.chsel[t] || 0, CH[t].length - 1), c = CH[t][sel];
+    const src = S.run[k] || "", env = tkRun(src), sel = S.chsel[t] || 0, c = CH[t][sel];
     if (env.err) S.chmsg = { task: t, k: "bad", t: "Program skončil chybou. Najprv ju oprav (pozri červený text pod editorom)." };
     else if (!env.packed) S.chmsg = { task: t, k: "bad", t: "Plocha nie je vidieť: chýba canvas.pack()." };
-    else { const r = c.ok(env, src); if (r === true) { S.ch[t] = S.ch[t] || {}; S.ch[t][sel] = true; award(t, Math.min(Object.keys(S.ch[t]).length, CH[t].length)); S.chmsg = { task: t, k: "ok", t: `✅ Úloha ${c.n} je splnená!` }; const nx = CH[t].findIndex((_, i) => !S.ch[t][i]); if (nx >= 0) S.chsel[t] = nx; } else S.chmsg = { task: t, k: "bad", t: typeof r === "string" ? r : "Ešte to nie je ono. Skontroluj súradnice, farby a hrúbky." }; }
+    else { const r = c.ok(env, src); if (r === true) { S.ch[t] = S.ch[t] || {}; S.ch[t][sel] = true; award(t, Object.keys(S.ch[t]).length); S.chmsg = { task: t, k: "ok", t: `✅ Úloha ${c.n} je splnená!` }; const nx = CH[t].findIndex((_, i) => !S.ch[t][i]); if (nx >= 0) S.chsel[t] = nx; } else S.chmsg = { task: t, k: "bad", t: typeof r === "string" ? r : "Ešte to nie je ono. Skontroluj súradnice, farby a hrúbky." }; }
     save(); render(false); return true;
   }
   return false;
@@ -513,7 +513,7 @@ document.addEventListener("keydown", e => {
   if (e.key === "Tab") { e.preventDefault(); const t = e.target, s = t.selectionStart; t.value = t.value.slice(0, s) + "    " + t.value.slice(t.selectionEnd); t.selectionStart = t.selectionEnd = s + 4; S.code[k] = t.value; save(); }
 });
 
-const KEY = "py3-r27-v2";
+const KEY = "py3-r27-v4";
 const LESSON = "2.7 Súradnice bodov a kreslenie čiar";
 const BRAND = "2.7 Súradnice a čiary";
 const CLASS_DEFAULT = "III.";
@@ -560,7 +560,6 @@ function drawCode() { const D = S.draw; if (D.pts.length < 2) return "Klikni na 
 /* ---------- challenges ---------- */
 const PRE = D1;
 const tri = [[[200, 50], [350, 250]], [[350, 250], [50, 250]], [[50, 250], [200, 50]]];
-const star = (() => { const P = [[200, 40], [260, 240], [100, 115], [300, 115], [140, 240]]; return [[P[0], P[1]], [P[1], P[2]], [P[2], P[3]], [P[3], P[4]], [P[4], P[0]]]; })();
 const DOM = { A: [100, 280], B: [300, 280], C: [300, 140], D: [100, 140], E: [200, 50] };
 const domSegs = [["A", "B"], ["B", "C"], ["C", "D"], ["D", "A"], ["A", "C"], ["B", "D"], ["D", "E"], ["E", "C"]].map(([p, q]) => [DOM[p], DOM[q]]);
 const CH = {
@@ -569,16 +568,14 @@ const CH = {
     { n: "B", t: "Nakresli <b>modrú prerušovanú</b> zvislú úsečku z (200, 30) do (200, 270). Prerušovanú čiaru dostaneš parametrom <code>dash=(10, 5)</code>.", ref: PRE + "canvas.create_line(200, 30, 200, 270, fill='blue', dash=(10, 5))\n", ok: e => sameSegs(e, [[[200, 30], [200, 270]]]) && segsOf(e)[0].s.fill === "blue" && !!segsOf(e)[0].s.dash || "Úsečka má byť modrá, prerušovaná (dash) a ísť z (200, 30) do (200, 270)." }
   ],
   c_lom: [
-    { n: "A", t: "Nakresli <b>trojuholník</b> s vrcholmi (200, 50), (350, 250) a (50, 250) <b>jediným</b> príkazom <code>create_line</code>. Aby bol uzavretý, posledný bod musí byť rovnaký ako prvý.", ref: PRE + "canvas.create_line(200, 50, 350, 250, 50, 250, 200, 50, width=3)\n", ok: (e, src) => (src.match(/create_line/g) || []).length === 1 && sameSegs(e, tri) || "Použi jediný create_line so 4 bodmi: 3 vrcholy a na konci znova prvý." },
-    { n: "B", t: "Nakresli <b>cik-cak</b> (lomenú čiaru) cez body (20, 250), (80, 50), (140, 250), (200, 50), (260, 250), (320, 50), (380, 250) oranžovou farbou s hrúbkou 4.", ref: PRE + "canvas.create_line(20, 250, 80, 50, 140, 250, 200, 50, 260, 250, 320, 50, 380, 250, fill='orange', width=4)\n", ok: e => { const P = [[20, 250], [80, 50], [140, 250], [200, 50], [260, 250], [320, 50], [380, 250]]; return sameSegs(e, P.slice(1).map((p, i) => [P[i], p])) && segsOf(e).every(g => g.s.fill === "orange") || "Skontroluj body a oranžovú farbu."; } }
+    { n: "A", t: "Nakresli <b>trojuholník</b> s vrcholmi (200, 50), (350, 250) a (50, 250) <b>jediným</b> príkazom <code>create_line</code>. Aby bol uzavretý, posledný bod musí byť rovnaký ako prvý.", ref: PRE + "canvas.create_line(200, 50, 350, 250, 50, 250, 200, 50, width=3)\n", ok: (e, src) => (src.match(/create_line/g) || []).length === 1 && sameSegs(e, tri) || "Použi jediný create_line so 4 bodmi: 3 vrcholy a na konci znova prvý." }
   ],
   c_obr: [
-    { n: "A", t: "Nakresli <b>domček jedným ťahom</b> (každú čiaru presne raz, bez zdvihnutia ceruzky). Body: A(100, 280), B(300, 280), C(300, 140), D(100, 140), E(200, 50). Čiary: štvorec ABCD, obe uhlopriečky AC a BD a strecha DE, EC. Stačí jeden <code>create_line</code>.", ref: PRE + "canvas.create_line(100, 280, 300, 280, 300, 140, 100, 280, 100, 140, 300, 140, 200, 50, 100, 140, 300, 280, width=3)\n", ok: (e, src) => sameSegs(e, domSegs) || "Kresba nesedí. Treba presne 8 čiar: AB, BC, CD, DA, AC, BD, DE, EC." },
-    { n: "B", t: "Nakresli <b>plot</b>: 5 zvislých latiek s x = 60, 130, 200, 270, 340, každá od y = 120 po y = 270, a dve vodorovné priečky od x = 40 po x = 360 vo výške y = 160 a y = 240. Farba <b>brown</b>, hrúbka <b>6</b>.", ref: PRE + ["60", "130", "200", "270", "340"].map(x => `canvas.create_line(${x}, 120, ${x}, 270, fill='brown', width=6)`).join("\n") + "\ncanvas.create_line(40, 160, 360, 160, fill='brown', width=6)\ncanvas.create_line(40, 240, 360, 240, fill='brown', width=6)\n", ok: e => sameSegs(e, [60, 130, 200, 270, 340].map(x => [[x, 120], [x, 270]]).concat([[[40, 160], [360, 160]], [[40, 240], [360, 240]]])) && segsOf(e).every(g => g.s.fill === "brown" && g.s.width === 6) || "Skontroluj súradnice latiek a priečok, farbu brown a width=6." }
+    { n: "A", t: "Nakresli <b>domček jedným ťahom</b> (každú čiaru presne raz, bez zdvihnutia ceruzky). Body: A(100, 280), B(300, 280), C(300, 140), D(100, 140), E(200, 50). Čiary: štvorec ABCD, obe uhlopriečky AC a BD a strecha DE, EC. Stačí jeden <code>create_line</code>.", ref: PRE + "canvas.create_line(100, 280, 300, 280, 300, 140, 100, 280, 100, 140, 300, 140, 200, 50, 100, 140, 300, 280, width=3)\n", ok: (e, src) => sameSegs(e, domSegs) || "Kresba nesedí. Treba presne 8 čiar: AB, BC, CD, DA, AC, BD, DE, EC." }
   ]
 };
 function chalHTML(task, k) {
-  const L = CH[task], sel = Math.min(S.chsel[task] || 0, CH[task].length - 1), c = L[sel], D = S.ch[task] || {};
+  const L = CH[task], sel = S.chsel[task] || 0, c = L[sel], D = S.ch[task] || {};
   return `<div class="chal">${L.map((x, i) => `<button class="${i === sel ? "on" : ""}" data-chs="${task}|${i}">${D[i] ? "✅" : "⬜"} Úloha ${x.n}</button>`).join("")}</div>
     <div class="tgt"><div class="pv">${tkSVG(tkRun(c.ref))}</div><div><p style="margin:0 0 8px">${c.t}</p><div class="row"><button class="primary" data-chk="${task}|${k}">✔ Skontrolovať</button></div>${S.chmsg && S.chmsg.task === task ? `<div class="fb ${S.chmsg.k}">${S.chmsg.t}</div>` : ""}</div></div>
     ${S.t[task] ? `<div class="checkbar"><span class="score ${S.t[task].score < S.t[task].max ? "part" : ""}">Splnené: ${S.t[task].score} z ${S.t[task].max}</span></div>` : ""}`;
@@ -597,8 +594,8 @@ const TASKS = {
     { id: "3", ...Q("Čo urobí <code>arrow='both'</code>?", ["pridá hroty na oba konce", "nakreslí dve čiary", "zdvojnásobí hrúbku", "nič"], 0) },
     { id: "4", ...Q("Úsečka z (50, 50) do (50, 250) je:", ["zvislá", "vodorovná", "šikmá", "bod"], 0, "Obe body majú rovnaké x, líši sa iba y.") }
   ]},
-  c_lom: { id: "c_lom", type: "custom", max: 2 },
-  c_obr: { id: "c_obr", type: "custom", max: 2 },
+  c_lom: { id: "c_lom", type: "custom", max: 1 },
+  c_obr: { id: "c_obr", type: "custom", max: 1 },
   chq: { id: "chq", type: "mc", qs: [
     { id: "1", ...Q("<code>canvas.create_line(10, 20, 30)</code> vypíše chybu. Prečo?", ["Súradníc musí byť párny počet (x a y pre každý bod)", "Chýba farba", "Čísla sú príliš malé", "Chýba pack()"], 0) },
     { id: "2", ...Q("Čiara mala byť hore, ale je dole. Čo je najpravdepodobnejšie?", ["pomýlil som os y: malé y je hore", "zlá farba", "chýba width", "zlá veľkosť plochy"], 0) },
@@ -836,7 +833,7 @@ const VIEWS = {
     <h3>Kresliaci nástroj</h3><p>Klikaj na plochu a nástroj ti vytvorí príkaz <code>create_line</code> s týmito bodmi. Hodí sa na zistenie súradníc.</p>
     <div class="drawbox"><div>${drawSVG()}</div><div><div class="gen" id="gencode">${esc(drawCode())}</div><div class="fp"><label>Farba <select id="dfill">${["black", "red", "blue", "green", "orange", "purple", "gold", "brown"].map(c => `<option ${D.fill === c ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>Hrúbka <select id="dwidth">${[1, 2, 3, 5, 8].map(w => `<option ${D.width === w ? "selected" : ""}>${w}</option>`).join("")}</select></label></div>
       <div class="row"><button class="ghost" data-dundo>↶ Späť</button><button class="ghost" data-dclr>Vymazať</button><button class="ghost" data-dclose ${D.pts.length > 2 ? "" : "disabled"}>Uzavrieť útvar</button><button class="primary" data-dcopy>⤵ Vložiť do editora</button></div></div></div>
-    <h3>Úlohy</h3>${chalHTML("c_lom", "lomena")}${ideHTML("lomena", D1)}
+    <h3>Úloha 1: nakresli trojuholník</h3>${chalHTML("c_lom", "lomena")}${ideHTML("lomena", D1)}
     <h3>Úloha 2: počty a uzavretie</h3><div class="task"><div class="ins">Každý žiak má iné čísla. Vyber správnu odpoveď.</div>${taskHTML("lomq")}</div>` + nextBar(); },
   obrazky() { return head() + `<h2>Obrázky z čiar</h2>
     <div class="theory tsplit"><div><p>Zložitejšie obrázky skladáme z viacerých čiar. Niektoré útvary sa dajú nakresliť <b>jedným ťahom</b> (jednou lomenou čiarou), iné potrebujú <b>viac príkazov</b>.</p>
@@ -848,7 +845,7 @@ const VIEWS = {
       <p><b>Domček jedným ťahom</b> je známa hádanka: dá sa nakresliť bez zdvihnutia ceruzky, ak začneš v jednom z dolných rohov. Každá čiara sa pritom nakreslí práve raz.</p></div><div>${TFIG.postup}</div></div>
     ${ltfigs(TFIG.tah, TFIG.viac)}
     ${VEDEL("Pravidlo o kreslení jedným ťahom objavil Leonhard Euler v roku 1736, keď riešil hádanku o siedmich mostoch v meste Kráľovec. Dokázal, že prejsť každý most práve raz sa nedá, a tým založil <b>teóriu grafov</b>.")}
-    <h3>Úlohy</h3>${chalHTML("c_obr", "obrazky")}${ideHTML("obrazky", D1)}` + nextBar(); },
+    <h3>Úloha: domček jedným ťahom</h3>${chalHTML("c_obr", "obrazky")}${ideHTML("obrazky", D1)}` + nextBar(); },
   chyby() { return head() + `<h2>Časté chyby</h2>
     <div class="theory tsplit"><div><p>Niektoré chyby Python <b>ohlási</b> červeným textom, iné uvidíš až na <b>obrázku</b>.</p>
       <table class="rtab"><thead><tr><th>Chyba</th><th>Čo sa stane</th></tr></thead><tbody>
