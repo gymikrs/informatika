@@ -260,6 +260,9 @@ table.res td:last-child,table.res th:last-child{text-align:right}
 .qfig{background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px;margin:0 0 14px}
 .qfig svg{width:100%;height:auto;display:block}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+.cflock .checkbar,.cflock [data-check]{display:none!important}
+.hz.pick .hit{stroke:#2F5BEA;fill:rgba(47,91,234,.16);stroke-width:4}
+.cfmsg{margin-top:14px;padding:8px 14px;border-radius:10px;background:var(--amberSoft);font-weight:600;font-size:15.5px}
 </style></head><body>
 <header class="top" id="top"></header><main id="main" tabindex="-1"></main>
 <script>
@@ -437,7 +440,7 @@ const HOMEZ = { blank: "Prázdny dokument", todo: "Šablóna Zoznam úloh", cv: 
 const HOMEQ = [["blank", "Ďuro chce začať písať úplne od nuly, na čistú prázdnu stranu."], ["cv", "Sestra si chce urobiť životopis podľa hotového vzoru a len doplniť svoje údaje."], ["r1", "Ďuro chce pokračovať v referáte o riekach, ktorý písal včera."], ["open", "Pani učiteľka poslala Ďurovi súbor, ktorý si uložil do počítača. Medzi nedávnymi súbormi nie je. Kam klikne, aby ho našiel?"]];
 const hz = (k, id, cls, x, y, w, h, inner) => `<g class="hz ${cls}" data-hz="${k}|${id}" tabindex="0" role="button" aria-label="Časť obrazovky">${inner}<rect class="hit" x="${x}" y="${y}" width="${w}" height="${h}" rx="6"/></g>`;
 function homeSVG(d, done) {
-  const L = d.last, cl = id => { if (!L || done) return done ? "off" : ""; return id === L.correct ? "ok" : id === L.c && !L.ok ? "bad" : ""; };
+  const L = d.last, cl = id => { if (!L || done) return done ? "off" : ""; if (!REVEAL()) return id === L.c ? "pick" : ""; return id === L.correct ? "ok" : id === L.c && !L.ok ? "bad" : ""; };
   const Z = (id, x, y, w, h, inner) => hz("home", id, cl(id), x, y, w, h, inner);
   let s = `<rect width="800" height="440" fill="#fff"/><rect width="150" height="440" fill="${W}"/>${T(20, 42, "Word", { fs: 20, b: 1, c: "#fff" })}`;
   s += Z("home", 6, 70, 138, 32, `<rect x="6" y="70" width="138" height="32" rx="6" fill="rgba(255,255,255,.25)"/>${T(20, 91, "🏠  Domov", { fs: 14, b: 1, c: "#fff" })}`);
@@ -456,8 +459,8 @@ function homeSVG(d, done) {
 }
 function homeHTML() {
   const done = S.t.home, d = S.d.home || (S.d.home = { i: 0, res: [], last: null }); let side;
-  if (done) side = `<div class="side"><h4>Hotovo</h4><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} ⭐</span><p class="muted" style="font-size:14.5px;margin:8px 0 0">Správne kliknutia: ${d.res.filter(Boolean).length} z ${HOMEQ.length}</p></div>`;
-  else { const L = d.last; side = `<div class="side"><span class="tag">Zadanie ${d.i + 1} z ${HOMEQ.length}</span><div class="prompt">${HOMEQ[d.i][1]}</div>${L ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne!" : "❌ To je: " + HOMEZ[L.c] + ". Správne miesto svieti nazeleno."}</div><div class="row"><button class="primary" data-hn>${d.i + 1 < HOMEQ.length ? "Ďalšie zadanie" : "Dokončiť"}</button></div>` : `<p class="muted" style="font-size:14.5px;margin:0">Klikni na správne miesto. Máš jeden pokus. Za každé 2 správne kliknutia získaš 1 ⭐.</p>`}</div>`; }
+  if (done) side = `<div class="side"><h4>Hotovo</h4><span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} ⭐</span><p class="muted" style="font-size:14.5px;margin:8px 0 0">Správne kliknutia: ${d.res.filter(Boolean).length} z ${HOMEQ.length}</p><ul class="muted" style="font-size:14px;margin:8px 0 0;padding-left:18px">${HOMEQ.map((q, i) => `<li>${d.res[i] ? "✅" : "❌"} Zadanie ${i + 1}: správne je <b>${HOMEZ[q[0]]}</b></li>`).join("")}</ul></div>`;
+  else { const L = d.last; side = `<div class="side"><span class="tag">Zadanie ${d.i + 1} z ${HOMEQ.length}</span><div class="prompt">${HOMEQ[d.i][1]}</div>${L ? `${REVEAL() ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne!" : "❌ To je: " + HOMEZ[L.c] + ". Správne miesto svieti nazeleno."}</div>` : `<div class="fb info">✔ Odpoveď je uložená: <b>${HOMEZ[L.c]}</b>.</div>`}<div class="row"><button class="primary" data-hn>${d.i + 1 < HOMEQ.length ? "Ďalšie zadanie" : "Dokončiť"}</button></div>` : `<p class="muted" style="font-size:14.5px;margin:0">Klikni na správne miesto. Máš jeden pokus. Za každé 2 správne kliknutia získaš 1 ⭐.</p>`}</div>`; }
   return `<div class="scr"><div class="scene">${homeSVG(d, done)}</div>${side}</div>`;
 }
 
@@ -523,12 +526,12 @@ const SWC = { "Bez farby": "#fff", "Svetložltá": "#FFF6C8", "Svetlomodrá": "#
 const RIBQ = [{ t: "Domov", c: "Zarovnať na stred", o: null, txt: "Nadpis <b>Vtáky Slovenska</b> zarovnaj na stred. Kurzor už v nadpise je.", fx: { al: "center" } }, { t: "Návrh", c: "Farba strany", o: "Svetložltá", txt: "Celej strane daj <b>svetložltú</b> farbu.", fx: { col: "#FFF6C8" } }, { t: "Rozloženie", c: "Okraje", o: "Úzke", txt: "Nastav <b>úzke okraje</b> strany, aby sa na ňu zmestilo viac textu.", fx: { mar: 8 } }];
 function ribHTML() {
   const done = S.t.rib, d = S.d.rib || (S.d.rib = { tab: "Domov", i: 0, res: [], last: null, dd: null, fx: { al: "left", col: "#fff", mar: 26 } }), cur = RIBQ[d.i], L = d.last, tab = d.tab;
-  const head = done ? `<b>Hotovo.</b> <span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} ⭐</span>`
-    : `<span class="tag">Zadanie ${d.i + 1} z ${RIBQ.length}</span><div class="prompt">${cur.txt}</div><p class="muted" style="margin:0;font-size:14.5px">Prepni kartu a klikni na správny príkaz. Pri príkaze so šípkou ▾ ešte vyber možnosť. Máš jeden pokus, prepínanie kariet sa neráta. Za každé správne zadanie získaš 1 ⭐.</p>${L ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne! Pozri sa, ako sa zmenila strana." : `❌ Správne je: karta <b>${cur.t}</b> › <b>${cur.c}</b>${cur.o ? " › <b>" + cur.o + "</b>" : ""}. Na strane vidíš, čo príkaz urobí.`}</div><div class="row"><button class="primary" data-rn>${d.i + 1 < RIBQ.length ? "Ďalšie zadanie" : "Dokončiť"}</button></div>` : ""}`;
+  const head = done ? `<b>Hotovo.</b> <span class="score ${done.score < done.max ? "part" : ""}">Získal si ${done.score} z ${done.max} ⭐</span><ul class="muted" style="font-size:14px;margin:8px 0 0;padding-left:18px">${RIBQ.map((q, i) => `<li>${d.res[i] ? "✅" : "❌"} Zadanie ${i + 1}: karta <b>${q.t}</b> › <b>${q.c}</b>${q.o ? " › <b>" + q.o + "</b>" : ""}</li>`).join("")}</ul>`
+    : `<span class="tag">Zadanie ${d.i + 1} z ${RIBQ.length}</span><div class="prompt">${cur.txt}</div><p class="muted" style="margin:0;font-size:14.5px">Prepni kartu a klikni na správny príkaz. Pri príkaze so šípkou ▾ ešte vyber možnosť. Máš jeden pokus, prepínanie kariet sa neráta. Za každé správne zadanie získaš 1 ⭐.</p>${L ? `${REVEAL() ? `<div class="fb ${L.ok ? "ok" : "bad"}">${L.ok ? "✅ Správne! Pozri sa, ako sa zmenila strana." : `❌ Správne je: karta <b>${cur.t}</b> › <b>${cur.c}</b>${cur.o ? " › <b>" + cur.o + "</b>" : ""}. Na strane vidíš, čo príkaz urobí.`}</div>` : `<div class="fb info">✔ Odpoveď je uložená: karta <b>${L.tab}</b> › <b>${L.cmd}</b>${L.opt ? " › <b>" + L.opt + "</b>" : ""}.</div>`}<div class="row"><button class="primary" data-rn>${d.i + 1 < RIBQ.length ? "Ďalšie zadanie" : "Dokončiť"}</button></div>` : ""}`;
   const lock = !!(done || L);
   const groups = tab === "Súbor" ? `<div class="grp"><div class="cmds"><span style="padding:6px;font-size:13px;color:#1B1F2A">Karta Súbor otvorí zákulisie: Nový, Otvoriť, Uložiť ako, Tlačiť. Teraz ju nepotrebuješ.</span></div></div>`
-    : RIB[tab].map(([g, cmds]) => `<div class="grp"><div class="cmds">${cmds.map(c => { let cls = ""; if (L && L.tab === tab && L.cmd === c) cls = L.ok ? "ok" : "bad"; else if (L && !L.ok && tab === cur.t && c === cur.c) cls = "ok"; else if (d.dd === c) cls = "on"; return `<button class="${cls}" data-rc="${he(c)}" ${lock ? "disabled" : ""}>${he(c)}${DD[c] ? " ▾" : ""}</button>`; }).join("")}</div><small>${g}</small></div>`).join("");
-  const dd = d.dd && DD[d.dd] && tab !== "Súbor" && RIB[tab].some(g => g[1].includes(d.dd)) ? `<div class="ddrow"><b>${he(d.dd)}:</b> ${DD[d.dd].map(o => { let cls = ""; if (L && L.cmd === d.dd && L.opt === o) cls = L.ok ? "ok" : "bad"; else if (L && !L.ok && d.dd === cur.c && o === cur.o) cls = "ok"; return `<button class="${cls}" data-ro="${he(d.dd)}|${he(o)}" ${lock ? "disabled" : ""}>${SWC[o] && d.dd !== "Okraje" ? `<span class="sw" style="background:${SWC[o]}"></span>` : ""}${o}</button>`; }).join("")}</div>` : "";
+    : RIB[tab].map(([g, cmds]) => `<div class="grp"><div class="cmds">${cmds.map(c => { let cls = ""; if (L && L.tab === tab && L.cmd === c) cls = !REVEAL() ? "on" : L.ok ? "ok" : "bad"; else if (REVEAL() && L && !L.ok && tab === cur.t && c === cur.c) cls = "ok"; else if (d.dd === c) cls = "on"; return `<button class="${cls}" data-rc="${he(c)}" ${lock ? "disabled" : ""}>${he(c)}${DD[c] ? " ▾" : ""}</button>`; }).join("")}</div><small>${g}</small></div>`).join("");
+  const dd = d.dd && DD[d.dd] && tab !== "Súbor" && RIB[tab].some(g => g[1].includes(d.dd)) ? `<div class="ddrow"><b>${he(d.dd)}:</b> ${DD[d.dd].map(o => { let cls = ""; if (L && L.cmd === d.dd && L.opt === o) cls = !REVEAL() ? "on" : L.ok ? "ok" : "bad"; else if (REVEAL() && L && !L.ok && d.dd === cur.c && o === cur.o) cls = "ok"; return `<button class="${cls}" data-ro="${he(d.dd)}|${he(o)}" ${lock ? "disabled" : ""}>${SWC[o] && d.dd !== "Okraje" ? `<span class="sw" style="background:${SWC[o]}"></span>` : ""}${o}</button>`; }).join("")}</div>` : "";
   const f = d.fx;
   return `<div class="task" style="margin:0 0 10px;background:var(--surface2)">${head}</div>
     <div class="win rib"><div class="wt"><span class="tt">W &nbsp;Vtaky_Slovenska.docx – Uložené ✓</span><span class="dots">— ▢ ✕</span></div>
@@ -714,18 +717,26 @@ const award = (id, score) => { S.t[id] = { score, max: maxOf(TASKS[id]) }; };
 const NSTOP = STEPS.length - 2;
 function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
 const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
-const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+/* ===== DOMACE – skryté hodnotenie (21. 11. 2026): body, správne/nesprávne a správne odpovede sa ukážu až po odoslaní výsledku ===== */
+const REVEAL = () => !!S.finished;
+const CFMSG = `<div class="cfmsg">✔ Odpovede sú potvrdené. Hodnotenie a správne odpovede uvidíš po odoslaní výsledku.</div>`;
+const HIDE = { on: false, bak: null };
+/* počas vykresľovania misie sa potvrdené úlohy vykreslia ako nepotvrdené (iba žiakove odpovede, bez hodnotenia) a potom sa uzamknú */
+function hideStart() { const sid = STEPS[S.cur].id; if (REVEAL() || HIDE.on || sid === "start" || sid === "vysledok") return; HIDE.bak = S.t; S.t = {}; HIDE.on = true; }
+function hideEnd(m) { if (!HIDE.on) return; S.t = HIDE.bak; HIDE.bak = null; HIDE.on = false; save();
+  if (m) m.querySelectorAll("h3[data-tid]").forEach(h => { if (!S.t[h.dataset.tid]) return; const t = h.nextElementSibling; if (!t || !t.classList.contains("task")) return; t.classList.add("cflock"); t.setAttribute("inert", ""); t.insertAdjacentHTML("beforeend", CFMSG); }); }
+const H3 = (n, ic, t, id) => `<h3 data-tid="${id}">${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
 
 function renderTop() {
   document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 2.1 Prostredie Wordu</div>
-    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <div class="pts" aria-live="polite">${REVEAL() ? `⭐ <b>${total()}</b> z ${MAX}` : `⭐ max. <b>${MAX}</b> · body uvidíš na konci`}</div></div>
     <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
 }
 function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
 function checkBar(T, ready, hint, label) {
   const r = S.t[T.id];
   if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
-  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "Kontrola je len jedna, potom sa odpovede nedajú zmeniť." : hint}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "✔ Potvrdiť odpovede"}</button><span class="hint">${ready ? "Odpovede potvrdíš len raz, potom sa už nedajú zmeniť." : hint}</span></div>`;
 }
 const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
 function mcHTML(T) {
@@ -766,7 +777,7 @@ const VIEWS = {
       <div class="task" style="margin-top:16px"><label class="f" for="nm">Meno a priezvisko</label><input class="in" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nová">
       <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
       <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
-      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. a domáca úloha sa uzamkne.</div></div>`;
+      ${(S.attempt || 1) === 2 ? `<div class="vedel" style="margin-top:16px;background:#E6F4EC;border-color:#9BD3B3;border-left-color:#12805A"><b>🔁 Toto je tvoja oprava.</b> Je to posledný pokus, po odoslaní sa domáca úloha uzamkne.</div>` : ""}<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Odpovede v každej úlohe potvrdíš len raz a potom sa už nedajú zmeniť. Body, známku a správne odpovede uvidíš až na konci, keď sa výsledok sám odošle pánovi učiteľovi a domáca úloha sa uzamkne.</div></div>`;
   },
   m1() {
     return banner(1, "Kde všade Word nájdeš, čo patrí do balíka Microsoft 365 a čo ti ponúkne hneď po spustení.") +
@@ -886,7 +897,7 @@ const VIEWS = {
       <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
       <div class="row">${sendResults()}</div>
       ${S.early ? `<p class="muted" style="margin-top:12px">Domácu úlohu si ukončil predčasne, nedokončené úlohy majú 0 ⭐.</p>` : ""}
-      <div class="vedel" style="margin-top:16px;background:#EEF3FB;border-color:#B9C8EA;border-left-color:#2F5BEA;color:#16213A"><b>🔒 Domáca úloha je odoslaná a uzamknutá.</b> Platí známka z tohto pokusu, opakovať ju nie je možné. Svoje odpovede aj vysvetlenia si môžeš kedykoľvek pozrieť v jednotlivých misiách hore.</div></div>`;
+      <div class="vedel" style="margin-top:16px;background:#EEF3FB;border-color:#B9C8EA;border-left-color:#2F5BEA;color:#16213A"><b>🔒 Domáca úloha je odoslaná a uzamknutá.</b> Platí známka z tohto pokusu, opakovať ju nie je možné. Teraz sa v misiách hore ukázali správne odpovede aj vysvetlenia, môžeš si ich kedykoľvek pozrieť.</div></div>`;
   }
 };
 /* čas vypracovania (DOMACA): pripíše sa k bodom */
@@ -911,7 +922,8 @@ function render(scroll) { const L = lockedDone(); if (L) { document.getElementBy
     document.getElementById("main").innerHTML = `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(L.name)} (${esc(L.cls)}) už túto domácu úlohu odoslal/a. Opakovať ju nie je možné.`)}
       <div class="bign"><span class="n">${L.score}</span><span class="of">z ${mx} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
       ${L.snap ? `<div class="row"><button class="primary" data-view>👀 Pozrieť si svoje odpovede</button></div>` : ""}</div>`; typo(document.getElementById("main")); return; }
-  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); typo(m); typo(document.getElementById("top"));
+  if (STEPS[S.cur].id === "vysledok" && !S.finished && allDone()) { S.finished = Date.now(); save(); }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); hideStart(); try { m.innerHTML = VIEWS[STEPS[S.cur].id](); } finally { hideEnd(m); } typo(m); typo(document.getElementById("top"));
   window.scrollTo({ top: scroll ? 0 : y }); }
 function scoreOf(id) {
   const T = TASKS[id], d = S.d[id] || {}; let sc = 0;
@@ -999,7 +1011,7 @@ document.addEventListener("keydown", e => {
 });
 document.addEventListener("input", e => {
   const t = e.target;
-  if (t.id === "pad") { S.d.pad = t.innerHTML; save(); const b = document.querySelector('[data-check="pad"]'); if (b) { b.disabled = false; const h = b.nextElementSibling; if (h) h.textContent = "Kontrola je len jedna, potom sa odpovede nedajú zmeniť."; } return; }
+  if (t.id === "pad") { S.d.pad = t.innerHTML; save(); const b = document.querySelector('[data-check="pad"]'); if (b) { b.disabled = false; const h = b.nextElementSibling; if (h) h.textContent = "Odpovede potvrdíš len raz, potom sa už nedajú zmeniť."; } return; }
   if (t.id === "sq") { S.d.search.q = t.value; save(); document.getElementById("sres").innerHTML = sresHTML(); return; }
   if (t.id === "svname") { S.d.saveas.name = t.value; save(); return; }
   const f = t.dataset.field; if (f) { S[f] = t.value; save(); const b = document.querySelector("[data-begin]"); if (b) b.disabled = S.name.trim().length < 3 || !S.cls; }
