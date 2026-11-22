@@ -415,7 +415,7 @@ function shellHTML() {
   <div class="shell" id="shellout"><span class="ban">Python 3 (64-bit) on win32\nEnter "help" below or click "Help" above for more information.\n</span>${L.map(l => `<span class="p">&gt;&gt;&gt; </span><span class="i">${esc(l.c)}</span>\n${l.out ? `<span class="o">${esc(l.out)}</span>\n` : ""}${l.err ? `<span class="e">${esc(l.err)}</span>\n` : ""}`).join("")}<div class="pin"><span>&gt;&gt;&gt;</span><input id="pyin" autocomplete="off" spellcheck="false" aria-label="Príkaz pre Python"></div></div></div>`;
 }
 function shellGoals() {
-  const g = S.g, li = (ok, t) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`;
+  const g = S.g, li = (ok, t) => `<li>${REVEAL() ? (ok ? "✅" : "❌") : "•"} ${t}</li>`;
   return `<ul class="goals">${li(g.calc125, "Vypočítaj v Shelli <b>125 * 8</b> a stlač Enter.")}${li(g.err, "Napíš slovo, ktoré Python nepozná, napr. <b>ahoj</b>, a pozri sa na chybu.")}${li(g.turtle, "Bonus: napíš <b>from turtle import *</b>, prvý príkaz z budúcej hodiny.")}</ul>`;
 }
 
@@ -634,8 +634,8 @@ const VIEWS = {
     if (I.step === 3) sim = `<div class="win"><div class="wt">Python 3.x.x (64-bit) Setup<span class="dots">✕</span></div><div class="inst"><div class="left">🐍</div><div class="right"><div style="font-size:19px;color:#1C4E8A;font-weight:600">Setup was successful</div><div class="prog"><i></i></div><p style="font-size:13.5px">Python sa nainštaloval spolu s prostredím IDLE.</p><div class="row" style="justify-content:flex-end"><button class="ghost" data-in="close">Close</button></div></div></div></div>`;
     if (I.step === 4) sim = `<div class="start"><select id="startq" aria-label="Hľadanie v ponuke Štart">${["", "word", "idle", "python", "kalkulačka"].map(v => `<option value="${v}" ${S.sm === v ? "selected" : ""}>${v ? "🔍 " + v : "🔍 Vyber, čo hľadáš"}</option>`).join("")}</select>
       <div class="res">${S.sm.trim().toLowerCase().startsWith("id") || S.sm.trim().toLowerCase().startsWith("py") ? `<button data-in="idle">🐍 <span><b>IDLE (Python 3 64-bit)</b><br><small>Aplikácia</small></span></button>${S.sm.trim().toLowerCase().startsWith("py") ? `<button data-in="wrong">⬛ <span><b>Python 3 (64-bit)</b><br><small>Aplikácia, čierne okno bez editora</small></span></button>` : ""}` : `<p style="opacity:.7;margin:6px 0 0;font-size:14px">Napíš „IDLE“…</p>`}</div></div>`;
-    if (I.step === 5) sim = `<div class="fb ok">✅ Python je nainštalovaný a IDLE spustené. V ďalšej zastávke v ňom budeš pracovať.</div>`;
-    const G = (k, t) => `<li>${S.g[k] ? "✅" : "⬜"} ${t}</li>`;
+    if (I.step === 5) sim = `<div class="fb info">IDLE je spustené. V ďalšej zastávke v ňom budeš pracovať.</div>`;
+    const G = (k, t) => `<li>${REVEAL() ? (S.g[k] ? "✅" : "❌") : "•"} ${t}</li>`;
     return head() + `<h2>Stiahnutie a inštalácia</h2>
     <div class="theory tsplit"><div>
       <p>Python je zadarmo. Stiahneš ho z oficiálnej stránky <b>www.python.org/downloads</b>. Spolu s ním sa nainštaluje aj <b>IDLE</b>, prostredie, v ktorom budeme programovať.</p>
@@ -647,7 +647,7 @@ const VIEWS = {
     <h3>Simulácia inštalácie</h3>
     <div class="lab"><div>${sim}${I.msg ? `<div class="fb ${I.msgk || "info"}">${I.msg}</div>` : ""}</div>
       <div class="side"><h4>Tvoje úlohy</h4><ul class="goals">${G("dl", "Stiahni inštalátor z python.org.")}${G("path", "Pred inštaláciou zaškrtni <b>Add python.exe to PATH</b>.")}${G("installed", "Nainštaluj cez <b>Install Now</b>.")}${G("idle", "Nájdi v ponuke Štart <b>IDLE</b> a spusti ho.")}</ul>
-      ${S.t.inst ? `<div class="checkbar"><span class="score ${S.t.inst.score < 3 ? "part" : ""}">Získal si ${S.t.inst.score} z 3 bodov</span></div>` : ""}
+      ${S.t.inst && !REVEAL() ? `<div class="checkbar">${S.t.inst.skip ? `<span class="score part">Úlohu si pred testom nevyriešil.</span>` : SUBMITTED}</div>` : S.t.inst ? `<div class="checkbar"><span class="score ${S.t.inst.score < 3 ? "part" : ""}">Získal si ${S.t.inst.score} z 3 bodov</span></div>` : ""}
       ${I.step === 5 ? `<div class="row"><button class="ghost" data-in="again">↺ Skúsiť znova</button></div>` : ""}</div></div>
     <h3>Zopakuj si: poradie krokov inštalácie</h3><div class="task">${taskHTML("instord")}</div>
     <div class="box v"><p><b>Čo je PATH?</b> Zoznam priečinkov, v ktorých Windows hľadá programy. Keď je Python v PATH, dá sa spustiť aj z príkazového riadka. Pre IDLE to nie je nutné, ale je dobré to zaškrtnúť.</p></div>` + nextBar();
@@ -668,7 +668,7 @@ const VIEWS = {
     <h3>Vyskúšaj Shell</h3>
     <div class="lab"><div>${shellHTML()}${S.sh.note ? `<div class="fb info">${S.sh.note}</div>` : ""}</div>
       <div class="side"><h4>Tvoje úlohy</h4>${shellGoals()}<p class="muted" style="font-size:14px;margin-top:10px">Shell vie počítať: + − * / aj zátvorky. Šípkou ↑ vrátiš predchádzajúci príkaz.</p>
-      ${S.t.shell ? `<div class="checkbar"><span class="score ${S.t.shell.score < 2 ? "part" : ""}">Splnené: ${S.t.shell.score} z 2</span></div>` : ""}</div></div>
+      ${S.t.shell && !REVEAL() ? `<div class="checkbar">${S.t.shell.skip ? `<span class="score part">Úlohu si pred testom nevyriešil.</span>` : SUBMITTED}</div>` : S.t.shell ? `<div class="checkbar"><span class="score ${S.t.shell.score < 2 ? "part" : ""}">Splnené: ${S.t.shell.score} z 2</span></div>` : ""}</div></div>
     <div class="box"><p><b>Chyby sa neboj.</b> Programátori robia chyby stále. Dôležité je prečítať si, čo Python píše. <b style="font-family:var(--mono)">NameError</b> znamená, že Python nepozná meno, ktoré si napísal. Často je to obyčajný preklep, napríklad <span style="font-family:var(--mono)">forwrad</span> namiesto <span style="font-family:var(--mono)">forward</span>.</p></div>
     <h3>Otázky</h3><div class="task">${taskHTML("shq")}</div>` + nextBar();
   },
@@ -679,14 +679,14 @@ const VIEWS = {
     const dlg = C.open ? `<div class="win" style="margin-top:12px"><div class="wt">Settings<span class="dots">✕</span></div><div class="wb">
       <div class="tabs2">${[["fonts", "Fonts"], ["hl", "Highlights"], ["keys", "Keys"], ["general", "General"]].map(([k, n]) => `<button class="${C.tab === k ? "on" : ""}" data-ctab="${k}">${n}</button>`).join("")}</div>
       ${C.tab === "fonts" ? `<div class="cfg"><div><label style="display:block;margin-bottom:6px">Font Face: <b>Courier New</b></label>
-          <label>Size: <select data-cf="size">${["8", "10", "11", "12", "14", "16", "18", "20"].map(s => `<option ${C.size === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+          <label>Size: <select data-cf="size">${["8", "10", "11", "12", "14", "16", "18", "20"].map(s => `<option value="${s}" ${C.size === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
           <label class="chk" style="margin-top:8px"><input type="checkbox" data-cf="bold" ${C.bold ? "checked" : ""}> Bold</label></div>
         <div><div style="font-size:13px;margin-bottom:4px">Font Sample:</div><div class="preview" style="font-size:${sz}px;font-weight:${C.bold ? 700 : 400}">from turtle import *<br>fd(100)</div></div></div>`
       : C.tab === "general" ? `<div><b style="font-size:14px">At Start of Run (F5)</b><label class="chk"><input type="radio" name="run" data-cf="run" value="prompt" ${C.run === "prompt" ? "checked" : ""}> Prompt to Save</label><label class="chk"><input type="radio" name="run" data-cf="run" value="noprompt" ${C.run === "noprompt" ? "checked" : ""}> No Prompt</label>
           <p style="font-size:13px;color:#555;margin:6px 0 0">Pri „No Prompt“ IDLE pred spustením programu uloží súbor bez otázky.</p></div>`
       : `<p style="color:#555;font-size:14px">Tu teraz nič meniť netreba.</p>`}
       <div class="row" style="justify-content:flex-end"><button class="ghost" data-cm="ok">Ok</button><button class="ghost" data-cm="apply">Apply</button><button class="ghost" data-cm="cancel">Cancel</button></div></div></div>` : "";
-    const A = C.applied || { size: "10", bold: false, run: "prompt" }, li = (ok, t) => `<li>${ok ? "✅" : "⬜"} ${t}</li>`;
+    const A = C.applied || { size: "10", bold: false, run: "prompt" }, li = (ok, t) => `<li>${REVEAL() ? (ok ? "✅" : "❌") : "•"} ${t}</li>`;
     return head() + `<h2>Nastavenie IDLE</h2>
     <div class="theory tsplit"><div>
       <p>IDLE si prispôsobíme dvoma nastaveniami, ktoré nám uľahčia prácu na hodinách. Obe nájdeš v menu <b>Options → Configure IDLE</b>.</p>
@@ -701,7 +701,7 @@ const VIEWS = {
     <div class="lab"><div><div class="win"><div class="wt">🐍 IDLE Shell<span class="dots">— ▢ ✕</span></div>${menu}<div class="shell" style="min-height:90px;font-size:${+A.size}px;font-weight:${A.bold ? 700 : 400}"><span class="p">&gt;&gt;&gt; </span></div></div>${dlg}</div>
       <div class="side"><h4>Tvoje úlohy</h4><ul class="goals">${li(A.size === "14", "Veľkosť písma <b>14</b>")}${li(A.bold, "Tučné písmo <b>Bold</b>")}${li(A.run === "noprompt", "Spúšťanie bez otázky: <b>No Prompt</b>")}</ul>
         <p class="muted" style="font-size:14px;margin-top:8px">Začni kliknutím na menu <b>Options</b>. Zmeny sa prejavia až po <b>Ok</b> alebo <b>Apply</b>.</p>
-        ${S.t.cfg ? `<div class="checkbar"><span class="score ${S.t.cfg.score < 3 ? "part" : ""}">Nastavené: ${S.t.cfg.score} z 3</span></div>` : ""}</div></div>
+        ${S.t.cfg && !REVEAL() ? `<div class="checkbar">${S.t.cfg.skip ? `<span class="score part">Úlohu si pred testom nevyriešil.</span>` : SUBMITTED}</div>` : S.t.cfg ? `<div class="checkbar"><span class="score ${S.t.cfg.score < 3 ? "part" : ""}">Nastavené: ${S.t.cfg.score} z 3</span></div>` : ""}</div></div>
     <h3>Zopakuj si: ako nastaviť písmo</h3><p>Zoraď kroky tak, ako by si ich robil v skutočnom IDLE.</p><div class="task">${taskHTML("cfgord")}</div>` + nextBar();
   },
   kalk() {
@@ -747,11 +747,11 @@ function CUSTOM_CLICK(e) {
     I.msg = "";
     if (ds.in === "dl") { S.g.dl = true; I.step = 1; }
     else if (ds.in === "run") I.step = 2;
-    else if (ds.in === "now") { S.g.installed = true; if (I.path) S.g.path = true; else { I.msg = "Nainštalované, ale bez zaškrtnutého <b>Add python.exe to PATH</b>. IDLE fungovať bude, no nabudúce to zaškrtni."; I.msgk = "bad"; } I.step = 3; scoreInst(); }
-    else if (ds.in === "custom") { I.msg = "Vlastné nastavenie teraz nepotrebuješ. Zvoľ <b>Install Now</b>."; I.msgk = "info"; }
+    else if (ds.in === "now") { S.g.installed = true; if (I.path) S.g.path = true; else { I.msg = ""; } I.step = 3; scoreInst(); }
+    else if (ds.in === "custom") { I.msg = "Vlastné nastavenie sa v tejto simulácii nedá otvoriť."; I.msgk = "info"; }
     else if (ds.in === "close") { I.step = 4; S.sm = ""; }
     else if (ds.in === "idle") { S.g.idle = true; I.step = 5; scoreInst(); }
-    else if (ds.in === "wrong") { I.msg = "Toto je Python bez editora, iba čierne okno. My potrebujeme <b>IDLE</b>."; I.msgk = "bad"; }
+    else if (ds.in === "wrong") { S.g.wrongApp = true; I.msg = "Otvorilo sa čierne okno Pythonu (Python 3.12). Zavri ho."; I.msgk = "info"; }
     else if (ds.in === "again") { S.ins = { step: 0, path: false }; }
     save(); render(false); return true;
   }
@@ -927,6 +927,10 @@ KFIN(["🐢", "Python"]);
 /* ===== shared lesson engine ===== */
 /* HODINY: úlohy v zastávkach sa dajú opraviť a skontrolovať znova; záverečný test je interaktívny (zoraď, priraď, klikni do obrázka, roztrieď, poskladaj),
    spúšťa sa tlačidlom s potvrdením a po spustení sú zastávky uzamknuté (iba na prezeranie) */
+/* ===== HODINY: odovzdanie vlastných úloh – body a správne riešenie až na Výsledku ===== */
+function awardC(id, s) { if (S.t[id] || (typeof RO === "function" && RO())) return; S.pend = S.pend || {}; S.pend[id] = Math.max(S.pend[id] || 0, s); save(); }
+function SUBBAR(id, ready, hint) { if (S.t[id]) return checkBar(TASKS[id], true, ""); return `<div class="checkbar"><button class="primary" data-subm="${id}" ${ready === false ? "disabled" : ""}>📤 Odovzdať</button><span class="hint">${ready === false && hint ? hint : "Odovzdať sa dá iba raz. Body a správne riešenie uvidíš na stránke Výsledok."}</span></div>`; }
+document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-subm]"); if (!b) return; e.stopPropagation(); if (RO() || S.testLocked) return; const id = b.dataset.subm; if (S.t[id]) return; if (typeof SUBMIT_HOOK === "function") SUBMIT_HOOK(id); award(id, Math.min((S.pend || {})[id] || 0, maxOf(TASKS[id]))); save(); render(false); }, true);
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
 const QGLUE = {};
 function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
@@ -941,15 +945,16 @@ function sendResults(detail) { /* automatické odoslanie výsledku do Google For
   const p = new URLSearchParams(); p.set(E.meno, S.name.trim()); p.set(E.trieda, S.cls.trim()); p.set(E.hodina, typeof LESSON !== "undefined" ? LESSON : document.title); p.set(E.body, `${total()}/${MAX} (${pct} %)`); p.set(E.detail, String(pct >= 90 ? 1 : pct >= 75 ? 2 : pct >= 50 ? 3 : pct >= 30 ? 4 : 5));
   const key = [S.name.trim(), S.cls.trim(), total(), S.finished].join("|");
   const st = (t, c) => { const el = document.getElementById("sendst"); if (el) { el.textContent = t; el.style.color = c || ""; } };
+  if (S.sentKey === key && !S.revealed) { S.revealed = true; save(); }
   if (S.sentKey !== key && !S.sending) { S.sending = true;
-    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); })
+    fetch(RESULTS_FORM.post, { method: "POST", mode: "no-cors", body: p }).then(() => { S.sentKey = key; S.sending = false; S.revealed = true; save(); st("✅ Výsledok bol odoslaný učiteľovi.", "#1E7B34"); const rn = document.getElementById("revnote"); if (rn) rn.textContent = "Zastávky aj záverečný test si teraz môžeš znova prezrieť (iba na čítanie). Uvidíš v nich aj správne odpovede."; })
       .catch(() => { S.sending = false; st("⚠️ Výsledok sa nepodarilo odoslať (asi nie je internet). Pripoj sa na internet a obnov stránku, výsledok sa odošle znova.", "#B3261E"); }); }
   return `<span id="sendst" style="font-weight:600;${S.sentKey === key ? "color:#1E7B34" : ""}">${S.sentKey === key ? "✅ Výsledok bol odoslaný učiteľovi." : "⏳ Odosiela sa výsledok učiteľovi…"}</span>`; }
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
 const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
-function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, testLocked: false, tconfirm: false, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, testLocked: false, tconfirm: false, revealed: false, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
 function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
@@ -969,7 +974,9 @@ function nextBar() { return memoHTML() + nextBar0(); }
 function nextBar0() { if (S.cur >= STEPS.length - 1) return ""; const n = STEPS[S.cur + 1]; if (S.testLocked && n.id === "test" && S.t.test) return `<div class="next"><button class="primary" data-go="${STEPS.length - 1}">Späť na výsledok</button></div>`;
   return `<div class="next"><button class="primary" data-go="${S.cur + 1}">${n.id === "vysledok" ? "Zobraziť výsledok" : "Ďalšia zastávka: " + n.title}</button></div>`; }
 function parseNum(v) { const m = String(v).replace(/\s/g, "").replace(",", ".").match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : NaN; }
-const REVEAL = () => true;   /* po skontrolovaní sa hneď ukážu správne odpovede (kontrola iba raz) */
+const REVEAL = () => !!S.revealed;
+const SUBMITTED = `<span class="score part">✔ Odovzdané. Body a správne odpovede uvidíš na stránke Výsledok.</span>`;
+const SHOWPTS = () => !!S.revealed || STEPS[S.cur].id === "vysledok";
 const RO = () => !!S.testLocked && !["test", "vysledok"].includes(STEPS[S.cur].id);   /* zastávky po spustení testu: iba na prezeranie */
 const QPIC = (svg, cl) => svg ? `<figure class="${cl || "qpic"}">${svg}</figure>` : "";
 
@@ -977,12 +984,13 @@ function renderTop() {
   const testI = testIdx();
   document.getElementById("top").innerHTML = `
   <div class="topbar"><div class="brand"><span class="lg" aria-hidden="true"></span>${BRAND}</div>
-    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>
+    ${SHOWPTS() ? `<div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div>` : ""}
     ${S.testLocked ? "" : `<button class="reset" data-reset>↺ Začať odznova</button>`}</div>
   <nav class="line" aria-label="Zastávky hodiny">${STEPS.map((s, i) => { const lockedBack = S.testLocked && !S.t.test && i < testI; return `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${(!S.started && i > 0) || lockedBack ? "disabled" : ""} ${lockedBack ? 'title="Po spustení záverečného testu sú zastávky uzamknuté."' : ""} ${i === S.cur ? 'aria-current="step"' : ""}><span class="c">${stepDone(i) ? "✓" : ""}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`; }).join("")}</nav>`;
 }
 function checkBar(T, ready, hint) {
   const r = S.t[T.id];
+  if (r && !REVEAL()) return `<div class="checkbar">${r.skip ? `<span class="score part">Úlohu si pred testom nevyriešil.</span>` : SUBMITTED}</div>`;
   if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span></div>`;
   return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
 }
@@ -992,10 +1000,10 @@ function mcHTML(T) {
     const o = ord(T.id + ":" + q.id, q.opts.map((_, i) => i), T.keep), good = d[q.id] === q.a;
     const opts = `<div class="opts">` + o.map(i => {
       let c = "opt"; if (d[q.id] === i) c += " sel";
-      if (done) { if (rv && i === q.a) c += " ok"; else if (d[q.id] === i) c += i === q.a ? " ok" : " bad"; }
+      if (done && rv) { if (i === q.a) c += " ok"; else if (d[q.id] === i) c += " bad"; }
       return `<button class="${c}" data-mc="${T.id}|${q.id}|${i}" aria-pressed="${d[q.id] === i}" ${done ? "disabled" : ""}>${q.opts[i]}</button>`;
-    }).join("") + `</div>${done && q.why && (good || rv) ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && !good ? `<p class="why miss">Správna odpoveď: ${q.opts[q.a]}</p>` : ""}`;
-    const img = typeof q.img === "function" ? q.img(done) : q.img;
+    }).join("") + `</div>${done && rv && q.why ? `<p class="why ${good ? "good" : "miss"}">${q.why}</p>` : done && rv && !good ? `<p class="why miss">Správna odpoveď: ${q.opts[q.a]}</p>` : ""}`;
+    const img = typeof q.img === "function" ? q.img(done && REVEAL()) : q.img;
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend>${img ? `<div class="qrow"><div>${opts}</div>${QPIC(img)}</div>` : opts}</fieldset>`;
   }).join("") + checkBar(T, T.qs.every(q => d[q.id] !== undefined), "Odpovedz na všetky otázky.");
 }
@@ -1003,14 +1011,14 @@ function sortHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {}, rv = REVEAL();
   const ids = ord(T.id, T.items.map(x => x.id));
   const by = Object.fromEntries(T.items.map(x => [x.id, x]));
-  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done) c += d[id] === by[id].b ? " ok" : " bad";
-    const fix = done && d[id] !== by[id].b ? `<span class="fixb">→ patrí do: ${(T.buckets.find(b => b.id === by[id].b) || {}).label || ""}</span>` : "";
+  const chip = id => { let c = "chipb"; if (SEL && SEL.t === T.id && SEL.i === id) c += " sel"; if (done && REVEAL()) c += d[id] === by[id].b ? " ok" : " bad";
+    const fix = done && REVEAL() && d[id] !== by[id].b ? `<span class="fixb">→ patrí do: ${(T.buckets.find(b => b.id === by[id].b) || {}).label || ""}</span>` : "";
     return `<span class="chipw"><button class="${c}" data-pick="${T.id}|${id}" draggable="${done ? "false" : "true"}" ${done ? "disabled" : ""}>${by[id].t}</button>${fix}</span>`; };
   const pool = ids.filter(id => !d[id]);
   return QPIC(T.img, "tpic") + (done ? "" : `<div class="pool" data-bucket="${T.id}|">${pool.length ? pool.map(chip).join("") : '<span class="empty">Všetko je roztriedené. Kartičku presunieš kliknutím na ňu a potom na iný kôš.</span>'}</div>`) +
     `<div class="buckets">${T.buckets.map(b => `<div class="bucket" data-bucket="${T.id}|${b.id}"><div class="bh">${b.label}</div><div class="bs">${b.sub || ""}</div><div class="bc">${ids.filter(id => d[id] === b.id).map(chip).join("")}</div></div>`).join("")}</div>` +
-    (done && ids.some(id => !d[id]) ? `<div class="box v" style="margin-top:12px"><p><b>Správne roztriedenie:</b></p><ul>${T.buckets.map(b => `<li><b>${b.label}:</b> ${T.items.filter(x => x.b === b.id).map(x => x.t).join(", ")}</li>`).join("")}</ul></div>` : "") +
-    (done && T.after && (done.score === done.max || rv) ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
+    (done && REVEAL() && ids.some(id => !d[id]) ? `<div class="box v" style="margin-top:12px"><p><b>Správne roztriedenie:</b></p><ul>${T.buckets.map(b => `<li><b>${b.label}:</b> ${T.items.filter(x => x.b === b.id).map(x => x.t).join(", ")}</li>`).join("")}</ul></div>` : "") +
+    (done && T.after && REVEAL() ? `<p class="why good" style="margin-top:12px">${T.after}</p>` : "") + checkBar(T, ids.every(id => d[id]), "Roztrieď všetky kartičky.");
 }
 function orderHTML(T) {
   const done = S.t[T.id], seq = S.d[T.id] || [];
@@ -1020,7 +1028,7 @@ function orderHTML(T) {
   let h = QPIC(T.img, "tpic") + `<ol class="seq">` + T.items.map((_, i) => {
     const id = seq[i];
     if (!id) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
-    let c = "slot"; if (done) c += id === T.items[i].id ? " ok" : " bad";
+    let c = "slot"; if (done && REVEAL()) c += id === T.items[i].id ? " ok" : " bad";
     return `<li class="${c}"><span class="n">${i + 1}</span><button class="slotbtn" data-unplace="${T.id}|${id}" ${done ? "disabled" : ""}>${by[id].t}</button></li>`;
   }).join("") + `</ol>`;
   if (!done) h += `<div class="pool">${pool.length ? pool.map(id => `<button class="chipb" data-place="${T.id}|${id}">${by[id].t}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kliknutím na kartičku hore ju vrátiš späť.</span>'}</div>`;
@@ -1033,20 +1041,20 @@ function buildHTML(T) {
   return qOrder(T).map((q, qi) => {
     const seq = d[q.id] || [], P = ord(T.id + ":" + q.id, q.pieces.map((_, i) => i)), ok = done && bOk(q, seq);
     const slots = `<div class="bsl ${q.mono === false ? "" : "mono"}">${q.pre ? `<span class="bpre">${q.pre}</span>` : ""}${q.a.map((_, i) => { const k = seq[i];
-      return k === undefined ? `<span class="bsx">${(q.lab && q.lab[i]) || "…"}</span>` : `<button class="bsx full ${done ? (q.pieces[k] === q.a[i] ? "ok" : "bad") : ""}" data-bu="${T.id}|${q.id}|${i}" ${done ? "disabled" : ""} title="Kliknutím dielik vrátiš">${q.pieces[k]}</button>`; }).join("")}${q.post ? `<span class="bpre">${q.post}</span>` : ""}</div>`;
+      return k === undefined ? `<span class="bsx">${(q.lab && q.lab[i]) || "…"}</span>` : `<button class="bsx full ${done && rv ? (q.pieces[k] === q.a[i] ? "ok" : "bad") : ""}" data-bu="${T.id}|${q.id}|${i}" ${done ? "disabled" : ""} title="Kliknutím dielik vrátiš">${q.pieces[k]}</button>`; }).join("")}${q.post ? `<span class="bpre">${q.post}</span>` : ""}</div>`;
     const pool = done ? "" : `<div class="pool bpool">${P.filter(k => !seq.includes(k)).map(k => `<button class="chipb ${q.mono === false ? "" : "mono"}" data-bp="${T.id}|${q.id}|${k}" ${seq.length >= q.a.length ? "disabled" : ""}>${q.pieces[k]}</button>`).join("")}</div>`;
-    const fb = done ? (ok ? (q.why ? `<p class="why good">${q.why}</p>` : "") : rv ? `<p class="why miss">Správne: <b>${(q.pre || "") + q.a.join(q.join == null ? " " : q.join) + (q.post || "")}</b>${q.why ? ". " + q.why : ""}</p>` : "") : "";
-    const img = typeof q.img === "function" ? q.img(done) : q.img;
+    const fb = done && rv ? (ok ? (q.why ? `<p class="why good">${q.why}</p>` : "") : rv ? `<p class="why miss">Správne: <b>${(q.pre || "") + q.a.join(q.join == null ? " " : q.join) + (q.post || "")}</b>${q.why ? ". " + q.why : ""}</p>` : "") : "";
+    const img = typeof q.img === "function" ? q.img(done && REVEAL()) : q.img;
     const body = slots + pool + fb;
     return `<fieldset class="q"><legend><span class="qn">${qi + 1}</span><span>${q.q}</span></legend>${img ? `<div class="qrow"><div>${body}</div>${QPIC(img)}</div>` : body}</fieldset>`;
   }).join("") + checkBar(T, T.qs.every(q => (d[q.id] || []).length === q.a.length), "Poskladaj všetky odpovede z dielikov.");
 }
 function bOk(q, seq) { return seq.length === q.a.length && seq.every((k, i) => q.pieces[k] === q.a[i]); }
 function inputHTML(T) {
-  const done = S.t[T.id], d = S.d[T.id] || {};
+  const done = S.t[T.id], d = S.d[T.id] || {}, rv = REVEAL();
   return qOrder(T).map((q, qi) => {
     const v = d[q.id] || "", ok = done ? q.ok(v) : null;
-    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
+    return `<div class="iq"><div class="iqq"><span class="qn">${qi + 1}</span><span>${q.q}</span></div><div class="iqa">${q.pre ? `<span class="unit">${q.pre}</span>` : ""}<input type="text" class="in ${done && rv ? (ok ? "good" : "badin") : ""}" data-inp="${T.id}|${q.id}" value="${esc(v)}" ${done ? "disabled" : ""} placeholder="${q.ph || ""}" autocomplete="off" aria-label="Odpoveď ${qi + 1}">${q.unit ? `<span class="unit">${q.unit}</span>` : ""}${done && rv ? `<span class="${ok ? "okm" : "badm"}">${ok ? "✓ správne" : "✗ správne je " + q.show}</span>` : ""}</div>${done && rv && q.why ? `<p class="why ${ok ? "good" : "miss"}" style="margin-left:37px">${q.why}</p>` : ""}</div>`;
   }).join("") + checkBar(T, T.qs.every(q => String(d[q.id] || "").trim()), "Vyplň všetky odpovede.");
 }
 function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
@@ -1083,41 +1091,42 @@ function tOk(q) { const a = TA()[q.id]; if (!tAnswered(q)) return false;
   if (q.kind === "sort") return q.items.every((it, i) => a[i] === it[1]);
   if (q.kind === "build") return a.every((x, i) => q.pieces[x] === q.a[i]);
   return false; }
-const HZ = (q, done) => id => { const a = TA()[q.id]; let c = "hz"; if (done) c += id === q.a ? (a === id ? " hok" : " hmiss") : a === id ? " hbad" : ""; else if (a === id) c += " hsel"; return c; };
+const HZ = (q, done) => id => { const a = TA()[q.id]; let c = "hz"; if (done && !REVEAL()) { if (a === id) c += " hsel"; } else if (done) c += id === q.a ? (a === id ? " hok" : " hmiss") : a === id ? " hbad" : ""; else if (a === id) c += " hsel"; return c; };
 function tBody(q, done) {
-  const a = TA()[q.id];
+  const a = TA()[q.id], dn = done, rv = !!done && REVEAL(); done = rv;
+  const lock = !!dn;
   if (q.kind === "order") {
     const seq = a || [], P = ord("test:" + q.id, q.items.map((_, i) => i));
     let h = `<ol class="seq">` + q.items.map((_, i) => { const k = seq[i];
       if (k === undefined) return `<li class="slot empty"><span class="n">${i + 1}</span><span>${i === seq.length ? "Klikni na kartičku nižšie" : "…"}</span></li>`;
-      return `<li class="slot ${done ? (k === i ? "ok" : "bad") : ""}"><span class="n">${i + 1}</span><button class="slotbtn" data-tun="${q.id}|${k}" ${done ? "disabled" : ""}><span>${q.items[k][0]}</span>${done && q.items[k][1] ? ` <b class="extra">${q.items[k][1]}</b>` : ""}</button></li>`; }).join("") + `</ol>`;
-    if (!done) { const rest = P.filter(k => !seq.includes(k)); h += `<div class="pool">${rest.length ? rest.map(k => `<button class="chipb" data-tord="${q.id}|${k}">${q.items[k][0]}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kartičku vrátiš kliknutím na ňu hore.</span>'}</div>`; }
+      return `<li class="slot ${done ? (k === i ? "ok" : "bad") : ""}"><span class="n">${i + 1}</span><button class="slotbtn" data-tun="${q.id}|${k}" ${lock ? "disabled" : ""}><span>${q.items[k][0]}</span>${done && q.items[k][1] ? ` <b class="extra">${q.items[k][1]}</b>` : ""}</button></li>`; }).join("") + `</ol>`;
+    if (!lock) { const rest = P.filter(k => !seq.includes(k)); h += `<div class="pool">${rest.length ? rest.map(k => `<button class="chipb" data-tord="${q.id}|${k}">${q.items[k][0]}</button>`).join("") : '<span class="empty">Všetko je poukladané. Kartičku vrátiš kliknutím na ňu hore.</span>'}</div>`; }
     return h + (done && !tOk(q) ? `<p class="fb2 miss">Správne poradie: ${q.items.map(x => x[0]).join(" → ")}</p>` : ""); }
   if (q.kind === "match") {
     const R = ord("test:" + q.id + ":r", q.rows.map((_, i) => i)), O = ord("test:" + q.id + ":o", q.rows.map((_, i) => i)), v = a || {};
     return `<table class="mtt"><tbody>${R.map(i => { const ok = done && v[i] !== undefined && v[i] !== "" && q.rows[+v[i]][1] === q.rows[i][1];
-      return `<tr><td>${q.rows[i][0]}</td><td><select data-tm="${q.id}|${i}" class="${done ? (ok ? "good" : "badsel") : ""}" ${done ? "disabled" : ""} aria-label="Priraď k: ${String(q.rows[i][0]).replace(/<[^>]+>/g, "")}"><option value="">vyber…</option>${O.map(k => `<option value="${k}" ${String(v[i]) === String(k) ? "selected" : ""}>${q.rows[k][1]}</option>`).join("")}</select>${done && !ok ? `<div class="mcorr">správne: ${q.rows[i][1]}</div>` : ""}</td></tr>`; }).join("")}</tbody></table>`; }
+      return `<tr><td>${q.rows[i][0]}</td><td><select data-tm="${q.id}|${i}" class="${done ? (ok ? "good" : "badsel") : ""}" ${lock ? "disabled" : ""} aria-label="Priraď k: ${String(q.rows[i][0]).replace(/<[^>]+>/g, "")}"><option value="">vyber…</option>${O.map(k => `<option value="${k}" ${String(v[i]) === String(k) ? "selected" : ""}>${q.rows[k][1]}</option>`).join("")}</select>${done && !ok ? `<div class="mcorr">správne: ${q.rows[i][1]}</div>` : ""}</td></tr>`; }).join("")}</tbody></table>`; }
   if (q.kind === "hot") return `<p class="muted" style="margin:0;font-size:15px">${a ? `Vybral si: <b>${q.names[a]}</b>` : "Zatiaľ si nič nevybral. Klikni na miesto v obrázku."}</p>${done && !tOk(q) ? `<p class="fb2 miss">Správne: ${q.names[q.a]}</p>` : ""}`;
   if (q.kind === "sort") {
     const P = ord("test:" + q.id, q.items.map((_, i) => i)), v = a || {};
-    let h = `<div class="buckets">${q.groups.map((g, gi) => `<div class="bucket" data-tg="${q.id}|${gi}"><div class="bh">${g}</div><div class="bc">${P.filter(i => v[i] === gi).map(i => done
-      ? `<span class="chipb ${q.items[i][1] === gi ? "ok" : "bad"}">${q.items[i][0]}</span>` : `<button class="chipb" data-tus="${q.id}|${i}" title="Kliknutím vrátiš kartičku späť">${q.items[i][0]}</button>`).join("")}</div></div>`).join("")}</div>`;
-    if (!done) { const rest = P.filter(i => v[i] === undefined || v[i] === null); h = `<div class="pool">${rest.length ? rest.map(i => `<button class="chipb ${TSEL && TSEL.q === q.id && TSEL.i === i ? "sel" : ""}" data-tpk="${q.id}|${i}">${q.items[i][0]}</button>`).join("") : '<span class="empty">Všetko je roztriedené. Kartičku vrátiš kliknutím na ňu v skupine.</span>'}</div>` + h; }
+    let h = `<div class="buckets">${q.groups.map((g, gi) => `<div class="bucket" data-tg="${q.id}|${gi}"><div class="bh">${g}</div><div class="bc">${P.filter(i => v[i] === gi).map(i => lock
+      ? `<span class="chipb ${!done ? "" : q.items[i][1] === gi ? "ok" : "bad"}">${q.items[i][0]}</span>` : `<button class="chipb" data-tus="${q.id}|${i}" title="Kliknutím vrátiš kartičku späť">${q.items[i][0]}</button>`).join("")}</div></div>`).join("")}</div>`;
+    if (!lock) { const rest = P.filter(i => v[i] === undefined || v[i] === null); h = `<div class="pool">${rest.length ? rest.map(i => `<button class="chipb ${TSEL && TSEL.q === q.id && TSEL.i === i ? "sel" : ""}" data-tpk="${q.id}|${i}">${q.items[i][0]}</button>`).join("") : '<span class="empty">Všetko je roztriedené. Kartičku vrátiš kliknutím na ňu v skupine.</span>'}</div>` + h; }
     return h + (done && !tOk(q) ? `<p class="fb2 miss">Správne: ${q.groups.map((g, gi) => `${g}: ${q.items.filter(x => x[1] === gi).map(x => x[0]).join(", ")}`).join(" · ")}</p>` : ""); }
   if (q.kind === "build") {
     const seq = a || [], P = ord("test:" + q.id, q.pieces.map((_, i) => i));
     let h = `<div class="bsl ${q.mono === false ? "" : "mono"}">${q.pre ? `<span class="bpre">${q.pre}</span>` : ""}${q.a.map((_, i) => { const k = seq[i]; return k === undefined ? `<span class="bsx">${(q.lab && q.lab[i]) || "…"}</span>`
-      : `<button class="bsx full ${done ? (q.pieces[k] === q.a[i] ? "ok" : "bad") : ""}" data-tbu="${q.id}|${i}" ${done ? "disabled" : ""}>${q.pieces[k]}</button>`; }).join("")}${q.post ? `<span class="bpre">${q.post}</span>` : ""}</div>`;
-    if (!done) h += `<div class="pool bpool">${P.filter(k => !seq.includes(k)).map(k => `<button class="chipb ${q.mono === false ? "" : "mono"}" data-tb="${q.id}|${k}" ${seq.length >= q.a.length ? "disabled" : ""}>${q.pieces[k]}</button>`).join("")}</div>`;
+      : `<button class="bsx full ${done ? (q.pieces[k] === q.a[i] ? "ok" : "bad") : ""}" data-tbu="${q.id}|${i}" ${lock ? "disabled" : ""}>${q.pieces[k]}</button>`; }).join("")}${q.post ? `<span class="bpre">${q.post}</span>` : ""}</div>`;
+    if (!lock) h += `<div class="pool bpool">${P.filter(k => !seq.includes(k)).map(k => `<button class="chipb ${q.mono === false ? "" : "mono"}" data-tb="${q.id}|${k}" ${seq.length >= q.a.length ? "disabled" : ""}>${q.pieces[k]}</button>`).join("")}</div>`;
     return h + (done && !tOk(q) ? `<p class="fb2 miss">Správne: <code>${(q.pre || "") + q.a.join(q.join == null ? " " : q.join) + (q.post || "")}</code></p>` : ""); }
   return ""; }
 function testHTML(T) {
   const done = S.t.test;
   return qOrder(T).map((q, qi) => {
-    const img = q.kind === "hot" ? q.hot(HZ(q, done)) : (typeof q.img === "function" ? q.img(done) : q.img);
-    return `<section class="tq"><div class="qh"><span class="qn">${qi + 1}</span><span>${q.q}</span><span class="pt">${done ? (tOk(q) ? "✅ 1 / 1" : "❌ 0 / 1") : "1 bod"}</span></div>
+    const img = q.kind === "hot" ? q.hot(HZ(q, done)) : (typeof q.img === "function" ? q.img(done && REVEAL()) : q.img);
+    return `<section class="tq"><div class="qh"><span class="qn">${qi + 1}</span><span>${q.q}</span><span class="pt">${done && REVEAL() ? (tOk(q) ? "✅ 1 / 1" : "❌ 0 / 1") : "1 bod"}</span></div>
       <figure class="tqfig ${done ? "done" : ""}" ${q.kind === "hot" ? `data-hq="${q.id}"` : ""}>${img}</figure>${tBody(q, done)}</section>`;
-  }).join("") + (done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">Test: ${done.score} z ${done.max} bodov</span></div>`
+  }).join("") + (done && !REVEAL() ? `<div class="checkbar"><span class="score part">✔ Test je odovzdaný. Body a správne odpovede uvidíš na stránke Výsledok.</span></div>` : done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">Test: ${done.score} z ${done.max} bodov</span></div>`
     : `<div class="checkbar"><button class="primary" data-check="test" ${T.qs.every(tAnswered) ? "" : "disabled"}>Skontrolovať test</button><span class="hint">${T.qs.every(tAnswered) ? "Pozor, test sa dá skontrolovať iba raz." : `Odpovedz na všetky otázky (hotovo ${T.qs.filter(tAnswered).length} zo ${T.qs.length}).`}</span></div>`);
 }
 VIEWS.test = function () {
@@ -1130,7 +1139,7 @@ VIEWS.test = function () {
         : `<button class="primary" data-tstart>▶ Spustiť záverečný test</button>`}
     </div>`;
   return head() + `<h2>Záverečný test</h2>
-    <p>${S.t.test ? "Test je skontrolovaný. Pozri si, kde si urobil chybu, a potom si zobraz výsledok." : "Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz."}</p>
+    <p>${S.t.test ? (REVEAL() ? "Test je skontrolovaný. Pozri si, kde si urobil chybu." : "Test je odovzdaný. Zobraz si výsledok: uvidíš body, známku a potom aj správne odpovede.") : "Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz."}</p>
     ${taskHTML("test")}` + (S.t.test ? `<div class="next"><button class="primary" data-go="${STEPS.length - 1}">Zobraziť výsledok</button></div>` : "");
 };
 function guessBox() {
@@ -1162,7 +1171,7 @@ VIEWS.vysledok = function () {
   <div class="row">${formBtn}</div>
   <div class="box" style="margin-top:16px">${S.rconfirm ? `<p style="margin:0"><b>Naozaj začať odznova?</b> Body aj odpovede sa vymažú.</p><div class="confirm"><button class="primary" data-ryes>Áno, začať odznova</button><button class="ghost" data-rno>Späť</button></div>`
     : `<p style="margin:0 0 10px">Chceš si hodinu prejsť ešte raz? Začneš od Štartu s novými úlohami a nový výsledok sa tiež odošle učiteľovi.</p><button class="ghost" data-rreset>↺ Začať odznova</button>`}</div>
-  <p class="muted" style="font-size:15px">Zastávky si môžeš znova prezrieť (kliknutím hore na ich názov), ale už v nich nič nezmeníš.</p>`;
+  <p class="muted" id="revnote" style="font-size:15px">${S.revealed ? "Zastávky aj záverečný test si teraz môžeš znova prezrieť (iba na čítanie). Uvidíš v nich aj správne odpovede." : "Správne odpovede v zastávkach a v teste sa zobrazia, keď sa výsledok odošle učiteľovi."}</p>`;
 };
 
 const main = document.getElementById("main");
