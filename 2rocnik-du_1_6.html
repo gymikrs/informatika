@@ -239,6 +239,8 @@ table.res td:last-child,table.res th:last-child{text-align:right}
 @media (max-width:560px){.panel{grid-template-columns:44px minmax(0,1fr);gap:6px;padding:8px}.panel svg{width:44px;height:44px}.panel .opts{grid-template-columns:1fr}.panel .opt{padding:8px 10px}}
 .panel{min-width:0}.panel .bub{min-width:0}
 @media (max-width:640px){.room{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px}.room svg{min-width:760px}.room::after{content:"↔️ Obrázok posúvaj prstom do strany.";display:block;font-size:13.5px;color:var(--muted);padding:4px 2px}}
+.cflock .checkbar,.cflock [data-check]{display:none!important}
+.cfmsg{margin-top:14px;padding:8px 14px;border-radius:10px;background:var(--amberSoft);font-weight:600;font-size:15.5px}
 </style></head><body>
 <header class="top" id="top"></header><main id="main" tabindex="-1"></main>
 <script>
@@ -526,19 +528,27 @@ const NSTOP = STEPS.length - 2;
 function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.finished; return STEP_TASKS[id].every(t => S.t[t]); }
 const allDone = () => Object.keys(TASKS).every(k => S.t[k]);
 const lockBox = t => `<div class="lock">🔒 ${t}</div>`;
-const H3 = (n, ic, t, id) => `<h3>${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
+/* ===== DOMACE – skryté hodnotenie (21. 11. 2026): body, správne/nesprávne a správne odpovede sa ukážu až po odoslaní výsledku ===== */
+const REVEAL = () => !!S.finished;
+const CFMSG = `<div class="cfmsg">✔ Odpovede sú potvrdené. Hodnotenie a správne odpovede uvidíš po odoslaní výsledku.</div>`;
+const HIDE = { on: false, bak: null };
+/* počas vykresľovania misie sa potvrdené úlohy vykreslia ako nepotvrdené (iba žiakove odpovede, bez hodnotenia) a potom sa uzamknú */
+function hideStart() { const sid = STEPS[S.cur].id; if (REVEAL() || HIDE.on || sid === "start" || sid === "vysledok") return; HIDE.bak = S.t; S.t = {}; HIDE.on = true; }
+function hideEnd(m) { if (!HIDE.on) return; S.t = HIDE.bak; HIDE.bak = null; HIDE.on = false; save();
+  if (m) m.querySelectorAll("h3[data-tid]").forEach(h => { if (!S.t[h.dataset.tid]) return; const t = h.nextElementSibling; if (!t || !t.classList.contains("task")) return; t.classList.add("cflock"); t.setAttribute("inert", ""); t.insertAdjacentHTML("beforeend", CFMSG); }); }
+const H3 = (n, ic, t, id) => `<h3 data-tid="${id}">${ic} Úloha ${n}: ${t} (${maxOf(TASKS[id])} ⭐)</h3>`;
 let UN = 0; /* počítadlo úloh na stránke */
 
 function renderTop() {
   document.getElementById("top").innerHTML = `<div class="topbar"><div class="brand"><span class="du">DÚ</span> 1.6 Periférne zariadenia</div>
-    <div class="pts" aria-live="polite">⭐ <b>${total()}</b> z ${MAX}</div></div>
+    <div class="pts" aria-live="polite">${REVEAL() ? `⭐ <b>${total()}</b> z ${MAX}` : `⭐ max. <b>${MAX}</b> · body uvidíš na konci`}</div></div>
     <nav class="line" aria-label="Misie">${STEPS.map((s, i) => `<button class="stn ${i === S.cur ? "cur" : ""} ${stepDone(i) ? "done" : ""} ${i <= S.cur || stepDone(i) ? "reached" : ""}" data-go="${i}" ${!S.started && i > 0 ? "disabled" : ""}><span class="c">${stepDone(i) ? "✓" : s.ic}</span><span class="l">${s.title}</span><span class="m">${s.min ? s.min + " min" : "cieľ"}</span></button>`).join("")}</nav>`;
 }
 function banner(i, sub) { const s = STEPS[i]; return `<div class="ban" style="background:${s.col}"><div><span class="pill">Misia ${i} z ${NSTOP} · asi ${s.min} min</span><h2>${s.title}</h2><p>${sub}</p></div><div class="big" aria-hidden="true">${s.ic}</div></div>`; }
 function checkBar(T, ready, hint, label) {
   const r = S.t[T.id];
   if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.score === r.max ? "Výborne! " : ""}Získal si ${r.score} z ${r.max} ⭐</span></div>`;
-  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "Skontrolovať"}</button><span class="hint">${ready ? "" : hint}</span></div>`;
+  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>${label || "✔ Potvrdiť odpovede"}</button><span class="hint">${ready ? "" : hint}</span></div>`;
 }
 const optCls = (done, sel, i, a) => { let c = "opt"; if (sel === i) c += " sel"; if (done) { if (i === a) c += " ok"; else if (sel === i) c += " bad"; } return c; };
 function qsOf(T) { return T.dyn ? homeDQs() : T.qs; }
@@ -647,7 +657,7 @@ const VIEWS = {
       <label class="f">Trieda</label><div class="row" style="margin-top:0">${CLASSES.map(c => `<button class="ghost ${S.cls === c ? "on" : ""}" data-cls="${c}">${c}</button>`).join("")}</div>
       <div class="row"><button class="primary" data-begin ${S.name.trim().length > 2 && S.cls ? "" : "disabled"}>🚀 Začať prvú misiu</button></div>
       ${S.att === 2 ? (() => { const P = attempts()[0]; return `<div class="vedel" style="margin-top:16px;background:#EAF7EF;border-color:#9ED7B6;border-left-color:#12805A;color:#0B3D27"><b>🔁 Oprava – posledný pokus.</b> Predchádzajúci výsledok: <b>${P.score} z ${P.max} ⭐ (známka ${P.g})</b>. Teraz máš ešte <b>jeden</b> pokus. Platí výsledok opravy a ďalší pokus už nebude.</div>`; })() :
-      `<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Každú úlohu si skontroluješ len jedenkrát a odpovede sa potom už nedajú zmeniť. Výsledok sa na konci odošle pánovi učiteľovi. Výsledok sa uzamkne hneď po odoslaní.</div>`}</div>`;
+      `<div class="vedel" style="margin-top:16px"><b>⚠️ Dôležité:</b> Odpovede v každej úlohe potvrdíš len raz a potom sa už nedajú zmeniť. Body, známku a správne odpovede uvidíš až na konci, keď sa výsledok sám odošle pánovi učiteľovi a domáca úloha sa uzamkne.</div>`}</div>`;
   },
   m1() {
     return banner(1, "Pán Novák zamkol do trezora lístky na koncert a zabudol kód. Číslice schoval na periférie v pracovni.") +
@@ -739,14 +749,14 @@ const VIEWS = {
       const left = s => STEP_TASKS[s.id].filter(t => !S.t[t]).length, ul = n => n === 1 ? "úloha" : n <= 4 ? "úlohy" : "úloh";
       return `<div class="result"><h2>🏆 Výsledok</h2>${say("Ešte nemáš hotové všetky misie. Môžeš sa k nim vrátiť, alebo domácu úlohu ukončiť a odoslať, ak už ďalej nevieš.")}
         <h3 style="margin-top:6px">Chýbajúce misie</h3><div class="row" style="margin-top:0">${miss.map(([s, i]) => `<button class="ghost" data-go="${i}">${s.ic} ${s.title} – ${left(s) === 1 ? "zostáva" : "zostávajú"} ${left(s)} ${ul(left(s))}</button>`).join("")}</div>
-        <p class="muted" style="margin-top:14px">Zatiaľ máš <b>${total()} ⭐</b> zo skontrolovaných úloh.</p>
+        <p class="muted" style="margin-top:14px">Body a správne odpovede uvidíš hneď po odoslaní.</p>
         ${S.confirmEnd ? `<div class="vedel" style="background:#FBE3E0;border-color:#F0B4AC;border-left-color:#C0392B;color:#5A1A12"><b>Naozaj ukončiť?</b> Úlohy, v ktorých si už niečo vybral, sa vyhodnotia. Nevyriešené úlohy budú za 0 bodov a vrátiť sa k nim už nebude možné.
           <div class="row"><button class="primary" style="background:#C0392B" data-endyes>✅ Áno, odoslať</button><button class="ghost" data-endno>↩️ Späť k úlohám</button></div></div>` :
           `<div class="row"><button class="primary" data-end>📨 Ukončiť a odoslať výsledok</button></div>`}</div>`; }
     if (!S.finished) { S.finished = Date.now(); save(); }
     const pct = Math.round(total() / MAX * 100), g = gradeOf(total(), MAX);
     let A = attempts(); if (!S.rec) { A.push({ name: S.name, cls: S.cls, score: total(), max: MAX, g, at: S.finished, snap: Object.assign({}, S, { sending: false, viewOnly: true, rec: true }) }); saveAttempts(A); S.rec = true; save(); }
-    const retry = `<div class="vedel" style="margin-top:16px;background:#EEF3FB;border-color:#B9C8EA;border-left-color:#2F5BEA;color:#16213A"><b>🔒 Domáca úloha je odoslaná a uzamknutá.</b> Platí známka z tohto pokusu, opakovať ju nie je možné. Svoje odpovede aj vysvetlenia si môžeš kedykoľvek pozrieť v jednotlivých misiách hore.</div>`;
+    const retry = `<div class="vedel" style="margin-top:16px;background:#EEF3FB;border-color:#B9C8EA;border-left-color:#2F5BEA;color:#16213A"><b>🔒 Domáca úloha je odoslaná a uzamknutá.</b> Platí známka z tohto pokusu, opakovať ju nie je možné. Teraz sa v misiách hore ukázali správne odpovede aj vysvetlenia, môžeš si ich kedykoľvek pozrieť.</div>`;
     return `<div class="result"><h2>🏆 Hotovo, ${esc(S.name.split(" ")[0])}!</h2>${say(g <= 2 ? "Si skvelý detektív periférií! Prípad je uzavretý. 🖱️🕵️" : "Dobrá práca! Pozri si vysvetlenia pri úlohách, kde si sa pomýlil.", "wow")}
       ${S.early ? `<p class="muted" style="margin:0 0 6px">📨 Domácu úlohu si ukončil predčasne, nevyriešené úlohy sú za 0 bodov.</p>` : ""}<div class="bign"><span class="n">${total()}</span><span class="of">z ${MAX} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
       <table class="res"><thead><tr><th>Misia</th><th>Body</th></tr></thead><tbody>${STEPS.slice(1, -1).map(s => { const ts = STEP_TASKS[s.id], a = ts.reduce((x, t) => x + S.t[t].score, 0), m = ts.reduce((x, t) => x + maxOf(TASKS[t]), 0); return `<tr><td>${s.ic} ${s.title}</td><td>${a} / ${m}</td></tr>`; }).join("")}</tbody></table>
@@ -773,7 +783,8 @@ function render(scroll) { const L = lockedDone(); if (L) { document.getElementBy
     document.getElementById("main").innerHTML = `<div class="result"><h2>✅ Domáca úloha je už odoslaná</h2>${say(`${esc(last.name)} (${esc(last.cls)}) už túto domácu úlohu odoslal/a. Opakovať ju nie je možné.`)}
       <div class="bign"><span class="n">${last.score}</span><span class="of">z ${mx} ⭐ (${pct} %)</span><div class="grade"><b>${g}</b><span>známka</span></div></div>
       ${last.snap ? `<div class="row"><button class="primary" data-view>👀 Pozrieť si svoje odpovede</button></div>` : ""}</div>`; typo(document.getElementById("main")); return; }
-  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); m.innerHTML = VIEWS[STEPS[S.cur].id](); hitAreas(m); typo(m); typo(document.getElementById("top")); window.scrollTo({ top: scroll ? 0 : y }); }
+  if (STEPS[S.cur].id === "vysledok" && !S.finished && allDone()) { S.finished = Date.now(); save(); }
+  const y = window.scrollY; renderTop(); const m = document.getElementById("main"); hideStart(); try { m.innerHTML = VIEWS[STEPS[S.cur].id](); } finally { hideEnd(m); } hitAreas(m); typo(m); typo(document.getElementById("top")); window.scrollTo({ top: scroll ? 0 : y }); }
 function hitAreas(m) { m.querySelectorAll(".room [data-hot]").forEach(g => { try { const r = g.getBBox(), pad = 6, n = document.createElementNS("http://www.w3.org/2000/svg", "rect");
   n.setAttribute("x", r.x - pad); n.setAttribute("y", r.y - pad); n.setAttribute("width", r.width + 2 * pad); n.setAttribute("height", r.height + 2 * pad); n.setAttribute("fill", "transparent"); g.insertBefore(n, g.firstChild); } catch (e) {} }); }
 function scoreOf(id) {
