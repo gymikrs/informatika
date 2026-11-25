@@ -468,7 +468,7 @@ const QQ = (p, s) => p + `<span class="qt">${s}</span>`;
 const ICO = { f: `<svg class="ico" viewBox="0 0 22 22" aria-hidden="true"><path d="M5 2h9l4 4v14H5z" fill="#fff" stroke="#5E5877" stroke-width="1.5"/><path d="M14 2v4h4" fill="none" stroke="#5E5877" stroke-width="1.5"/></svg>` };
 
 
-const KEY = "formaty-n23-v2";
+const KEY = "formaty-n23-v2-mk";
 const LESSON = "2.3 Grafické formáty";
 const BRAND = "2.3 Grafické formáty";
 const CLASS_DEFAULT = "I.";
@@ -625,7 +625,7 @@ const VIEWS = {
     <div class="fcards">${FMT.map(([n, d]) => `<div><b>${n}</b><br>${d}</div>`).join("")}</div>
     <h3>Úloha 1: roztrieď formáty</h3><div class="task"><div class="ins">Klikni na kartičku a potom na kôš.</div>${taskHTML("fsort")}</div>
     <h3>Úloha 2: otázky</h3><div class="task">${taskHTML("pq")}</div>` + nextBar(),
-  porovnanie: () => head() + `<h2>Laboratórium formátov</h2>${guessBox()}
+  porovnanie: () => head() + `<h2>Laboratórium formátov</h2>
     <div class="theory tsplit"><div>
       <p>Uložíme dva obrázky: <b>fotku</b> (veľa detailov a farieb) a <b>grafiku</b> (text, jednofarebné plochy) do rôznych formátov a porovnáme veľkosti. Najmenší súbor v každom stĺpci sa zvýrazní.</p>
       <p><b>Kompresia</b> hľadá v obrázku <b>opakovania</b>. Jednofarebnú plochu zapíše krátko („100 bielych pixelov“), pri pestrých detailoch to nejde.</p>
@@ -713,8 +713,8 @@ const HOT = (() => { const { TX, SV } = HK;
 /* ===== shared lesson engine ===== */
 const QGLUE = {};
 /* ===== HODINY: odovzdanie vlastných úloh – body a správne riešenie až na Výsledku ===== */
-function awardC(id, s) { if (S.t[id] || (typeof RO === "function" && RO())) return; S.pend = S.pend || {}; S.pend[id] = Math.max(S.pend[id] || 0, s); save(); }
-function SUBBAR(id, ready, hint) { if (S.t[id]) return checkBar(TASKS[id], true, ""); return `<div class="checkbar"><button class="primary" data-subm="${id}" ${ready === false ? "disabled" : ""}>📤 Odovzdať</button><span class="hint">${ready === false && hint ? hint : "Odovzdať sa dá iba raz. Body a správne riešenie uvidíš na stránke Výsledok."}</span></div>`; }
+function awardC(id, s) { if (S.t[id] || S.testLocked) return; S.pend = S.pend || {}; S.pend[id] = s; save(); }
+function SUBBAR(id) { return checkBar(TASKS[id]); }
 document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-subm]"); if (!b) return; e.stopPropagation(); if (RO() || S.testLocked) return; const id = b.dataset.subm; if (S.t[id]) return; if (typeof SUBMIT_HOOK === "function") SUBMIT_HOOK(id); award(id, Math.min((S.pend || {})[id] || 0, maxOf(TASKS[id]))); save(); render(false); }, true);
 const RESULTS_FORM = { url: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/viewform", post: "https://docs.google.com/forms/d/e/1FAIpQLSfZYJMbWx16Rwk0I-baKi8fAWzEKxdRr5_QtiEXUxn_PcnnQg/formResponse", entries: { meno: "entry.1474825380", trieda: "entry.1595709580", hodina: "entry.2116247609", body: "entry.635405102", detail: "entry.348187999" } };
 function qOrder(T) { /* premiešané poradie otázok pre každého žiaka; nadväzujúce otázky (QGLUE) ostávajú za predchádzajúcou */
@@ -738,7 +738,7 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&a
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items.length); }
 const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
-function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, testLocked: false, tconfirm: false, revealed: false, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
+function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, testLocked: false, tconfirm: false, econfirm: false, revealed: false, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
 function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 let S = load() || fresh();
@@ -749,7 +749,7 @@ function ord(key, ids, keep) {
 }
 const total = () => Object.values(S.t).reduce((a, x) => a + x.score, 0);
 function award(id, score) { if (S.testLocked && id !== "test") return; S.t[id] = { score, max: maxOf(TASKS[id]) }; }
-function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return STEP_TASKS[id].every(t => S.t[t]); }
+function stepDone(i) { const id = STEPS[i].id; if (id === "start") return !!S.started; if (id === "vysledok") return !!S.t.test; return (STEP_TASKS[id] || []).every(t => answered(t)); }
 const NSTOP = STEPS.length - 2;
 const head = () => `<p class="kicker">Zastávka ${S.cur} z ${NSTOP}${STEPS[S.cur].min ? ", asi " + STEPS[S.cur].min + " minút" : ""}</p>`;
 function memoHTML() { const T = typeof THEORY !== "undefined" ? THEORY[STEPS[S.cur].id] : null; return T ? `<section class="memo" aria-label="Zapamätaj si"><h3>📌 Zapamätaj si</h3><ul>${T.map(x => `<li>${x}</li>`).join("")}</ul></section>` : ""; }
@@ -776,11 +776,11 @@ const pic = (k, cl) => k && QIMG0()[k] ? `<figure class="${cl || "hq"}">${QIMG0(
 const qpic = (T, q) => q.img || (QIMG0()[T.id + ":" + q.id] ? T.id + ":" + q.id : "");
 const withPic = (k, inner) => k && QIMG0()[k] ? `<div class="qrow"><div>${inner}</div>${pic(k)}</div>` : inner;
 function retryBtn(id) { return ""; }                 /* úlohy sa kontrolujú iba raz */
-function checkBar(T, ready, hint) {
+function checkBar(T) { /* MILOSKO: žiadne Skontrolovať – odpovede sa ukladajú priebežne */
   const r = S.t[T.id];
-  if (r && !REVEAL()) return `<div class="checkbar">${r.skip ? `<span class="score part">Úlohu si pred testom nevyriešil.</span>` : SUBMITTED}</div>`;
-  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${r.skip ? "Úlohu si pred testom nevyriešil: 0 bodov" : (r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span>${retryBtn(T.id)}</div>`;
-  return `<div class="checkbar"><button class="primary" data-check="${T.id}" ${ready ? "" : "disabled"}>Skontrolovať</button><span class="hint" data-hint="${T.id}">${ready ? "" : hint}</span></div>`;
+  if (r && !REVEAL()) return `<div class="checkbar"><span class="score part">🔒 Odpovede sú uložené. Body a správne odpovede uvidíš na stránke Výsledok.</span></div>`;
+  if (r) return `<div class="checkbar"><span class="score ${r.score < r.max ? "part" : ""}">${(r.score === r.max ? "Výborne! " : "") + `Získal si ${r.score} z ${r.max} ${r.max === 1 ? "bodu" : "bodov"}`}</span></div>`;
+  return `<div class="checkbar"><span class="hint">💾 Odpovede sa ukladajú automaticky. Zmeniť ich môžeš, kým nespustíš záverečný test.</span></div>`;
 }
 function mcHTML(T) {
   const done = S.t[T.id], d = S.d[T.id] || {}, rv = REVEAL();
@@ -833,16 +833,10 @@ function inputHTML(T) {
 }
 function inputReady(T) { const d = S.d[T.id] || {}; return T.qs.every(q => String(d[q.id] || "").trim()); }
 function taskHTML(id) { const T = TASKS[id]; return T.type === "itest" ? testHTML(T) : T.type === "mc" ? mcHTML(T) : T.type === "sort" ? sortHTML(T) : T.type === "order" ? orderHTML(T) : inputHTML(T); }
-function check(id) {
-  const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+function check(id) { /* MILOSKO: test sa vyhodnotí po potvrdení „Zobraziť výsledok“ */
   if (S.testLocked && id !== "test") return;
-  let s = 0;
-  if (T.type === "itest") s = T.qs.filter(q => tOk(q)).length;
-  if (T.type === "mc") s = T.qs.filter(q => d[q.id] === q.a).length;
-  if (T.type === "sort") s = T.items.filter(x => d[x.id] === x.b).length;
-  if (T.type === "order") s = T.items.filter((x, i) => d[i] === x.id).length;
-  if (T.type === "input") s = T.qs.filter(q => q.ok(d[q.id] || "")).length;
-  award(id, s);
+  if (id === "test" && (S.t.test || !S.testLocked)) return;
+  S.t[id] = { score: scoreOf(id), max: maxOf(TASKS[id]) };
   if (id === "test") S.finished = Date.now();
   save(); render(false);
 }
@@ -898,7 +892,7 @@ function testHTML(T) {
     return `<section class="tq"><div class="qh"><span class="qn">${qi + 1}</span><span>${q.q}</span><span class="pt">${done && REVEAL() ? (tOk(q) ? "✅ 1 / 1" : "❌ 0 / 1") : "1 bod"}</span></div>
       ${img ? `<figure class="tqfig ${done ? "done" : ""}" ${q.kind === "hot" ? `data-hq="${q.id}"` : ""}>${img}</figure>` : ""}${tBody(q, done)}</section>`;
   }).join("") + (done && !REVEAL() ? `<div class="checkbar"><span class="score part">✔ Test je odovzdaný. Body a správne odpovede uvidíš na stránke Výsledok.</span></div>` : done ? `<div class="checkbar"><span class="score ${done.score < done.max ? "part" : ""}">Test: ${done.score} zo ${done.max} bodov</span></div>`
-    : `<div class="checkbar"><button class="primary" data-check="test" ${T.qs.every(tAnswered) ? "" : "disabled"}>Skontrolovať test</button><span class="hint">${T.qs.every(tAnswered) ? "Pozor, test sa dá skontrolovať iba raz." : `Odpovedz na všetky otázky (hotovo ${T.qs.filter(tAnswered).length} zo ${T.qs.length}).`}</span></div>`);
+    : testFooter(T));
 }
 const HZ = (q, done) => id => { const a = TA()[q.id]; let c = "hz"; if (done && !REVEAL()) { if (a === id) c += " hsel"; } else if (done) c += id === q.a ? (a === id ? " hok" : " hmiss") : a === id ? " hbad" : ""; else if (a === id) c += " hsel"; return c; };
 
@@ -911,21 +905,20 @@ if (!VIEWS.start) VIEWS.start = function () {
   return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
   <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
   <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
-  <h3>Než začneš: tvoj tip</h3><p>${START.guessQ} ${START.guessNote}</p>
-  <div class="guesses">${START.guesses.map((g, i) => `<button class="opt ${S.guess === i ? "sel" : ""}" data-guess="${i}" aria-pressed="${S.guess === i}">${g}</button>`).join("")}</div>
-  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a vyber tip." : S.guess === null ? "Vyber svoj tip." : ""}</span>
-  <button class="primary" data-start ${S.name.trim().length < 3 || S.guess === null ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a priezvisko." : ""}</span>
+  <button class="primary" data-start ${S.name.trim().length < 3 ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
 VIEWS.test = function () {
   if (!S.testLocked) return head() + `<h2>Záverečný test</h2>
     <div class="tstart">
-      <p style="margin-top:0">Test má <b>${TASKS.test.qs.length} otázok</b>, za každú dostaneš <b>1 bod</b>. ${typeof TEST_INTRO !== "undefined" ? TEST_INTRO : "Budeš zoraďovať, priraďovať, klikať do obrázka a triediť."} Test skontroluješ iba raz.</p>
-      <div class="warn">⚠️ Po spustení sa už nevrátiš do zastávok. Úlohy, ktoré v zastávkach nemáš vyriešené, budú za 0 bodov.</div>
+      <p style="margin-top:0">Test má <b>${TASKS.test.qs.length} otázok</b>, za každú dostaneš <b>1 bod</b>. ${typeof TEST_INTRO !== "undefined" ? TEST_INTRO : "Budeš zoraďovať, priraďovať, klikať do obrázka a triediť."} Odpovede môžeš meniť, kým neklikneš na <b>Zobraziť výsledok</b>.</p>
+      <div class="warn">⚠️ Po spustení sa už nevrátiš do zastávok a odpovede v nich sa už nebudú dať zmeniť. Nevyplnené odpovede budú za 0 bodov.</div>
       ${S.tconfirm ? `<p style="margin:0"><b>Naozaj chceš spustiť záverečný test?</b></p><div class="confirm"><button class="primary" data-tyes>Áno, spustiť test</button><button class="ghost" data-tno>Späť</button></div>`
         : `<button class="primary" data-tstart>▶ Spustiť záverečný test</button>`}
     </div>`;
   return head() + `<h2>Záverečný test</h2>
-    <p>${S.t.test ? (REVEAL() ? "Test je skontrolovaný. Pozri si, kde si urobil chybu." : "Test je odovzdaný. Zobraz si výsledok: uvidíš body, známku a potom aj správne odpovede.") : "Odpovedz na všetky otázky a potom test skontroluj. Skontrolovať sa dá iba raz."}</p>
+    <p>${S.t.test ? (REVEAL() ? "Pozri si, kde si urobil chybu." : "Test je odovzdaný. Zobraz si výsledok: uvidíš body, známku a potom aj správne odpovede.") : "Odpovedz na otázky. Odpovede môžeš meniť. Keď budeš hotový, klikni na Zobraziť výsledok (nájdeš ho aj dole pod testom)."}</p>
+    ${S.t.test ? "" : `<div class="next" style="margin-top:0"><button class="primary" data-tend>Zobraziť výsledok</button></div>`}
     ${taskHTML("test")}` + (S.t.test ? `<div class="next"><button class="primary" data-go="${STEPS.length - 1}">Zobraziť výsledok</button></div>` : "");
 };
 if (!VIEWS.vysledok) VIEWS.vysledok = function () {
@@ -962,8 +955,8 @@ function go(i) {
   if (!S.started && i > 0) return;
   const testI = STEPS.findIndex(x => x.id === "test");
   if (S.testLocked && !S.t.test && i < testI) return;
-  if (STEPS[i].id === "vysledok" && !S.t.test) return;
-  S.cur = i; SEL = null; TSEL = null; S.tconfirm = false; save(); render(true);
+  if (STEPS[i].id === "vysledok" && !S.t.test) { if (S.testLocked) { S.cur = STEPS.findIndex(x => x.id === "test"); S.econfirm = true; save(); render(true); const c = document.querySelector("[data-teyes]"); if (c) c.scrollIntoView({ block: "center" }); return; } if (S.started) { S.cur = i; S.econfirm = false; save(); render(true); } return; }
+  S.cur = i; SEL = null; TSEL = null; S.tconfirm = false; S.econfirm = false; save(); render(true);
 }
 function placeSel(t, b) { if (!SEL || SEL.t !== t || S.t[t] || RO()) return; const d = S.d[t] = S.d[t] || {}; if (b) d[SEL.i] = b; else delete d[SEL.i]; SEL = null; save(); render(false); }
 
@@ -995,9 +988,12 @@ document.addEventListener("click", e => {
   if (ds.guess !== undefined) { if (S.testLocked) return; S.guess = +ds.guess; save(); return render(false); }
   if (ds.tstart !== undefined) { S.tconfirm = true; save(); return render(false); }
   if (ds.tno !== undefined) { S.tconfirm = false; save(); return render(false); }
+  if (ds.tend !== undefined) { if (!S.testLocked || S.t.test) return; S.econfirm = true; save(); render(false); const c = document.querySelector("[data-teyes]"); if (c) c.scrollIntoView({ block: "center" }); return; }
+  if (ds.teno !== undefined) { S.econfirm = false; save(); return render(false); }
+  if (ds.teyes !== undefined) { if (!S.testLocked || S.t.test) return; S.econfirm = false; check("test"); return go(STEPS.length - 1); }
   if (ds.tyes !== undefined) {
     S.testLocked = true; S.tconfirm = false; S.testStarted = Date.now();
-    Object.keys(STEP_TASKS).filter(k => k !== "test").forEach(k => STEP_TASKS[k].forEach(t => { if (!S.t[t]) S.t[t] = { score: 0, max: maxOf(TASKS[t]), skip: true }; }));
+    Object.keys(STEP_TASKS).filter(k => k !== "test").forEach(k => STEP_TASKS[k].forEach(t => { if (!S.t[t]) S.t[t] = { score: Math.min(scoreOf(t), maxOf(TASKS[t])), max: maxOf(TASKS[t]) }; }));
     save(); return render(true);
   }
   if (STEPS[S.cur].id === "test") {
@@ -1041,8 +1037,8 @@ document.addEventListener("input", e => {
   S[f] = t.value; save();
   if (STEPS[S.cur].id === "start") {
     const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
-    if (btn) btn.disabled = !ok || S.guess === null;
-    if (h) h.textContent = ok ? (S.guess === null ? "Vyber svoj tip." : "") : "Napíš svoje meno a vyber tip.";
+    if (btn) btn.disabled = !ok;
+    if (h) h.textContent = ok ? "" : "Napíš svoje meno a priezvisko.";
   }
 });
 document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t] || S.testLocked) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
@@ -1050,6 +1046,49 @@ document.addEventListener("dragover", e => { const b = e.target.closest && e.tar
 document.addEventListener("dragleave", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (b && !b.contains(e.relatedTarget)) b.classList.remove("over"); });
 document.addEventListener("drop", e => { const b = e.target.closest && e.target.closest("[data-bucket]"); if (!b) return; e.preventDefault(); const [t, bk] = b.dataset.bucket.split("|"); placeSel(t, bk); });
 document.addEventListener("dragend", () => document.querySelectorAll(".over").forEach(x => x.classList.remove("over")));
+/* ===== MILOSKO: odpovede sa dajú meniť do spustenia testu, potom sa ohodnotia; z testu hneď na Výsledok ===== */
+function SELDEFS() { return {}; }
+const STD_T = ["mc", "sort", "order", "input", "itest", "mix", "build", "pz"];
+function scoreOf(id) { const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  if (!STD_T.includes(T.type)) {
+    if (typeof CUSTOM_SCORE === "function") { const v = CUSTOM_SCORE(id); if (v != null) return Math.min(v, maxOf(T)); }
+    const sd = SELDEFS(); for (const k in sd) if (sd[k][1] === id) return sd[k][0].filter((x, i) => (S[k] || {})[i] === x[1]).length;
+    if (typeof SUBMIT_HOOK === "function") { try { SUBMIT_HOOK(id); } catch (e) {} }
+    if (S.pend && S.pend[id] != null) return Math.min(S.pend[id], maxOf(T));
+    if (/^f_/.test(id) && typeof XS === "function") { try { return Math.min((XS(id.slice(2)).res || []).filter(Boolean).length, maxOf(T)); } catch (e) {} }
+    return 0; }
+  if (T.type === "itest") return T.qs.filter(q => tOk(q)).length;
+  if (T.type === "mc") return T.qs.filter(q => d[q.id] === q.a).length;
+  if (T.type === "mix") return T.qs.filter(q => xOk(T, q)).length;
+  if (T.type === "build") return T.qs.filter(q => bOk(q, d[q.id] || [])).length;
+  if (T.type === "pz") return T.qs.filter(q => pzOk(q, d[q.id])).length;
+  if (T.type === "sort") return T.items.filter(x => d[x.id] === x.b).length;
+  if (T.type === "order") return T.items.filter((x, i) => d[i] === x.id).length;
+  if (T.type === "input") return T.qs.filter(q => q.ok(d[q.id] || "")).length;
+  return 0; }
+function answered(id) { const T = TASKS[id], d = S.d[id] || (T.type === "order" ? [] : {});
+  if (S.t[id] && id !== "test") return true;
+  if (!STD_T.includes(T.type)) {
+    if (typeof CUSTOM_ANSWERED === "function") { const v = CUSTOM_ANSWERED(id); if (v != null) return !!v; }
+    const sd = SELDEFS(); for (const k in sd) if (sd[k][1] === id) return sd[k][0].every((_, i) => (S[k] || {})[i]);
+    if (typeof SUBMIT_HOOK === "function") { try { SUBMIT_HOOK(id); } catch (e) {} }
+    return !!(S.pend && S.pend[id] > 0); }
+  if (T.type === "itest") return !!S.t.test;
+  if (T.type === "mc") return T.qs.every(q => d[q.id] !== undefined);
+  if (T.type === "mix") return T.qs.every(q => xAns(T, q));
+  if (T.type === "build" || T.type === "pz") return T.qs.every(q => (d[q.id] || []).length === q.a.length);
+  if (T.type === "sort") return T.items.every(x => d[x.id]);
+  if (T.type === "order") return d.length === T.items.length;
+  if (T.type === "input") return T.qs.every(q => String(d[q.id] || "").trim());
+  return false; }
+function testFooter(T) { const n = T.qs.filter(q => !tAnswered(q)).length;
+  return S.econfirm
+    ? `<div class="checkbar" style="display:block"><p style="margin:0 0 8px"><b>Naozaj ukončiť?</b> Odpovede sa už nebudú dať zmeniť.${n ? ` Nezodpovedané otázky (${n}) budú za 0 bodov.` : ""}</p><div class="confirm"><button class="primary" data-teyes>Áno, zobraziť výsledok</button><button class="ghost" data-teno>Späť</button></div></div>`
+    : `<div class="checkbar"><button class="primary" data-tend>Zobraziť výsledok</button><span class="hint">${n ? `Nezodpovedané otázky: ${n} zo ${T.qs.length} (budú za 0 bodov).` : "Všetko máš zodpovedané."}</span></div>`; }
+
+/* MILOSKO: možnosti rovnakej dĺžky, líšia sa v detaile */
+(function () { const F = {"pq": {"4": ["dátum, fotoaparát, nastavenia, niekedy aj GPS poloha", "dátum, fotoaparát, nastavenia, nikdy nie GPS poloha", "farby všetkých pixelov a ich súradnice", "názov súboru, priečinok a veľkosť na disku"]}};
+  for (const t in F) { const T = TASKS[t]; if (!T || !T.qs) { console.warn("MCFIX task", t); continue; } T.qs.forEach(q => { const o = F[t][q.id]; if (!o) return; if (o.length !== q.opts.length) return; const n = new Array(o.length); n[q.a] = o[0]; let j = 1; for (let i = 0; i < o.length; i++) if (i !== q.a) n[i] = o[j++]; q.opts = n; }); } })();
 if (!S.started) S.cur = 0;
 if (S.testLocked && !S.t.test) S.cur = STEPS.findIndex(x => x.id === "test");
 render(true);
