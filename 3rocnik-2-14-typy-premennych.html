@@ -1414,6 +1414,31 @@ function testFooter(T) { const n = T.qs.filter(q => !tAnswered(q)).length;
 function autoChk(k) { if (S.testLocked) return; const C = [...document.querySelectorAll("[data-chk]")]; const hit = C.find(x => { const v = x.dataset.chk || ""; return v.endsWith("|" + k) || (v && k.startsWith(v + "_")) || (!v && C.length === 1); }); if (hit) hit.click(); }
 document.addEventListener("click", e => { const b = e.target.closest && e.target.closest("[data-run],[data-irun]"); if (b) autoChk(b.dataset.run || b.dataset.irun); });
 document.addEventListener("keydown", e => { if (e.key !== "F5") return; const t = e.target, k = t && t.dataset && (t.dataset.ed || t.dataset.ied); if (k) setTimeout(() => autoChk(k), 0); });
+/* MILOSKO: lepšie nesprávne možnosti pri otázkach Čo vypíše program? */
+(function () {
+  const dec = t => t.replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+  const bal = (x, a, b) => (x.split(a).length) === (x.split(b).length);
+  for (const T of Object.values(TASKS)) { if (!T || T.type !== "mc" || !T.qs) continue;
+    T.qs.forEach(q => { if (!/class="pcode"/.test(q.q)) return; const ok = String(q.opts[q.a]), okw = ok.split(" ");
+      const junk = x => { x = String(x); return !x || x === ok || /NaN/.test(x) || !bal(x, "[", "]") || !bal(x, "(", ")") || (x.split(" ").length > okw.length && x.split(" ").every(w => okw.includes(w))) || (x.split(" ").length < okw.length && /^[\[(]/.test(ok)); };
+      let oth = q.opts.filter((x, i) => i !== q.a).map(String).filter(x => !junk(x)); oth = [...new Set(oth)];
+      const need = Math.max(3, q.opts.length - 1); if (oth.length >= need) return;
+      const code = dec((q.q.match(/<div class="pcode"[^>]*>([\s\S]*?)<\/div>/) || [])[1] || ""), pool = [];
+      (code.match(/'([^'\n]{1,20})'|"([^"\n]{1,20})"/g) || []).forEach(m => pool.push(m.slice(1, -1)));
+      if (ok === "True" || ok === "False") pool.unshift(ok === "True" ? "False" : "True", "None");
+      if (/^-?\d+(\.\d+)?$/.test(ok)) { const n = +ok; pool.unshift(String(n + 1), String(n - 1), String(n * 2)); }
+      if (okw.length > 1) { pool.push(okw.slice(0, -1).join(" "), okw.slice(1).join(" "), [...okw].reverse().join(" ")); }
+      if (/^[\[(].*[\])]$/.test(ok)) { const L = ok[0], R = ok.slice(-1), it = ok.slice(1, -1) ? ok.slice(1, -1).split(", ") : [], mk = a => L + a.join(", ") + (L === "(" && a.length === 1 ? "," : "") + R;
+        const nums = it.length && it.every(x => /^-?\d+$/.test(x)) ? it.map(Number) : null;
+        if (it.length > 1) pool.unshift(mk(it.slice(0, -1)), mk([...it].reverse()), mk(it.slice(1)));
+        if (nums) { const d = nums.length > 1 ? nums[nums.length - 1] - nums[nums.length - 2] : 1; pool.unshift(mk([...it, String(nums[nums.length - 1] + d)]), mk(nums.map(x => String(x + 1)))); }
+        else if (it.length) { pool.push(mk(it.map(x => x.replace(/^'|'$/g, ""))), (L === "[" ? "(" : "[") + it.join(", ") + (L === "[" ? ")" : "]"), mk([it.map(x => x.replace(/^'|'$/g, "")).join("")].map(x => "'" + x + "'"))); }
+        if (!it.length) pool.unshift(L + "None" + R, L + "''" + R); }
+      if (okw.length === 1 && /^[a-z]+$/i.test(ok)) pool.push(ok.toUpperCase() === ok ? ok.toLowerCase() : ok.toUpperCase());
+      pool.push("None", "chyba");
+      for (const x of pool) { if (oth.length >= need) break; if (!junk(x) && !oth.includes(x) && !(/^[\[(]/.test(ok) && !/^[\[(]/.test(x))) oth.push(x); }
+      const n = new Array(oth.length + 1); n[q.a < n.length ? q.a : 0] = ok; if (q.a >= n.length) q.a = 0; let j = 0; for (let i = 0; i < n.length; i++) if (i !== q.a) n[i] = oth[j++]; q.opts = n; }); }
+})();
 /* MILOSKO: možnosti rovnakej dĺžky, líšia sa v detaile */
 (function () { const F = {"mc_typy": {"4": ["'A' (reťazec dĺžky 1)", "char A (znak)", "A (bez úvodzoviek)", "#A (s mriežkou)"]}, "px_logicke": {"1": ["True", "False", "None"], "2": ["False", "True", "None", "0"], "3": ["True", "False", "None"], "4": ["False", "True", "None"], "5": ["True", "False", "None"], "6": ["False", "True", "None", "1"], "7": ["True", "False", "None"], "8": ["True", "False", "None"]}, "px_prevody": {"8": ["TypeError", "ValueError", "NameError", "53"]}, "mc_prevody": {"3": ["5.0", "5", "'2.52.5'", "4.0"], "4": ["input() vždy vráti reťazec", "input() vždy vráti desatinné číslo", "input() vždy vráti celé číslo", "input() vráti typ podľa zadania"]}, "mc_programy": {"1": ["TypeError – nedá sa sčítať str a int", "vypíše vek zväčšený o 1", "vypíše vek s pripojenou 1", "ValueError – vek nie je číslo"], "3": ["print('vek:', v)", "print('vek:' + v)", "print(vek: v)", "print('vek:', + v)"]}};
   for (const t in F) { const T = TASKS[t]; if (!T || !T.qs) { console.warn("MCFIX task", t); continue; } T.qs.forEach(q => { const o = F[t][q.id]; if (!o) return; if (o.length !== q.opts.length) { console.warn("MCFIX len", t, q.id); return; } const n = new Array(o.length); n[q.a] = o[0]; let j = 1; for (let i = 0; i < o.length; i++) if (i !== q.a) n[i] = o[j++]; q.opts = n; }); } })();
