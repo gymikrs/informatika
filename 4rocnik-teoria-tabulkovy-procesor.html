@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Spracovanie dát v tabuľkovom procesore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Spracovanie dát v tabuľkovom procesore</title>
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--soft:#F3F7FD;--ink:#16213A;--muted:#566381;--line:#2F5BEA;--lineSoft:#D5DFFB;
+  --border:#C9D6EA;--ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--sun:#F0B429;--sunSoft:#FDF1D3;
+  --font:"Lexend","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.6}
+a{color:var(--line)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+/* hlavička */
+header.hero{padding:26px 0 18px}
+header h1{font-size:clamp(30px,5vw,50px);line-height:1.08;margin:12px 0 10px;letter-spacing:-.015em}
+header .sub{color:var(--muted);font-size:18px;margin:0;max-width:70ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:15px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+/* navigácia */
+nav.toc{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 0}
+nav.toc .wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+nav.toc .lbl{font-weight:700;font-size:14px;margin-right:2px}
+nav.toc a{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:32px;padding:0 10px;border-radius:999px;background:var(--surface);border:1.5px solid var(--border);text-decoration:none;color:var(--ink);font-weight:600;font-size:14px}
+nav.toc a:hover{border-color:var(--line);color:var(--line)}
+nav.toc .gap{width:14px}
+.part{background:var(--surface);border-radius:18px;padding:24px 26px;margin-top:18px;box-shadow:0 2px 10px rgba(22,33,58,.06)}
+.parth{display:flex;gap:14px;align-items:flex-start;padding-bottom:16px;margin-bottom:6px;border-bottom:2px solid var(--lineSoft)}
+/* blok: text vľavo, obrázok vpravo */
+.blk{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:start;padding:20px 0;border-bottom:1px dashed var(--border)}
+.blk:last-child{border-bottom:0;padding-bottom:4px}
+.blk.full{grid-template-columns:minmax(0,1fr)}
+.txt h3{margin:0 0 8px;font-size:21px;line-height:1.25;color:var(--ink)}
+.txt h4{margin:14px 0 4px;font-size:17px}
+.txt p{margin:0 0 10px}
+.txt p:last-child{margin-bottom:0}
+.txt ul,.txt ol{margin:0 0 10px;padding-left:22px}
+.txt li{margin:3px 0}
+.pics{display:flex;flex-direction:column;gap:14px}
+figure.pic{margin:0;background:var(--soft);border:1px solid var(--lineSoft);border-radius:14px;padding:12px}
+figure.pic svg{display:block;width:100%;height:auto}
+figure.pic svg text{font-family:var(--font)}
+figure.pic figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.4}
+/* tabuľky */
+.tw{overflow-x:auto;margin:6px 0 10px}
+table.tb{border-collapse:collapse;width:100%;font-size:15.5px}
+table.tb th,table.tb td{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+table.tb th{background:var(--lineSoft);font-weight:600}
+table.tb tr:nth-child(even) td{background:var(--soft)}
+table.tb td.c,table.tb th.c{text-align:center}
+/* kód a výpočty */
+pre.code{background:#16213A;color:#E8EDF7;border-radius:12px;padding:12px 16px;font-family:Consolas,"Courier New",monospace;font-size:15px;line-height:1.5;overflow-x:auto;margin:6px 0 10px}
+pre.code .k{color:#7FB2FF}pre.code .s{color:#9BE29B}pre.code .c{color:#8A97B5}
+code{font-family:Consolas,"Courier New",monospace;background:var(--soft);border:1px solid var(--lineSoft);border-radius:6px;padding:0 5px;font-size:.92em}
+.calc{background:var(--sunSoft);border-left:5px solid var(--sun);border-radius:10px;padding:12px 16px;margin:8px 0 10px}
+.calc b.h{display:block;margin-bottom:4px}
+.mono{font-family:Consolas,"Courier New",monospace}
+.def{background:var(--lineSoft);border-radius:10px;padding:10px 14px;margin:0 0 10px}
+footer{color:var(--muted);font-size:14px;padding:30px 0 40px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.parth{padding-bottom:14px;margin-bottom:6px;border-bottom:2px solid var(--lineSoft)}
+.parth h2{margin:0;font-size:clamp(22px,3vw,28px);line-height:1.2;display:flex;align-items:center;gap:12px}
+.parth h2::before{content:"";flex:0 0 auto;width:8px;height:30px;border-radius:4px;background:var(--line)}
+.only-m{display:none!important}
+@media (max-width:820px){
+  .only-d{display:none!important}.only-m{display:block!important}
+  .blk{grid-template-columns:minmax(0,1fr);gap:16px}
+  .part{padding:18px 16px}
+    body{font-size:16.5px}
+  table.tb{font-size:14px}
+  table.tb th,table.tb td{padding:6px 7px}
+}
+@media print{nav.toc{display:none}body{background:#fff}.part{box-shadow:none;border:1px solid #ccc;break-inside:auto}}
+
+/* tlač a zvýraznenie */
+.printbtn{display:inline-flex;align-items:center;gap:8px;margin-top:6px;padding:9px 18px;border-radius:999px;border:0;background:var(--line);color:#fff;font:600 15px var(--font);cursor:pointer;box-shadow:0 2px 8px rgba(47,91,234,.25)}
+.printbtn:hover{background:#2449c4}
+.titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
+.titlerow h1{margin:12px 0 10px}
+.titlerow .printbtn{margin-top:0;flex:0 0 auto}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .printbtn,nav.toc{display:none!important}
+  body{background:#fff;font-size:10.5pt}
+  .blk{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)!important;gap:18px!important;padding:10px 0!important}
+  .blk.full{grid-template-columns:minmax(0,1fr)!important}
+  .part{padding:14px 16px!important;margin-top:10px}
+  .only-d{display:block!important}.only-m{display:none!important}
+  header.hero{padding:6px 0}
+  .part{box-shadow:none;border:1px solid #C9D6EA}
+  figure.pic,table.tb tr,pre.code{break-inside:avoid}
+  .txt h3,.parth{break-after:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="titlerow"><h1>Spracovanie dát v tabuľkovom procesore</h1><button class="printbtn" type="button" onclick="window.print()">🖨️ Vytlačiť / Stiahnuť PDF</button></div>
+</div></header>
+<nav class="toc" aria-label="Obsah"><div class="wrap">
+  <span class="lbl">Obsah:</span><a href="#priemer">Priemer</a><a href="#podmienka">Funkcia IF</a><a href="#formatovanie">Podmienené formátovanie</a><a href="#triedenie">Triedenie, MIN a MAX</a>
+</div></nav>
+<main class="wrap">
+<div class="part" id="priemer">
+<div class="parth"><h2>Tabuľkový procesor a výpočet priemeru</h2></div>
+
+<div class="blk">
+<div class="txt">
+<h3>Čo je tabuľkový procesor</h3>
+<div class="def"><b>Tabuľkový procesor</b> je program na spracovanie údajov v tabuľkách – výpočty pomocou vzorcov a funkcií, triedenie, filtrovanie a tvorbu grafov. Najznámejšie sú <b>Microsoft Excel</b>, <b>Google Tabuľky</b> a <b>LibreOffice Calc</b>.</div>
+<p>Súbor sa nazýva <b>zošit</b> a skladá sa z <b>hárkov</b>. Hárok tvoria <b>stĺpce</b> (označené písmenami A, B, C…) a <b>riadky</b> (čísla 1, 2, 3…). Ich priesečník je <b>bunka</b>, ktorá má svoju <b>adresu</b> – napr. <code>C2</code> je bunka v stĺpci C a riadku 2.</p>
+<p>Skupina susedných buniek je <b>rozsah</b> (oblasť), zapisuje sa dvojbodkou: <code>C2:H2</code> sú všetky bunky od C2 po H2.</p>
+<p><b>Vzorec</b> vždy začína znakom <b>=</b>. Môže obsahovať čísla, adresy buniek, operátory (+ − * / ^) a <b>funkcie</b> (SUM, AVERAGE, MIN, MAX, IF…). Keď sa zmení hodnota v bunke, výsledok vzorca sa <b>automaticky prepočíta</b>.</p>
+</div>
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 192" role="img" aria-label="Okno tabuľkového procesora"><rect x="1" y="1" width="318" height="190" rx="8" fill="#fff" stroke="#16213A" stroke-width="1.5"/><rect x="1" y="1" width="318" height="22" rx="8" fill="#107C41"/><rect x="1" y="14" width="318" height="9" fill="#107C41"/><text x="160.0" y="16" text-anchor="middle" font-size="10.5" fill="#fff" font-weight="600">znamky.xlsx – Excel</text><rect x="8" y="30" width="42" height="20" rx="3" fill="#fff" stroke="#C9D6EA"/><text x="29" y="44" text-anchor="middle" font-size="10.5" fill="#16213A">I2</text><text x="60" y="44" font-size="11" font-style="italic" fill="#566381">fx</text><rect x="76" y="30" width="236" height="20" rx="3" fill="#fff" stroke="#C9D6EA"/><text x="82" y="44" font-size="10.5" font-family="Consolas, monospace" fill="#16213A">=AVERAGE(C2:H2)</text><rect x="1" y="60" width="318" height="20" fill="#F0F2F5"/><rect x="1" y="60" width="23" height="120" fill="#F0F2F5"/><text x="59.0" y="74" text-anchor="middle" font-size="10" fill="#566381">B</text><text x="106.0" y="74" text-anchor="middle" font-size="10" fill="#566381">C</text><text x="130.0" y="74" text-anchor="middle" font-size="10" fill="#566381">D</text><text x="154.0" y="74" text-anchor="middle" font-size="10" fill="#566381">E</text><text x="178.0" y="74" text-anchor="middle" font-size="10" fill="#566381">F</text><text x="202.0" y="74" text-anchor="middle" font-size="10" fill="#566381">G</text><text x="226.0" y="74" text-anchor="middle" font-size="10" fill="#566381">H</text><text x="264.0" y="74" text-anchor="middle" font-size="10" fill="#566381">I</text><text x="13.0" y="94" text-anchor="middle" font-size="10" fill="#566381">1</text><text x="13.0" y="114" text-anchor="middle" font-size="10" fill="#566381">2</text><text x="13.0" y="134" text-anchor="middle" font-size="10" fill="#566381">3</text><text x="13.0" y="154" text-anchor="middle" font-size="10" fill="#566381">4</text><text x="13.0" y="174" text-anchor="middle" font-size="10" fill="#566381">5</text><text x="28" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">meno</text><text x="98" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">mat</text><text x="122" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">fyz</text><text x="146" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">che</text><text x="170" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">bio</text><text x="194" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">inf</text><text x="218" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">dej</text><text x="242" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">priemer</text><text x="28" y="114" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Jana N.</text><text x="114" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="138" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="162" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><text x="186" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="210" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="234" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><rect x="238" y="100" width="52" height="20" fill="#E3F4EA"/><text x="286" y="114" text-anchor="end" font-size="10" font-weight="700" fill="#16213A">1,33</text><text x="28" y="134" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Peter H.</text><text x="114" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><text x="138" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3</text><text x="162" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><text x="186" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3</text><text x="210" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><text x="234" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3</text><text x="286" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2,50</text><text x="28" y="154" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Mária K.</text><text x="114" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="138" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="162" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="186" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="210" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><text x="234" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="286" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,17</text><text x="28" y="174" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Tomáš V.</text><text x="114" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3</text><text x="138" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><text x="162" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3</text><text x="186" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><text x="210" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3</text><text x="234" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3</text><text x="286" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2,67</text><line x1="24" y1="60" x2="24" y2="180" stroke="#DADFE6"/><line x1="94" y1="60" x2="94" y2="180" stroke="#DADFE6"/><line x1="118" y1="60" x2="118" y2="180" stroke="#DADFE6"/><line x1="142" y1="60" x2="142" y2="180" stroke="#DADFE6"/><line x1="166" y1="60" x2="166" y2="180" stroke="#DADFE6"/><line x1="190" y1="60" x2="190" y2="180" stroke="#DADFE6"/><line x1="214" y1="60" x2="214" y2="180" stroke="#DADFE6"/><line x1="238" y1="60" x2="238" y2="180" stroke="#DADFE6"/><line x1="290" y1="60" x2="290" y2="180" stroke="#DADFE6"/><line x1="1" y1="60" x2="290" y2="60" stroke="#DADFE6"/><line x1="1" y1="80" x2="290" y2="80" stroke="#DADFE6"/><line x1="1" y1="100" x2="290" y2="100" stroke="#DADFE6"/><line x1="1" y1="120" x2="290" y2="120" stroke="#DADFE6"/><line x1="1" y1="140" x2="290" y2="140" stroke="#DADFE6"/><line x1="1" y1="160" x2="290" y2="160" stroke="#DADFE6"/><line x1="1" y1="180" x2="290" y2="180" stroke="#DADFE6"/><rect x="238" y="100" width="52" height="20" fill="none" stroke="#107C41" stroke-width="2.5"/><rect x="287" y="117" width="6" height="6" fill="#107C41"/></svg>
+<figcaption>Bunka I2 je vybraná, v riadku vzorcov (fx) vidno jej vzorec, v bunke výsledok.</figcaption>
+</figure></div>
+</div>
+
+<div class="blk">
+<div class="txt">
+<h3>Vzorec pre aritmetický priemer</h3>
+<p><b>Aritmetický priemer</b> je súčet všetkých hodnôt vydelený ich počtom. Ak má žiak 6 známok v bunkách C2 až H2, priemer vypočítame jedným z týchto vzorcov:</p>
+<div class="tw"><table class="tb">
+<tr><th>Spôsob</th><th>Vzorec</th></tr>
+<tr><td>funkcia priemeru</td><td><code>=AVERAGE(C2:H2)</code></td></tr>
+<tr><td>súčet / počet</td><td><code>=SUM(C2:H2)/6</code> alebo <code>=SUM(C2:H2)/COUNT(C2:H2)</code></td></tr>
+<tr><td>ručne po bunkách</td><td><code>=(C2+D2+E2+F2+G2+H2)/6</code></td></tr>
+</table></div>
+<p>Najvhodnejší je <code>AVERAGE</code> – je krátky a ak niektorá bunka chýba (je prázdna), funkcia ju nezapočíta.</p>
+<div class="calc"><b class="h">Ručné overenie – Jana Nováková (známky 1, 1, 2, 1, 1, 2)</b>
+súčet: 1 + 1 + 2 + 1 + 1 + 2 = 8<br>
+počet známok: 6<br>
+priemer: 8 : 6 = 1,333… ≈ <b>1,33</b> – zhoduje sa s výsledkom vzorca.</div>
+<p><b>Kopírovanie vzorca:</b> vzorec napíšeme len raz do I2 a potiahneme ho za pravý dolný roh bunky (úchyt) nadol. Adresy sa samy posunú – v I3 bude <code>=AVERAGE(C3:H3)</code>.</p>
+</div>
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 200" role="img" aria-label="Kopírovanie vzorca ťahaním">
+<g font-family="Consolas, monospace" font-size="11" fill="#16213A">
+<rect x="20" y="20" width="56" height="34" fill="#F0F2F5" stroke="#DADFE6"/><text x="48" y="42" text-anchor="middle" font-family="Lexend, sans-serif" font-weight="700" fill="#566381">I</text>
+<rect x="76" y="20" width="230" height="34" fill="#F0F2F5" stroke="#DADFE6"/><text x="190" y="42" text-anchor="middle" font-family="Lexend, sans-serif" fill="#566381">vzorec v bunke</text>
+<rect x="20" y="54" width="56" height="34" fill="#E3F4EA" stroke="#107C41" stroke-width="2.5"/><text x="48" y="76" text-anchor="middle">1,33</text>
+<rect x="76" y="54" width="230" height="34" fill="#fff" stroke="#DADFE6"/><text x="86" y="76">=AVERAGE(C<tspan fill="#C0392B" font-weight="700">2</tspan>:H<tspan fill="#C0392B" font-weight="700">2</tspan>)</text>
+<rect x="20" y="88" width="56" height="34" fill="#fff" stroke="#DADFE6" stroke-dasharray="4 3"/><text x="48" y="110" text-anchor="middle">2,50</text>
+<rect x="76" y="88" width="230" height="34" fill="#fff" stroke="#DADFE6"/><text x="86" y="110">=AVERAGE(C<tspan fill="#C0392B" font-weight="700">3</tspan>:H<tspan fill="#C0392B" font-weight="700">3</tspan>)</text>
+<rect x="20" y="122" width="56" height="34" fill="#fff" stroke="#DADFE6" stroke-dasharray="4 3"/><text x="48" y="144" text-anchor="middle">1,17</text>
+<rect x="76" y="122" width="230" height="34" fill="#fff" stroke="#DADFE6"/><text x="86" y="144">=AVERAGE(C<tspan fill="#C0392B" font-weight="700">4</tspan>:H<tspan fill="#C0392B" font-weight="700">4</tspan>)</text>
+</g>
+<rect x="72" y="84" width="8" height="8" fill="#107C41"/>
+<path d="M10 70 V150" stroke="#107C41" stroke-width="3"/><path d="M4 146 l6 10 6-10z" fill="#107C41"/>
+<text x="163" y="184" text-anchor="middle" font-size="11.5" font-weight="600" fill="#566381">ťahaním za úchyt sa adresy riadkov posúvajú</text>
+</svg>
+<figcaption>Skopírovaný vzorec počíta vždy s riadkom, v ktorom sa nachádza.</figcaption>
+</figure>
+<figure class="pic">
+<svg viewBox="0 0 320 140" role="img" aria-label="Priemer ako súčet delený počtom">
+<text x="122" y="14" text-anchor="middle" font-size="10.5" fill="#566381">známky C2:H2</text><rect x="20" y="22" width="30" height="30" rx="5" fill="#E3F4EA" stroke="#107C41"/><text x="35" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#16213A">1</text><rect x="54" y="22" width="30" height="30" rx="5" fill="#E3F4EA" stroke="#107C41"/><text x="69" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#16213A">1</text><rect x="88" y="22" width="30" height="30" rx="5" fill="#E3F4EA" stroke="#107C41"/><text x="103" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#16213A">2</text><rect x="122" y="22" width="30" height="30" rx="5" fill="#E3F4EA" stroke="#107C41"/><text x="137" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#16213A">1</text><rect x="156" y="22" width="30" height="30" rx="5" fill="#E3F4EA" stroke="#107C41"/><text x="171" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#16213A">1</text><rect x="190" y="22" width="30" height="30" rx="5" fill="#E3F4EA" stroke="#107C41"/><text x="205" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#16213A">2</text>
+<rect x="240" y="22" width="74" height="30" rx="6" fill="#2F5BEA"/><text x="277" y="42" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">AVERAGE</text>
+<text x="230" y="42" text-anchor="middle" font-size="14" fill="#16213A">→</text>
+<g font-size="13" font-weight="700" text-anchor="middle">
+<rect x="20" y="76" width="84" height="40" rx="8" fill="#FDF1D3"/><text x="62" y="93" fill="#B9822B">SUM</text><text x="62" y="110" fill="#16213A">8</text>
+<text x="122" y="102" fill="#16213A">:</text>
+<rect x="140" y="76" width="84" height="40" rx="8" fill="#FDF1D3"/><text x="182" y="93" fill="#B9822B">COUNT</text><text x="182" y="110" fill="#16213A">6</text>
+<text x="242" y="102" fill="#16213A">=</text>
+<rect x="258" y="76" width="54" height="40" rx="8" fill="#107C41"/><text x="285" y="102" fill="#fff">1,33</text>
+</g>
+<text x="160" y="134" text-anchor="middle" font-size="10.5" fill="#566381">priemer = súčet známok : počet známok</text>
+</svg>
+<figcaption>AVERAGE robí to isté ako SUM vydelené počtom (COUNT).</figcaption>
+</figure></div>
+</div>
+</div>
+<div class="part" id="podmienka">
+<div class="parth"><h2>Podmienka vo vzorci</h2></div>
+
+<div class="blk">
+<div class="txt">
+<h3>Podmienka vo vzorci – funkcia IF</h3>
+<p>Funkcia <b>IF</b> (ak) vráti jednu hodnotu, ak je podmienka splnená, a inú, ak nie je:</p>
+<p><code>=IF(podmienka; hodnota_ak_áno; hodnota_ak_nie)</code></p>
+<p>Ak má byť v stĺpci klasifikácie písmeno <b>P</b> vtedy, keď je priemer v intervale 1 až 1,50, inak <b>N</b>, musia platiť <b>dve podmienky súčasne</b>. Spojíme ich funkciou <b>AND</b> (a zároveň):</p>
+<pre class="code">=IF(AND(I2&gt;=1;I2&lt;=1,5);"P";"N")</pre>
+<p>Keďže priemer nemôže byť menší ako 1, stačí aj jednoduchší vzorec <code>=IF(I2&lt;=1,5;"P";"N")</code>. Text vo vzorci píšeme v <b>úvodzovkách</b>.</p>
+<p>Počet žiakov s označením P a N zistíme funkciou <b>COUNTIF</b>, ktorá spočíta bunky spĺňajúce podmienku:</p>
+<pre class="code">=COUNTIF(J2:J16;"P")    → 6 žiakov
+=COUNTIF(J2:J16;"N")    → 9 žiakov</pre>
+<p>Kontrola: 6 + 9 = 15, teda všetci žiaci v súbore.</p>
+</div>
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 252" role="img" aria-label="Okno tabuľkového procesora"><rect x="1" y="1" width="318" height="250" rx="8" fill="#fff" stroke="#16213A" stroke-width="1.5"/><rect x="1" y="1" width="318" height="22" rx="8" fill="#107C41"/><rect x="1" y="14" width="318" height="9" fill="#107C41"/><text x="160.0" y="16" text-anchor="middle" font-size="10.5" fill="#fff" font-weight="600">znamky.xlsx – Excel</text><rect x="8" y="30" width="42" height="20" rx="3" fill="#fff" stroke="#C9D6EA"/><text x="29" y="44" text-anchor="middle" font-size="10.5" fill="#16213A">J2</text><text x="60" y="44" font-size="11" font-style="italic" fill="#566381">fx</text><rect x="76" y="30" width="236" height="20" rx="3" fill="#fff" stroke="#C9D6EA"/><text x="82" y="44" font-size="10.5" font-family="Consolas, monospace" fill="#16213A">=IF(AND(I2&gt;=1;I2&lt;=1,5);"P";"N")</text><rect x="1" y="60" width="318" height="20" fill="#F0F2F5"/><rect x="1" y="60" width="23" height="180" fill="#F0F2F5"/><text x="84.0" y="74" text-anchor="middle" font-size="10" fill="#566381">B</text><text x="179.0" y="74" text-anchor="middle" font-size="10" fill="#566381">I</text><text x="249.0" y="74" text-anchor="middle" font-size="10" fill="#566381">J</text><text x="13.0" y="94" text-anchor="middle" font-size="10" fill="#566381">1</text><text x="13.0" y="114" text-anchor="middle" font-size="10" fill="#566381">2</text><text x="13.0" y="134" text-anchor="middle" font-size="10" fill="#566381">3</text><text x="13.0" y="154" text-anchor="middle" font-size="10" fill="#566381">4</text><text x="13.0" y="174" text-anchor="middle" font-size="10" fill="#566381">5</text><text x="13.0" y="194" text-anchor="middle" font-size="10" fill="#566381">6</text><text x="13.0" y="214" text-anchor="middle" font-size="10" fill="#566381">7</text><text x="13.0" y="234" text-anchor="middle" font-size="10" fill="#566381">8</text><text x="28" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">meno</text><text x="148" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">priemer</text><text x="218" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">klasif.</text><text x="28" y="114" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Jana Nováková</text><text x="210" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,33</text><rect x="214" y="100" width="70" height="20" fill="#DDF3EA"/><text x="249.0" y="114" text-anchor="middle" font-size="10" font-weight="700" fill="#12805A">P</text><text x="28" y="134" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Peter Horváth</text><text x="210" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2,50</text><rect x="214" y="120" width="70" height="20" fill="#FBE3E0"/><text x="249.0" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#C0392B">N</text><text x="28" y="154" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Mária Kováčová</text><text x="210" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,17</text><rect x="214" y="140" width="70" height="20" fill="#DDF3EA"/><text x="249.0" y="154" text-anchor="middle" font-size="10" font-weight="700" fill="#12805A">P</text><text x="28" y="174" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Tomáš Varga</text><text x="210" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2,67</text><rect x="214" y="160" width="70" height="20" fill="#FBE3E0"/><text x="249.0" y="174" text-anchor="middle" font-size="10" font-weight="700" fill="#C0392B">N</text><text x="28" y="194" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Eva Szabóová</text><text x="210" y="194" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,50</text><rect x="214" y="180" width="70" height="20" fill="#DDF3EA"/><text x="249.0" y="194" text-anchor="middle" font-size="10" font-weight="700" fill="#12805A">P</text><text x="28" y="214" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Lukáš Baláž</text><text x="210" y="214" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3,67</text><rect x="214" y="200" width="70" height="20" fill="#FBE3E0"/><text x="249.0" y="214" text-anchor="middle" font-size="10" font-weight="700" fill="#C0392B">N</text><text x="28" y="234" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Katarína Molnárová</text><text x="210" y="234" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2,50</text><rect x="214" y="220" width="70" height="20" fill="#FBE3E0"/><text x="249.0" y="234" text-anchor="middle" font-size="10" font-weight="700" fill="#C0392B">N</text><line x1="24" y1="60" x2="24" y2="240" stroke="#DADFE6"/><line x1="144" y1="60" x2="144" y2="240" stroke="#DADFE6"/><line x1="214" y1="60" x2="214" y2="240" stroke="#DADFE6"/><line x1="284" y1="60" x2="284" y2="240" stroke="#DADFE6"/><line x1="1" y1="60" x2="284" y2="60" stroke="#DADFE6"/><line x1="1" y1="80" x2="284" y2="80" stroke="#DADFE6"/><line x1="1" y1="100" x2="284" y2="100" stroke="#DADFE6"/><line x1="1" y1="120" x2="284" y2="120" stroke="#DADFE6"/><line x1="1" y1="140" x2="284" y2="140" stroke="#DADFE6"/><line x1="1" y1="160" x2="284" y2="160" stroke="#DADFE6"/><line x1="1" y1="180" x2="284" y2="180" stroke="#DADFE6"/><line x1="1" y1="200" x2="284" y2="200" stroke="#DADFE6"/><line x1="1" y1="220" x2="284" y2="220" stroke="#DADFE6"/><line x1="1" y1="240" x2="284" y2="240" stroke="#DADFE6"/><rect x="214" y="100" width="70" height="20" fill="none" stroke="#107C41" stroke-width="2.5"/><rect x="281" y="117" width="6" height="6" fill="#107C41"/></svg>
+<figcaption>Funkcia IF zapíše P alebo N podľa priemeru žiaka.</figcaption>
+</figure></div>
+</div>
+</div>
+<div class="part" id="formatovanie">
+<div class="parth"><h2>Podmienené formátovanie</h2></div>
+
+<div class="blk">
+<div class="txt">
+<h3>Podmienené formátovanie</h3>
+<div class="def"><b>Podmienené formátovanie</b> automaticky zmení vzhľad bunky (farbu výplne, písma, rámik, ikonu) podľa toho, akú hodnotu bunka obsahuje. Ak sa hodnota zmení, zmení sa aj formát.</div>
+<p><b>Účel:</b> dôležité alebo neobvyklé údaje sú v tabuľke <b>na prvý pohľad viditeľné</b> bez toho, aby sme museli čítať každé číslo. Nastavuje sa cez <i>Domov → Podmienené formátovanie</i>.</p>
+<div class="tw"><table class="tb">
+<tr><th>Typ pravidla</th><th>Príklad využitia</th></tr>
+<tr><td>zvýrazniť bunky väčšie / menšie ako…</td><td>známky 4 a 5 červenou, nedostatočný počet bodov</td></tr>
+<tr><td>farebná škála</td><td>teploty od modrej (studené) po červenú (teplé), prospech tried</td></tr>
+<tr><td>údajové pruhy</td><td>tržby predajní, počet vymeškaných hodín</td></tr>
+<tr><td>sady ikon</td><td>šípky rastu a poklesu cien, semafor plnenia plánu</td></tr>
+<tr><td>duplicitné hodnoty</td><td>dvakrát zapísaný žiak alebo e-mail v zozname</td></tr>
+<tr><td>dátumy</td><td>termíny, ktoré už vypršali alebo vyprší tento týždeň</td></tr>
+</table></div>
+</div>
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 212" role="img" aria-label="Okno tabuľkového procesora"><rect x="1" y="1" width="318" height="210" rx="8" fill="#fff" stroke="#16213A" stroke-width="1.5"/><rect x="1" y="1" width="318" height="22" rx="8" fill="#107C41"/><rect x="1" y="14" width="318" height="9" fill="#107C41"/><text x="160.0" y="16" text-anchor="middle" font-size="10.5" fill="#fff" font-weight="600">Podmienené formátovanie – farebná škála</text><rect x="8" y="30" width="42" height="20" rx="3" fill="#fff" stroke="#C9D6EA"/><text x="29" y="44" text-anchor="middle" font-size="10.5" fill="#16213A">C2</text><text x="60" y="44" font-size="11" font-style="italic" fill="#566381">fx</text><rect x="76" y="30" width="236" height="20" rx="3" fill="#fff" stroke="#C9D6EA"/><text x="82" y="44" font-size="10.5" font-family="Consolas, monospace" fill="#16213A"></text><rect x="1" y="60" width="318" height="20" fill="#F0F2F5"/><rect x="1" y="60" width="23" height="140" fill="#F0F2F5"/><text x="59.0" y="74" text-anchor="middle" font-size="10" fill="#566381">B</text><text x="110.0" y="74" text-anchor="middle" font-size="10" fill="#566381">C</text><text x="142.0" y="74" text-anchor="middle" font-size="10" fill="#566381">D</text><text x="174.0" y="74" text-anchor="middle" font-size="10" fill="#566381">E</text><text x="206.0" y="74" text-anchor="middle" font-size="10" fill="#566381">F</text><text x="238.0" y="74" text-anchor="middle" font-size="10" fill="#566381">G</text><text x="270.0" y="74" text-anchor="middle" font-size="10" fill="#566381">H</text><text x="13.0" y="94" text-anchor="middle" font-size="10" fill="#566381">1</text><text x="13.0" y="114" text-anchor="middle" font-size="10" fill="#566381">2</text><text x="13.0" y="134" text-anchor="middle" font-size="10" fill="#566381">3</text><text x="13.0" y="154" text-anchor="middle" font-size="10" fill="#566381">4</text><text x="13.0" y="174" text-anchor="middle" font-size="10" fill="#566381">5</text><text x="13.0" y="194" text-anchor="middle" font-size="10" fill="#566381">6</text><text x="28" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">meno</text><text x="98" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">mat</text><text x="130" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">fyz</text><text x="162" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">che</text><text x="194" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">bio</text><text x="226" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">inf</text><text x="258" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">dej</text><text x="28" y="114" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Jana</text><rect x="94" y="100" width="32" height="20" fill="#BFE6CF"/><text x="110.0" y="114" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><rect x="126" y="100" width="32" height="20" fill="#BFE6CF"/><text x="142.0" y="114" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><rect x="158" y="100" width="32" height="20" fill="#E3F4EA"/><text x="174.0" y="114" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">2</text><rect x="190" y="100" width="32" height="20" fill="#BFE6CF"/><text x="206.0" y="114" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><rect x="222" y="100" width="32" height="20" fill="#BFE6CF"/><text x="238.0" y="114" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><rect x="254" y="100" width="32" height="20" fill="#E3F4EA"/><text x="270.0" y="114" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">2</text><text x="28" y="134" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Lukáš</text><rect x="94" y="120" width="32" height="20" fill="#F8D3CC"/><text x="110.0" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#16213A">4</text><rect x="126" y="120" width="32" height="20" fill="#FDF1D3"/><text x="142.0" y="134" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">3</text><rect x="158" y="120" width="32" height="20" fill="#F8D3CC"/><text x="174.0" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#16213A">4</text><rect x="190" y="120" width="32" height="20" fill="#FDF1D3"/><text x="206.0" y="134" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">3</text><rect x="222" y="120" width="32" height="20" fill="#F8D3CC"/><text x="238.0" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#16213A">4</text><rect x="254" y="120" width="32" height="20" fill="#F8D3CC"/><text x="270.0" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#16213A">4</text><text x="28" y="154" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Katarína</text><rect x="94" y="140" width="32" height="20" fill="#E3F4EA"/><text x="110.0" y="154" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">2</text><rect x="126" y="140" width="32" height="20" fill="#E3F4EA"/><text x="142.0" y="154" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">2</text><rect x="158" y="140" width="32" height="20" fill="#E3F4EA"/><text x="174.0" y="154" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">2</text><rect x="190" y="140" width="32" height="20" fill="#E3F4EA"/><text x="206.0" y="154" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">2</text><rect x="222" y="140" width="32" height="20" fill="#E3F4EA"/><text x="238.0" y="154" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">2</text><rect x="254" y="140" width="32" height="20" fill="#E8968A"/><text x="270.0" y="154" text-anchor="middle" font-size="10" font-weight="700" fill="#16213A">5</text><text x="28" y="174" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Barbora</text><rect x="94" y="160" width="32" height="20" fill="#FDF1D3"/><text x="110.0" y="174" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">3</text><rect x="126" y="160" width="32" height="20" fill="#F8D3CC"/><text x="142.0" y="174" text-anchor="middle" font-size="10" font-weight="700" fill="#16213A">4</text><rect x="158" y="160" width="32" height="20" fill="#FDF1D3"/><text x="174.0" y="174" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">3</text><rect x="190" y="160" width="32" height="20" fill="#F8D3CC"/><text x="206.0" y="174" text-anchor="middle" font-size="10" font-weight="700" fill="#16213A">4</text><rect x="222" y="160" width="32" height="20" fill="#FDF1D3"/><text x="238.0" y="174" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">3</text><rect x="254" y="160" width="32" height="20" fill="#F8D3CC"/><text x="270.0" y="174" text-anchor="middle" font-size="10" font-weight="700" fill="#16213A">4</text><text x="28" y="194" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Mária</text><rect x="94" y="180" width="32" height="20" fill="#BFE6CF"/><text x="110.0" y="194" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><rect x="126" y="180" width="32" height="20" fill="#BFE6CF"/><text x="142.0" y="194" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><rect x="158" y="180" width="32" height="20" fill="#BFE6CF"/><text x="174.0" y="194" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><rect x="190" y="180" width="32" height="20" fill="#BFE6CF"/><text x="206.0" y="194" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><rect x="222" y="180" width="32" height="20" fill="#E3F4EA"/><text x="238.0" y="194" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">2</text><rect x="254" y="180" width="32" height="20" fill="#BFE6CF"/><text x="270.0" y="194" text-anchor="middle" font-size="10" font-weight="400" fill="#16213A">1</text><line x1="24" y1="60" x2="24" y2="200" stroke="#DADFE6"/><line x1="94" y1="60" x2="94" y2="200" stroke="#DADFE6"/><line x1="126" y1="60" x2="126" y2="200" stroke="#DADFE6"/><line x1="158" y1="60" x2="158" y2="200" stroke="#DADFE6"/><line x1="190" y1="60" x2="190" y2="200" stroke="#DADFE6"/><line x1="222" y1="60" x2="222" y2="200" stroke="#DADFE6"/><line x1="254" y1="60" x2="254" y2="200" stroke="#DADFE6"/><line x1="286" y1="60" x2="286" y2="200" stroke="#DADFE6"/><line x1="1" y1="60" x2="286" y2="60" stroke="#DADFE6"/><line x1="1" y1="80" x2="286" y2="80" stroke="#DADFE6"/><line x1="1" y1="100" x2="286" y2="100" stroke="#DADFE6"/><line x1="1" y1="120" x2="286" y2="120" stroke="#DADFE6"/><line x1="1" y1="140" x2="286" y2="140" stroke="#DADFE6"/><line x1="1" y1="160" x2="286" y2="160" stroke="#DADFE6"/><line x1="1" y1="180" x2="286" y2="180" stroke="#DADFE6"/><line x1="1" y1="200" x2="286" y2="200" stroke="#DADFE6"/></svg>
+<figcaption>Farebná škála: lepšie známky zelenou, horšie červenou – problémové predmety vidno hneď.</figcaption>
+</figure>
+<figure class="pic">
+<svg viewBox="0 0 320 140" role="img" aria-label="Pravidlo podmieneného formátovania">
+<rect x="4" y="4" width="312" height="132" rx="8" fill="#fff" stroke="#16213A" stroke-width="1.5"/>
+<rect x="4" y="4" width="312" height="22" rx="8" fill="#107C41"/><rect x="4" y="16" width="312" height="10" fill="#107C41"/>
+<text x="160" y="19" text-anchor="middle" font-size="10.5" font-weight="600" fill="#fff">Nové pravidlo formátovania</text>
+<g font-size="10.5" fill="#16213A"><text x="14" y="46">Formátovať bunky, ktorých hodnota je</text>
+<rect x="14" y="54" width="110" height="22" rx="3" fill="#F3F7FD" stroke="#C9D6EA"/><text x="20" y="69">väčšia alebo rovná</text>
+<rect x="132" y="54" width="46" height="22" rx="3" fill="#F3F7FD" stroke="#C9D6EA"/><text x="148" y="69" font-weight="700">4</text>
+<text x="14" y="98">Formát:</text><rect x="62" y="84" width="116" height="22" rx="3" fill="#F8D3CC" stroke="#C0392B"/><text x="120" y="99" text-anchor="middle" font-weight="700" fill="#C0392B">červená výplň</text></g>
+<g font-size="13" font-weight="700" text-anchor="middle">
+<rect x="204" y="44" width="30" height="28" fill="#fff" stroke="#DADFE6"/><text x="219" y="63">2</text>
+<rect x="236" y="44" width="30" height="28" fill="#F8D3CC" stroke="#DADFE6"/><text x="251" y="63">4</text>
+<rect x="268" y="44" width="30" height="28" fill="#fff" stroke="#DADFE6"/><text x="283" y="63">1</text>
+<rect x="204" y="74" width="30" height="28" fill="#E8968A" stroke="#DADFE6"/><text x="219" y="93">5</text>
+<rect x="236" y="74" width="30" height="28" fill="#fff" stroke="#DADFE6"/><text x="251" y="93">3</text>
+<rect x="268" y="74" width="30" height="28" fill="#F8D3CC" stroke="#DADFE6"/><text x="283" y="93">4</text></g>
+<text x="251" y="124" text-anchor="middle" font-size="10" fill="#566381">výsledok</text>
+</svg>
+<figcaption>Pravidlo: všetky známky 4 a 5 sa automaticky vyfarbia na červeno.</figcaption>
+</figure></div>
+</div>
+</div>
+<div class="part" id="triedenie">
+<div class="parth"><h2>Triedenie a funkcie MIN a MAX</h2></div>
+
+<div class="blk">
+<div class="txt">
+<h3>Triedenie a funkcie MIN a MAX</h3>
+<p><b>Postup zoradenia:</b> označíme celú tabuľku (aj s hlavičkou), zvolíme <i>Údaje → Zoradiť</i>, vyberieme stĺpec <b>priemer</b> a poradie <b>od najmenšieho po najväčšie</b> (vzostupne). Je dôležité označiť všetky stĺpce, inak by sa priemery „odtrhli“ od mien.</p>
+<div class="calc"><b class="h">Výsledné poradie (vzostupne podľa priemeru)</b>
+1,17 – Mária Kováčová, Martin Fekete, Zuzana Peterová, Zuzana Novotná · 1,33 – Jana Nováková · 1,50 – Eva Szabóová · 2,50 – Peter Horváth, Katarína Molnárová, Filip Krajčí, Andrej Dúžik · 2,67 – Tomáš Varga · 3,50 – Barbora Hudáková · 3,67 – Lukáš Baláž · 3,83 – Jakub Takáč, Jakub Koláč</div>
+<p><code>=MIN(I2:I16)</code> vráti najmenšiu hodnotu = <b>1,17</b>, <code>=MAX(I2:I16)</code> najväčšiu = <b>3,83</b>.</p>
+<p><b>Prečo najlepší priemer = MIN:</b> v slovenskej klasifikácii je <b>1 najlepšia</b> a 5 najhoršia známka. Čím je priemer menší, tým je žiak lepší – preto najlepší priemer nájde funkcia MIN a najhorší funkcia MAX. Pri bodoch alebo percentách je to naopak.</p>
+</div>
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 292" role="img" aria-label="Okno tabuľkového procesora"><rect x="1" y="1" width="318" height="290" rx="8" fill="#fff" stroke="#16213A" stroke-width="1.5"/><rect x="1" y="1" width="318" height="22" rx="8" fill="#107C41"/><rect x="1" y="14" width="318" height="9" fill="#107C41"/><text x="160.0" y="16" text-anchor="middle" font-size="10.5" fill="#fff" font-weight="600">Zoradené vzostupne podľa priemeru</text><rect x="8" y="30" width="42" height="20" rx="3" fill="#fff" stroke="#C9D6EA"/><text x="29" y="44" text-anchor="middle" font-size="10.5" fill="#16213A">D17</text><text x="60" y="44" font-size="11" font-style="italic" fill="#566381">fx</text><rect x="76" y="30" width="236" height="20" rx="3" fill="#fff" stroke="#C9D6EA"/><text x="82" y="44" font-size="10.5" font-family="Consolas, monospace" fill="#16213A">=MIN(I2:I16)</text><rect x="1" y="60" width="318" height="20" fill="#F0F2F5"/><rect x="1" y="60" width="23" height="220" fill="#F0F2F5"/><text x="52.0" y="74" text-anchor="middle" font-size="10" fill="#566381">A</text><text x="155.0" y="74" text-anchor="middle" font-size="10" fill="#566381">B</text><text x="265.0" y="74" text-anchor="middle" font-size="10" fill="#566381">C</text><text x="13.0" y="94" text-anchor="middle" font-size="10" fill="#566381">1</text><text x="13.0" y="114" text-anchor="middle" font-size="10" fill="#566381">2</text><text x="13.0" y="134" text-anchor="middle" font-size="10" fill="#566381">3</text><text x="13.0" y="154" text-anchor="middle" font-size="10" fill="#566381">4</text><text x="13.0" y="174" text-anchor="middle" font-size="10" fill="#566381">5</text><text x="13.0" y="194" text-anchor="middle" font-size="10" fill="#566381">6</text><text x="13.0" y="214" text-anchor="middle" font-size="10" fill="#566381">7</text><text x="13.0" y="234" text-anchor="middle" font-size="10" fill="#566381">8</text><text x="13.0" y="254" text-anchor="middle" font-size="10" fill="#566381">9</text><text x="13.0" y="274" text-anchor="middle" font-size="10" fill="#566381">10</text><text x="28" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">poradie</text><text x="84" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">meno</text><text x="234" y="94" text-anchor="start" font-size="10" font-weight="700" fill="#16213A">priemer</text><text x="76" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1</text><text x="84" y="114" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Mária Kováčová</text><text x="296" y="114" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,17</text><text x="76" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">2</text><text x="84" y="134" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Martin Fekete</text><text x="296" y="134" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,17</text><text x="76" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3</text><text x="84" y="154" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Zuzana Peterová</text><text x="296" y="154" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,17</text><text x="76" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">4</text><text x="84" y="174" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Zuzana Novotná</text><text x="296" y="174" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,17</text><text x="76" y="194" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">5</text><text x="84" y="194" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Jana Nováková</text><text x="296" y="194" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">1,33</text><text x="28" y="214" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">…</text><text x="84" y="214" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">…</text><text x="234" y="214" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">…</text><text x="76" y="234" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">15</text><text x="84" y="234" text-anchor="start" font-size="10" font-weight="400" fill="#16213A">Jakub Koláč</text><text x="296" y="234" text-anchor="end" font-size="10" font-weight="400" fill="#16213A">3,83</text><text x="28" y="254" text-anchor="start" font-size="10" font-weight="400" fill="#16213A"></text><text x="84" y="254" text-anchor="start" font-size="10" font-weight="700" fill="#12805A">najlepší =MIN</text><rect x="230" y="240" width="70" height="20" fill="#DDF3EA"/><text x="296" y="254" text-anchor="end" font-size="10" font-weight="700" fill="#12805A">1,17</text><text x="28" y="274" text-anchor="start" font-size="10" font-weight="400" fill="#16213A"></text><text x="84" y="274" text-anchor="start" font-size="10" font-weight="700" fill="#C0392B">najhorší =MAX</text><rect x="230" y="260" width="70" height="20" fill="#FBE3E0"/><text x="296" y="274" text-anchor="end" font-size="10" font-weight="700" fill="#C0392B">3,83</text><line x1="24" y1="60" x2="24" y2="280" stroke="#DADFE6"/><line x1="80" y1="60" x2="80" y2="280" stroke="#DADFE6"/><line x1="230" y1="60" x2="230" y2="280" stroke="#DADFE6"/><line x1="300" y1="60" x2="300" y2="280" stroke="#DADFE6"/><line x1="1" y1="60" x2="300" y2="60" stroke="#DADFE6"/><line x1="1" y1="80" x2="300" y2="80" stroke="#DADFE6"/><line x1="1" y1="100" x2="300" y2="100" stroke="#DADFE6"/><line x1="1" y1="120" x2="300" y2="120" stroke="#DADFE6"/><line x1="1" y1="140" x2="300" y2="140" stroke="#DADFE6"/><line x1="1" y1="160" x2="300" y2="160" stroke="#DADFE6"/><line x1="1" y1="180" x2="300" y2="180" stroke="#DADFE6"/><line x1="1" y1="200" x2="300" y2="200" stroke="#DADFE6"/><line x1="1" y1="220" x2="300" y2="220" stroke="#DADFE6"/><line x1="1" y1="240" x2="300" y2="240" stroke="#DADFE6"/><line x1="1" y1="260" x2="300" y2="260" stroke="#DADFE6"/><line x1="1" y1="280" x2="300" y2="280" stroke="#DADFE6"/></svg>
+<figcaption>Po zoradení je najlepší žiak hore. MIN a MAX nájdu krajné hodnoty aj bez triedenia.</figcaption>
+</figure></div>
+</div>
+</div>
+</main>
+<footer><div class="wrap"><span>1</span><span class="author">Ing. Miloš Ďurina · Gymnázium Ivana Kraska, Rimavská Sobota</span></div></footer>
+</body>
+</html>

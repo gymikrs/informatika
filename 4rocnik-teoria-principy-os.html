@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Princípy fungovania operačného systému</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Princípy fungovania operačného systému</title>
+<style>
+:root{
+  --bg:#D9EAFB;--surface:#FFFFFF;--soft:#F3F7FD;--ink:#16213A;--muted:#566381;--line:#2F5BEA;--lineSoft:#D5DFFB;
+  --border:#C9D6EA;--ok:#12805A;--okSoft:#DDF3EA;--bad:#C0392B;--badSoft:#FBE3E0;--sun:#F0B429;--sunSoft:#FDF1D3;
+  --font:"Lexend","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:17px;line-height:1.6}
+a{color:var(--line)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+/* hlavička */
+header.hero{padding:26px 0 18px}
+header h1{font-size:clamp(30px,5vw,50px);line-height:1.08;margin:12px 0 10px;letter-spacing:-.015em}
+header .sub{color:var(--muted);font-size:18px;margin:0;max-width:70ch}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;font-size:15px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+/* navigácia */
+nav.toc{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border);padding:10px 0}
+nav.toc .wrap{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+nav.toc .lbl{font-weight:700;font-size:14px;margin-right:2px}
+nav.toc a{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:32px;padding:0 10px;border-radius:999px;background:var(--surface);border:1.5px solid var(--border);text-decoration:none;color:var(--ink);font-weight:600;font-size:14px}
+nav.toc a:hover{border-color:var(--line);color:var(--line)}
+nav.toc .gap{width:14px}
+.part{background:var(--surface);border-radius:18px;padding:24px 26px;margin-top:18px;box-shadow:0 2px 10px rgba(22,33,58,.06)}
+.parth{display:flex;gap:14px;align-items:flex-start;padding-bottom:16px;margin-bottom:6px;border-bottom:2px solid var(--lineSoft)}
+/* blok: text vľavo, obrázok vpravo */
+.blk{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px;align-items:start;padding:20px 0;border-bottom:1px dashed var(--border)}
+.blk:last-child{border-bottom:0;padding-bottom:4px}
+.blk.full{grid-template-columns:minmax(0,1fr)}
+.txt h3{margin:0 0 8px;font-size:21px;line-height:1.25;color:var(--ink)}
+.txt h4{margin:14px 0 4px;font-size:17px}
+.txt p{margin:0 0 10px}
+.txt p:last-child{margin-bottom:0}
+.txt ul,.txt ol{margin:0 0 10px;padding-left:22px}
+.txt li{margin:3px 0}
+.pics{display:flex;flex-direction:column;gap:14px}
+figure.pic{margin:0;background:var(--soft);border:1px solid var(--lineSoft);border-radius:14px;padding:12px}
+figure.pic svg{display:block;width:100%;height:auto}
+figure.pic svg text{font-family:var(--font)}
+figure.pic figcaption{font-size:13.5px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.4}
+/* tabuľky */
+.tw{overflow-x:auto;margin:6px 0 10px}
+table.tb{border-collapse:collapse;width:100%;font-size:15.5px}
+table.tb th,table.tb td{border:1px solid var(--border);padding:7px 10px;text-align:left;vertical-align:top}
+table.tb th{background:var(--lineSoft);font-weight:600}
+table.tb tr:nth-child(even) td{background:var(--soft)}
+table.tb td.c,table.tb th.c{text-align:center}
+/* kód a výpočty */
+pre.code{background:#16213A;color:#E8EDF7;border-radius:12px;padding:12px 16px;font-family:Consolas,"Courier New",monospace;font-size:15px;line-height:1.5;overflow-x:auto;margin:6px 0 10px}
+pre.code .k{color:#7FB2FF}pre.code .s{color:#9BE29B}pre.code .c{color:#8A97B5}
+code{font-family:Consolas,"Courier New",monospace;background:var(--soft);border:1px solid var(--lineSoft);border-radius:6px;padding:0 5px;font-size:.92em}
+.calc{background:var(--sunSoft);border-left:5px solid var(--sun);border-radius:10px;padding:12px 16px;margin:8px 0 10px}
+.calc b.h{display:block;margin-bottom:4px}
+.mono{font-family:Consolas,"Courier New",monospace}
+.def{background:var(--lineSoft);border-radius:10px;padding:10px 14px;margin:0 0 10px}
+footer{color:var(--muted);font-size:14px;padding:30px 0 40px}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.parth{padding-bottom:14px;margin-bottom:6px;border-bottom:2px solid var(--lineSoft)}
+.parth h2{margin:0;font-size:clamp(22px,3vw,28px);line-height:1.2;display:flex;align-items:center;gap:12px}
+.parth h2::before{content:"";flex:0 0 auto;width:8px;height:30px;border-radius:4px;background:var(--line)}
+.only-m{display:none!important}
+@media (max-width:820px){
+  .only-d{display:none!important}.only-m{display:block!important}
+  .blk{grid-template-columns:minmax(0,1fr);gap:16px}
+  .part{padding:18px 16px}
+    body{font-size:16.5px}
+  table.tb{font-size:14px}
+  table.tb th,table.tb td{padding:6px 7px}
+}
+@media print{nav.toc{display:none}body{background:#fff}.part{box-shadow:none;border:1px solid #ccc;break-inside:auto}}
+
+/* tlač a zvýraznenie */
+.printbtn{display:inline-flex;align-items:center;gap:8px;margin-top:6px;padding:9px 18px;border-radius:999px;border:0;background:var(--line);color:#fff;font:600 15px var(--font);cursor:pointer;box-shadow:0 2px 8px rgba(47,91,234,.25)}
+.printbtn:hover{background:#2449c4}
+.titlerow{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
+.titlerow h1{margin:12px 0 10px}
+.titlerow .printbtn{margin-top:0;flex:0 0 auto}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .printbtn,nav.toc{display:none!important}
+  body{background:#fff;font-size:10.5pt}
+  .blk{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)!important;gap:18px!important;padding:10px 0!important}
+  .blk.full{grid-template-columns:minmax(0,1fr)!important}
+  .part{padding:14px 16px!important;margin-top:10px}
+  .only-d{display:block!important}.only-m{display:none!important}
+  header.hero{padding:6px 0}
+  .part{box-shadow:none;border:1px solid #C9D6EA}
+  figure.pic,table.tb tr,pre.code{break-inside:avoid}
+  .txt h3,.parth{break-after:avoid}
+}
+
+/* text obteká obrázok – bez prázdneho miesta */
+@media screen and (min-width:821px){
+  .blk.wrapf{display:block!important}
+  .blk.wrapf::after{content:"";display:block;clear:both}
+  .blk.wrapf>.pics{float:right;width:42%;margin:0 0 14px 28px}
+}
+@media (max-width:820px){ .blk.wrapf>.txt{order:-1} }
+@media print{ .blk.wrapf{display:flex!important;flex-direction:column;gap:8px} .blk.wrapf>.txt{order:-1} .blk.wrapf>.pics{width:62%;margin:0 auto} .tw{overflow:visible} }
+code{overflow-wrap:anywhere}
+@media (max-width:820px){.calc,.def{overflow-wrap:anywhere}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="titlerow"><h1>Princípy fungovania operačného systému</h1><button class="printbtn" type="button" onclick="window.print()">🖨️ Vytlačiť / Stiahnuť PDF</button></div>
+</div></header>
+<nav class="toc" aria-label="Obsah"><div class="wrap">
+  <span class="lbl">Obsah:</span><a href="#p0">Operačný systém</a><a href="#p1">Procesy</a><a href="#p2">Kontá a práva</a><a href="#p3">Rozhranie a swap</a>
+</div></nav>
+<main class="wrap">
+<div class="part" id="p0">
+<div class="parth"><h2>Operačný systém a jeho funkcie</h2></div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 230" role="img" aria-label="Vrstvy: používateľ, aplikácie, operačný systém, hardvér">
+<g font-weight="700" text-anchor="middle">
+<rect x="40" y="10" width="240" height="40" rx="8" fill="#DDF3EA" stroke="#12805A" stroke-width="2"/><text x="160" y="35" font-size="12" fill="#12805A">👤 používateľ</text>
+<rect x="40" y="60" width="240" height="40" rx="8" fill="#FDF1D3" stroke="#B9822B" stroke-width="2"/><text x="160" y="78" font-size="12" fill="#16213A">aplikácie</text><text x="160" y="93" font-size="9" font-weight="500" fill="#566381">Word, prehliadač, hry, Thonny</text>
+<rect x="40" y="110" width="240" height="56" rx="8" fill="#2F5BEA"/><text x="160" y="132" font-size="13" fill="#fff">operačný systém</text><text x="160" y="150" font-size="9" font-weight="500" fill="#D5DFFB">procesy · pamäť · súbory · zariadenia</text>
+<rect x="40" y="176" width="240" height="44" rx="8" fill="#16213A"/><text x="160" y="196" font-size="12" fill="#fff">hardvér</text><text x="160" y="211" font-size="9" font-weight="500" fill="#C9D6EA">CPU, RAM, disk, klávesnica, monitor</text>
+</g>
+<g stroke="#566381" stroke-width="2"><path d="M300 30 V196" /><path d="M296 190 l4 8 4 -8" fill="none"/><path d="M296 36 l4 -8 4 8" fill="none"/></g>
+</svg>
+<figcaption>Operačný systém je vrstva medzi aplikáciami a hardvérom.</figcaption>
+</figure></div>
+<div class="txt">
+<h3>Operačný systém a jeho úloha</h3>
+<div class="def"><b>Operačný systém</b> (OS) je základný program, ktorý sa spustí po zapnutí počítača, <b>riadi celý hardvér</b> a vytvára prostredie, v ktorom bežia ostatné programy. Je <b>sprostredkovateľom medzi používateľom, aplikáciami a hardvérom</b>.</div>
+<p>Bez operačného systému by každý program musel sám vedieť ovládať procesor, pamäť, disk či tlačiareň. OS to robí za ne – aplikácie len požiadajú systém (napr. „ulož súbor“) a on sa postará o detaily. Jadro systému, ktoré priamo pracuje s hardvérom, sa nazýva <b>kernel</b>.</p>
+<p>Príklady: <b>Windows, macOS, Linux</b> (počítače), <b>Android, iOS</b> (mobily), RTOS (vstavané zariadenia).</p>
+</div>
+</div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 220" role="img" aria-label="Štyri funkcie operačného systému">
+<circle cx="160" cy="110" r="40" fill="#2F5BEA"/><text x="160" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">OS</text><text x="160" y="122" text-anchor="middle" font-size="8.5" fill="#D5DFFB">riadi</text>
+<g font-size="10.5" font-weight="700" text-anchor="middle">
+<rect x="10" y="14" width="120" height="58" rx="10" fill="#FBE3E0" stroke="#C0392B"/><text x="70" y="38" fill="#C0392B">procesy</text><text x="70" y="56" font-size="9" font-weight="500" fill="#16213A">⚙ CPU – kto beží</text>
+<rect x="190" y="14" width="120" height="58" rx="10" fill="#DDF3EA" stroke="#12805A"/><text x="250" y="38" fill="#12805A">pamäť</text><text x="250" y="56" font-size="9" font-weight="500" fill="#16213A">▦ RAM – kto koľko</text>
+<rect x="10" y="148" width="120" height="58" rx="10" fill="#FDF1D3" stroke="#B9822B"/><text x="70" y="172" fill="#B9822B">súbory</text><text x="70" y="190" font-size="9" font-weight="500" fill="#16213A">📁 disk – priečinky</text>
+<rect x="190" y="148" width="120" height="58" rx="10" fill="#D5DFFB" stroke="#2F5BEA"/><text x="250" y="172" fill="#2F5BEA">zariadenia</text><text x="250" y="190" font-size="9" font-weight="500" fill="#16213A">🖨 ovládače</text>
+</g>
+<g stroke="#8A94A8" stroke-width="2"><line x1="124" y1="72" x2="134" y2="84"/><line x1="196" y1="72" x2="186" y2="84"/><line x1="124" y1="148" x2="134" y2="136"/><line x1="196" y1="148" x2="186" y2="136"/></g>
+</svg>
+<figcaption>Operačný systém spravuje procesy, pamäť, súbory a zariadenia.</figcaption>
+</figure></div>
+<div class="txt">
+<h3>Štyri základné funkcie operačného systému</h3>
+<div class="tw"><table class="tb">
+<tr><th>Funkcia</th><th>Čo robí</th></tr>
+<tr><td><b>Správa procesov</b></td><td>spúšťa a ukončuje programy, rozdeľuje čas procesora medzi bežiace procesy (plánovanie), určuje priority</td></tr>
+<tr><td><b>Správa pamäte</b></td><td>prideľuje operačnú pamäť procesom, chráni ich, aby si navzájom neprepisovali údaje, uvoľňuje pamäť po skončení programu, využíva virtuálnu pamäť</td></tr>
+<tr><td><b>Správa súborov</b></td><td>ukladá súbory na disk v súborovom systéme, organizuje priečinky, kontroluje prístupové práva, vyhľadáva súbory</td></tr>
+<tr><td><b>Správa vstupno-výstupných zariadení</b></td><td>komunikuje s klávesnicou, myšou, tlačiarňou, diskom či sieťou pomocou <b>ovládačov (driverov)</b>, rieši požiadavky na zariadenia</td></tr>
+</table></div>
+<p>K ďalším úlohám patrí <b>používateľské rozhranie</b>, <b>správa používateľov</b> a <b>bezpečnosť</b> (prihlasovanie, firewall, aktualizácie).</p>
+</div>
+</div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 180" role="img" aria-label="Systémový a aplikačný softvér">
+<rect x="10" y="10" width="140" height="160" rx="10" fill="#D5DFFB"/>
+<text x="80" y="32" text-anchor="middle" font-size="11.5" font-weight="700" fill="#2F5BEA">systémový</text>
+<g font-size="10" fill="#16213A" text-anchor="middle" font-weight="600">
+<rect x="26" y="46" width="108" height="24" rx="6" fill="#fff"/><text x="80" y="62">Windows / Linux</text>
+<rect x="26" y="78" width="108" height="24" rx="6" fill="#fff"/><text x="80" y="94">ovládače</text>
+<rect x="26" y="110" width="108" height="24" rx="6" fill="#fff"/><text x="80" y="126">BIOS / UEFI</text>
+<rect x="26" y="142" width="108" height="20" rx="6" fill="#fff"/><text x="80" y="156">antivírus</text>
+</g>
+<rect x="170" y="10" width="140" height="160" rx="10" fill="#FDF1D3"/>
+<text x="240" y="32" text-anchor="middle" font-size="11.5" font-weight="700" fill="#B9822B">aplikačný</text>
+<g font-size="10" fill="#16213A" text-anchor="middle" font-weight="600">
+<rect x="186" y="46" width="50" height="40" rx="8" fill="#2B579A"/><text x="211" y="71" fill="#fff" font-size="14">W</text>
+<rect x="244" y="46" width="50" height="40" rx="8" fill="#107C41"/><text x="269" y="71" fill="#fff" font-size="14">X</text>
+<rect x="186" y="96" width="50" height="40" rx="8" fill="#F0B429"/><circle cx="211" cy="116" r="11" fill="#fff"/><circle cx="211" cy="116" r="5" fill="#2F5BEA"/>
+<rect x="244" y="96" width="50" height="40" rx="8" fill="#7A3FC4"/><text x="269" y="121" fill="#fff" font-size="14">🎮</text>
+<text x="240" y="158" fill="#566381" font-size="9">editor, tabuľky, prehliadač, hry</text>
+</g>
+</svg>
+<figcaption>Systémový softvér riadi počítač, aplikačný slúži na konkrétnu prácu.</figcaption>
+</figure></div>
+<div class="txt">
+<h3>Systémový a aplikačný softvér</h3>
+<div class="tw"><table class="tb">
+<tr><th></th><th>Systémový softvér</th><th>Aplikačný softvér</th></tr>
+<tr><td><b>Úloha</b></td><td>zabezpečuje chod počítača a riadi hardvér</td><td>slúži používateľovi na konkrétnu prácu alebo zábavu</td></tr>
+<tr><td><b>Príklady</b></td><td>operačný systém, ovládače, firmvér (BIOS/UEFI), pomocné programy (antivírus, zálohovanie, defragmentácia)</td><td>textový editor, tabuľkový procesor, prehliadač, hry, grafický editor, Thonny</td></tr>
+<tr><td><b>Závislosť</b></td><td>beží bez aplikácií</td><td>potrebuje operačný systém, na ktorom beží</td></tr>
+<tr><td><b>Kontakt s používateľom</b></td><td>často pracuje „v pozadí“</td><td>používateľ s ním priamo pracuje</td></tr>
+</table></div>
+</div>
+</div>
+</div>
+<div class="part" id="p1">
+<div class="parth"><h2>Proces, multitasking a správca úloh</h2></div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 170" role="img" aria-label="Program na disku a proces v pamäti">
+<rect x="10" y="30" width="110" height="90" rx="8" fill="#8A94A8"/>
+<circle cx="50" cy="75" r="30" fill="#C9D6EA"/><circle cx="50" cy="75" r="7" fill="#566381"/>
+<rect x="74" y="60" width="40" height="30" rx="4" fill="#fff"/><text x="94" y="79" text-anchor="middle" font-size="8" font-weight="700" fill="#16213A">.exe</text>
+<text x="65" y="140" text-anchor="middle" font-size="10.5" font-weight="700" fill="#16213A">program na disku</text>
+<path d="M126 75 h44" stroke="#16213A" stroke-width="2.5"/><path d="M168 68 l9 7 -9 7z" fill="#16213A"/>
+<text x="150" y="64" text-anchor="middle" font-size="9" font-weight="600" fill="#2F5BEA">spustenie</text>
+<rect x="186" y="34" width="124" height="82" rx="6" fill="#12805A"/>
+<g fill="#16213A"><rect x="196" y="44" width="22" height="34" rx="2"/><rect x="224" y="44" width="22" height="34" rx="2"/><rect x="252" y="44" width="22" height="34" rx="2"/><rect x="280" y="44" width="22" height="34" rx="2"/></g>
+<rect x="224" y="44" width="22" height="34" rx="2" fill="#F0B429"/>
+<text x="248" y="98" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">RAM – proces PID 1002</text>
+<text x="248" y="140" text-anchor="middle" font-size="10.5" font-weight="700" fill="#16213A">proces v pamäti</text>
+</svg>
+<figcaption>Spustením sa program z disku načíta do RAM a stane sa procesom.</figcaption>
+</figure></div>
+<div class="txt">
+<h3>Program a proces</h3>
+<p><b>Program</b> je súbor s inštrukciami <b>uložený na disku</b> (napr. <code>chrome.exe</code>). Je pasívny – nič nerobí, len zaberá miesto.</p>
+<p><b>Proces</b> je <b>spustený program</b> – program načítaný do operačnej pamäte, ktorý práve vykonáva procesor. Má pridelenú vlastnú pamäť, čas procesora, otvorené súbory a jedinečné číslo <b>PID</b>. Z jedného programu môže bežať viac procesov naraz (napr. viac okien alebo kariet prehliadača).</p>
+<div class="tw"><table class="tb">
+<tr><th></th><th>Program</th><th>Proces</th></tr>
+<tr><td><b>Kde je</b></td><td>na disku</td><td>v operačnej pamäti (RAM)</td></tr>
+<tr><td><b>Stav</b></td><td>pasívny, nemenný</td><td>aktívny – beží, čaká, je pozastavený, ukončí sa</td></tr>
+<tr><td><b>Trvanie</b></td><td>trvalo, kým ho nezmažeme</td><td>od spustenia po ukončenie</td></tr>
+</table></div>
+</div>
+</div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 220" role="img" aria-label="Prepínanie procesov na jednom jadre a paralelne na viacerých jadrách">
+<text x="10" y="18" font-size="11" font-weight="700" fill="#16213A">1 jadro – striedanie v čase</text>
+<g><rect x="10" y="26" width="40" height="22" fill="#2F5BEA"/><rect x="50" y="26" width="40" height="22" fill="#F0B429"/><rect x="90" y="26" width="40" height="22" fill="#12805A"/><rect x="130" y="26" width="40" height="22" fill="#2F5BEA"/><rect x="170" y="26" width="40" height="22" fill="#F0B429"/><rect x="210" y="26" width="40" height="22" fill="#12805A"/><rect x="250" y="26" width="40" height="22" fill="#2F5BEA"/></g>
+<path d="M10 58 H300" stroke="#16213A" stroke-width="1.5"/><path d="M298 54 l8 4 -8 4z" fill="#16213A"/><text x="300" y="72" text-anchor="end" font-size="9" fill="#566381">čas</text>
+<text x="10" y="104" font-size="11" font-weight="700" fill="#16213A">4 jadrá – naozaj súčasne</text>
+<g font-size="9" font-weight="700" fill="#fff">
+<rect x="10" y="112" width="280" height="18" fill="#2F5BEA"/><text x="16" y="125">jadro 1: hudba</text>
+<rect x="10" y="134" width="280" height="18" fill="#F0B429"/><text x="16" y="147" fill="#16213A">jadro 2: Word</text>
+<rect x="10" y="156" width="280" height="18" fill="#12805A"/><text x="16" y="169">jadro 3: aktualizácia</text>
+<rect x="10" y="178" width="280" height="18" fill="#7A3FC4"/><text x="16" y="191">jadro 4: prehliadač</text>
+</g>
+<g font-size="9" font-weight="600"><rect x="200" y="78" width="10" height="10" fill="#2F5BEA"/><text x="214" y="87" fill="#566381">hudba</text><rect x="250" y="78" width="10" height="10" fill="#F0B429"/><text x="264" y="87" fill="#566381">Word</text></g>
+</svg>
+<figcaption>Jedno jadro procesy rýchlo strieda, viac jadier ich spracúva paralelne.</figcaption>
+</figure></div>
+<div class="txt">
+<h3>Multitasking a viacjadrový procesor</h3>
+<p><b>Multitasking</b> je schopnosť operačného systému vykonávať <b>viac úloh (procesov) naraz</b> – počúvame hudbu, píšeme dokument a na pozadí sa sťahuje aktualizácia.</p>
+<p>Jedno jadro procesora však v danom okamihu vykonáva len jednu inštrukciu. Operačný systém preto procesor <b>rýchlo prepína</b> medzi procesmi – každý dostane krátky časový úsek (niekoľko milisekúnd), potom sa preruší a na rad príde ďalší. Prepínanie je také rýchle, že sa nám zdá, že všetko beží súčasne. O poradí a dĺžke úsekov rozhoduje <b>plánovač</b> podľa priorít.</p>
+<p><b>Viacjadrový procesor</b> má v jednom čipe viac samostatných jadier (napr. 4, 8, 16). Každé jadro môže spracúvať iný proces <b>skutočne súčasne (paralelne)</b>. Počítač je tak pri viacerých úlohách rýchlejší a programy, ktoré vedia prácu rozdeliť (strih videa, hry), využijú všetky jadrá.</p>
+</div>
+</div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 210" role="img" aria-label="Okno správcu úloh so zoznamom procesov">
+<rect x="4" y="4" width="312" height="202" rx="8" fill="#fff" stroke="#16213A" stroke-width="1.5"/>
+<rect x="4" y="4" width="312" height="22" rx="8" fill="#16213A"/><rect x="4" y="16" width="312" height="10" fill="#16213A"/>
+<text x="14" y="19" font-size="10" font-weight="700" fill="#fff">Správca úloh</text>
+<g font-size="9.5" fill="#16213A">
+<rect x="4" y="30" width="312" height="18" fill="#F0F2F5"/>
+<text x="12" y="43" font-weight="700">Názov</text><text x="150" y="43" font-weight="700">PID</text><text x="196" y="43" font-weight="700">CPU</text><text x="248" y="43" font-weight="700">Pamäť</text>
+<text x="12" y="64">chrome.exe</text><text x="150" y="64">1002</text><text x="196" y="64">15,3 %</text><text x="248" y="64">420 MB</text>
+<rect x="190" y="52" width="46" height="16" fill="#F0B429" opacity=".35"/>
+<text x="12" y="84">teams.exe</text><text x="150" y="84">1007</text><text x="196" y="84">8,5 %</text><text x="248" y="84">310 MB</text>
+<text x="12" y="104">antivirus.exe</text><text x="150" y="104">1003</text><text x="196" y="104">3,2 %</text><text x="248" y="104">110 MB</text>
+<text x="12" y="124">explorer.exe</text><text x="150" y="124">1001</text><text x="196" y="124">2,1 %</text><text x="248" y="124">85 MB</text>
+<text x="12" y="144">svchost.exe</text><text x="150" y="144">1004</text><text x="196" y="144">0,8 %</text><text x="248" y="144">45 MB</text>
+<rect x="8" y="152" width="304" height="18" fill="#FBE3E0"/>
+<text x="12" y="165" fill="#C0392B" font-weight="700">update_fake.exe</text><text x="150" y="165">1006</text><text x="196" y="165" fill="#C0392B">blokovaný</text>
+</g>
+<rect x="220" y="178" width="88" height="22" rx="4" fill="#2F5BEA"/><text x="264" y="193" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">Ukončiť úlohu</text>
+</svg>
+<figcaption>Správca úloh: prehliadač zaberá najviac CPU a pamäte, podozrivý proces je zablokovaný.</figcaption>
+</figure></div>
+<div class="txt">
+<h3>Správca úloh</h3>
+<p><b>Správca úloh</b> (Task Manager, vo Windows <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Esc</kbd>) zobrazuje <b>bežiace procesy</b> a ich spotrebu prostriedkov – využitie procesora (CPU), pamäte (RAM), disku a siete.</p>
+<ul>
+<li><b>ukončiť zamrznutý program</b>, ktorý nereaguje (<i>Ukončiť úlohu</i>),</li>
+<li>zistiť, <b>ktorý proces spomaľuje</b> počítač,</li>
+<li>sledovať <b>výkon</b> hardvéru v grafoch,</li>
+<li>nastaviť, ktoré programy sa <b>spúšťajú po štarte</b> systému (Po spustení),</li>
+<li>odhaliť <b>podozrivé procesy</b> s neznámym názvom (napr. <code>update_fake.exe</code>).</li>
+</ul>
+<p>V Linuxe podobnú úlohu plní príkaz <code>top</code> alebo grafický Monitor systému, v macOS Monitor aktivity.</p>
+</div>
+</div>
+</div>
+<div class="part" id="p2">
+<div class="parth"><h2>Používateľské kontá a prístupové práva</h2></div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 210" role="img" aria-label="Konto správcu a štandardného používateľa">
+<g text-anchor="middle">
+<circle cx="80" cy="50" r="22" fill="#C0392B"/><path d="M44 110 q36 -46 72 0z" fill="#C0392B"/>
+<path d="M66 32 l6 -12 8 8 8 -8 6 12z" fill="#F0B429"/>
+<text x="80" y="130" font-size="11" font-weight="700" fill="#C0392B">správca</text>
+<circle cx="240" cy="50" r="22" fill="#2F5BEA"/><path d="M204 110 q36 -46 72 0z" fill="#2F5BEA"/>
+<text x="240" y="130" font-size="11" font-weight="700" fill="#2F5BEA">štandardný</text>
+</g>
+<g font-size="9.5" fill="#16213A">
+<text x="20" y="152">✓ inštalovať programy</text><text x="20" y="168">✓ meniť systém</text><text x="20" y="184">✓ spravovať kontá</text><text x="20" y="200">✓ všetky súbory</text>
+<text x="180" y="152">✓ používať programy</text><text x="180" y="168">✓ vlastné súbory</text><text x="180" y="184" fill="#C0392B">✗ meniť systém</text><text x="180" y="200" fill="#C0392B">✗ cudzie súbory</text>
+</g>
+<rect x="120" y="60" width="80" height="44" rx="6" fill="#fff" stroke="#16213A"/>
+<rect x="120" y="60" width="80" height="12" rx="6" fill="#FDF1D3"/>
+<text x="160" y="84" text-anchor="middle" font-size="8" font-weight="700" fill="#16213A">UAC: Povoliť</text><text x="160" y="96" text-anchor="middle" font-size="8" fill="#566381">zmeny? Áno / Nie</text>
+</svg>
+<figcaption>Správca môže meniť systém, štandardný používateľ len svoje súbory.</figcaption>
+</figure></div>
+<div class="txt">
+<p><b>Používateľské konto</b> je profil v operačnom systéme s menom, heslom, vlastnými súbormi a nastaveniami (pracovná plocha, dokumenty). Viacerí ľudia tak môžu používať jeden počítač bez toho, aby si navzájom videli alebo menili súbory.</p>
+<div class="tw"><table class="tb">
+<tr><th>Typ konta</th><th>Oprávnenia</th></tr>
+<tr><td><b>Správca (administrátor, v Linuxe root)</b></td><td>môže všetko – inštalovať programy, meniť systémové nastavenia, spravovať ostatných používateľov, pristupovať ku všetkým súborom</td></tr>
+<tr><td><b>Štandardný používateľ</b></td><td>používa programy a mení len vlastné súbory a nastavenia, na zásah do systému potrebuje heslo správcu</td></tr>
+<tr><td><b>Hosť</b></td><td>dočasný prístup s minimálnymi právami, nič sa trvalo neukladá</td></tr>
+</table></div>
+<p><b>Prístupové práva</b> určujú, kto môže súbor alebo priečinok <b>čítať, zapisovať (meniť) a spúšťať</b>. V Linuxe sa zapisujú ako <code>rwx</code> pre vlastníka, skupinu a ostatných.</p>
+<p><b>Prečo rôzne oprávnenia:</b> <b>bezpečnosť</b> – škodlivý program spustený bežným používateľom nemôže poškodiť celý systém; <b>ochrana pred chybami</b> – používateľ omylom nevymaže systémové súbory; <b>súkromie</b> – každý vidí len svoje údaje. Preto aj správca má pracovať bežne pod štandardným kontom (princíp najnižších oprávnení). Windows sa pred zásahom do systému pýta <b>kontrolou používateľských kont (UAC)</b>.</p>
+</div>
+</div>
+</div>
+<div class="part" id="p3">
+<div class="parth"><h2>Používateľské rozhranie a virtuálna pamäť</h2></div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 210" role="img" aria-label="Grafické okno a príkazový riadok">
+<rect x="6" y="10" width="148" height="110" rx="6" fill="#fff" stroke="#16213A" stroke-width="1.5"/>
+<rect x="6" y="10" width="148" height="18" rx="6" fill="#2F5BEA"/><rect x="6" y="20" width="148" height="8" fill="#2F5BEA"/>
+<text x="14" y="23" font-size="8.5" font-weight="700" fill="#fff">Dokumenty</text>
+<g><path d="M20 44 h16 l4 4 h20 v24 h-40z" fill="#F0B429"/><path d="M70 44 h16 l4 4 h20 v24 h-40z" fill="#F0B429"/><rect x="118" y="42" width="24" height="30" rx="2" fill="#fff" stroke="#2B579A"/><text x="130" y="62" text-anchor="middle" font-size="9" font-weight="700" fill="#2B579A">W</text></g>
+<g font-size="7.5" fill="#16213A" text-anchor="middle"><text x="40" y="84">Škola</text><text x="90" y="84">Fotky</text><text x="130" y="84">referát</text></g>
+<path d="M100 96 l0 16 4 -4 3 7 3 -1 -3 -7 6 0z" fill="#16213A"/>
+<text x="80" y="140" text-anchor="middle" font-size="11" font-weight="700" fill="#2F5BEA">GUI</text>
+<rect x="166" y="10" width="148" height="110" rx="6" fill="#0C0C0C"/>
+<g font-family="Consolas, monospace" font-size="8.5" fill="#C9D6EA"><text x="172" y="28">C:\&gt; dir</text><text x="172" y="42">Škola   &lt;DIR&gt;</text><text x="172" y="54">Fotky   &lt;DIR&gt;</text><text x="172" y="66">referat.docx 24 kB</text><text x="172" y="84">C:\&gt; ping 8.8.8.8</text><text x="172" y="96" fill="#7FC97F">Reply from 8.8.8.8</text><text x="172" y="112">C:\&gt; _</text></g>
+<text x="240" y="140" text-anchor="middle" font-size="11" font-weight="700" fill="#16213A">CLI</text>
+<text x="160" y="176" text-anchor="middle" font-size="10" fill="#566381">ten istý obsah priečinka – klikaním alebo príkazom</text>
+</svg>
+<figcaption>V GUI klikáme na ikony, v príkazovom riadku píšeme príkazy.</figcaption>
+</figure></div>
+<div class="txt">
+<h3>Grafické a textové používateľské rozhranie</h3>
+<p><b>Grafické rozhranie (GUI)</b> – ovládanie pomocou <b>okien, ikon, ponúk a tlačidiel</b> myšou alebo dotykom (Windows, macOS, Android).</p>
+<p><b>Textové rozhranie (CLI, príkazový riadok)</b> – ovládanie <b>písaním príkazov</b> (cmd a PowerShell vo Windows, terminál v Linuxe, napr. <code>dir</code>, <code>ls</code>, <code>ping</code>, <code>ipconfig</code>).</p>
+<div class="tw"><table class="tb">
+<tr><th></th><th>GUI</th><th>CLI</th></tr>
+<tr><td><b>Výhody</b></td><td>intuitívne, ľahké na naučenie, názorné, vhodné pre grafiku a bežnú prácu</td><td>rýchle pre skúsených, automatizácia cez skripty, opakované a hromadné úlohy, vzdialená správa serverov, nízke nároky na výkon</td></tr>
+<tr><td><b>Nevýhody</b></td><td>pomalšie pri opakovaných úlohách, vyššie nároky na hardvér, ťažšie sa automatizuje</td><td>treba poznať príkazy a ich syntax, preklep spôsobí chybu, menej názorné</td></tr>
+<tr><td><b>Kto používa</b></td><td>bežní používatelia</td><td>správcovia systémov, programátori</td></tr>
+</table></div>
+</div>
+</div>
+
+<div class="blk wrapf">
+<div class="pics"><figure class="pic">
+<svg viewBox="0 0 320 200" role="img" aria-label="Presun stránok medzi RAM a diskom">
+<rect x="10" y="30" width="120" height="120" rx="8" fill="#12805A"/>
+<text x="70" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#12805A">RAM – rýchla</text>
+<g fill="#fff"><rect x="22" y="42" width="44" height="22" rx="3"/><rect x="74" y="42" width="44" height="22" rx="3"/><rect x="22" y="72" width="44" height="22" rx="3"/><rect x="74" y="72" width="44" height="22" rx="3"/><rect x="22" y="102" width="44" height="22" rx="3"/></g>
+<rect x="74" y="102" width="44" height="22" rx="3" fill="#F0B429" stroke="#fff" stroke-dasharray="3 2"/>
+<text x="70" y="142" text-anchor="middle" font-size="9" fill="#fff">plná</text>
+<rect x="190" y="30" width="120" height="120" rx="8" fill="#8A94A8"/>
+<text x="250" y="22" text-anchor="middle" font-size="11" font-weight="700" fill="#566381">disk – pomalý</text>
+<rect x="202" y="88" width="96" height="50" rx="4" fill="#E6EAF0"/><text x="250" y="102" text-anchor="middle" font-size="8.5" font-weight="700" fill="#16213A">pagefile / swap</text>
+<rect x="228" y="108" width="44" height="22" rx="3" fill="#F0B429"/>
+<path d="M124 108 C160 108 170 118 224 118" stroke="#C0392B" stroke-width="2.5" fill="none"/><path d="M222 112 l8 6 -8 6z" fill="#C0392B"/>
+<text x="176" y="102" text-anchor="middle" font-size="9" font-weight="700" fill="#C0392B">odloženie</text>
+<path d="M224 128 C170 140 150 136 124 124" stroke="#2F5BEA" stroke-width="2" stroke-dasharray="4 3" fill="none"/>
+<text x="176" y="150" text-anchor="middle" font-size="9" font-weight="700" fill="#2F5BEA">načítanie späť</text>
+<text x="160" y="186" text-anchor="middle" font-size="10.5" font-weight="700" fill="#C0392B">časté odkladanie = pomalý počítač</text>
+</svg>
+<figcaption>Nepoužívané stránky sa z plnej RAM odkladajú na disk.</figcaption>
+</figure></div>
+<div class="txt">
+<h3>Virtuálna pamäť – odkladací súbor (swap)</h3>
+<p>Keď spustené programy potrebujú <b>viac pamäte, než má RAM</b>, operačný systém si pomôže diskom. Časť disku použije ako <b>virtuálnu pamäť</b> – vo Windows je to <b>stránkovací súbor</b> <code>pagefile.sys</code>, v Linuxe <b>swap</b>.</p>
+<p>Pamäť je rozdelená na malé časti – <b>stránky</b>. Stránky, ktoré sa práve nepoužívajú (napr. minimalizovaný program), systém <b>presunie z RAM na disk</b> a uvoľní miesto. Keď ich program znova potrebuje, načíta ich späť – inú stránku pritom odloží.</p>
+<p><b>Vplyv na rýchlosť:</b> disk je mnohonásobne <b>pomalší</b> ako RAM (SSD stokrát, HDD až desaťtisíckrát). Ak systém musí odkladať často, počítač sa výrazne <b>spomalí</b> – okná sa prepínajú pomaly a disk stále pracuje. Virtuálna pamäť teda zabráni pádu programov pre nedostatok pamäte, ale <b>nenahradí</b> dostatok RAM. Riešením je pridať RAM alebo zatvoriť nepotrebné programy.</p>
+</div>
+</div>
+</div>
+</main>
+<footer><div class="wrap"><span>26</span><span class="author">Ing. Miloš Ďurina · Gymnázium Ivana Kraska, Rimavská Sobota</span></div></footer>
+</body>
+</html>
