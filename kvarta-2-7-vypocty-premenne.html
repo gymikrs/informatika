@@ -343,6 +343,15 @@ main.ro .task,main.ro .ws,main.ro .robo,main.ro .lab,main.ro .chal,main.ro .tsim
 .fixb{font-size:13px;font-weight:600;color:var(--ok);padding-left:6px;line-height:1.3}
 .confirm{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:12px}
 .qpic svg,.tpic svg{max-width:100%;height:auto}
+
+/* ===== POKRAČOVANIE: stav ukladania na server ===== */
+.cloudst{position:fixed;left:10px;bottom:10px;z-index:50;background:#fff;border:1px solid #C9D6E8;border-radius:999px;padding:5px 12px;font-size:13px;line-height:1.3;box-shadow:0 2px 8px rgba(0,0,0,.08);max-width:calc(100vw - 20px)}
+.cloudst.ok{color:#1E7B34}.cloudst.off{color:#B3261E;border-color:#E8B4B0}.cloudst.local{color:#7A5A00;border-color:#E9D49A}.cloudst.wait{color:#45556C}
+.cloudbox{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:60;width:min(560px,calc(100vw - 20px))}
+.cloudbox .cbin{background:#fff;border:2px solid #1E5BB8;border-radius:14px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.18);font-size:15px}
+.cloudbox .confirm{margin-top:10px}
+.pinnote{margin:6px 0 0;font-size:14px;color:#45556C}
+#pn{max-width:170px;letter-spacing:.25em;font-weight:700}
 </style>
 </head>
 <body>
@@ -1034,7 +1043,160 @@ function maxOf(T) { return T.max != null ? T.max : (T.qs ? T.qs.length : T.items
 const MAX = Object.values(TASKS).reduce((a, T) => a + maxOf(T), 0);
 function fresh() { return Object.assign({ v: 1, name: "", cls: CLASS_DEFAULT, guess: null, cur: 0, started: null, finished: null, testLocked: false, tconfirm: false, econfirm: false, revealed: false, t: {}, d: {}, ord: {} }, typeof EXTRA_STATE === "function" ? EXTRA_STATE() : {}); }
 function load() { try { const r = localStorage.getItem(KEY); if (r) { const o = JSON.parse(r); if (o && o.v === 1) return Object.assign(fresh(), o); } } catch (e) {} return null; }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} if (typeof clQueue === "function") clQueue(); }
+/* ===== POKRAČOVANIE: rozpracovaná hodina sa ukladá aj do Google tabuľky učiteľa –
+   žiak pokračuje na inom počítači alebo doma (rovnaké meno, trieda a PIN) ===== */
+const PROGRESS_URL = "https://script.google.com/macros/s/AKfycbzx3u3hlphq6R0QVp_xQvYj2ivmt9LzBDMrElsSwFIiQE2OtdTrOQz4xACNgdn32NtK5Q/exec";
+const CL = { on: /^https:\/\/script\.google\.com\/macros\/s\/[\w-]{20,}\/exec$/.test(PROGRESS_URL) || /^http:\/\/(localhost|127\.0\.0\.1)[:/]/.test(PROGRESS_URL),
+  dev: "", pin: "", ok: false, busy: false, again: false, dirty: false, blocked: false, timer: null, retry: null };
+try { CL.dev = localStorage.getItem("hodiny:dev") || ""; if (!CL.dev) { CL.dev = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem("hodiny:dev", CL.dev); } } catch (e) { CL.dev = "x" + Math.random().toString(36).slice(2, 8); }
+const PIN_OK = p => /^\d{4}$/.test(String(p || ""));
+const clNorm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+function clGate() { return CL.on && !CL.ok && !(S.testLocked && !S.t.test); }
+function startOk() { return S.name.trim().length >= 3 && (!CL.on || PIN_OK(CL.pin)); }
+function startMsg() { return S.name.trim().length < 3 ? "Napíš svoje meno a priezvisko." : (CL.on && !PIN_OK(CL.pin) ? "Vymysli si 4-ciferný PIN (alebo zadaj ten, ktorý už máš)." : ""); }
+function clCall(body) { return fetch(PROGRESS_URL, { method: "POST", body: JSON.stringify(Object.assign({ lesson: KEY, title: LESSON, dev: CL.dev }, body)) }).then(r => { if (!r.ok) throw new Error("http"); return r.json(); }); }
+function clWho() { return { name: S.cidName || S.name.trim(), cls: S.cidCls || S.cls.trim(), pin: S.pin }; }
+function clInfo() {
+  const st = S.t.test ? (S.sentKey ? "hotové – výsledok odoslaný" : "hotové") : S.testLocked ? "píše záverečný test" : "rozpracované";
+  return { stav: st, zast: (STEPS[S.cur] || {}).title || "", body: total() + "/" + MAX };
+}
+function clData() { const o = Object.assign({}, S); delete o.sending; o.rn = RN; return JSON.stringify(o); }
+function clRaw() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function clTime(ms) { const d = ms ? new Date(ms) : null; return d ? d.toLocaleDateString("sk-SK", { day: "numeric", month: "numeric" }).replace(/\s/g, "\u00a0") + "\u00a0o\u00a0" + d.toLocaleTimeString("sk-SK", { hour: "2-digit", minute: "2-digit" }) : ""; }
+
+function clShow(k) {
+  const el = document.getElementById("cloudst"); if (!el) return;
+  if (!CL.on || !CL.ok || !S.started || STEPS[S.cur].id === "start") { el.hidden = true; return; }
+  el.hidden = false; el.className = "cloudst " + k;
+  el.textContent = k === "ok" ? "☁️ Uložené o " + new Date().toLocaleTimeString("sk-SK", { hour: "2-digit", minute: "2-digit" })
+    : k === "off" ? "⚠️ Neuložené na server – chýba internet, skúsim znova"
+    : k === "local" ? "💾 Ukladá sa len v tomto počítači" : "☁️ Ukladám…";
+}
+function clBox(html) {
+  const b = document.getElementById("cloudbox"); if (!b) return;
+  b.innerHTML = html ? `<div class="cbin">${html}</div>` : ""; b.hidden = !html;
+}
+
+function clQueue() {
+  if (CL.on && STEPS[S.cur].id === "start") return clShow("");
+  if (!CL.on || !CL.ok || !S.started || !S.cloudOk || CL.blocked || STEPS[S.cur].id === "start") return;
+  CL.dirty = true; clShow("wait"); clearTimeout(CL.timer); CL.timer = setTimeout(clPush, 1500);
+}
+function clPush(force) {
+  if (!CL.on || !S.cloudOk || !S.started || (CL.blocked && !force)) return;
+  if (CL.busy) { CL.again = true; return; }
+  clearTimeout(CL.timer); clearTimeout(CL.retry); CL.busy = true; CL.dirty = false;
+  clCall(Object.assign({ a: "save", rev: S.crev || 0, force: !!force, data: clData() }, clWho(), clInfo())).then(r => {
+    CL.busy = false;
+    if (r.ok) { S.crev = r.rev; CL.blocked = false; clRaw(); clShow("ok"); clBox(""); }
+    else if (r.err === "conflict") { CL.blocked = true; clShow("local");
+      clBox(`<b>Túto hodinu si medzitým robil na inom zariadení</b> (uložené ${clTime(r.saved)}).<div class="confirm"><button class="primary" data-clload>Načítať novšiu verziu</button><button class="ghost" data-clforce>Ponechať túto</button></div>`); }
+    else if (r.err === "pin") { CL.blocked = true; clShow("local"); clBox(`<b>PIN nesedí s uloženou hodinou.</b> Hodina sa ukladá len v tomto počítači. Povedz to pánovi učiteľovi.<div class="confirm"><button class="ghost" data-clclose>Zavrieť</button></div>`); }
+    else throw new Error(r.err || "server");
+    if (CL.again) { CL.again = false; clQueue(); }
+  }).catch(() => { CL.busy = false; CL.dirty = true; CL.again = false; clShow("off"); CL.retry = setTimeout(() => clPush(), 20000); });
+}
+function clBeacon() {
+  if (!CL.on || !CL.ok || !S.cloudOk || !S.started || CL.blocked || !CL.dirty || !navigator.sendBeacon) return;
+  clearTimeout(CL.timer);
+  try { const body = JSON.stringify(Object.assign({ a: "save", lesson: KEY, title: LESSON, dev: CL.dev, rev: S.crev || 0, data: clData() }, clWho(), clInfo()));
+    if (navigator.sendBeacon(PROGRESS_URL, new Blob([body], { type: "text/plain" }))) CL.dirty = false; } catch (e) {}
+}
+function clApply(r, msg) {
+  let o = null; try { o = JSON.parse(r.data); } catch (e) {}
+  if (!o) return false;
+  const rn = o.rn; delete o.rn;
+  Object.assign(o, { sending: false, cloudOk: true, crev: r.rev, pin: CL.pin || S.pin });
+  try { localStorage.setItem(KEY, JSON.stringify(o)); if (rn) localStorage.setItem(KEY + ":rn", JSON.stringify(rn)); sessionStorage.setItem(KEY + ":ok", "1"); } catch (e) {}
+  clBox(`<b>${msg}</b>`); CL.blocked = true;
+  setTimeout(() => location.reload(), 900); return true;
+}
+function clBegin(n, c, rev) {
+  Object.assign(S, { cloudOk: true, cidName: n, cidCls: c, pin: CL.pin, crev: rev || 0 });
+  CL.ok = true; CL.blocked = false;
+  try { sessionStorage.setItem(KEY + ":ok", "1"); } catch (e) {}
+  if (!S.started) S.started = Date.now();
+  go(1); clPush();
+}
+function clFreshFor(n, c) { const keep = { name: n, cls: c }; S = Object.assign(fresh(), keep); SEL = null; if (typeof TSEL !== "undefined") TSEL = null; }
+function clStart() {
+  if (!startOk()) return;
+  const n = S.name.trim(), c = S.cls.trim(), btn = document.querySelector("[data-start]"), h = document.getElementById("starthint");
+  const mine = S.cidName ? (clNorm(S.cidName) === clNorm(n) && clNorm(S.cidCls) === clNorm(c)) : !!S.started;
+  if (btn) btn.disabled = true;
+  if (h) h.textContent = "⏳ Hľadám tvoju uloženú hodinu…";
+  clCall({ a: "load", name: n, cls: c, pin: CL.pin }).then(r => {
+    if (!r.ok) {
+      if (btn) btn.disabled = false;
+      if (h) h.textContent = r.err === "pin" ? "❌ Pre toto meno a triedu je už uložená hodina s iným PIN-om. Skontroluj PIN. Ak si ho zabudol, povedz to pánovi učiteľovi." : "⚠️ Server teraz neodpovedá. Skús to znova o chvíľu.";
+      return;
+    }
+    let o = null; if (r.found) { try { o = JSON.parse(r.data); } catch (e) {} }
+    if (o && o.started) {
+      if (mine && ((S.crev || 0) >= r.rev || r.dev === CL.dev)) return clBegin(n, c, r.rev);
+      if (h) h.textContent = "";
+      return clApply(r, `✅ Našiel som tvoju rozpracovanú hodinu (uložená ${clTime(r.saved)}). Načítavam ju…`);
+    }
+    if (S.started && !mine) clFreshFor(n, c);
+    clBegin(n, c, r.found ? r.rev : 0);
+  }).catch(() => {
+    if (btn) btn.disabled = false;
+    if (h) h.innerHTML = `⚠️ Nepodarilo sa spojiť so serverom (asi nie je internet). <button class="ghost" data-cloff style="margin-left:6px">Pokračovať bez ukladania na server</button>`;
+  });
+}
+function clOffline() {
+  const n = S.name.trim(), c = S.cls.trim();
+  const mine = S.cidName ? (clNorm(S.cidName) === clNorm(n) && clNorm(S.cidCls) === clNorm(c)) : !!S.started;
+  const h = document.getElementById("starthint");
+  if (mine && S.pin && S.pin !== CL.pin) { if (h) h.textContent = "❌ PIN nesedí s hodinou uloženou v tomto počítači."; return; }
+  if (S.started && !mine) clFreshFor(n, c);
+  Object.assign(S, { cloudOk: false, cidName: n, cidCls: c, pin: CL.pin });
+  CL.ok = true; if (!S.started) S.started = Date.now();
+  go(1); clShow("local"); clRecheck();
+}
+function clRecheck() { /* po štarte bez internetu: keď sa internet vráti, napoj hodinu na server */
+  clearTimeout(CL.retry);
+  CL.retry = setTimeout(() => {
+    if (S.cloudOk) return;
+    clCall({ a: "load", name: S.cidName, cls: S.cidCls, pin: S.pin }).then(r => {
+      if (!r.ok) { if (r.err === "pin") clBox(`<b>PIN nesedí s hodinou uloženou na serveri.</b> Hodina sa ukladá len v tomto počítači.<div class="confirm"><button class="ghost" data-clclose>Zavrieť</button></div>`); else clRecheck(); return; }
+      let o = null; if (r.found) { try { o = JSON.parse(r.data); } catch (e) {} }
+      S.crev = r.found ? r.rev : 0;
+      if (o && o.started) { S.cloudOk = true; CL.blocked = true; clRaw(); clShow("local");
+        clBox(`<b>Na serveri je uložená tvoja hodina</b> (uložená ${clTime(r.saved)}). Ktorú chceš ponechať?<div class="confirm"><button class="primary" data-clload>Načítať uloženú zo servera</button><button class="ghost" data-clforce>Ponechať túto</button></div>`); return; }
+      S.cloudOk = true; clRaw(); clPush();
+    }).catch(clRecheck);
+  }, 30000);
+}
+function clInit() {
+  if (!CL.on) return;
+  if (!document.getElementById("cloudst")) document.body.insertAdjacentHTML("beforeend", `<div id="cloudst" class="cloudst" hidden aria-live="polite"></div><div id="cloudbox" class="cloudbox" hidden role="alertdialog"></div>`);
+  let sess = false; try { sess = sessionStorage.getItem(KEY + ":ok") === "1"; } catch (e) {}
+  if (S.started && S.cidName && (sess || (S.testLocked && !S.t.test))) { CL.ok = true; CL.pin = S.pin || ""; }
+  else if (S.started && STEPS[S.cur].id !== "start") { S.cur = 0; render(true); }
+  if (CL.ok) {
+    clShow(S.cloudOk ? "ok" : "local");
+    if (!S.cloudOk) return clRecheck();
+    clCall(Object.assign({ a: "load" }, clWho())).then(r => {
+      if (r.ok && r.found && r.rev > (S.crev || 0) && r.dev !== CL.dev) return clApply(r, "⏳ Načítavam novšiu verziu tvojej hodiny z iného zariadenia…");
+      if (r.ok && r.found && r.dev === CL.dev && r.rev > (S.crev || 0)) { S.crev = r.rev; clRaw(); }
+      if (r.ok && !r.found) clPush();
+    }).catch(() => clShow("off"));
+  }
+  document.getElementById("cloudbox").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return; e.stopPropagation();
+    if (b.dataset.clclose !== undefined) return clBox("");
+    if (b.dataset.clforce !== undefined) { clBox(""); CL.blocked = false; return clPush(true); }
+    if (b.dataset.clload !== undefined) { clCall(Object.assign({ a: "load" }, clWho())).then(r => { if (r.ok && r.found) clApply(r, "⏳ Načítavam uloženú verziu…"); }).catch(() => clShow("off")); }
+  });
+  addEventListener("pagehide", clBeacon);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") clBeacon(); });
+}
+document.addEventListener("input", e => { if (e.target && e.target.id === "pn") { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 4); CL.pin = e.target.value;
+  const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"); if (btn) btn.disabled = !startOk(); if (h) h.textContent = startMsg(); } }, true);
+document.addEventListener("click", e => { if (e.target.closest && e.target.closest("[data-cloff]")) { e.stopPropagation(); clOffline(); } }, true);
+
 let S = load() || fresh();
 let SEL = null, TSEL = null;
 function ord(key, ids, keep) {
@@ -1221,9 +1383,9 @@ function guessBox() {
 if (!VIEWS.start) VIEWS.start = function () {
   return `<p class="kicker">${START.kicker}</p><h1>${LESSON}</h1>${START.hero || ""}<p class="lead">${START.lead}</p>
   <div class="task"><label class="f" for="nm">Meno a priezvisko</label><input class="in" type="text" id="nm" data-field="name" value="${esc(S.name)}" autocomplete="name" placeholder="napr. Jana Nováková">
-  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}"></div>
-  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${S.name.trim().length < 3 ? "Napíš svoje meno a priezvisko." : ""}</span>
-  <button class="primary" data-start ${S.name.trim().length < 3 ? "disabled" : ""}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
+  <label class="f" for="cl">Trieda</label><input class="in" type="text" id="cl" data-field="cls" value="${esc(S.cls)}">${CL.on ? `<label class="f" for="pn">PIN (4 číslice)</label><input class="in" type="text" id="pn" inputmode="numeric" maxlength="4" autocomplete="off" value="${esc(CL.pin)}" placeholder="napr. 4821"><p class="pinnote">🔑 PIN si vymysli a zapamätaj. Ak hodinu nestihneš, dokončíš ju na inom počítači alebo doma: zadáš rovnaké meno, triedu a&nbsp;PIN.</p>` : ""}</div>
+  <div class="next"><span class="muted" id="starthint" style="margin-right:auto">${startMsg()}</span>
+  <button class="primary" data-start ${startOk() ? "" : "disabled"}>${S.started ? "Pokračovať" : "Začať hodinu"}</button></div>`;
 };
 VIEWS.vysledok = function () {
   if (!S.t.test) return `<h2>Výsledok</h2><p>Výsledok sa zobrazí, keď dokončíš záverečný test.</p><button class="primary" data-go="${testIdx()}">Prejsť na záverečný test</button>`;
@@ -1256,7 +1418,7 @@ function render(toTop) {
   else window.scrollTo(0, y);
 }
 function go(i) {
-  if (!S.started && i > 0) return;
+  if ((!S.started || clGate()) && i > 0) return;
   if (S.testLocked && !S.t.test && i < testIdx()) return;
   if (STEPS[i].id === "vysledok" && !S.t.test) { if (S.testLocked) { S.cur = STEPS.findIndex(x => x.id === "test"); S.econfirm = true; save(); render(true); const c = document.querySelector("[data-teyes]"); if (c) c.scrollIntoView({ block: "center" }); return; } if (S.started) { S.cur = i; S.econfirm = false; save(); render(true); } return; }
   S.cur = i; SEL = null; TSEL = null; S.tconfirm = false; S.econfirm = false; save(); render(true);
@@ -1275,12 +1437,12 @@ document.addEventListener("click", e => {
   if (ds.go !== undefined) return go(+ds.go);
   if (ds.rreset !== undefined) { S.rconfirm = true; save(); return render(false); }
   if (ds.rno !== undefined) { S.rconfirm = false; save(); return render(false); }
-  if (ds.ryes !== undefined) { const keep = { cls: S.cls }; try { localStorage.removeItem(KEY); } catch (e) {} S = fresh(); S.cls = keep.cls; SEL = null; if (typeof TSEL !== "undefined") TSEL = null; save(); window.scrollTo(0, 0); return render(true); }
+  if (ds.ryes !== undefined) { const keep = { cls: S.cls, name: CL.on ? S.name : "", cloudOk: S.cloudOk, cidName: S.cidName, cidCls: S.cidCls, pin: S.pin, crev: S.crev }; try { localStorage.removeItem(KEY); } catch (e) {} S = Object.assign(fresh(), keep); SEL = null; if (typeof TSEL !== "undefined") TSEL = null; save(); window.scrollTo(0, 0); return render(true); }
   if (ds.reset !== undefined) { if (S.testLocked) return;
     if (!resetArmed) { el.classList.add("arm"); el.textContent = "Naozaj? Klikni znova"; resetArmed = setTimeout(() => { resetArmed = null; renderTop(); }, 3000); return; }
-    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls }; S = fresh(); S.name = keep.name; S.cls = keep.cls; SEL = null; save(); return render(true);
+    clearTimeout(resetArmed); resetArmed = null; const keep = { name: S.name, cls: S.cls, cloudOk: S.cloudOk, cidName: S.cidName, cidCls: S.cidCls, pin: S.pin, crev: S.crev }; S = Object.assign(fresh(), keep); SEL = null; save(); return render(true);
   }
-  if (ds.start !== undefined) { if (!S.started) S.started = Date.now(); return go(1); }
+  if (ds.start !== undefined) { if (CL.on) return clStart(); if (!S.started) S.started = Date.now(); return go(1); }
   if (ds.tstart !== undefined) { S.tconfirm = true; save(); return render(false); }
   if (ds.tno !== undefined) { S.tconfirm = false; save(); return render(false); }
   if (ds.tend !== undefined) { if (!S.testLocked || S.t.test) return; S.econfirm = true; save(); render(false); const c = document.querySelector("[data-teyes]"); if (c) c.scrollIntoView({ block: "center" }); return; }
@@ -1330,9 +1492,9 @@ document.addEventListener("input", e => {
   const f = t.dataset.field; if (!f) return;
   S[f] = t.value; save();
   if (STEPS[S.cur].id === "start") {
-    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = S.name.trim().length >= 3;
+    const btn = document.querySelector("[data-start]"), h = document.getElementById("starthint"), ok = startOk();
     if (btn) btn.disabled = !ok;
-    if (h) h.textContent = ok ? "" : "Napíš svoje meno a priezvisko.";
+    if (h) h.textContent = startMsg();
   }
 });
 document.addEventListener("dragstart", e => { const p = e.target.closest && e.target.closest("[data-pick]"); if (!p) return; const [t, id] = p.dataset.pick.split("|"); if (S.t[t] || RO()) return e.preventDefault(); SEL = { t, i: id }; try { e.dataTransfer.setData("text/plain", id); } catch (err) {} });
@@ -1389,6 +1551,7 @@ document.addEventListener("keydown", e => { if (e.key !== "F5") return; const t 
   for (const t in F) { const T = TASKS[t]; if (!T || !T.qs) { console.warn("MCFIX task", t); continue; } T.qs.forEach(q => { const o = F[t][q.id]; if (!o) return; if (o.length !== q.opts.length) { console.warn("MCFIX len", t, q.id); return; } const n = new Array(o.length); n[q.a] = o[0]; let j = 1; for (let i = 0; i < o.length; i++) if (i !== q.a) n[i] = o[j++]; q.opts = n; }); } })();
 if (!S.started) S.cur = 0;
 render(true);
+clInit();
 
 </script>
 </body>
